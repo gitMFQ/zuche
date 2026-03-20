@@ -165,6 +165,18 @@ npm run dev
 
 ### 2026-03-20
 
+#### 保险管理支持上传图片和PDF
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/insurance.ts`
+  - `backend/src/index.ts`
+  - `frontend/src/components/InsuranceTab.vue`
+- **变更内容**:
+  - 数据库 insurance 表新增 `documents` 字段（JSON数组存储）
+  - 后端上传接口支持PDF文件（仅保险上传）
+  - 保险记录支持上传最多5个附件（图片或PDF）
+  - 列表和详情页显示附件，支持预览图片和打开PDF
+
 #### 违章管理支持多图上传
 - **修改文件**:
   - `backend/src/db/index.ts`

@@ -189,6 +189,16 @@ function runMigrations(db: Database): void {
       }
     }
     
+    // 检查insurance表是否有documents字段
+    const insuranceColumns = db.exec("PRAGMA table_info(insurance)");
+    if (insuranceColumns.length > 0) {
+      const columns = insuranceColumns[0].values.map((col: any) => col[1]);
+      if (!columns.includes('documents')) {
+        db.run('ALTER TABLE insurance ADD COLUMN documents TEXT');
+        console.log('已添加documents字段到保险表');
+      }
+    }
+    
     saveDatabase();
   } catch (error) {
     console.error('数据库迁移错误:', error);

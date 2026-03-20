@@ -33,8 +33,8 @@ UPLOAD_SUBDIRS.forEach(subdir => {
   }
 });
 
-// 创建multer上传器工厂函数，支持指定子目录
-function createUploader(subdir: string, filePrefix: string) {
+// 创建multer上传器工厂函数，支持指定子目录和文件类型
+function createUploader(subdir: string, filePrefix: string, allowPdf = false) {
   const uploadDir = join(UPLOADS_DIR, subdir);
   
   const storage = multer.diskStorage({
@@ -48,24 +48,28 @@ function createUploader(subdir: string, filePrefix: string) {
     }
   });
 
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedPdfTypes = ['application/pdf'];
+  const allowedTypes = allowPdf ? [...allowedImageTypes, ...allowedPdfTypes] : allowedImageTypes;
+  const fileTypeName = allowPdf ? '图片或PDF文件' : '图片文件';
+
   return multer({ 
     storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB限制
     fileFilter: (_req, file, cb) => {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('只支持图片文件'));
+        cb(new Error(`只支持${fileTypeName}`));
       }
     }
   });
 }
 
-// 不同类型的上传器
+// 不同类型的上传器（保险支持PDF）
 const uploaders = {
   inspection: createUploader('inspection', 'inspection'),
-  insurance: createUploader('insurance', 'insurance'),
+  insurance: createUploader('insurance', 'insurance', true), // 支持图片和PDF
   violation: createUploader('violation', 'violation'),
   other: createUploader('other', 'file')
 };
@@ -85,15 +89,18 @@ app.use((req, res, next) => {
 });
 
 // 通用上传处理函数
-function handleUpload(uploader: multer.Multer, subdir: string) {
+function handleUpload(uploader: multer.Multer, subdir: string, allowPdf = false) {
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
     uploader.single('image')(req, res, (err: any) => {
       if (err) {
-        if (err.message === '只支持图片文件') {
-          return res.status(400).json({ success: false, message: '只支持 JPG、PNG、GIF、WEBP 格式的图片' });
+        if (err.message.includes('只支持')) {
+          const msg = allowPdf 
+            ? '只支持 JPG、PNG、GIF、WEBP 格式的图片或 PDF 文件'
+            : '只支持 JPG、PNG、GIF、WEBP 格式的图片';
+          return res.status(400).json({ success: false, message: msg });
         }
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ success: false, message: '图片大小不能超过 10MB' });
+          return res.status(400).json({ success: false, message: '文件大小不能超过 10MB' });
         }
         console.error('上传错误:', err);
         return res.status(500).json({ success: false, message: '上传失败' });
@@ -101,14 +108,16 @@ function handleUpload(uploader: multer.Multer, subdir: string) {
       
       try {
         if (!req.file) {
-          return res.status(400).json({ success: false, message: '请选择图片文件' });
+          return res.status(400).json({ success: false, message: '请选择文件' });
         }
         const fileUrl = `/uploads/${subdir}/${req.file.filename}`;
+        const isPdf = req.file.mimetype === 'application/pdf';
         res.json({ 
           success: true, 
           data: { 
             filename: req.file.filename,
-            url: fileUrl 
+            url: fileUrl,
+            type: isPdf ? 'pdf' : 'image'
           } 
         });
       } catch (error) {
@@ -122,8 +131,8 @@ function handleUpload(uploader: multer.Multer, subdir: string) {
 // 年检证图片上传接口
 app.post('/api/upload/inspection', authMiddleware, handleUpload(uploaders.inspection, 'inspection'));
 
-// 保险图片上传接口
-app.post('/api/upload/insurance', authMiddleware, handleUpload(uploaders.insurance, 'insurance'));
+// 保险图片/PDF上传接口
+app.post('/api/upload/insurance', authMiddleware, handleUpload(uploaders.insurance, 'insurance', true));
 
 // 违章图片上传接口
 app.post('/api/upload/violation', authMiddleware, handleUpload(uploaders.violation, 'violation'));

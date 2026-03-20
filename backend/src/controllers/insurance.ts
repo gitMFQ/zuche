@@ -66,11 +66,20 @@ export function getInsuranceList(req: AuthRequest, res: Response): void {
         actualStatus = 'active';
       }
       
+      // 解析 documents JSON
+      let documents = [];
+      try {
+        documents = i.documents ? JSON.parse(i.documents) : [];
+      } catch {
+        documents = [];
+      }
+      
       return {
         ...i,
         status: actualStatus,
         type_text: INSURANCE_TYPE_MAP[i.insurance_type] || i.insurance_type,
-        status_text: STATUS_MAP[actualStatus] || actualStatus
+        status_text: STATUS_MAP[actualStatus] || actualStatus,
+        documents
       };
     });
 
@@ -181,6 +190,7 @@ export function createInsurance(req: AuthRequest, res: Response): void {
       premium,
       coverage_amount,
       beneficiary,
+      documents,
       remarks
     } = req.body;
 
@@ -213,11 +223,12 @@ export function createInsurance(req: AuthRequest, res: Response): void {
     execute(
       `INSERT INTO insurance (
         id, vehicle_id, plate_number, insurance_type, insurance_company, policy_number,
-        start_date, end_date, premium, coverage_amount, beneficiary, remarks, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        start_date, end_date, premium, coverage_amount, beneficiary, documents, remarks, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, vehicle_id, plateNum, insurance_type, insurance_company, policy_number || null,
         start_date, end_date, premium || 0, coverage_amount || 0, beneficiary || null,
+        documents ? JSON.stringify(documents) : null,
         remarks || null, status, currentTime, currentTime
       ]
     );
@@ -247,6 +258,7 @@ export function updateInsurance(req: AuthRequest, res: Response): void {
       premium,
       coverage_amount,
       beneficiary,
+      documents,
       remarks,
       status
     } = req.body;
@@ -261,7 +273,7 @@ export function updateInsurance(req: AuthRequest, res: Response): void {
       `UPDATE insurance SET 
         vehicle_id = ?, insurance_type = ?, insurance_company = ?, policy_number = ?,
         start_date = ?, end_date = ?, premium = ?, coverage_amount = ?,
-        beneficiary = ?, remarks = ?, status = ?, updated_at = ?
+        beneficiary = ?, documents = ?, remarks = ?, status = ?, updated_at = ?
       WHERE id = ?`,
       [
         vehicle_id || insurance.vehicle_id,
@@ -273,6 +285,7 @@ export function updateInsurance(req: AuthRequest, res: Response): void {
         premium ?? 0,
         coverage_amount ?? 0,
         beneficiary || null,
+        documents ? JSON.stringify(documents) : null,
         remarks || null,
         status || insurance.status,
         now(),

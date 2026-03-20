@@ -78,6 +78,18 @@
           <span class="label">保费</span>
           <span class="value text-danger">¥{{ item.premium }}</span>
         </div>
+        <div class="mobile-card-row" v-if="item.documents && item.documents.length">
+          <span class="label">附件</span>
+          <div class="docs-mini">
+            <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
+              <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents, idx)" />
+              <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                <el-icon><Document /></el-icon>
+              </div>
+            </template>
+            <span v-if="item.documents.length > 3" class="more">+{{ item.documents.length - 3 }}</span>
+          </div>
+        </div>
         <div class="mobile-card-actions">
           <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
           <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
@@ -109,6 +121,20 @@
         </el-table-column>
         <el-table-column prop="premium" label="保费" width="70">
           <template #default="{ row }">¥{{ row.premium }}</template>
+        </el-table-column>
+        <el-table-column label="附件" width="80">
+          <template #default="{ row }">
+            <div class="docs-mini" v-if="row.documents && row.documents.length">
+              <template v-for="(doc, idx) in row.documents.slice(0, 2)" :key="idx">
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)" />
+                <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                  <el-icon><Document /></el-icon>
+                </div>
+              </template>
+              <span v-if="row.documents.length > 2" class="badge">{{ row.documents.length }}</span>
+            </div>
+            <span v-else>-</span>
+          </template>
         </el-table-column>
         <el-table-column prop="status_text" label="状态" width="70">
           <template #default="{ row }">
@@ -208,6 +234,26 @@
         <el-form-item label="受益人">
           <el-input v-model="form.beneficiary" placeholder="受益人" />
         </el-form-item>
+        <el-form-item label="附件">
+          <div class="multi-upload">
+            <div class="file-list">
+              <div v-for="(doc, idx) in form.documents" :key="idx" class="file-item">
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" />
+                <div v-else class="pdf-thumb">
+                  <el-icon><Document /></el-icon>
+                  <span>PDF</span>
+                </div>
+                <div class="file-remove" @click="removeDocument(idx)">×</div>
+              </div>
+              <div v-if="form.documents.length < 5" class="upload-btn" @click="triggerUpload">
+                <el-icon><Plus /></el-icon>
+                <span>{{ form.documents.length }}/5</span>
+              </div>
+            </div>
+            <div class="upload-tip">支持图片和PDF文件，最多5个</div>
+            <input ref="fileInput" type="file" accept="image/*,.pdf" style="display: none" @change="handleFileSelect" />
+          </div>
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
         </el-form-item>
@@ -217,21 +263,44 @@
         <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 图片预览 -->
+    <el-dialog v-model="imagePreviewVisible" title="附件预览" width="90%" :style="{ maxWidth: '500px' }">
+      <el-carousel :initial-index="previewIndex" indicator-position="outside" v-if="previewDocs.length">
+        <el-carousel-item v-for="(doc, idx) in previewDocs" :key="idx">
+          <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" style="width: 100%; height: 100%; object-fit: contain" />
+          <div v-else class="pdf-preview">
+            <el-icon :size="60"><Document /></el-icon>
+            <p>PDF 文件</p>
+            <el-button type="primary" @click="openPdf(doc.url)">打开文件</el-button>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { insuranceApi, vehicleApi } from '../api'
+import { insuranceApi, vehicleApi, uploadApi } from '../api'
+
+interface DocumentItem {
+  url: string
+  type: 'image' | 'pdf'
+}
 
 const loading = ref(false)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
+const fileInput = ref<HTMLInputElement>()
 const editingId = ref('')
 const vehicles = ref<any[]>([])
+const imagePreviewVisible = ref(false)
+const previewDocs = ref<DocumentItem[]>([])
+const previewIndex = ref(0)
 
 const searchForm = reactive({ keyword: '', insurance_type: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
@@ -248,6 +317,7 @@ const form = reactive({
   premium: 0,
   coverage_amount: 0,
   beneficiary: '',
+  documents: [] as DocumentItem[],
   remarks: ''
 })
 
@@ -279,6 +349,23 @@ function isExpiringSoon(date: string) {
   const diff = target.getTime() - now.getTime()
   const days = diff / (1000 * 60 * 60 * 24)
   return days > 0 && days <= 30
+}
+
+function getFileUrl(url: string) {
+  if (!url) return ''
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+  return baseUrl + url
+}
+
+function openPdf(url: string) {
+  window.open(getFileUrl(url), '_blank')
+}
+
+function previewDoc(docs: DocumentItem[], index: number) {
+  previewDocs.value = docs
+  previewIndex.value = index
+  imagePreviewVisible.value = true
 }
 
 async function loadData() {
@@ -326,6 +413,7 @@ function openDialog(item?: any) {
     premium: item?.premium ?? 0,
     coverage_amount: item?.coverage_amount ?? 0,
     beneficiary: item?.beneficiary || '',
+    documents: item?.documents || [],
     remarks: item?.remarks || ''
   })
   loadVehicles()
@@ -337,6 +425,54 @@ function onVehicleChange(id: string) {
   if (vehicle) {
     form.plate_number = vehicle.plate_number
   }
+}
+
+function triggerUpload() {
+  fileInput.value?.click()
+}
+
+async function handleFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  // 检查文件类型
+  const isImage = file.type.startsWith('image/')
+  const isPdf = file.type === 'application/pdf'
+  if (!isImage && !isPdf) {
+    ElMessage.error('请选择图片或PDF文件')
+    return
+  }
+
+  // 检查文件大小
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('文件大小不能超过10MB')
+    return
+  }
+
+  // 上传
+  try {
+    const res = await uploadApi.uploadInsurance(file)
+    if (res.success && res.data) {
+      form.documents.push({
+        url: res.data.url,
+        type: res.data.type || (isPdf ? 'pdf' : 'image')
+      })
+      ElMessage.success('文件上传成功')
+    } else {
+      ElMessage.error(res.message || '上传失败')
+    }
+  } catch (error: any) {
+    console.error('上传失败', error)
+    ElMessage.error('上传失败')
+  }
+
+  // 清空 input
+  target.value = ''
+}
+
+function removeDocument(index: number) {
+  form.documents.splice(index, 1)
 }
 
 async function handleSubmit() {
@@ -481,6 +617,7 @@ onMounted(() => loadData())
 .mobile-card-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 3px 0;
   font-size: 13px;
 }
@@ -540,5 +677,153 @@ onMounted(() => loadData())
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+/* 文件上传 */
+.multi-upload {
+  width: 100%;
+}
+
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-item {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+}
+
+.file-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pdf-thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  color: #909399;
+}
+
+.pdf-thumb .el-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.pdf-thumb span {
+  font-size: 10px;
+}
+
+.file-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-btn {
+  width: 70px;
+  height: 70px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #909399;
+  font-size: 12px;
+}
+
+.upload-btn:hover {
+  border-color: #409EFF;
+  color: #409EFF;
+}
+
+.upload-btn .el-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
+}
+
+/* 表格/卡片中的小文件 */
+.docs-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.docs-mini img {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.docs-mini .pdf-icon {
+  width: 30px;
+  height: 30px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F56C6C;
+  cursor: pointer;
+}
+
+.docs-mini .more {
+  font-size: 12px;
+  color: #909399;
+}
+
+.docs-mini .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #F56C6C;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 8px;
+}
+
+/* PDF 预览 */
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #909399;
+}
+
+.pdf-preview .el-icon {
+  color: #F56C6C;
 }
 </style>
