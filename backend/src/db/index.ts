@@ -157,13 +157,8 @@ function runMigrations(db: Database): void {
           id TEXT PRIMARY KEY,
           vehicle_id TEXT NOT NULL,
           plate_number TEXT NOT NULL,
-          inspection_type TEXT NOT NULL,
-          inspection_date TEXT NOT NULL,
           expiry_date TEXT NOT NULL,
-          inspection_station TEXT,
-          cost REAL DEFAULT 0,
-          result TEXT DEFAULT 'passed',
-          certificate_number TEXT,
+          certificate_image TEXT,
           remarks TEXT,
           status TEXT DEFAULT 'valid',
           created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -172,15 +167,15 @@ function runMigrations(db: Database): void {
         )
       `);
       console.log('已创建年检证表');
-    }
-    
-    // 检查inspections表是否有certificate_image字段
-    const inspectionColumns = db.exec("PRAGMA table_info(inspections)");
-    if (inspectionColumns.length > 0) {
-      const columns = inspectionColumns[0].values.map(col => col[1]);
-      if (!columns.includes('certificate_image')) {
-        db.run('ALTER TABLE inspections ADD COLUMN certificate_image TEXT');
-        console.log('已添加certificate_image字段到年检证表');
+    } else {
+      // 检查inspections表是否有certificate_image字段
+      const inspectionColumns = db.exec("PRAGMA table_info(inspections)");
+      if (inspectionColumns.length > 0) {
+        const columns = inspectionColumns[0].values.map((col: any) => col[1]);
+        if (!columns.includes('certificate_image')) {
+          db.run('ALTER TABLE inspections ADD COLUMN certificate_image TEXT');
+          console.log('已添加certificate_image字段到年检证表');
+        }
       }
     }
     
@@ -425,13 +420,8 @@ function createTables(db: Database): void {
       id TEXT PRIMARY KEY,
       vehicle_id TEXT NOT NULL,
       plate_number TEXT NOT NULL,
-      inspection_type TEXT NOT NULL,
-      inspection_date TEXT NOT NULL,
       expiry_date TEXT NOT NULL,
-      inspection_station TEXT,
-      cost REAL DEFAULT 0,
-      result TEXT DEFAULT 'passed',
-      certificate_number TEXT,
+      certificate_image TEXT,
       remarks TEXT,
       status TEXT DEFAULT 'valid',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,

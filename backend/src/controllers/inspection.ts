@@ -138,6 +138,8 @@ export function createInspection(req: AuthRequest, res: Response): void {
   try {
     const { vehicle_id, plate_number, expiry_date, certificate_image, remarks } = req.body;
 
+    console.log('创建年检证请求:', { vehicle_id, plate_number, expiry_date, certificate_image, remarks });
+
     if (!vehicle_id || !expiry_date) {
       res.status(400).json({ success: false, message: '车辆和到期日期不能为空' });
       return;
@@ -147,9 +149,15 @@ export function createInspection(req: AuthRequest, res: Response): void {
     let plateNum = plate_number;
     if (!plateNum) {
       const vehicle = queryOne('SELECT plate_number FROM vehicles WHERE id = ?', [vehicle_id]);
+      console.log('查询车辆结果:', vehicle);
       if (vehicle) {
         plateNum = vehicle.plate_number;
       }
+    }
+
+    if (!plateNum) {
+      res.status(400).json({ success: false, message: '无法获取车牌号' });
+      return;
     }
 
     const id = generateId();
@@ -162,12 +170,16 @@ export function createInspection(req: AuthRequest, res: Response): void {
       status = 'expired';
     }
 
+    console.log('准备插入年检证:', { id, vehicle_id, plateNum, expiry_date, status });
+
     execute(
       `INSERT INTO inspections (
         id, vehicle_id, plate_number, expiry_date, certificate_image, remarks, status, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, vehicle_id, plateNum, expiry_date, certificate_image || null, remarks || null, status, currentTime, currentTime]
     );
+
+    console.log('年检证创建成功:', id);
 
     res.json({
       success: true,
@@ -176,7 +188,7 @@ export function createInspection(req: AuthRequest, res: Response): void {
     });
   } catch (error) {
     console.error('创建年检记录错误:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
+    res.status(500).json({ success: false, message: '服务器错误: ' + (error as Error).message });
   }
 }
 
