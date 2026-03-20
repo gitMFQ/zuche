@@ -102,9 +102,8 @@ router.delete('/insurance/:id', authMiddleware, insuranceController.deleteInsura
 // ==================== 年检证管理路由 ====================
 router.get('/inspections', authMiddleware, inspectionController.getInspectionList);
 router.get('/inspections/stats', authMiddleware, inspectionController.getInspectionStats);
-router.get('/inspections/:id', authMiddleware, inspectionController.getInspection);
 router.post('/inspections', authMiddleware, inspectionController.createInspection);
-router.put('/inspections/:id', authMiddleware, inspectionController.updateInspection);
-router.delete('/inspections/:id', authMiddleware, inspectionController.deleteInspection);
+router.put('/inspections/:vehicle_id', authMiddleware, inspectionController.updateInspection);
+router.delete('/inspections/:vehicle_id', authMiddleware, inspectionController.deleteInspection);
 
 export default router;

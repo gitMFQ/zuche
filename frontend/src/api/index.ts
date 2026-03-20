@@ -153,25 +153,33 @@ export const insuranceApi = {
 export const inspectionApi = {
   getList: (params?: any) => api.get('/inspections', { params }),
   getStats: () => api.get('/inspections/stats'),
-  getOne: (id: string) => api.get(`/inspections/${id}`),
   create: (data: any) => api.post('/inspections', data),
-  update: (id: string, data: any) => api.put(`/inspections/${id}`, data),
-  delete: (id: string) => api.delete(`/inspections/${id}`)
+  update: (vehicleId: string, data: any) => api.put(`/inspections/${vehicleId}`, data),
+  delete: (vehicleId: string) => api.delete(`/inspections/${vehicleId}`)
 }
 
 // ==================== 文件上传 API ====================
 export const uploadApi = {
-  uploadImage: async (file: File): Promise<{ success: boolean; data?: { filename: string; url: string } }> => {
+  uploadImage: async (file: File): Promise<{ success: boolean; data?: { filename: string; url: string }; message?: string }> => {
     const formData = new FormData()
     formData.append('image', file)
-    const response = await fetch(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001' + '/api/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: formData
-    })
-    return response.json()
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+    try {
+      const response = await fetch(`${baseUrl}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        return { success: false, message: result.message || `上传失败 (${response.status})` }
+      }
+      return result
+    } catch (error) {
+      return { success: false, message: '网络错误，请检查服务器连接' }
+    }
   }
 }
 

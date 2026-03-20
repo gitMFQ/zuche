@@ -63,24 +63,36 @@ app.use((req, res, next) => {
 });
 
 // 图片上传接口
-app.post('/api/upload', authMiddleware, upload.single('image'), (req, res) => {
-  try {
-    if (!req.file) {
-      res.status(400).json({ success: false, message: '请选择图片文件' });
-      return;
+app.post('/api/upload', authMiddleware, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err.message === '只支持图片文件') {
+        return res.status(400).json({ success: false, message: '只支持 JPG、PNG、GIF、WEBP 格式的图片' });
+      }
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: '图片大小不能超过 10MB' });
+      }
+      console.error('上传错误:', err);
+      return res.status(500).json({ success: false, message: '上传失败' });
     }
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ 
-      success: true, 
-      data: { 
-        filename: req.file.filename,
-        url: fileUrl 
-      } 
-    });
-  } catch (error) {
-    console.error('上传失败:', error);
-    res.status(500).json({ success: false, message: '上传失败' });
-  }
+    
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: '请选择图片文件' });
+      }
+      const fileUrl = `/uploads/${req.file.filename}`;
+      res.json({ 
+        success: true, 
+        data: { 
+          filename: req.file.filename,
+          url: fileUrl 
+        } 
+      });
+    } catch (error) {
+      console.error('上传失败:', error);
+      res.status(500).json({ success: false, message: '上传失败' });
+    }
+  });
 });
 
 // API 路由

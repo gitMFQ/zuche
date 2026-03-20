@@ -4,12 +4,13 @@
     <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="searchForm" size="default">
         <el-form-item>
-          <el-input v-model="searchForm.keyword" placeholder="车牌" clearable @keyup.enter="loadData" style="width: 120px" />
+          <el-input v-model="searchForm.keyword" placeholder="车牌/品牌" clearable @keyup.enter="loadData" style="width: 140px" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="searchForm.status" placeholder="状态" clearable style="width: 90px">
+          <el-select v-model="searchForm.status" placeholder="年检状态" clearable style="width: 100px">
             <el-option label="有效" value="valid" />
             <el-option label="已过期" value="expired" />
+            <el-option label="未登记" value="none" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -18,16 +19,9 @@
       </el-form>
     </el-card>
 
-    <!-- 操作栏 -->
-    <div class="action-bar">
-      <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加年检
-      </el-button>
-    </div>
-
     <!-- 统计卡片 -->
     <div class="stats-cards">
-      <div class="stat-card primary">
+      <div class="stat-card success">
         <div class="stat-value">{{ stats.validCount }}</div>
         <div class="stat-label">有效</div>
       </div>
@@ -39,14 +33,18 @@
         <div class="stat-value">{{ stats.expired.length }}</div>
         <div class="stat-label">已过期</div>
       </div>
+      <div class="stat-card info">
+        <div class="stat-value">{{ stats.noneCount }}</div>
+        <div class="stat-label">未登记</div>
+      </div>
     </div>
 
     <!-- 移动端卡片列表 -->
     <div class="mobile-cards">
-      <div v-for="item in tableData" :key="item.id" class="mobile-card" :class="{ 'expired': item.status === 'expired' }">
+      <div v-for="item in tableData" :key="item.vehicle_id" class="mobile-card" :class="item.inspection_status">
         <div class="mobile-card-header">
           <span class="plate">{{ item.plate_number }}</span>
-          <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          <el-tag :type="getStatusType(item.inspection_status)" size="small">{{ item.status_text }}</el-tag>
         </div>
         <div class="mobile-card-row">
           <span class="label">车辆</span>
@@ -54,8 +52,8 @@
         </div>
         <div class="mobile-card-row">
           <span class="label">到期日期</span>
-          <span class="value" :class="{ 'text-danger': isExpired(item.expiry_date), 'text-warning': isExpiringSoon(item.expiry_date) }">
-            {{ item.expiry_date }}
+          <span class="value" :class="getDateClass(item)">
+            {{ item.expiry_date || '-' }}
           </span>
         </div>
         <div class="mobile-card-row" v-if="item.certificate_image">
@@ -63,8 +61,10 @@
           <el-button type="primary" link size="small" @click="previewImage(item.certificate_image)">查看</el-button>
         </div>
         <div class="mobile-card-actions">
-          <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
-          <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
+          <el-button type="primary" size="small" @click="openDialog(item)">
+            {{ item.inspection_id ? '编辑' : '登记' }}
+          </el-button>
+          <el-popconfirm v-if="item.inspection_id" title="确定删除年检证?" @confirm="handleDelete(item.vehicle_id)">
             <template #reference>
               <el-button type="danger" size="small">删除</el-button>
             </template>
@@ -77,13 +77,13 @@
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
         <el-table-column prop="plate_number" label="车牌" width="100" />
-        <el-table-column prop="brand" label="车辆" width="120">
+        <el-table-column prop="brand" label="车辆" width="140">
           <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
         </el-table-column>
         <el-table-column prop="expiry_date" label="到期日期" width="120">
           <template #default="{ row }">
-            <span :class="{ 'text-danger': isExpired(row.expiry_date), 'text-warning': isExpiringSoon(row.expiry_date) }">
-              {{ row.expiry_date }}
+            <span :class="getDateClass(row)">
+              {{ row.expiry_date || '-' }}
             </span>
           </template>
         </el-table-column>
@@ -93,15 +93,17 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="status_text" label="状态" width="80">
+        <el-table-column prop="status_text" label="状态" width="90">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
+            <el-tag :type="getStatusType(row.inspection_status)" size="small">{{ row.status_text }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="150">
+        <el-table-column label="操作" fixed="right" width="140">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
-            <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
+            <el-button type="primary" link size="small" @click="openDialog(row)">
+              {{ row.inspection_id ? '编辑' : '登记' }}
+            </el-button>
+            <el-popconfirm v-if="row.inspection_id" title="确定删除年检证?" @confirm="handleDelete(row.vehicle_id)">
               <template #reference>
                 <el-button type="danger" link size="small">删除</el-button>
               </template>
@@ -123,17 +125,13 @@
     </el-card>
 
     <!-- 添加/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑年检证' : '添加年检证'" width="90%" :style="{ maxWidth: '450px' }">
+    <el-dialog v-model="dialogVisible" :title="formTitle" width="90%" :style="{ maxWidth: '450px' }">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
-        <el-form-item label="车辆" prop="vehicle_id">
-          <el-select v-model="form.vehicle_id" placeholder="选择车辆" style="width: 100%" @change="onVehicleChange">
-            <el-option 
-              v-for="v in vehicles" 
-              :key="v.id" 
-              :label="`${v.plate_number} - ${v.brand} ${v.model}`" 
-              :value="v.id" 
-            />
-          </el-select>
+        <el-form-item label="车辆">
+          <div class="vehicle-info">
+            <span class="plate">{{ currentVehicle?.plate_number }}</span>
+            <span class="detail">{{ currentVehicle?.brand }} {{ currentVehicle?.model }}</span>
+          </div>
         </el-form-item>
         
         <el-form-item label="到期日期" prop="expiry_date">
@@ -192,9 +190,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
-import { inspectionApi, vehicleApi, uploadApi } from '../api'
+import { inspectionApi, uploadApi } from '../api'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -202,36 +200,42 @@ const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const uploadRef = ref()
-const editingId = ref('')
-const vehicles = ref<any[]>([])
+const currentVehicle = ref<any>(null)
 const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
 
 const searchForm = reactive({ keyword: '', status: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const stats = reactive({ validCount: 0, expiringSoon: [] as any[], expired: [] as any[], thisMonthCost: 0 })
+const stats = reactive({ validCount: 0, expiringSoon: [] as any[], expired: [] as any[], noneCount: 0 })
 
 const form = reactive({
   vehicle_id: '',
-  plate_number: '',
   expiry_date: '',
   certificate_image: '',
   remarks: ''
 })
 
+const formTitle = computed(() => currentVehicle.value?.inspection_id ? '编辑年检证' : '登记年检证')
+
 const rules: FormRules = {
-  vehicle_id: [{ required: true, message: '请选择车辆', trigger: 'change' }],
   expiry_date: [{ required: true, message: '请选择到期日期', trigger: 'change' }]
 }
 
 const statusTypeMap: Record<string, string> = {
   valid: 'success',
   expired: 'danger',
-  pending: 'warning'
+  none: 'info'
 }
 
 function getStatusType(status: string) {
   return statusTypeMap[status] || 'info'
+}
+
+function getDateClass(item: any) {
+  if (!item.expiry_date) return ''
+  if (isExpired(item.expiry_date)) return 'text-danger'
+  if (isExpiringSoon(item.expiry_date)) return 'text-warning'
+  return 'text-success'
 }
 
 function getImageUrl(url: string) {
@@ -266,6 +270,8 @@ async function loadData() {
     }
     if (statsRes.success) {
       Object.assign(stats, statsRes.data)
+      // 计算未登记数量
+      stats.noneCount = pagination.total - stats.validCount - stats.expired.length
     }
   } catch (error) {
     console.error('加载数据失败', error)
@@ -274,35 +280,15 @@ async function loadData() {
   }
 }
 
-async function loadVehicles() {
-  try {
-    const res: any = await vehicleApi.getList({ pageSize: 1000 })
-    if (res.success) {
-      vehicles.value = res.data.data
-    }
-  } catch (error) {
-    console.error('加载车辆失败', error)
-  }
-}
-
-function openDialog(item?: any) {
-  editingId.value = item?.id || ''
+function openDialog(item: any) {
+  currentVehicle.value = item
   Object.assign(form, {
-    vehicle_id: item?.vehicle_id || '',
-    plate_number: item?.plate_number || '',
-    expiry_date: item?.expiry_date || '',
-    certificate_image: item?.certificate_image || '',
-    remarks: item?.remarks || ''
+    vehicle_id: item.vehicle_id,
+    expiry_date: item.expiry_date || '',
+    certificate_image: item.certificate_image || '',
+    remarks: item.remarks || ''
   })
-  loadVehicles()
   dialogVisible.value = true
-}
-
-function onVehicleChange(id: string) {
-  const vehicle = vehicles.value.find(v => v.id === id)
-  if (vehicle) {
-    form.plate_number = vehicle.plate_number
-  }
 }
 
 // 处理图片选择
@@ -316,6 +302,12 @@ async function handleImageChange(uploadFile: UploadFile) {
     return
   }
 
+  // 检查文件大小 (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过10MB')
+    return
+  }
+
   // 上传文件到服务器
   try {
     const res = await uploadApi.uploadImage(file)
@@ -323,11 +315,11 @@ async function handleImageChange(uploadFile: UploadFile) {
       form.certificate_image = res.data.url
       ElMessage.success('图片上传成功')
     } else {
-      ElMessage.error('上传失败')
+      ElMessage.error(res.message || '上传失败')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('上传失败', error)
-    ElMessage.error('上传失败')
+    ElMessage.error(error.message || '上传失败，请重试')
   }
 }
 
@@ -336,7 +328,6 @@ function clearImage() {
 }
 
 function previewImage(url: string) {
-  // 处理相对路径
   const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
   previewImageUrl.value = url.startsWith('http') ? url : baseUrl + url
   imagePreviewVisible.value = true
@@ -348,14 +339,9 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    let res: any
-    if (editingId.value) {
-      res = await inspectionApi.update(editingId.value, form)
-    } else {
-      res = await inspectionApi.create(form)
-    }
+    const res: any = await inspectionApi.update(form.vehicle_id, form)
     if (res.success) {
-      ElMessage.success(editingId.value ? '修改成功' : '添加成功')
+      ElMessage.success(currentVehicle.value?.inspection_id ? '修改成功' : '登记成功')
       dialogVisible.value = false
       loadData()
     }
@@ -366,9 +352,9 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(id: string) {
+async function handleDelete(vehicleId: string) {
   try {
-    const res: any = await inspectionApi.delete(id)
+    const res: any = await inspectionApi.delete(vehicleId)
     if (res.success) {
       ElMessage.success('删除成功')
       loadData()
@@ -404,13 +390,9 @@ onMounted(() => loadData())
   }
 }
 
-.action-bar {
-  margin-bottom: 12px;
-}
-
 .stats-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -423,9 +405,10 @@ onMounted(() => loadData())
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.primary { border-left: 3px solid #409EFF; }
+.stat-card.success { border-left: 3px solid #67C23A; }
 .stat-card.warning { border-left: 3px solid #E6A23C; }
 .stat-card.danger { border-left: 3px solid #F56C6C; }
+.stat-card.info { border-left: 3px solid #909399; }
 
 .stat-value {
   font-size: 18px;
@@ -460,7 +443,15 @@ onMounted(() => loadData())
 }
 
 .mobile-card.expired {
-  opacity: 0.7;
+  border-left: 3px solid #F56C6C;
+}
+
+.mobile-card.valid {
+  border-left: 3px solid #67C23A;
+}
+
+.mobile-card.none {
+  border-left: 3px solid #909399;
 }
 
 .mobile-card-header {
@@ -501,6 +492,11 @@ onMounted(() => loadData())
   font-weight: 500;
 }
 
+.mobile-card-row .value.text-success {
+  color: #67C23A;
+  font-weight: 500;
+}
+
 .mobile-card-actions {
   display: flex;
   justify-content: flex-end;
@@ -526,6 +522,10 @@ onMounted(() => loadData())
   color: #E6A23C;
 }
 
+.text-success {
+  color: #67C23A;
+}
+
 @media (min-width: 768px) {
   .mobile-cards {
     display: none;
@@ -543,6 +543,21 @@ onMounted(() => loadData())
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+.vehicle-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vehicle-info .plate {
+  font-weight: 600;
+  color: #303133;
+}
+
+.vehicle-info .detail {
+  color: #606266;
 }
 
 /* 上传区域样式 */
