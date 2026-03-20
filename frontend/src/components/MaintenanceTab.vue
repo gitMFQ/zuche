@@ -8,12 +8,7 @@
         </el-form-item>
         <el-form-item>
           <el-select v-model="searchForm.type" placeholder="保养类型" clearable style="width: 100px">
-            <el-option label="常规保养" value="routine" />
-            <el-option label="维修" value="repair" />
-            <el-option label="年检" value="inspection" />
-            <el-option label="轮胎更换" value="tire" />
-            <el-option label="换油" value="oil" />
-            <el-option label="其他" value="other" />
+            <el-option v-for="t in typeOptions" :key="t.value" :label="t.label" :value="t.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -76,6 +71,13 @@
           <span class="label">下次保养</span>
           <span class="value text-warning">{{ item.next_maintenance_date }}</span>
         </div>
+        <div class="mobile-card-row" v-if="item.images && item.images.length">
+          <span class="label">图片</span>
+          <div class="images-preview-mini">
+            <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images)" />
+            <span v-if="item.images.length > 3" class="more">+{{ item.images.length - 3 }}</span>
+          </div>
+        </div>
         <div class="mobile-card-actions">
           <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
           <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
@@ -94,7 +96,7 @@
         <el-table-column prop="brand" label="品牌" width="70">
           <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
         </el-table-column>
-        <el-table-column prop="type_text" label="类型" width="80" />
+        <el-table-column prop="type_text" label="类型" min-width="120" />
         <el-table-column prop="maintenance_date" label="保养日期" width="100" />
         <el-table-column prop="cost" label="费用" width="80">
           <template #default="{ row }">¥{{ row.cost }}</template>
@@ -103,6 +105,15 @@
           <template #default="{ row }">{{ row.mileage }}km</template>
         </el-table-column>
         <el-table-column prop="garage" label="维修店" min-width="100" show-overflow-tooltip />
+        <el-table-column label="图片" width="80">
+          <template #default="{ row }">
+            <div class="images-mini" v-if="row.images && row.images.length">
+              <img :src="getImageUrl(row.images[0])" @click="previewImages(row.images)" />
+              <span v-if="row.images.length > 1" class="badge">{{ row.images.length }}</span>
+            </div>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="next_maintenance_date" label="下次保养" width="100">
           <template #default="{ row }">
             <span v-if="row.next_maintenance_date" class="text-warning">{{ row.next_maintenance_date }}</span>
@@ -151,19 +162,12 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="保养类型" prop="type">
+          <el-checkbox-group v-model="form.type" class="type-checkbox-group">
+            <el-checkbox v-for="t in typeOptions" :key="t.value" :value="t.value">{{ t.label }}</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
         <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="保养类型" prop="type">
-              <el-select v-model="form.type" placeholder="选择类型" style="width: 100%">
-                <el-option label="常规保养" value="routine" />
-                <el-option label="维修" value="repair" />
-                <el-option label="年检" value="inspection" />
-                <el-option label="轮胎更换" value="tire" />
-                <el-option label="换油" value="oil" />
-                <el-option label="其他" value="other" />
-              </el-select>
-            </el-form-item>
-          </el-col>
           <el-col :span="12">
             <el-form-item label="保养日期" prop="maintenance_date">
               <el-date-picker 
@@ -175,19 +179,15 @@
               />
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="费用" prop="cost">
               <el-input-number v-model="form.cost" :min="0" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item label="里程">
-              <el-input-number v-model="form.mileage" :min="0" style="width: 100%" />
-            </el-form-item>
-          </el-col>
         </el-row>
+        <el-form-item label="里程">
+          <el-input-number v-model="form.mileage" :min="0" style="width: 100%" />
+        </el-form-item>
         <el-form-item label="维修店">
           <el-input v-model="form.garage" placeholder="维修店名称" />
         </el-form-item>
@@ -209,6 +209,21 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item label="图片">
+          <div class="multi-upload">
+            <div class="image-list">
+              <div v-for="(img, idx) in form.images" :key="idx" class="image-item">
+                <img :src="getImageUrl(img)" />
+                <div class="image-remove" @click="removeImage(idx)">×</div>
+              </div>
+              <div v-if="form.images.length < 5" class="upload-btn" @click="triggerUpload">
+                <el-icon><Plus /></el-icon>
+                <span>{{ form.images.length }}/5</span>
+              </div>
+            </div>
+            <input ref="fileInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleImageSelect" />
+          </div>
+        </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="form.status">
             <el-radio value="pending">待保养</el-radio>
@@ -224,21 +239,49 @@
         <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 图片预览 -->
+    <el-dialog v-model="imagePreviewVisible" title="保养图片" width="90%" :style="{ maxWidth: '500px' }">
+      <el-carousel :initial-index="previewIndex" indicator-position="outside">
+        <el-carousel-item v-for="(img, idx) in previewImages" :key="idx">
+          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
+        </el-carousel-item>
+      </el-carousel>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { maintenanceApi, vehicleApi } from '../api'
+import { maintenanceApi, vehicleApi, uploadApi } from '../api'
 
 const loading = ref(false)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
+const fileInput = ref<HTMLInputElement>()
 const editingId = ref('')
 const vehicles = ref<any[]>([])
+const imagePreviewVisible = ref(false)
+const previewImages = ref<string[]>([])
+const previewIndex = ref(0)
+
+// 保养类型选项
+const typeOptions = [
+  { value: 'maintenance', label: '保养' },
+  { value: 'oil', label: '机油' },
+  { value: 'oil_filter', label: '机滤' },
+  { value: 'air_filter', label: '空滤' },
+  { value: 'ac_filter', label: '空调滤' },
+  { value: 'tire', label: '轮胎' },
+  { value: 'coolant', label: '防冻液' },
+  { value: 'brake_fluid', label: '刹车油' },
+  { value: 'inspection', label: '年检' },
+  { value: 'repair', label: '维修' },
+  { value: 'other', label: '其它' }
+]
 
 const searchForm = reactive({ keyword: '', type: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
@@ -247,20 +290,31 @@ const stats = reactive({ thisMonth: 0, pending: 0, thisMonthCost: 0, upcomingExp
 const form = reactive({
   vehicle_id: '',
   plate_number: '',
-  type: 'routine',
+  type: [] as string[],
   maintenance_date: '',
   cost: 0,
   mileage: 0,
   garage: '',
   next_maintenance_date: '',
   next_maintenance_mileage: 0,
+  images: [] as string[],
   status: 'completed',
   remarks: ''
 })
 
 const rules: FormRules = {
   vehicle_id: [{ required: true, message: '请选择车辆', trigger: 'change' }],
-  type: [{ required: true, message: '请选择保养类型', trigger: 'change' }],
+  type: [{ 
+    required: true, 
+    validator: (_rule, value, callback) => {
+      if (!value || value.length === 0) {
+        callback(new Error('请选择至少一个保养类型'))
+      } else {
+        callback()
+      }
+    },
+    trigger: 'change' 
+  }],
   maintenance_date: [{ required: true, message: '请选择保养日期', trigger: 'change' }]
 }
 
@@ -272,6 +326,13 @@ const statusTypeMap: Record<string, string> = {
 
 function getStatusType(status: string) {
   return statusTypeMap[status] || 'info'
+}
+
+function getImageUrl(url: string) {
+  if (!url) return ''
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+  return baseUrl + url
 }
 
 async function loadData() {
@@ -311,13 +372,14 @@ function openDialog(item?: any) {
   Object.assign(form, {
     vehicle_id: item?.vehicle_id || '',
     plate_number: item?.plate_number || '',
-    type: item?.type || 'routine',
+    type: item?.types || (item?.type ? [item.type] : []),
     maintenance_date: item?.maintenance_date || '',
     cost: item?.cost ?? 0,
     mileage: item?.mileage ?? 0,
     garage: item?.garage || '',
     next_maintenance_date: item?.next_maintenance_date || '',
     next_maintenance_mileage: item?.next_maintenance_mileage ?? 0,
+    images: item?.images || [],
     status: item?.status || 'completed',
     remarks: item?.remarks || ''
   })
@@ -330,6 +392,55 @@ function onVehicleChange(id: string) {
   if (vehicle) {
     form.plate_number = vehicle.plate_number
   }
+}
+
+function triggerUpload() {
+  fileInput.value?.click()
+}
+
+async function handleImageSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  // 检查文件类型
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('请选择图片文件')
+    return
+  }
+
+  // 检查文件大小
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过10MB')
+    return
+  }
+
+  // 上传
+  try {
+    const res = await uploadApi.uploadMaintenance(file)
+    if (res.success && res.data) {
+      form.images.push(res.data.url)
+      ElMessage.success('图片上传成功')
+    } else {
+      ElMessage.error(res.message || '上传失败')
+    }
+  } catch (error: any) {
+    console.error('上传失败', error)
+    ElMessage.error('上传失败')
+  }
+
+  // 清空 input
+  target.value = ''
+}
+
+function removeImage(index: number) {
+  form.images.splice(index, 1)
+}
+
+function previewImagesList(images: string[], index = 0) {
+  previewImages.value = images
+  previewIndex.value = index
+  imagePreviewVisible.value = true
 }
 
 async function handleSubmit() {
@@ -459,6 +570,7 @@ onMounted(() => loadData())
 .mobile-card-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 3px 0;
   font-size: 13px;
 }
@@ -519,5 +631,127 @@ onMounted(() => loadData())
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+/* 类型复选框 */
+.type-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.type-checkbox-group :deep(.el-checkbox) {
+  margin-right: 0;
+}
+
+/* 多图上传 */
+.multi-upload {
+  width: 100%;
+}
+
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.image-item {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+}
+
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-btn {
+  width: 70px;
+  height: 70px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #909399;
+  font-size: 12px;
+}
+
+.upload-btn:hover {
+  border-color: #409EFF;
+  color: #409EFF;
+}
+
+.upload-btn .el-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+/* 表格中的小图 */
+.images-mini {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.images-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.images-mini .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #F56C6C;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 8px;
+}
+
+/* 移动端小图预览 */
+.images-preview-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.images-preview-mini img {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.images-preview-mini .more {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3001;
 
 // 创建uploads目录及子目录
 const UPLOADS_DIR = join(__dirname, '../uploads');
-const UPLOAD_SUBDIRS = ['inspection', 'insurance', 'violation', 'other'];
+const UPLOAD_SUBDIRS = ['inspection', 'insurance', 'violation', 'maintenance', 'other'];
 
 if (!existsSync(UPLOADS_DIR)) {
   mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -71,6 +71,7 @@ const uploaders = {
   inspection: createUploader('inspection', 'inspection'),
   insurance: createUploader('insurance', 'insurance', true), // 支持图片和PDF
   violation: createUploader('violation', 'violation'),
+  maintenance: createUploader('maintenance', 'maintenance'),
   other: createUploader('other', 'file')
 };
 
@@ -136,6 +137,9 @@ app.post('/api/upload/insurance', authMiddleware, handleUpload(uploaders.insuran
 
 // 违章图片上传接口
 app.post('/api/upload/violation', authMiddleware, handleUpload(uploaders.violation, 'violation'));
+
+// 保养图片上传接口
+app.post('/api/upload/maintenance', authMiddleware, handleUpload(uploaders.maintenance, 'maintenance'));
 
 // 其他图片上传接口
 app.post('/api/upload', authMiddleware, handleUpload(uploaders.other, 'other'));

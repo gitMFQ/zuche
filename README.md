@@ -165,6 +165,20 @@ npm run dev
 
 ### 2026-03-20
 
+#### 保养管理支持多类型和多图上传
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/maintenance.ts`
+  - `backend/src/index.ts`
+  - `frontend/src/components/MaintenanceTab.vue`
+  - `frontend/src/api/index.ts`
+- **变更内容**:
+  - 数据库 maintenance 表新增 images 字段
+  - 保养类型改为复选框，支持多选
+  - 新增保养类型：保养、机油、机滤、空滤、空调滤、轮胎、防冻液、刹车油、年检、维修、其它
+  - 支持上传最多5张图片
+  - 新增保养上传接口 `/api/upload/maintenance`
+
 #### 保险管理支持上传图片和PDF
 - **修改文件**:
   - `backend/src/db/index.ts`

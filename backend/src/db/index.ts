@@ -199,6 +199,16 @@ function runMigrations(db: Database): void {
       }
     }
     
+    // 检查maintenance表是否有images字段
+    const maintenanceColumns = db.exec("PRAGMA table_info(maintenance)");
+    if (maintenanceColumns.length > 0) {
+      const columns = maintenanceColumns[0].values.map((col: any) => col[1]);
+      if (!columns.includes('images')) {
+        db.run('ALTER TABLE maintenance ADD COLUMN images TEXT');
+        console.log('已添加images字段到保养表');
+      }
+    }
+    
     saveDatabase();
   } catch (error) {
     console.error('数据库迁移错误:', error);

@@ -4,12 +4,17 @@ import { AuthRequest } from '../middleware/auth.js';
 
 // 保养类型映射
 const TYPE_MAP: Record<string, string> = {
-  routine: '常规保养',
-  repair: '维修',
+  maintenance: '保养',
+  oil: '机油',
+  oil_filter: '机滤',
+  air_filter: '空滤',
+  ac_filter: '空调滤',
+  tire: '轮胎',
+  coolant: '防冻液',
+  brake_fluid: '刹车油',
   inspection: '年检',
-  tire: '轮胎更换',
-  oil: '换油',
-  other: '其他'
+  repair: '维修',
+  other: '其它'
 };
 
 // 保养状态映射
@@ -18,6 +23,21 @@ const STATUS_MAP: Record<string, string> = {
   in_progress: '保养中',
   completed: '已完成'
 };
+
+// 解析类型数组
+function parseTypes(typeStr: string): string[] {
+  try {
+    return typeStr ? JSON.parse(typeStr) : [];
+  } catch {
+    return typeStr ? [typeStr] : [];
+  }
+}
+
+// 获取类型文本
+function getTypeText(typeStr: string): string {
+  const types = parseTypes(typeStr);
+  return types.map(t => TYPE_MAP[t] || t).join('、') || '-';
+}
 
 // 获取保养列表
 export function getMaintenanceList(req: AuthRequest, res: Response): void {
@@ -40,8 +60,8 @@ export function getMaintenanceList(req: AuthRequest, res: Response): void {
     }
 
     if (type) {
-      sql += ' AND m.type = ?';
-      params.push(type);
+      sql += ' AND m.type LIKE ?';
+      params.push(`%"${type}"%`);
     }
 
     if (vehicle_id) {
@@ -54,11 +74,23 @@ export function getMaintenanceList(req: AuthRequest, res: Response): void {
     const result = queryWithPagination(sql, params, Number(page), Number(pageSize));
     
     // 添加文本映射
-    result.data = result.data.map((m: any) => ({
-      ...m,
-      type_text: TYPE_MAP[m.type] || m.type,
-      status_text: STATUS_MAP[m.status] || m.status
-    }));
+    result.data = result.data.map((m: any) => {
+      // 解析图片
+      let images = [];
+      try {
+        images = m.images ? JSON.parse(m.images) : [];
+      } catch {
+        images = [];
+      }
+      
+      return {
+        ...m,
+        type_text: getTypeText(m.type),
+        status_text: STATUS_MAP[m.status] || m.status,
+        types: parseTypes(m.type),
+        images
+      };
+    });
 
     res.json({ success: true, data: result });
   } catch (error) {
@@ -157,6 +189,7 @@ export function createMaintenance(req: AuthRequest, res: Response): void {
       garage,
       next_maintenance_date,
       next_maintenance_mileage,
+      images,
       remarks,
       status
     } = req.body;
@@ -175,18 +208,24 @@ export function createMaintenance(req: AuthRequest, res: Response): void {
       }
     }
 
+    // 处理类型（支持数组或单个值）
+    const typeStr = Array.isArray(type) ? JSON.stringify(type) : type;
+    
+    // 处理图片
+    const imagesStr = images && images.length > 0 ? JSON.stringify(images) : null;
+
     const id = generateId();
     const currentTime = now();
 
     execute(
       `INSERT INTO maintenance (
         id, vehicle_id, plate_number, type, maintenance_date, cost, mileage, 
-        garage, next_maintenance_date, next_maintenance_mileage, remarks, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        garage, next_maintenance_date, next_maintenance_mileage, images, remarks, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, vehicle_id, plateNum, type, maintenance_date, cost || 0, mileage || 0,
+        id, vehicle_id, plateNum, typeStr, maintenance_date, cost || 0, mileage || 0,
         garage || null, next_maintenance_date || null, next_maintenance_mileage || null,
-        remarks || null, status || 'completed', currentTime, currentTime
+        imagesStr, remarks || null, status || 'completed', currentTime, currentTime
       ]
     );
 
@@ -222,6 +261,7 @@ export function updateMaintenance(req: AuthRequest, res: Response): void {
       garage,
       next_maintenance_date,
       next_maintenance_mileage,
+      images,
       remarks,
       status
     } = req.body;
@@ -232,21 +272,28 @@ export function updateMaintenance(req: AuthRequest, res: Response): void {
       return;
     }
 
+    // 处理类型（支持数组或单个值）
+    const typeStr = Array.isArray(type) ? JSON.stringify(type) : type;
+    
+    // 处理图片
+    const imagesStr = images && images.length > 0 ? JSON.stringify(images) : null;
+
     execute(
       `UPDATE maintenance SET 
         vehicle_id = ?, type = ?, maintenance_date = ?, cost = ?, mileage = ?,
         garage = ?, next_maintenance_date = ?, next_maintenance_mileage = ?, 
-        remarks = ?, status = ?, updated_at = ?
+        images = ?, remarks = ?, status = ?, updated_at = ?
       WHERE id = ?`,
       [
         vehicle_id || maintenance.vehicle_id,
-        type,
+        typeStr,
         maintenance_date,
         cost ?? 0,
         mileage ?? 0,
         garage || null,
         next_maintenance_date || null,
         next_maintenance_mileage || null,
+        imagesStr,
         remarks || null,
         status || maintenance.status,
         now(),

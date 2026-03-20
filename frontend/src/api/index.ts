@@ -159,11 +159,11 @@ export const inspectionApi = {
 }
 
 // ==================== 文件上传 API ====================
-export type UploadType = 'inspection' | 'insurance' | 'violation' | 'other'
+export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance' | 'other'
 
 export const uploadApi = {
   // 按类型上传图片到指定子目录
-  uploadImage: async (file: File, type: UploadType = 'other'): Promise<{ success: boolean; data?: { filename: string; url: string }; message?: string }> => {
+  uploadImage: async (file: File, type: UploadType = 'other'): Promise<{ success: boolean; data?: { filename: string; url: string; type?: string }; message?: string }> => {
     const formData = new FormData()
     formData.append('image', file)
     const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
@@ -193,7 +193,10 @@ export const uploadApi = {
   uploadInsurance: (file: File) => uploadApi.uploadImage(file, 'insurance'),
   
   // 违章图片上传（便捷方法）
-  uploadViolation: (file: File) => uploadApi.uploadImage(file, 'violation')
+  uploadViolation: (file: File) => uploadApi.uploadImage(file, 'violation'),
+  
+  // 保养图片上传（便捷方法）
+  uploadMaintenance: (file: File) => uploadApi.uploadImage(file, 'maintenance')
 }
 
 export default api
