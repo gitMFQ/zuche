@@ -165,6 +165,17 @@ npm run dev
 
 ### 2026-03-20
 
+#### 违章管理支持多图上传
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/violations.ts`
+  - `frontend/src/components/ViolationsTab.vue`
+- **变更内容**:
+  - 数据库 violations 表新增 `images` 字段（JSON数组存储）
+  - 违章记录支持上传最多5张图片
+  - 列表和详情页显示图片缩略图，支持轮播预览
+  - 图片存储到 `/uploads/violation/` 子目录
+
 #### 文件上传分类存储
 - **修改文件**:
   - `backend/src/index.ts`

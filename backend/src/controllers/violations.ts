@@ -54,11 +54,12 @@ export function getViolations(req: AuthRequest, res: Response): void {
 
     const result = queryWithPagination(sql, params, Number(page), Number(pageSize));
     
-    // 添加状态和类型文本
+    // 添加状态和类型文本，解析图片数组
     result.data = result.data.map((item: any) => ({
       ...item,
       status_text: STATUS_MAP[item.status] || item.status,
-      violation_type_text: TYPE_MAP[item.violation_type] || item.violation_type
+      violation_type_text: TYPE_MAP[item.violation_type] || item.violation_type,
+      images: item.images ? JSON.parse(item.images) : []
     }));
 
     res.json({ success: true, data: result });
@@ -84,7 +85,8 @@ export function getViolation(req: AuthRequest, res: Response): void {
       data: {
         ...violation,
         status_text: STATUS_MAP[violation.status] || violation.status,
-        violation_type_text: TYPE_MAP[violation.violation_type] || violation.violation_type
+        violation_type_text: TYPE_MAP[violation.violation_type] || violation.violation_type,
+        images: violation.images ? JSON.parse(violation.images) : []
       }
     });
   } catch (error) {
@@ -99,12 +101,18 @@ export function createViolation(req: AuthRequest, res: Response): void {
     const {
       order_id, vehicle_id, customer_id, customer_name, customer_phone,
       plate_number, violation_type, violation_date, location,
-      fine_amount, penalty_points, remarks
+      fine_amount, penalty_points, images, remarks
     } = req.body;
 
     if (!vehicle_id || !customer_name || !plate_number || !violation_type || !violation_date) {
       res.status(400).json({ success: false, message: '车辆、客户姓名、车牌、违章类型和违章日期不能为空' });
       return;
+    }
+
+    // 处理图片数组，最多5张
+    let imagesJson = null;
+    if (images && Array.isArray(images)) {
+      imagesJson = JSON.stringify(images.slice(0, 5));
     }
 
     const id = generateId();
@@ -113,10 +121,10 @@ export function createViolation(req: AuthRequest, res: Response): void {
     execute(
       `INSERT INTO violations 
         (id, order_id, vehicle_id, customer_id, customer_name, customer_phone, plate_number, 
-         violation_type, violation_date, location, fine_amount, penalty_points, status, remarks, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+         violation_type, violation_date, location, fine_amount, penalty_points, images, status, remarks, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
       [id, order_id || null, vehicle_id, customer_id || null, customer_name, customer_phone || null, plate_number,
-       violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, remarks || null, currentTime, currentTime]
+       violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, imagesJson, remarks || null, currentTime, currentTime]
     );
 
     res.json({ 
@@ -135,7 +143,7 @@ export function updateViolation(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
     const {
-      violation_type, violation_date, location, fine_amount, penalty_points, remarks
+      violation_type, violation_date, location, fine_amount, penalty_points, images, remarks
     } = req.body;
 
     const violation = queryOne('SELECT * FROM violations WHERE id = ?', [id]);
@@ -144,14 +152,20 @@ export function updateViolation(req: AuthRequest, res: Response): void {
       return;
     }
 
+    // 处理图片数组，最多5张
+    let imagesJson = null;
+    if (images && Array.isArray(images)) {
+      imagesJson = JSON.stringify(images.slice(0, 5));
+    }
+
     const currentTime = now();
 
     execute(
       `UPDATE violations SET 
         violation_type = ?, violation_date = ?, location = ?, 
-        fine_amount = ?, penalty_points = ?, remarks = ?, updated_at = ? 
+        fine_amount = ?, penalty_points = ?, images = ?, remarks = ?, updated_at = ? 
        WHERE id = ?`,
-      [violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, remarks || null, currentTime, id]
+      [violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, imagesJson, remarks || null, currentTime, id]
     );
 
     res.json({ success: true, message: '违章记录更新成功' });

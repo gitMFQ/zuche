@@ -179,6 +179,16 @@ function runMigrations(db: Database): void {
       }
     }
     
+    // 检查违章表是否有images字段
+    const violationColumns = db.exec("PRAGMA table_info(violations)");
+    if (violationColumns.length > 0) {
+      const columns = violationColumns[0].values.map((col: any) => col[1]);
+      if (!columns.includes('images')) {
+        db.run('ALTER TABLE violations ADD COLUMN images TEXT');
+        console.log('已添加images字段到违章表');
+      }
+    }
+    
     saveDatabase();
   } catch (error) {
     console.error('数据库迁移错误:', error);
@@ -326,6 +336,7 @@ function createTables(db: Database): void {
       location TEXT,
       fine_amount REAL DEFAULT 0,
       penalty_points INTEGER DEFAULT 0,
+      images TEXT,
       status TEXT DEFAULT 'pending',
       handle_date TEXT,
       handle_remarks TEXT,
