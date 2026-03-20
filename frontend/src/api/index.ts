@@ -159,13 +159,17 @@ export const inspectionApi = {
 }
 
 // ==================== 文件上传 API ====================
+export type UploadType = 'inspection' | 'insurance' | 'violation' | 'other'
+
 export const uploadApi = {
-  uploadImage: async (file: File): Promise<{ success: boolean; data?: { filename: string; url: string }; message?: string }> => {
+  // 按类型上传图片到指定子目录
+  uploadImage: async (file: File, type: UploadType = 'other'): Promise<{ success: boolean; data?: { filename: string; url: string }; message?: string }> => {
     const formData = new FormData()
     formData.append('image', file)
     const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+    const endpoint = type === 'other' ? '/api/upload' : `/api/upload/${type}`
     try {
-      const response = await fetch(`${baseUrl}/api/upload`, {
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -180,7 +184,16 @@ export const uploadApi = {
     } catch (error) {
       return { success: false, message: '网络错误，请检查服务器连接' }
     }
-  }
+  },
+  
+  // 年检证图片上传（便捷方法）
+  uploadInspection: (file: File) => uploadApi.uploadImage(file, 'inspection'),
+  
+  // 保险图片上传（便捷方法）
+  uploadInsurance: (file: File) => uploadApi.uploadImage(file, 'insurance'),
+  
+  // 违章图片上传（便捷方法）
+  uploadViolation: (file: File) => uploadApi.uploadImage(file, 'violation')
 }
 
 export default api

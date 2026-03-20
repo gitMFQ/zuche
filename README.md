@@ -165,6 +165,17 @@ npm run dev
 
 ### 2026-03-20
 
+#### 文件上传分类存储
+- **修改文件**:
+  - `backend/src/index.ts`
+  - `frontend/src/api/index.ts`
+  - `frontend/src/components/InspectionTab.vue`
+- **变更内容**:
+  - 重构上传功能，支持按类型存储到子文件夹
+  - 新增子目录: `/uploads/inspection/`, `/uploads/insurance/`, `/uploads/violation/`, `/uploads/other/`
+  - 新增独立上传接口: `/api/upload/inspection`, `/api/upload/insurance`, `/api/upload/violation`
+  - 前端 `uploadApi` 增加 `type` 参数和便捷方法
+
 #### 年检证管理重构
 - **修改文件**: 
   - `backend/src/controllers/inspection.ts`
