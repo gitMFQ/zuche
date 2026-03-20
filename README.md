@@ -165,6 +165,15 @@ npm run dev
 
 ### 2026-03-20
 
+#### 系统设置添加标题配置
+- **修改文件**:
+  - `frontend/src/views/Settings.vue`
+  - `frontend/src/layouts/MainLayout.vue`
+- **变更内容**:
+  - 设置页面新增"系统设置"标签页
+  - 支持自定义系统标题（保存到 localStorage）
+  - 侧边栏 logo 动态显示系统标题
+
 #### 保养管理支持多类型和多图上传
 - **修改文件**:
   - `backend/src/db/index.ts`

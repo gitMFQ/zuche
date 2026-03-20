@@ -14,7 +14,7 @@
     >
       <div class="logo">
         <el-icon :size="28"><Car /></el-icon>
-        <span v-show="!isCollapse || isMobile" class="logo-text">租车管理系统</span>
+        <span v-show="!isCollapse || isMobile" class="logo-text">{{ systemTitle }}</span>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -133,6 +133,7 @@ const isMobile = ref(false)
 const isCollapse = ref(true)
 const passwordDialogVisible = ref(false)
 const passwordFormRef = ref<FormInstance>()
+const systemTitle = ref('租车管理系统')
 
 const passwordForm = ref({
   oldPassword: '',
@@ -165,6 +166,17 @@ const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title as string || '')
 const isAdmin = computed(() => userStore.isAdmin())
 
+function loadSystemTitle() {
+  const savedTitle = localStorage.getItem('systemTitle')
+  if (savedTitle) {
+    systemTitle.value = savedTitle
+  }
+}
+
+function handleTitleChange(e: CustomEvent) {
+  systemTitle.value = e.detail
+}
+
 function checkMobile() {
   isMobile.value = window.innerWidth < 768
   if (isMobile.value) {
@@ -182,7 +194,9 @@ function handleMenuSelect() {
 
 onMounted(async () => {
   checkMobile()
+  loadSystemTitle()
   window.addEventListener('resize', checkMobile)
+  window.addEventListener('systemTitleChange', handleTitleChange as EventListener)
   
   if (!userStore.user) {
     try {
@@ -198,6 +212,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
+  window.removeEventListener('systemTitleChange', handleTitleChange as EventListener)
 })
 
 function handleCommand(command: string) {
