@@ -35,13 +35,13 @@
           <el-icon><Van /></el-icon>
           <template #title>车辆管理</template>
         </el-menu-item>
-        <el-menu-item index="/customers">
-          <el-icon><User /></el-icon>
-          <template #title>客户管理</template>
-        </el-menu-item>
         <el-menu-item index="/orders">
           <el-icon><Document /></el-icon>
           <template #title>订单管理</template>
+        </el-menu-item>
+        <el-menu-item index="/customers">
+          <el-icon><User /></el-icon>
+          <template #title>客户管理</template>
         </el-menu-item>
         <el-menu-item index="/blacklist">
           <el-icon><CircleClose /></el-icon>

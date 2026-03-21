@@ -165,6 +165,12 @@ npm run dev
 
 ### 2026-03-21
 
+#### 侧边栏菜单顺序调整
+- **修改文件**:
+  - `frontend/src/layouts/MainLayout.vue`
+- **变更内容**:
+  - 客户管理移到订单管理下面
+
 #### 服务类型标签简化
 - **修改文件**:
   - `frontend/src/views/Orders.vue`
