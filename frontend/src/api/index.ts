@@ -63,9 +63,11 @@ export const userApi = {
 // ==================== 客户管理 API ====================
 export const customerApi = {
   getList: (params?: any) => api.get('/customers', { params }),
+  getRegular: () => api.get('/customers/regular'),
   getOne: (id: string) => api.get(`/customers/${id}`),
   create: (data: any) => api.post('/customers', data),
   update: (id: string, data: any) => api.put(`/customers/${id}`, data),
+  setRegular: (id: string, isRegular: boolean) => api.put(`/customers/${id}/regular`, { is_regular: isRegular }),
   delete: (id: string) => api.delete(`/customers/${id}`)
 }
 
@@ -158,8 +160,15 @@ export const inspectionApi = {
   delete: (vehicleId: string) => api.delete(`/inspections/${vehicleId}`)
 }
 
+// ==================== 系统设置 API ====================
+export const settingsApi = {
+  getAll: () => api.get('/settings'),
+  get: (key: string) => api.get(`/settings/${key}`),
+  update: (key: string, value: string) => api.put('/settings', { key, value })
+}
+
 // ==================== 文件上传 API ====================
-export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance' | 'other'
+export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance' | 'vehicle' | 'customer' | 'other'
 
 export const uploadApi = {
   // 按类型上传图片到指定子目录
@@ -196,7 +205,16 @@ export const uploadApi = {
   uploadViolation: (file: File) => uploadApi.uploadImage(file, 'violation'),
   
   // 保养图片上传（便捷方法）
-  uploadMaintenance: (file: File) => uploadApi.uploadImage(file, 'maintenance')
+  uploadMaintenance: (file: File) => uploadApi.uploadImage(file, 'maintenance'),
+  
+  // 车辆图片上传（便捷方法）
+  uploadVehicle: (file: File) => uploadApi.uploadImage(file, 'vehicle'),
+  
+  // 客户图片上传（便捷方法）
+  uploadCustomer: (file: File) => uploadApi.uploadImage(file, 'customer'),
+
+  // 其他文件上传（便捷方法）
+  uploadOther: (file: File) => uploadApi.uploadImage(file, 'other')
 }
 
 export default api

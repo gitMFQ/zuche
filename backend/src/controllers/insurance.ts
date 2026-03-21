@@ -6,12 +6,23 @@ import { AuthRequest } from '../middleware/auth.js';
 const INSURANCE_TYPE_MAP: Record<string, string> = {
   compulsory: '交强险',
   commercial: '商业险',
-  third_party: '第三者责任险',
-  theft: '盗抢险',
-  scratch: '划痕险',
-  glass: '玻璃险',
-  comprehensive: '综合险'
+  seat: '座位险'
 };
+
+// 解析类型数组
+function parseTypes(typeStr: string): string[] {
+  try {
+    return typeStr ? JSON.parse(typeStr) : [];
+  } catch {
+    return typeStr ? [typeStr] : [];
+  }
+}
+
+// 获取类型文本
+function getTypeText(typeStr: string): string {
+  const types = parseTypes(typeStr);
+  return types.map(t => INSURANCE_TYPE_MAP[t] || t).join('、') || '-';
+}
 
 // 保险状态映射
 const STATUS_MAP: Record<string, string> = {
@@ -77,8 +88,9 @@ export function getInsuranceList(req: AuthRequest, res: Response): void {
       return {
         ...i,
         status: actualStatus,
-        type_text: INSURANCE_TYPE_MAP[i.insurance_type] || i.insurance_type,
+        type_text: getTypeText(i.insurance_type),
         status_text: STATUS_MAP[actualStatus] || actualStatus,
+        insurance_types: parseTypes(i.insurance_type),
         documents
       };
     });
@@ -96,26 +108,33 @@ export function getInsuranceStats(req: AuthRequest, res: Response): void {
     const today = new Date().toISOString().split('T')[0];
     const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
-    // 即将到期（30天内）
+    // 即将到期（30天内）- 只看最新保险
     const expiringSoon = query(`
       SELECT i.*, v.brand, v.model FROM insurance i
       LEFT JOIN vehicles v ON i.vehicle_id = v.id
       WHERE i.end_date >= ? AND i.end_date <= ?
+      AND i.end_date = (
+        SELECT MAX(i2.end_date) FROM insurance i2 WHERE i2.vehicle_id = i.vehicle_id
+      )
       ORDER BY i.end_date ASC
     `, [today, thirtyDaysLater]);
     
-    // 已过期
-    const expired = query(`
-      SELECT i.*, v.brand, v.model FROM insurance i
-      LEFT JOIN vehicles v ON i.vehicle_id = v.id
+    // 已过期 - 只统计最新保险已过期的车辆数
+    const expiredCount = queryOne(`
+      SELECT COUNT(DISTINCT i.vehicle_id) as count FROM insurance i
       WHERE i.end_date < ?
-      ORDER BY i.end_date DESC
+      AND i.end_date = (
+        SELECT MAX(i2.end_date) FROM insurance i2 WHERE i2.vehicle_id = i.vehicle_id
+      )
     `, [today]);
     
-    // 生效中
-    const active = queryOne(`
-      SELECT COUNT(*) as count FROM insurance
-      WHERE start_date <= ? AND end_date >= ?
+    // 生效中 - 只统计最新保险生效中的车辆数
+    const activeCount = queryOne(`
+      SELECT COUNT(DISTINCT i.vehicle_id) as count FROM insurance i
+      WHERE i.start_date <= ? AND i.end_date >= ?
+      AND i.end_date = (
+        SELECT MAX(i2.end_date) FROM insurance i2 WHERE i2.vehicle_id = i.vehicle_id
+      )
     `, [today, today]);
     
     // 本年保费总额
@@ -129,15 +148,11 @@ export function getInsuranceStats(req: AuthRequest, res: Response): void {
       data: {
         expiringSoon: expiringSoon.map((i: any) => ({
           ...i,
-          type_text: INSURANCE_TYPE_MAP[i.insurance_type] || i.insurance_type,
+          type_text: getTypeText(i.insurance_type),
           status_text: '即将到期'
         })),
-        expired: expired.map((i: any) => ({
-          ...i,
-          type_text: INSURANCE_TYPE_MAP[i.insurance_type] || i.insurance_type,
-          status_text: '已过期'
-        })),
-        activeCount: active?.count || 0,
+        expiredCount: expiredCount?.count || 0,
+        activeCount: activeCount?.count || 0,
         thisYearPremium: thisYearPremium?.total || 0
       }
     });
@@ -183,6 +198,7 @@ export function createInsurance(req: AuthRequest, res: Response): void {
       vehicle_id,
       plate_number,
       insurance_type,
+      insurance_types,
       insurance_company,
       policy_number,
       start_date,
@@ -194,7 +210,12 @@ export function createInsurance(req: AuthRequest, res: Response): void {
       remarks
     } = req.body;
 
-    if (!vehicle_id || !insurance_type || !insurance_company || !start_date || !end_date) {
+    // 支持数组或单个值
+    const typeStr = insurance_types 
+      ? (Array.isArray(insurance_types) ? JSON.stringify(insurance_types) : insurance_types)
+      : (insurance_type || '');
+    
+    if (!vehicle_id || !typeStr || !insurance_company || !start_date || !end_date) {
       res.status(400).json({ success: false, message: '车辆、保险类型、保险公司、生效日期和到期日期不能为空' });
       return;
     }
@@ -226,7 +247,7 @@ export function createInsurance(req: AuthRequest, res: Response): void {
         start_date, end_date, premium, coverage_amount, beneficiary, documents, remarks, status, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, vehicle_id, plateNum, insurance_type, insurance_company, policy_number || null,
+        id, vehicle_id, plateNum, typeStr, insurance_company, policy_number || null,
         start_date, end_date, premium || 0, coverage_amount || 0, beneficiary || null,
         documents ? JSON.stringify(documents) : null,
         remarks || null, status, currentTime, currentTime
@@ -251,6 +272,7 @@ export function updateInsurance(req: AuthRequest, res: Response): void {
     const {
       vehicle_id,
       insurance_type,
+      insurance_types,
       insurance_company,
       policy_number,
       start_date,
@@ -269,6 +291,11 @@ export function updateInsurance(req: AuthRequest, res: Response): void {
       return;
     }
 
+    // 支持数组或单个值
+    const typeStr = insurance_types 
+      ? (Array.isArray(insurance_types) ? JSON.stringify(insurance_types) : insurance_types)
+      : (insurance_type || insurance.insurance_type);
+
     execute(
       `UPDATE insurance SET 
         vehicle_id = ?, insurance_type = ?, insurance_company = ?, policy_number = ?,
@@ -277,7 +304,7 @@ export function updateInsurance(req: AuthRequest, res: Response): void {
       WHERE id = ?`,
       [
         vehicle_id || insurance.vehicle_id,
-        insurance_type,
+        typeStr,
         insurance_company,
         policy_number || null,
         start_date,

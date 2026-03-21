@@ -14,6 +14,7 @@ import * as orderSourcesController from '../controllers/orderSources.js';
 import * as maintenanceController from '../controllers/maintenance.js';
 import * as insuranceController from '../controllers/insurance.js';
 import * as inspectionController from '../controllers/inspection.js';
+import * as settingsController from '../controllers/settings.js';
 
 const router = Router();
 
@@ -32,9 +33,11 @@ router.put('/users/:id/reset-password', authMiddleware, adminOnly, usersControll
 
 // ==================== 客户管理路由 ====================
 router.get('/customers', authMiddleware, customersController.getCustomers);
+router.get('/customers/regular', authMiddleware, customersController.getRegularCustomers);
 router.get('/customers/:id', authMiddleware, customersController.getCustomer);
 router.post('/customers', authMiddleware, customersController.createCustomer);
 router.put('/customers/:id', authMiddleware, customersController.updateCustomer);
+router.put('/customers/:id/regular', authMiddleware, customersController.setRegularCustomer);
 router.delete('/customers/:id', authMiddleware, customersController.deleteCustomer);
 
 // ==================== 车辆管理路由 ====================
@@ -105,5 +108,10 @@ router.get('/inspections/stats', authMiddleware, inspectionController.getInspect
 router.post('/inspections', authMiddleware, inspectionController.createInspection);
 router.put('/inspections/:vehicle_id', authMiddleware, inspectionController.updateInspection);
 router.delete('/inspections/:vehicle_id', authMiddleware, inspectionController.deleteInspection);
+
+// ==================== 系统设置路由 ====================
+router.get('/settings', authMiddleware, settingsController.getSettings);
+router.get('/settings/:key', authMiddleware, settingsController.getSetting);
+router.put('/settings', authMiddleware, adminOnly, settingsController.updateSettings);
 
 export default router;

@@ -106,10 +106,10 @@ export function getVehicle(req: AuthRequest, res: Response): void {
 // 创建车辆
 export function createVehicle(req: AuthRequest, res: Response): void {
   try {
-    const { plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, remarks } = req.body;
+    const { plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_image, registration_image, remarks } = req.body;
 
-    if (!plate_number || !brand || !model || !daily_rate) {
-      res.status(400).json({ success: false, message: '车牌号、品牌、型号和日租金不能为空' });
+    if (!plate_number || !brand || !model) {
+      res.status(400).json({ success: false, message: '车牌号、品牌、型号不能为空' });
       return;
     }
 
@@ -124,9 +124,9 @@ export function createVehicle(req: AuthRequest, res: Response): void {
     const currentTime = now();
 
     execute(
-      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, remarks, status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`,
-      [id, plate_number, brand, model, color || null, year || null, seats || 5, daily_rate, deposit || 0, mileage || 0, remarks || null, currentTime, currentTime]
+      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_image, registration_image, remarks, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`,
+      [id, plate_number, brand, model, color || null, year || null, seats || 5, daily_rate || 0, deposit || 0, mileage || 0, vin || null, engine_number || null, license_image || null, registration_image || null, remarks || null, currentTime, currentTime]
     );
 
     res.json({ 
@@ -144,7 +144,7 @@ export function createVehicle(req: AuthRequest, res: Response): void {
 export function updateVehicle(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
-    const { plate_number, brand, model, color, year, seats, daily_rate, deposit, status, mileage, last_maintenance, remarks } = req.body;
+    const { plate_number, brand, model, color, year, seats, daily_rate, deposit, status, mileage, last_maintenance, vin, engine_number, license_image, registration_image, remarks } = req.body;
 
     const vehicle = queryOne('SELECT id FROM vehicles WHERE id = ?', [id]);
     if (!vehicle) {
@@ -162,8 +162,8 @@ export function updateVehicle(req: AuthRequest, res: Response): void {
     }
 
     execute(
-      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, remarks = ?, updated_at = ? WHERE id = ?`,
-      [plate_number, brand, model, color || null, year || null, seats || 5, daily_rate, deposit || 0, status, mileage || 0, last_maintenance || null, remarks || null, now(), id]
+      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_image = ?, registration_image = ?, remarks = ?, updated_at = ? WHERE id = ?`,
+      [plate_number, brand, model, color || null, year || null, seats || 5, daily_rate || 0, deposit || 0, status, mileage || 0, last_maintenance || null, vin || null, engine_number || null, license_image || null, registration_image || null, remarks || null, now(), id]
     );
 
     res.json({ success: true, message: '车辆更新成功' });

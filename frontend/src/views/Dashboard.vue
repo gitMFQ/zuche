@@ -178,8 +178,8 @@ const stats = ref<any>({
 })
 
 const statusMap: Record<string, { text: string; type: string }> = {
-  pending: { text: '待确认', type: 'warning' },
-  active: { text: '进行中', type: 'primary' },
+  pending: { text: '待取车', type: 'warning' },
+  active: { text: '已取车', type: 'primary' },
   completed: { text: '已完成', type: 'success' },
   cancelled: { text: '已取消', type: 'info' },
   overdue: { text: '已逾期', type: 'danger' }

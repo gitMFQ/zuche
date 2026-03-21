@@ -163,83 +163,164 @@ npm run dev
 
 > **给 iFlow CLI 的提示：每次修改代码后，请在此处添加更新记录，并进行 git commit。**
 
+### 2026-03-21
+
+#### 订单管理标签页分类显示
+- **修改文件**:
+  - `frontend/src/views/Orders.vue`
+- **变更内容**:
+  - 订单列表改为标签页形式，按状态分类显示
+  - 四个标签页：待取车、待还车、已完成、已取消
+  - 待取车和待还车标签页显示数量角标
+  - 移除原来的状态下拉选择器
+
+#### 登录有效期延长
+- **修改文件**:
+  - `backend/src/middleware/auth.ts`
+- **变更内容**:
+  - JWT token 有效期从 7 天改为 1 年
+
+#### 取车还车里程和照片上传
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/orders.ts`
+  - `frontend/src/api/index.ts`
+  - `frontend/src/views/Orders.vue`
+  - `frontend/src/views/OrderDetail.vue`
+- **变更内容**:
+  - 取车时可输入取车里程（非必填）
+  - 取车时可上传取车照片（非必填）
+  - 还车时可输入还车里程（非必填）
+  - 还车时可上传还车照片（非必填）
+  - 订单详情页显示取车/还车里程和照片
+  - 还车时自动更新车辆里程
+  - 订单表新增 `pickup_mileage`、`return_mileage`、`pickup_image`、`return_image` 字段
+
+#### 订单列表快捷操作
+- **修改文件**:
+  - `frontend/src/views/Orders.vue`
+- **变更内容**:
+  - 订单列表添加快捷操作按钮
+  - 待取车订单：编辑、取车、取消
+  - 已取车订单：编辑、还车、续租、取消
+  - 移动端和PC端均支持
+
+#### 订单详情和编辑功能完善
+- **修改文件**:
+  - `backend/src/controllers/orders.ts`
+  - `frontend/src/views/OrderDetail.vue`
+- **变更内容**:
+  - 订单详情页面显示服务类型标签
+  - 订单详情页面显示押金/免押状态和免押到期日期
+  - 订单编辑支持总租金输入
+  - 订单编辑支持服务类型选择
+  - 订单编辑支持免押选项
+
+#### 订单免押功能
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/orders.ts`
+  - `frontend/src/views/Orders.vue`
+- **变更内容**:
+  - 新建订单支持免押选项
+  - 选免押后押金字段隐藏
+  - 免押到期日期默认为还车后30天
+  - 订单表新增 `deposit_waived` 和 `deposit_waived_expiry` 字段
+
+#### 订单租金和服务类型优化
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/orders.ts`
+  - `frontend/src/views/Orders.vue`
+- **变更内容**:
+  - 日租金改为非必填
+  - 新增总租金输入框，可直接填写总租金
+  - 新增服务类型单选：基础服务、优享服务、尊享服务
+  - 订单表新增 `service_type` 字段
+
+#### 常用客户功能
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/customers.ts`
+  - `backend/src/routes/index.ts`
+  - `frontend/src/api/index.ts`
+  - `frontend/src/views/Customers.vue`
+  - `frontend/src/views/Orders.vue`
+- **变更内容**:
+  - 客户表新增 `is_regular` 字段（常用客户标记）
+  - 客户管理页面支持设置/取消常用客户
+  - 常用客户显示星标图标
+  - 新建订单时可直接选择常用客户，自动填充客户信息
+
 ### 2026-03-20
 
-#### 系统设置添加标题配置
+#### 局域网访问支持
 - **修改文件**:
-  - `frontend/src/views/Settings.vue`
-  - `frontend/src/layouts/MainLayout.vue`
-- **变更内容**:
-  - 设置页面新增"系统设置"标签页
-  - 支持自定义系统标题（保存到 localStorage）
-  - 侧边栏 logo 动态显示系统标题
-
-#### 保养管理支持多类型和多图上传
-- **修改文件**:
-  - `backend/src/db/index.ts`
-  - `backend/src/controllers/maintenance.ts`
   - `backend/src/index.ts`
-  - `frontend/src/components/MaintenanceTab.vue`
-  - `frontend/src/api/index.ts`
+  - `frontend/.env`
 - **变更内容**:
-  - 数据库 maintenance 表新增 images 字段
-  - 保养类型改为复选框，支持多选
-  - 新增保养类型：保养、机油、机滤、空滤、空调滤、轮胎、防冻液、刹车油、年检、维修、其它
-  - 支持上传最多5张图片
-  - 新增保养上传接口 `/api/upload/maintenance`
+  - 后端监听 `0.0.0.0` 支持局域网设备访问
+  - 前端 `.env` 配置 `VITE_API_URL` 局域网地址
 
-#### 保险管理支持上传图片和PDF
+#### 保险管理重构为车辆列表视图
 - **修改文件**:
-  - `backend/src/db/index.ts`
-  - `backend/src/controllers/insurance.ts`
-  - `backend/src/index.ts`
   - `frontend/src/components/InsuranceTab.vue`
 - **变更内容**:
-  - 数据库 insurance 表新增 `documents` 字段（JSON数组存储）
-  - 后端上传接口支持PDF文件（仅保险上传）
-  - 保险记录支持上传最多5个附件（图片或PDF）
-  - 列表和详情页显示附件，支持预览图片和打开PDF
+  - 主视图改为显示所有车辆列表，带保险状态摘要
+  - 点击车辆进入该车辆的保险记录列表
+  - 可为每辆车添加/编辑/删除保险记录
 
-#### 违章管理支持多图上传
+#### 保养管理重构为车辆列表视图
+- **修改文件**:
+  - `frontend/src/components/MaintenanceTab.vue`
+- **变更内容**:
+  - 主视图改为显示所有车辆列表，带保养状态摘要
+  - 点击车辆进入该车辆的保养记录列表
+  - 最近保养和下次保养显示里程信息
+  - 里程优先显示（如 `5000km 2026-03-20`）
+
+#### PC端侧边栏按钮优化
+- **修改文件**:
+  - `frontend/src/layouts/MainLayout.vue`
+- **变更内容**:
+  - 展开收缩按钮改为 Element Plus 圆形按钮
+  - 增大按钮尺寸和点击区域
+
+#### 车辆管理功能增强
 - **修改文件**:
   - `backend/src/db/index.ts`
-  - `backend/src/controllers/violations.ts`
-  - `frontend/src/components/ViolationsTab.vue`
-- **变更内容**:
-  - 数据库 violations 表新增 `images` 字段（JSON数组存储）
-  - 违章记录支持上传最多5张图片
-  - 列表和详情页显示图片缩略图，支持轮播预览
-  - 图片存储到 `/uploads/violation/` 子目录
-
-#### 文件上传分类存储
-- **修改文件**:
+  - `backend/src/controllers/vehicles.ts`
   - `backend/src/index.ts`
-  - `frontend/src/api/index.ts`
-  - `frontend/src/components/InspectionTab.vue`
-- **变更内容**:
-  - 重构上传功能，支持按类型存储到子文件夹
-  - 新增子目录: `/uploads/inspection/`, `/uploads/insurance/`, `/uploads/violation/`, `/uploads/other/`
-  - 新增独立上传接口: `/api/upload/inspection`, `/api/upload/insurance`, `/api/upload/violation`
-  - 前端 `uploadApi` 增加 `type` 参数和便捷方法
-
-#### 年检证管理重构
-- **修改文件**: 
-  - `backend/src/controllers/inspection.ts`
-  - `backend/src/routes/index.ts`
-  - `frontend/src/components/InspectionTab.vue`
+  - `frontend/src/components/VehiclesTab.vue`
   - `frontend/src/api/index.ts`
 - **变更内容**:
-  - 重构年检证列表为车辆列表视图，显示每辆车的年检证状态
-  - 每辆车只保留一条年检证记录（自动判断新增或更新）
-  - 新增"未登记"状态统计
-  - 优化图片上传错误提示
+  - 日租金改为非必填
+  - 新增字段：车架号(VIN)、发动机号
+  - 新增图片上传：行驶证、登记证书
+  - 新增上传接口 `/api/upload/vehicle`
 
-#### 图片上传功能修复
+#### 保险类型改为复选框
 - **修改文件**:
-  - `backend/src/index.ts`
-  - `frontend/src/api/index.ts`
-  - `frontend/src/components/InspectionTab.vue`
+  - `backend/src/controllers/insurance.ts`
+  - `frontend/src/components/InsuranceTab.vue`
 - **变更内容**:
-  - 修复上传 URL 构造错误
-  - 添加 multer 错误处理，返回友好的错误提示
-  - 添加前端文件大小校验（10MB）
+  - 保险类型改为复选框，选项：交强险、商业险、座位险
+  - 支持选择多个保险类型
+  - 数据库存储为 JSON 数组
+
+#### 保险统计优化
+- **修改文件**:
+  - `backend/src/controllers/insurance.ts`
+  - `frontend/src/components/InsuranceTab.vue`
+- **变更内容**:
+  - 已过期只统计最新保险已过期的车辆数量
+  - 生效中也只统计最新保险生效中的车辆
+
+#### 保养里程提醒
+- **修改文件**:
+  - `backend/src/controllers/maintenance.ts`
+  - `frontend/src/components/MaintenanceTab.vue`
+- **变更内容**:
+  - 当前里程 >= 下次保养里程 - 1000km 时提示"待保养"
+  - 当前里程 >= 下次保养里程 时显示"已超期"
+  - 后端统计待保养数量包含里程接近的车辆

@@ -108,8 +108,14 @@ export function getMaintenanceStats(req: AuthRequest, res: Response): void {
       WHERE strftime('%Y-%m', maintenance_date) = strftime('%Y-%m', 'now')
     `);
     
-    // 待保养数量
-    const pending = queryOne(`SELECT COUNT(*) as count FROM maintenance WHERE status = 'pending'`);
+    // 待保养数量（状态为pending 或 里程接近下次保养里程1000km内）
+    const pending = queryOne(`
+      SELECT COUNT(DISTINCT m.vehicle_id) as count FROM maintenance m
+      LEFT JOIN vehicles v ON m.vehicle_id = v.id
+      WHERE m.status = 'pending'
+      OR (m.next_maintenance_mileage IS NOT NULL 
+          AND v.mileage >= m.next_maintenance_mileage - 1000)
+    `);
     
     // 本月保养费用
     const thisMonthCost = queryOne(`
@@ -117,13 +123,15 @@ export function getMaintenanceStats(req: AuthRequest, res: Response): void {
       WHERE strftime('%Y-%m', maintenance_date) = strftime('%Y-%m', 'now')
     `);
     
-    // 即将到期保养（根据next_maintenance_date）
+    // 即将到期保养（根据next_maintenance_date或里程）
     const upcomingExpire = query(`
-      SELECT m.*, v.brand, v.model FROM maintenance m
+      SELECT m.*, v.brand, v.model, v.mileage as vehicle_mileage FROM maintenance m
       LEFT JOIN vehicles v ON m.vehicle_id = v.id
       WHERE m.next_maintenance_date IS NOT NULL 
       AND m.next_maintenance_date >= date('now')
       AND m.next_maintenance_date <= date('now', '+30 days')
+      OR (m.next_maintenance_mileage IS NOT NULL 
+          AND v.mileage >= m.next_maintenance_mileage - 1000)
       ORDER BY m.next_maintenance_date ASC
     `);
 
@@ -135,7 +143,7 @@ export function getMaintenanceStats(req: AuthRequest, res: Response): void {
         thisMonthCost: thisMonthCost?.total || 0,
         upcomingExpire: upcomingExpire.map((m: any) => ({
           ...m,
-          type_text: TYPE_MAP[m.type] || m.type,
+          type_text: getTypeText(m.type),
           status_text: STATUS_MAP[m.status] || m.status
         }))
       }

@@ -1,193 +1,248 @@
 <template>
   <div class="insurance-tab">
-    <!-- 搜索栏 -->
-    <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="searchForm" size="default">
-        <el-form-item>
-          <el-input v-model="searchForm.keyword" placeholder="车牌/保单号/保险公司" clearable @keyup.enter="loadData" style="width: 150px" />
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="searchForm.insurance_type" placeholder="保险类型" clearable style="width: 100px">
-            <el-option label="交强险" value="compulsory" />
-            <el-option label="商业险" value="commercial" />
-            <el-option label="第三者责任险" value="third_party" />
-            <el-option label="综合险" value="comprehensive" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="loadData">搜索</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <!-- 车辆列表视图 -->
+    <template v-if="!selectedVehicle">
+      <!-- 搜索栏 -->
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="vehicleSearchForm" size="default">
+          <el-form-item>
+            <el-input v-model="vehicleSearchForm.keyword" placeholder="车牌/品牌/型号" clearable @keyup.enter="loadVehicles" style="width: 150px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadVehicles">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
 
-    <!-- 操作栏 -->
-    <div class="action-bar">
-      <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加保险
-      </el-button>
-    </div>
+      <!-- 统计卡片 -->
+      <div class="stats-cards">
+        <div class="stat-card primary">
+          <div class="stat-value">{{ stats.activeCount }}</div>
+          <div class="stat-label">生效中</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-value">{{ stats.expiringSoon.length }}</div>
+          <div class="stat-label">即将到期</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-value">{{ stats.expiredCount }}</div>
+          <div class="stat-label">已过期</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-value">¥{{ stats.thisYearPremium }}</div>
+          <div class="stat-label">本年保费</div>
+        </div>
+      </div>
 
-    <!-- 统计卡片 -->
-    <div class="stats-cards">
-      <div class="stat-card primary">
-        <div class="stat-value">{{ stats.activeCount }}</div>
-        <div class="stat-label">生效中</div>
-      </div>
-      <div class="stat-card warning">
-        <div class="stat-value">{{ stats.expiringSoon.length }}</div>
-        <div class="stat-label">即将到期</div>
-      </div>
-      <div class="stat-card danger">
-        <div class="stat-value">{{ stats.expired.length }}</div>
-        <div class="stat-label">已过期</div>
-      </div>
-      <div class="stat-card success">
-        <div class="stat-value">¥{{ stats.thisYearPremium }}</div>
-        <div class="stat-label">本年保费</div>
-      </div>
-    </div>
-
-    <!-- 移动端卡片列表 -->
-    <div class="mobile-cards">
-      <div v-for="item in tableData" :key="item.id" class="mobile-card" :class="{ 'expired': item.status === 'expired' }">
-        <div class="mobile-card-header">
-          <span class="plate">{{ item.plate_number }}</span>
-          <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">车辆</span>
-          <span class="value">{{ item.brand }} {{ item.model }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">保险类型</span>
-          <span class="value">{{ item.type_text }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">保险公司</span>
-          <span class="value">{{ item.insurance_company }}</span>
-        </div>
-        <div class="mobile-card-row" v-if="item.policy_number">
-          <span class="label">保单号</span>
-          <span class="value">{{ item.policy_number }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">有效期</span>
-          <span class="value">{{ item.start_date }} ~ {{ item.end_date }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">保费</span>
-          <span class="value text-danger">¥{{ item.premium }}</span>
-        </div>
-        <div class="mobile-card-row" v-if="item.documents && item.documents.length">
-          <span class="label">附件</span>
-          <div class="docs-mini">
-            <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
-              <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents, idx)" />
-              <div v-else class="pdf-icon" @click="openPdf(doc.url)">
-                <el-icon><Document /></el-icon>
-              </div>
-            </template>
-            <span v-if="item.documents.length > 3" class="more">+{{ item.documents.length - 3 }}</span>
+      <!-- 移动端车辆卡片 -->
+      <div class="mobile-cards">
+        <div v-for="vehicle in vehicles" :key="vehicle.id" class="mobile-card" @click="selectVehicle(vehicle)">
+          <div class="mobile-card-header">
+            <span class="plate">{{ vehicle.plate_number }}</span>
+            <el-icon><ArrowRight /></el-icon>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">车辆</span>
+            <span class="value">{{ vehicle.brand }} {{ vehicle.model }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保险状态</span>
+            <span class="value">
+              <el-tag :type="getVehicleInsuranceStatusType(vehicle)" size="small">
+                {{ getVehicleInsuranceStatus(vehicle) }}
+              </el-tag>
+            </span>
+          </div>
+          <div class="mobile-card-row" v-if="vehicle.latestInsurance">
+            <span class="label">到期日期</span>
+            <span class="value" :class="{ 'text-danger': isExpired(vehicle.latestInsurance.end_date), 'text-warning': isExpiringSoon(vehicle.latestInsurance.end_date) }">
+              {{ vehicle.latestInsurance.end_date }}
+            </span>
+          </div>
+          <div class="insurance-count">
+            <el-tag size="small" type="info">{{ vehicle.insuranceCount || 0 }} 条记录</el-tag>
           </div>
         </div>
-        <div class="mobile-card-actions">
-          <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
-          <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
-            <template #reference>
-              <el-button type="danger" size="small">删除</el-button>
+      </div>
+
+      <!-- PC端车辆表格 -->
+      <el-card shadow="never" class="table-card">
+        <el-table :data="vehicles" v-loading="loading" stripe class="hide-mobile" @row-click="selectVehicle" style="cursor: pointer">
+          <el-table-column prop="plate_number" label="车牌" width="100" />
+          <el-table-column prop="brand" label="品牌型号" min-width="120">
+            <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
+          </el-table-column>
+          <el-table-column label="保险状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getVehicleInsuranceStatusType(row)" size="small">
+                {{ getVehicleInsuranceStatus(row) }}
+              </el-tag>
             </template>
-          </el-popconfirm>
+          </el-table-column>
+          <el-table-column label="最新保险到期" width="120">
+            <template #default="{ row }">
+              <span v-if="row.latestInsurance" :class="{ 'text-danger': isExpired(row.latestInsurance.end_date), 'text-warning': isExpiringSoon(row.latestInsurance.end_date) }">
+                {{ row.latestInsurance.end_date }}
+              </span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="记录数" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" type="info">{{ row.insuranceCount || 0 }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click.stop="selectVehicle(row)">查看</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          v-model:current-page="vehiclePagination.page"
+          v-model:page-size="vehiclePagination.pageSize"
+          :total="vehiclePagination.total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, prev, pager, next"
+          background
+          class="pagination"
+          @size-change="loadVehicles"
+          @current-change="loadVehicles"
+        />
+      </el-card>
+    </template>
+
+    <!-- 车辆保险记录视图 -->
+    <template v-else>
+      <!-- 返回按钮和车辆信息 -->
+      <div class="vehicle-header">
+        <el-button @click="selectedVehicle = null" class="back-btn">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </el-button>
+        <div class="vehicle-info">
+          <span class="plate">{{ selectedVehicle.plate_number }}</span>
+          <span class="brand">{{ selectedVehicle.brand }} {{ selectedVehicle.model }}</span>
         </div>
       </div>
-    </div>
 
-    <!-- PC端表格 -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="plate_number" label="车牌" width="90" />
-        <el-table-column prop="brand" label="品牌" width="70">
-          <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
-        </el-table-column>
-        <el-table-column prop="type_text" label="类型" width="90" />
-        <el-table-column prop="insurance_company" label="保险公司" width="100" show-overflow-tooltip />
-        <el-table-column prop="policy_number" label="保单号" width="120" show-overflow-tooltip />
-        <el-table-column prop="start_date" label="生效日期" width="90" />
-        <el-table-column prop="end_date" label="到期日期" width="90">
-          <template #default="{ row }">
-            <span :class="{ 'text-danger': isExpired(row.end_date), 'text-warning': isExpiringSoon(row.end_date) }">
-              {{ row.end_date }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="premium" label="保费" width="70">
-          <template #default="{ row }">¥{{ row.premium }}</template>
-        </el-table-column>
-        <el-table-column label="附件" width="80">
-          <template #default="{ row }">
-            <div class="docs-mini" v-if="row.documents && row.documents.length">
-              <template v-for="(doc, idx) in row.documents.slice(0, 2)" :key="idx">
-                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)" />
+      <!-- 操作栏 -->
+      <div class="action-bar">
+        <el-button type="primary" @click="openDialog()">
+          <el-icon><Plus /></el-icon> 添加保险
+        </el-button>
+      </div>
+
+      <!-- 移动端保险卡片 -->
+      <div class="mobile-cards">
+        <div v-for="item in insuranceRecords" :key="item.id" class="mobile-card" :class="{ 'expired': item.status === 'expired' }">
+          <div class="mobile-card-header">
+            <span class="type">{{ item.type_text }}</span>
+            <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保险公司</span>
+            <span class="value">{{ item.insurance_company }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.policy_number">
+            <span class="label">保单号</span>
+            <span class="value">{{ item.policy_number }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">有效期</span>
+            <span class="value">{{ item.start_date }} ~ {{ item.end_date }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保费</span>
+            <span class="value text-danger">¥{{ item.premium }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.documents && item.documents.length">
+            <span class="label">附件</span>
+            <div class="docs-mini">
+              <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents, idx)" />
                 <div v-else class="pdf-icon" @click="openPdf(doc.url)">
                   <el-icon><Document /></el-icon>
                 </div>
               </template>
-              <span v-if="row.documents.length > 2" class="badge">{{ row.documents.length }}</span>
+              <span v-if="item.documents.length > 3" class="more">+{{ item.documents.length - 3 }}</span>
             </div>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status_text" label="状态" width="70">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" fixed="right" width="130">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
-            <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
+          </div>
+          <div class="mobile-card-actions">
+            <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
+            <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
               <template #reference>
-                <el-button type="danger" link size="small">删除</el-button>
+                <el-button type="danger" size="small">删除</el-button>
               </template>
             </el-popconfirm>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, prev, pager, next"
-        background
-        class="pagination"
-        @size-change="loadData"
-        @current-change="loadData"
-      />
-    </el-card>
+          </div>
+        </div>
+        <div v-if="insuranceRecords.length === 0 && !loading" class="empty-tip">
+          暂无保险记录，点击上方"添加保险"按钮添加
+        </div>
+      </div>
+
+      <!-- PC端保险表格 -->
+      <el-card shadow="never" class="table-card">
+        <el-table :data="insuranceRecords" v-loading="loading" stripe class="hide-mobile">
+          <el-table-column prop="type_text" label="类型" width="100" />
+          <el-table-column prop="insurance_company" label="保险公司" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="policy_number" label="保单号" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="start_date" label="生效日期" width="100" />
+          <el-table-column prop="end_date" label="到期日期" width="100">
+            <template #default="{ row }">
+              <span :class="{ 'text-danger': isExpired(row.end_date), 'text-warning': isExpiringSoon(row.end_date) }">
+                {{ row.end_date }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="premium" label="保费" width="80">
+            <template #default="{ row }">¥{{ row.premium }}</template>
+          </el-table-column>
+          <el-table-column label="附件" width="80">
+            <template #default="{ row }">
+              <div class="docs-mini" v-if="row.documents && row.documents.length">
+                <template v-for="(doc, idx) in row.documents.slice(0, 2)" :key="idx">
+                  <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)" />
+                  <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                    <el-icon><Document /></el-icon>
+                  </div>
+                </template>
+                <span v-if="row.documents.length > 2" class="badge">{{ row.documents.length }}</span>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status_text" label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" fixed="right" width="130">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
+              <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
+                <template #reference>
+                  <el-button type="danger" link size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
 
     <!-- 添加/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="editingId ? '编辑保险' : '添加保险'" width="90%" :style="{ maxWidth: '500px' }">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
-        <el-form-item label="车辆" prop="vehicle_id">
-          <el-select v-model="form.vehicle_id" placeholder="选择车辆" style="width: 100%" @change="onVehicleChange">
-            <el-option 
-              v-for="v in vehicles" 
-              :key="v.id" 
-              :label="`${v.plate_number} - ${v.brand} ${v.model}`" 
-              :value="v.id" 
-            />
-          </el-select>
+        <el-form-item label="车辆">
+          <el-input :value="`${selectedVehicle?.plate_number} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`" disabled />
         </el-form-item>
-        <el-form-item label="保险类型" prop="insurance_type">
-          <el-select v-model="form.insurance_type" placeholder="选择类型" style="width: 100%">
-            <el-option label="交强险" value="compulsory" />
-            <el-option label="商业险" value="commercial" />
-            <el-option label="第三者责任险" value="third_party" />
-            <el-option label="盗抢险" value="theft" />
-            <el-option label="划痕险" value="scratch" />
-            <el-option label="玻璃险" value="glass" />
-            <el-option label="综合险" value="comprehensive" />
-          </el-select>
+        <el-form-item label="保险类型" prop="insurance_types">
+          <el-checkbox-group v-model="form.insurance_types" class="type-checkbox-group">
+            <el-checkbox value="compulsory">交强险</el-checkbox>
+            <el-checkbox value="commercial">商业险</el-checkbox>
+            <el-checkbox value="seat">座位险</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
         <el-form-item label="保险公司" prop="insurance_company">
           <el-input v-model="form.insurance_company" placeholder="保险公司名称" />
@@ -292,24 +347,23 @@ interface DocumentItem {
 
 const loading = ref(false)
 const submitting = ref(false)
-const tableData = ref<any[]>([])
+const vehicles = ref<any[]>([])
+const selectedVehicle = ref<any>(null)
+const insuranceRecords = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const fileInput = ref<HTMLInputElement>()
 const editingId = ref('')
-const vehicles = ref<any[]>([])
 const imagePreviewVisible = ref(false)
 const previewDocs = ref<DocumentItem[]>([])
 const previewIndex = ref(0)
 
-const searchForm = reactive({ keyword: '', insurance_type: '' })
-const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const stats = reactive({ activeCount: 0, expiringSoon: [] as any[], expired: [] as any[], thisYearPremium: 0 })
+const vehicleSearchForm = reactive({ keyword: '' })
+const vehiclePagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const stats = reactive({ activeCount: 0, expiringSoon: [] as any[], expiredCount: 0, thisYearPremium: 0 })
 
 const form = reactive({
-  vehicle_id: '',
-  plate_number: '',
-  insurance_type: '',
+  insurance_types: [] as string[],
   insurance_company: '',
   policy_number: '',
   start_date: '',
@@ -322,8 +376,17 @@ const form = reactive({
 })
 
 const rules: FormRules = {
-  vehicle_id: [{ required: true, message: '请选择车辆', trigger: 'change' }],
-  insurance_type: [{ required: true, message: '请选择保险类型', trigger: 'change' }],
+  insurance_types: [{ 
+    required: true, 
+    validator: (_rule, value, callback) => {
+      if (!value || value.length === 0) {
+        callback(new Error('请选择至少一个保险类型'))
+      } else {
+        callback()
+      }
+    },
+    trigger: 'change' 
+  }],
   insurance_company: [{ required: true, message: '请输入保险公司', trigger: 'blur' }],
   start_date: [{ required: true, message: '请选择生效日期', trigger: 'change' }],
   end_date: [{ required: true, message: '请选择到期日期', trigger: 'change' }]
@@ -351,6 +414,20 @@ function isExpiringSoon(date: string) {
   return days > 0 && days <= 30
 }
 
+function getVehicleInsuranceStatus(vehicle: any) {
+  if (!vehicle.latestInsurance) return '无保险'
+  if (isExpired(vehicle.latestInsurance.end_date)) return '已过期'
+  if (isExpiringSoon(vehicle.latestInsurance.end_date)) return '即将到期'
+  return '生效中'
+}
+
+function getVehicleInsuranceStatusType(vehicle: any) {
+  if (!vehicle.latestInsurance) return 'info'
+  if (isExpired(vehicle.latestInsurance.end_date)) return 'danger'
+  if (isExpiringSoon(vehicle.latestInsurance.end_date)) return 'warning'
+  return 'success'
+}
+
 function getFileUrl(url: string) {
   if (!url) return ''
   if (url.startsWith('http') || url.startsWith('data:')) return url
@@ -368,17 +445,38 @@ function previewDoc(docs: DocumentItem[], index: number) {
   imagePreviewVisible.value = true
 }
 
-async function loadData() {
+// 加载车辆列表（带保险信息）
+async function loadVehicles() {
   loading.value = true
   try {
-    const [listRes, statsRes]: any[] = await Promise.all([
-      insuranceApi.getList({ ...searchForm, ...pagination }),
+    const [vehicleRes, statsRes]: any[] = await Promise.all([
+      vehicleApi.getList({ ...vehicleSearchForm, ...vehiclePagination }),
       insuranceApi.getStats()
     ])
-    if (listRes.success) {
-      tableData.value = listRes.data.data
-      pagination.total = listRes.data.total
+    
+    if (vehicleRes.success) {
+      // 为每个车辆获取保险统计
+      const vehicleList = vehicleRes.data.data
+      const vehiclesWithInsurance = await Promise.all(
+        vehicleList.map(async (v: any) => {
+          try {
+            const insuranceRes: any = await insuranceApi.getList({ vehicle_id: v.id, pageSize: 100 })
+            const records = insuranceRes.success ? insuranceRes.data.data : []
+            const activeRecords = records.filter((r: any) => r.status === 'active')
+            return {
+              ...v,
+              insuranceCount: records.length,
+              latestInsurance: activeRecords.length > 0 ? activeRecords[0] : (records.length > 0 ? records[0] : null)
+            }
+          } catch {
+            return { ...v, insuranceCount: 0, latestInsurance: null }
+          }
+        })
+      )
+      vehicles.value = vehiclesWithInsurance
+      vehiclePagination.total = vehicleRes.data.total
     }
+    
     if (statsRes.success) {
       Object.assign(stats, statsRes.data)
     }
@@ -389,23 +487,32 @@ async function loadData() {
   }
 }
 
-async function loadVehicles() {
+// 选择车辆，加载其保险记录
+async function selectVehicle(vehicle: any) {
+  selectedVehicle.value = vehicle
+  await loadInsuranceRecords()
+}
+
+// 加载选中车辆的保险记录
+async function loadInsuranceRecords() {
+  if (!selectedVehicle.value) return
+  loading.value = true
   try {
-    const res: any = await vehicleApi.getList({ pageSize: 1000 })
+    const res: any = await insuranceApi.getList({ vehicle_id: selectedVehicle.value.id, pageSize: 100 })
     if (res.success) {
-      vehicles.value = res.data.data
+      insuranceRecords.value = res.data.data
     }
   } catch (error) {
-    console.error('加载车辆失败', error)
+    console.error('加载保险记录失败', error)
+  } finally {
+    loading.value = false
   }
 }
 
 function openDialog(item?: any) {
   editingId.value = item?.id || ''
   Object.assign(form, {
-    vehicle_id: item?.vehicle_id || '',
-    plate_number: item?.plate_number || '',
-    insurance_type: item?.insurance_type || '',
+    insurance_types: item?.insurance_types || (item?.insurance_type ? [item.insurance_type] : []),
     insurance_company: item?.insurance_company || '',
     policy_number: item?.policy_number || '',
     start_date: item?.start_date || '',
@@ -416,15 +523,7 @@ function openDialog(item?: any) {
     documents: item?.documents || [],
     remarks: item?.remarks || ''
   })
-  loadVehicles()
   dialogVisible.value = true
-}
-
-function onVehicleChange(id: string) {
-  const vehicle = vehicles.value.find(v => v.id === id)
-  if (vehicle) {
-    form.plate_number = vehicle.plate_number
-  }
 }
 
 function triggerUpload() {
@@ -436,7 +535,6 @@ async function handleFileSelect(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  // 检查文件类型
   const isImage = file.type.startsWith('image/')
   const isPdf = file.type === 'application/pdf'
   if (!isImage && !isPdf) {
@@ -444,13 +542,11 @@ async function handleFileSelect(e: Event) {
     return
   }
 
-  // 检查文件大小
   if (file.size > 10 * 1024 * 1024) {
     ElMessage.error('文件大小不能超过10MB')
     return
   }
 
-  // 上传
   try {
     const res = await uploadApi.uploadInsurance(file)
     if (res.success && res.data) {
@@ -467,7 +563,6 @@ async function handleFileSelect(e: Event) {
     ElMessage.error('上传失败')
   }
 
-  // 清空 input
   target.value = ''
 }
 
@@ -481,16 +576,23 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
+    const data = {
+      ...form,
+      vehicle_id: selectedVehicle.value.id,
+      plate_number: selectedVehicle.value.plate_number
+    }
+    
     let res: any
     if (editingId.value) {
-      res = await insuranceApi.update(editingId.value, form)
+      res = await insuranceApi.update(editingId.value, data)
     } else {
-      res = await insuranceApi.create(form)
+      res = await insuranceApi.create(data)
     }
     if (res.success) {
       ElMessage.success(editingId.value ? '修改成功' : '添加成功')
       dialogVisible.value = false
-      loadData()
+      loadInsuranceRecords()
+      loadVehicles()
     }
   } catch (error) {
     console.error('提交失败', error)
@@ -504,14 +606,15 @@ async function handleDelete(id: string) {
     const res: any = await insuranceApi.delete(id)
     if (res.success) {
       ElMessage.success('删除成功')
-      loadData()
+      loadInsuranceRecords()
+      loadVehicles()
     }
   } catch (error) {
     console.error('删除失败', error)
   }
 }
 
-onMounted(() => loadData())
+onMounted(() => loadVehicles())
 </script>
 
 <style scoped>
@@ -583,6 +686,38 @@ onMounted(() => loadData())
   }
 }
 
+/* 车辆头部 */
+.vehicle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.back-btn {
+  padding: 8px 12px;
+}
+
+.vehicle-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-info .plate {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.vehicle-info .brand {
+  font-size: 13px;
+  color: #909399;
+}
+
 .mobile-cards {
   display: flex;
   flex-direction: column;
@@ -595,6 +730,7 @@ onMounted(() => loadData())
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
 }
 
 .mobile-card.expired {
@@ -608,7 +744,7 @@ onMounted(() => loadData())
   margin-bottom: 10px;
 }
 
-.plate {
+.plate, .type {
   font-size: 15px;
   font-weight: 600;
   color: #303133;
@@ -635,6 +771,13 @@ onMounted(() => loadData())
   font-weight: 500;
 }
 
+.insurance-count {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+
 .mobile-card-actions {
   display: flex;
   justify-content: flex-end;
@@ -642,6 +785,13 @@ onMounted(() => loadData())
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #eee;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 30px;
+  color: #909399;
+  font-size: 14px;
 }
 
 .hide-mobile {
@@ -658,6 +808,10 @@ onMounted(() => loadData())
 
 .text-warning {
   color: #E6A23C;
+}
+
+.text-muted {
+  color: #909399;
 }
 
 @media (min-width: 768px) {

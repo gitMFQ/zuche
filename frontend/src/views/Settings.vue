@@ -32,23 +32,29 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import UsersTab from '../components/UsersTab.vue'
 import OrderSourcesTab from '../components/OrderSourcesTab.vue'
+import { settingsApi } from '../api'
 
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref('system')
 const systemTitle = ref('租车管理系统')
+const saving = ref(false)
 
 // 从路由参数获取当前标签
-onMounted(() => {
+onMounted(async () => {
   const tab = route.query.tab as string
   if (tab && ['system', 'users', 'sources'].includes(tab)) {
     activeTab.value = tab
   }
   
-  // 加载系统设置
-  const savedTitle = localStorage.getItem('systemTitle')
-  if (savedTitle) {
-    systemTitle.value = savedTitle
+  // 从API加载系统设置
+  try {
+    const res: any = await settingsApi.getAll()
+    if (res.success && res.data?.system_title) {
+      systemTitle.value = res.data.system_title
+    }
+  } catch (error) {
+    console.error('加载系统设置失败', error)
   }
 })
 
@@ -57,11 +63,21 @@ watch(activeTab, (val) => {
   router.replace({ query: { tab: val } })
 })
 
-function saveSettings() {
-  localStorage.setItem('systemTitle', systemTitle.value)
-  // 触发自定义事件通知布局更新
-  window.dispatchEvent(new CustomEvent('systemTitleChange', { detail: systemTitle.value }))
-  ElMessage.success('设置保存成功')
+async function saveSettings() {
+  saving.value = true
+  try {
+    const res: any = await settingsApi.update('system_title', systemTitle.value)
+    if (res.success) {
+      // 触发自定义事件通知布局更新
+      window.dispatchEvent(new CustomEvent('systemTitleChange', { detail: systemTitle.value }))
+      ElMessage.success('设置保存成功')
+    }
+  } catch (error) {
+    console.error('保存设置失败', error)
+    ElMessage.error('保存设置失败')
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 

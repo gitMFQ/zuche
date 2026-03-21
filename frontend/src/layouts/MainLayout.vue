@@ -59,12 +59,13 @@
       <!-- 顶部栏 -->
       <el-header class="header">
         <div class="header-left">
-          <el-icon 
+          <el-button 
             class="collapse-btn" 
             @click="isCollapse = !isCollapse"
-          >
-            <component :is="isCollapse ? 'Expand' : 'Fold'" />
-          </el-icon>
+            :icon="isCollapse ? 'Expand' : 'Fold'"
+            circle
+            size="large"
+          />
           <el-breadcrumb separator="/" class="breadcrumb">
             <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item>{{ currentTitle }}</el-breadcrumb-item>
@@ -123,7 +124,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '../stores/user'
-import { authApi } from '../api'
+import { authApi, settingsApi } from '../api'
 
 const route = useRoute()
 const router = useRouter()
@@ -166,10 +167,14 @@ const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title as string || '')
 const isAdmin = computed(() => userStore.isAdmin())
 
-function loadSystemTitle() {
-  const savedTitle = localStorage.getItem('systemTitle')
-  if (savedTitle) {
-    systemTitle.value = savedTitle
+async function loadSystemTitle() {
+  try {
+    const res: any = await settingsApi.getAll()
+    if (res.success && res.data?.system_title) {
+      systemTitle.value = res.data.system_title
+    }
+  } catch (error) {
+    console.error('加载系统标题失败', error)
   }
 }
 
@@ -343,21 +348,21 @@ async function handleChangePassword() {
 }
 
 .collapse-btn {
-  cursor: pointer;
-  color: #606266;
-  padding: 8px;
-  font-size: 24px;
+  font-size: 20px;
+}
+
+.collapse-btn :deep(.el-icon) {
+  font-size: 22px;
 }
 
 @media (max-width: 767px) {
   .collapse-btn {
-    font-size: 26px;
-    padding: 6px;
+    font-size: 18px;
   }
-}
-
-.collapse-btn:hover {
-  color: #409EFF;
+  
+  .collapse-btn :deep(.el-icon) {
+    font-size: 20px;
+  }
 }
 
 .breadcrumb {

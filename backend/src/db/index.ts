@@ -60,6 +60,34 @@ function runMigrations(db: Database): void {
       if (!columns.includes('net_amount')) {
         db.run('ALTER TABLE orders ADD COLUMN net_amount REAL');
       }
+      if (!columns.includes('service_type')) {
+        db.run("ALTER TABLE orders ADD COLUMN service_type TEXT DEFAULT 'basic'");
+        console.log('已添加service_type字段到订单表');
+      }
+      if (!columns.includes('deposit_waived')) {
+        db.run('ALTER TABLE orders ADD COLUMN deposit_waived INTEGER DEFAULT 0');
+        console.log('已添加deposit_waived字段到订单表');
+      }
+      if (!columns.includes('deposit_waived_expiry')) {
+        db.run('ALTER TABLE orders ADD COLUMN deposit_waived_expiry TEXT');
+        console.log('已添加deposit_waived_expiry字段到订单表');
+      }
+      if (!columns.includes('pickup_mileage')) {
+        db.run('ALTER TABLE orders ADD COLUMN pickup_mileage INTEGER');
+        console.log('已添加pickup_mileage字段到订单表');
+      }
+      if (!columns.includes('return_mileage')) {
+        db.run('ALTER TABLE orders ADD COLUMN return_mileage INTEGER');
+        console.log('已添加return_mileage字段到订单表');
+      }
+      if (!columns.includes('pickup_image')) {
+        db.run('ALTER TABLE orders ADD COLUMN pickup_image TEXT');
+        console.log('已添加pickup_image字段到订单表');
+      }
+      if (!columns.includes('return_image')) {
+        db.run('ALTER TABLE orders ADD COLUMN return_image TEXT');
+        console.log('已添加return_image字段到订单表');
+      }
     }
     
     // 检查订单来源表是否存在
@@ -207,6 +235,61 @@ function runMigrations(db: Database): void {
         db.run('ALTER TABLE maintenance ADD COLUMN images TEXT');
         console.log('已添加images字段到保养表');
       }
+    }
+    
+    // 检查vehicles表是否有新字段
+    const vehicleColumns = db.exec("PRAGMA table_info(vehicles)");
+    if (vehicleColumns.length > 0) {
+      const columns = vehicleColumns[0].values.map((col: any) => col[1]);
+      if (!columns.includes('vin')) {
+        db.run('ALTER TABLE vehicles ADD COLUMN vin TEXT');
+        console.log('已添加vin字段到车辆表');
+      }
+      if (!columns.includes('engine_number')) {
+        db.run('ALTER TABLE vehicles ADD COLUMN engine_number TEXT');
+        console.log('已添加engine_number字段到车辆表');
+      }
+      if (!columns.includes('license_image')) {
+        db.run('ALTER TABLE vehicles ADD COLUMN license_image TEXT');
+        console.log('已添加license_image字段到车辆表');
+      }
+      if (!columns.includes('registration_image')) {
+        db.run('ALTER TABLE vehicles ADD COLUMN registration_image TEXT');
+        console.log('已添加registration_image字段到车辆表');
+      }
+    }
+    
+    // 检查customers表是否有照片字段
+    const customerColumns = db.exec("PRAGMA table_info(customers)");
+    if (customerColumns.length > 0) {
+      const columns = customerColumns[0].values.map((col: any) => col[1]);
+      if (!columns.includes('id_card_images')) {
+        db.run('ALTER TABLE customers ADD COLUMN id_card_images TEXT');
+        console.log('已添加id_card_images字段到客户表');
+      }
+      if (!columns.includes('license_images')) {
+        db.run('ALTER TABLE customers ADD COLUMN license_images TEXT');
+        console.log('已添加license_images字段到客户表');
+      }
+      if (!columns.includes('is_regular')) {
+        db.run('ALTER TABLE customers ADD COLUMN is_regular INTEGER DEFAULT 0');
+        console.log('已添加is_regular字段到客户表');
+      }
+    }
+    
+    // 检查系统设置表是否存在
+    const settingsTable = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='system_settings'");
+    if (settingsTable.length === 0) {
+      db.run(`
+        CREATE TABLE IF NOT EXISTS system_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      // 插入默认系统标题
+      db.run("INSERT INTO system_settings (key, value) VALUES ('system_title', '租车管理系统')");
+      console.log('已创建系统设置表');
     }
     
     saveDatabase();

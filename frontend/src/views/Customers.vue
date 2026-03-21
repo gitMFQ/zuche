@@ -23,7 +23,10 @@
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
-          <span class="customer-name">{{ item.name }}</span>
+          <span class="customer-name">
+            <el-icon v-if="item.is_regular" class="regular-star" @click="toggleRegular(item)"><Star /></el-icon>
+            {{ item.name }}
+          </span>
           <el-tag :type="item.status === 1 ? 'success' : 'danger'" size="small">
             {{ item.status === 1 ? '正常' : '禁用' }}
           </el-tag>
@@ -41,9 +44,13 @@
           <span class="value">{{ item.license_expiry }}</span>
         </div>
         <div class="mobile-card-actions">
-          <el-button type="danger" size="small" @click="addToBlacklist(item)">拉黑</el-button>
+          <el-button type="info" size="small" plain @click="openViewDialog(item)">查看</el-button>
           <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
-          <el-button size="small" :href="'tel:' + item.phone">拨打</el-button>
+          <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
+            <template #reference>
+              <el-button type="danger" size="small">删除</el-button>
+            </template>
+          </el-popconfirm>
         </div>
       </div>
     </div>
@@ -51,7 +58,14 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="name" label="姓名" width="80" />
+        <el-table-column prop="name" label="姓名" width="100">
+          <template #default="{ row }">
+            <span>
+              <el-icon v-if="row.is_regular" class="regular-star" @click="toggleRegular(row)"><Star /></el-icon>
+              {{ row.name }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="phone" label="手机号" width="120" />
         <el-table-column prop="id_card" label="身份证号" width="180" />
         <el-table-column prop="license_number" label="驾驶证号" width="180" />
@@ -63,9 +77,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column label="操作" fixed="right" width="240">
           <template #default="{ row }">
-            <el-button type="danger" link size="small" @click="addToBlacklist(row)">拉黑</el-button>
+            <el-button type="info" link size="small" @click="openViewDialog(row)">查看</el-button>
+            <el-button :type="row.is_regular ? 'warning' : 'default'" link size="small" @click="toggleRegular(row)">
+              {{ row.is_regular ? '取消常用' : '设为常用' }}
+            </el-button>
             <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
             <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
               <template #reference>
@@ -100,8 +117,38 @@
         <el-form-item label="身份证">
           <el-input v-model="form.id_card" placeholder="请输入身份证号" />
         </el-form-item>
+        <el-form-item label="身份证照片">
+          <div class="multi-upload">
+            <div class="image-list">
+              <div v-for="(img, idx) in form.id_card_images" :key="idx" class="image-item">
+                <img :src="getImageUrl(img)" @click="previewImage(form.id_card_images, idx)" />
+                <div class="image-remove" @click="removeIdCardImage(idx)">×</div>
+              </div>
+              <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')">
+                <el-icon><Plus /></el-icon>
+                <span>{{ form.id_card_images.length }}/2</span>
+              </div>
+            </div>
+            <input ref="idCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'id_card')" />
+          </div>
+        </el-form-item>
         <el-form-item label="驾驶证">
           <el-input v-model="form.license_number" placeholder="请输入驾驶证号" />
+        </el-form-item>
+        <el-form-item label="驾驶证照片">
+          <div class="multi-upload">
+            <div class="image-list">
+              <div v-for="(img, idx) in form.license_images" :key="idx" class="image-item">
+                <img :src="getImageUrl(img)" @click="previewImage(form.license_images, idx)" />
+                <div class="image-remove" @click="removeLicenseImage(idx)">×</div>
+              </div>
+              <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
+                <el-icon><Plus /></el-icon>
+                <span>{{ form.license_images.length }}/2</span>
+              </div>
+            </div>
+            <input ref="licenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'license')" />
+          </div>
         </el-form-item>
         <el-form-item label="驾照到期">
           <el-date-picker v-model="form.license_expiry" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -124,13 +171,72 @@
         <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 图片预览 -->
+    <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '500px' }">
+      <el-carousel :initial-index="previewIndex" indicator-position="outside">
+        <el-carousel-item v-for="(img, idx) in previewImagesList" :key="idx">
+          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
+        </el-carousel-item>
+      </el-carousel>
+    </el-dialog>
+
+    <!-- 查看详情对话框 -->
+    <el-dialog v-model="viewDialogVisible" title="客户详情" width="90%" :style="{ maxWidth: '500px' }">
+      <el-descriptions :column="1" border size="default">
+        <el-descriptions-item label="姓名">
+          <span class="view-value highlight">{{ viewData.name }}</span>
+          <el-icon v-if="viewData.is_regular" class="regular-star"><Star /></el-icon>
+        </el-descriptions-item>
+        <el-descriptions-item label="手机号">
+          <a :href="'tel:' + viewData.phone">{{ viewData.phone }}</a>
+        </el-descriptions-item>
+        <el-descriptions-item label="身份证">{{ viewData.id_card || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="驾驶证号">{{ viewData.license_number || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="驾照到期">
+          <span :class="{ 'text-danger': isLicenseExpiringSoon(viewData.license_expiry) }">
+            {{ viewData.license_expiry || '-' }}
+          </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="地址">{{ viewData.address || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="viewData.status === 1 ? 'success' : 'danger'" size="small">
+            {{ viewData.status === 1 ? '正常' : '禁用' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="备注">{{ viewData.remarks || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <div class="view-images" v-if="viewData.id_card_images?.length || viewData.license_images?.length">
+        <div class="view-image-group" v-if="viewData.id_card_images?.length">
+          <div class="view-image-label">身份证照片</div>
+          <div class="view-image-list">
+            <img v-for="(img, idx) in viewData.id_card_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.id_card_images, idx)" />
+          </div>
+        </div>
+        <div class="view-image-group" v-if="viewData.license_images?.length">
+          <div class="view-image-label">驾驶证照片</div>
+          <div class="view-image-list">
+            <img v-for="(img, idx) in viewData.license_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.license_images, idx)" />
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
+        <el-button :type="viewData.is_regular ? 'warning' : 'default'" @click="toggleRegular(viewData)">
+          {{ viewData.is_regular ? '取消常用' : '设为常用' }}
+        </el-button>
+        <el-button type="warning" @click="viewDialogVisible = false; addToBlacklist(viewData)">拉黑</el-button>
+        <el-button type="primary" @click="viewDialogVisible = false; openDialog(viewData)">编辑</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { customerApi, blacklistApi } from '../api'
+import { Star } from '@element-plus/icons-vue'
+import { customerApi, blacklistApi, uploadApi } from '../api'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -138,6 +244,13 @@ const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const editingId = ref('')
 const formRef = ref<FormInstance>()
+const idCardInput = ref<HTMLInputElement>()
+const licenseInput = ref<HTMLInputElement>()
+const imagePreviewVisible = ref(false)
+const previewImagesList = ref<string[]>([])
+const previewIndex = ref(0)
+const viewDialogVisible = ref(false)
+const viewData = reactive<any>({})
 
 const searchForm = reactive({ keyword: '', status: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
@@ -146,7 +259,9 @@ const form = reactive({
   name: '',
   phone: '',
   id_card: '',
+  id_card_images: [] as string[],
   license_number: '',
+  license_images: [] as string[],
   license_expiry: '',
   address: '',
   status: 1,
@@ -159,6 +274,69 @@ const rules: FormRules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ]
+}
+
+function getImageUrl(url: string) {
+  if (!url) return ''
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+  return baseUrl + url
+}
+
+function previewImage(images: string[], index: number) {
+  previewImagesList.value = images
+  previewIndex.value = index
+  imagePreviewVisible.value = true
+}
+
+function triggerUpload(type: 'id_card' | 'license') {
+  if (type === 'id_card') {
+    idCardInput.value?.click()
+  } else {
+    licenseInput.value?.click()
+  }
+}
+
+async function handleUpload(e: Event, type: 'id_card' | 'license') {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('请选择图片文件')
+    return
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过10MB')
+    return
+  }
+
+  try {
+    const res = await uploadApi.uploadCustomer(file)
+    if (res.success && res.data) {
+      if (type === 'id_card') {
+        form.id_card_images.push(res.data.url)
+      } else {
+        form.license_images.push(res.data.url)
+      }
+      ElMessage.success('图片上传成功')
+    } else {
+      ElMessage.error(res.message || '上传失败')
+    }
+  } catch (error) {
+    ElMessage.error('上传失败')
+  }
+
+  target.value = ''
+}
+
+function removeIdCardImage(index: number) {
+  form.id_card_images.splice(index, 1)
+}
+
+function removeLicenseImage(index: number) {
+  form.license_images.splice(index, 1)
 }
 
 async function loadData() {
@@ -176,16 +354,43 @@ async function loadData() {
   }
 }
 
+function openViewDialog(row: any) {
+  Object.assign(viewData, row)
+  viewDialogVisible.value = true
+}
+
+function isLicenseExpiringSoon(date: string) {
+  if (!date) return false
+  const expiry = new Date(date)
+  const now = new Date()
+  const diff = expiry.getTime() - now.getTime()
+  const days = diff / (1000 * 60 * 60 * 24)
+  return days <= 30 && days > 0
+}
+
 function openDialog(row?: any) {
   editingId.value = row?.id || ''
   if (row) {
-    Object.assign(form, row)
+    Object.assign(form, {
+      name: row.name,
+      phone: row.phone,
+      id_card: row.id_card,
+      id_card_images: row.id_card_images || [],
+      license_number: row.license_number,
+      license_images: row.license_images || [],
+      license_expiry: row.license_expiry,
+      address: row.address,
+      status: row.status,
+      remarks: row.remarks
+    })
   } else {
     Object.assign(form, {
       name: '',
       phone: '',
       id_card: '',
+      id_card_images: [],
       license_number: '',
+      license_images: [],
       license_expiry: '',
       address: '',
       status: 1,
@@ -257,6 +462,25 @@ async function addToBlacklist(customer: any) {
   }
 }
 
+// 设置/取消常用客户
+async function toggleRegular(customer: any) {
+  try {
+    const newStatus = !customer.is_regular
+    const res: any = await customerApi.setRegular(customer.id, newStatus)
+    if (res.success) {
+      customer.is_regular = newStatus
+      // 同步更新列表中的数据
+      const listItem = tableData.value.find(item => item.id === customer.id)
+      if (listItem) {
+        listItem.is_regular = newStatus
+      }
+      ElMessage.success(newStatus ? '已设为常用客户' : '已取消常用客户')
+    }
+  } catch (error) {
+    console.error('设置常用客户失败', error)
+  }
+}
+
 onMounted(() => loadData())
 </script>
 
@@ -317,6 +541,13 @@ onMounted(() => loadData())
   color: #303133;
 }
 
+.regular-star {
+  color: #F7BA2A;
+  margin-right: 4px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
 .mobile-card-row {
   display: flex;
   justify-content: space-between;
@@ -370,5 +601,118 @@ onMounted(() => loadData())
 .pagination {
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+/* 多图上传 */
+.multi-upload {
+  width: 100%;
+}
+
+.image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.image-item {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+}
+
+.image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.image-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-btn {
+  width: 70px;
+  height: 70px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #909399;
+  font-size: 12px;
+}
+
+.upload-btn:hover {
+  border-color: #409EFF;
+  color: #409EFF;
+}
+
+.upload-btn .el-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+/* 查看详情 */
+.view-value {
+  font-weight: 500;
+}
+
+.view-value.highlight {
+  font-size: 16px;
+  color: #303133;
+}
+
+.view-images {
+  margin-top: 16px;
+}
+
+.view-image-group {
+  margin-bottom: 16px;
+}
+
+.view-image-label {
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.view-image-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.view-image-list img {
+  width: 100px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #dcdfe6;
+  cursor: pointer;
+}
+
+.view-image-list img:hover {
+  border-color: #409EFF;
+}
+
+.text-danger {
+  color: #F56C6C;
 }
 </style>

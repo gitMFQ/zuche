@@ -14,7 +14,7 @@
           <span class="name">{{ item.name }}</span>
         </div>
         <div class="mobile-card-row">
-          <span class="label">抽成比例</span>
+          <span class="label">服务费</span>
           <span class="value text-warning">{{ item.commission_rate }}%</span>
         </div>
         <div class="mobile-card-row" v-if="item.remarks">
@@ -36,7 +36,7 @@
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
         <el-table-column prop="name" label="来源名称" min-width="150" />
-        <el-table-column prop="commission_rate" label="抽成比例" width="120">
+        <el-table-column prop="commission_rate" label="服务费" width="120">
           <template #default="{ row }">
             <span class="text-warning">{{ row.commission_rate }}%</span>
           </template>
@@ -64,11 +64,11 @@
         <el-form-item label="来源名称" prop="name">
           <el-input v-model="form.name" placeholder="如：携程、神州租车、门店直客等" />
         </el-form-item>
-        <el-form-item label="抽成比例" prop="commission_rate">
+        <el-form-item label="服务费" prop="commission_rate">
           <el-input-number v-model="form.commission_rate" :min="0" :max="100" :precision="1" style="width: 100%">
             <template #suffix>%</template>
           </el-input-number>
-          <div class="form-tip">平台抽成百分比，如 10 表示抽成10%</div>
+          <div class="form-tip">平台服务费百分比，如 10 表示收取10%</div>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
@@ -102,7 +102,7 @@ const form = reactive({
 
 const rules: FormRules = {
   name: [{ required: true, message: '请输入来源名称', trigger: 'blur' }],
-  commission_rate: [{ required: true, message: '请输入抽成比例', trigger: 'blur' }]
+  commission_rate: [{ required: true, message: '请输入服务费', trigger: 'blur' }]
 }
 
 async function loadData() {

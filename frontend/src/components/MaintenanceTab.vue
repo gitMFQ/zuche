@@ -1,166 +1,246 @@
 <template>
   <div class="maintenance-tab">
-    <!-- 搜索栏 -->
-    <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="searchForm" size="default">
-        <el-form-item>
-          <el-input v-model="searchForm.keyword" placeholder="车牌/品牌/型号" clearable @keyup.enter="loadData" style="width: 130px" />
-        </el-form-item>
-        <el-form-item>
-          <el-select v-model="searchForm.type" placeholder="保养类型" clearable style="width: 100px">
-            <el-option v-for="t in typeOptions" :key="t.value" :label="t.label" :value="t.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="loadData">搜索</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <!-- 车辆列表视图 -->
+    <template v-if="!selectedVehicle">
+      <!-- 搜索栏 -->
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="vehicleSearchForm" size="default">
+          <el-form-item>
+            <el-input v-model="vehicleSearchForm.keyword" placeholder="车牌/品牌/型号" clearable @keyup.enter="loadVehicles" style="width: 130px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadVehicles">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
 
-    <!-- 操作栏 -->
-    <div class="action-bar">
-      <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加保养
-      </el-button>
-    </div>
+      <!-- 统计卡片 -->
+      <div class="stats-cards">
+        <div class="stat-card primary">
+          <div class="stat-value">{{ stats.thisMonth }}</div>
+          <div class="stat-label">本月保养</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-value">{{ stats.pending }}</div>
+          <div class="stat-label">待保养</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-value">¥{{ stats.thisMonthCost }}</div>
+          <div class="stat-label">本月费用</div>
+        </div>
+      </div>
 
-    <!-- 统计卡片 -->
-    <div class="stats-cards">
-      <div class="stat-card primary">
-        <div class="stat-value">{{ stats.thisMonth }}</div>
-        <div class="stat-label">本月保养</div>
-      </div>
-      <div class="stat-card warning">
-        <div class="stat-value">{{ stats.pending }}</div>
-        <div class="stat-label">待保养</div>
-      </div>
-      <div class="stat-card success">
-        <div class="stat-value">¥{{ stats.thisMonthCost }}</div>
-        <div class="stat-label">本月费用</div>
-      </div>
-    </div>
-
-    <!-- 移动端卡片列表 -->
-    <div class="mobile-cards">
-      <div v-for="item in tableData" :key="item.id" class="mobile-card">
-        <div class="mobile-card-header">
-          <span class="plate">{{ item.plate_number }}</span>
-          <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">车辆</span>
-          <span class="value">{{ item.brand }} {{ item.model }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">类型</span>
-          <span class="value">{{ item.type_text }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">日期</span>
-          <span class="value">{{ item.maintenance_date }}</span>
-        </div>
-        <div class="mobile-card-row">
-          <span class="label">费用</span>
-          <span class="value text-danger">¥{{ item.cost }}</span>
-        </div>
-        <div class="mobile-card-row" v-if="item.garage">
-          <span class="label">维修店</span>
-          <span class="value">{{ item.garage }}</span>
-        </div>
-        <div class="mobile-card-row" v-if="item.next_maintenance_date">
-          <span class="label">下次保养</span>
-          <span class="value text-warning">{{ item.next_maintenance_date }}</span>
-        </div>
-        <div class="mobile-card-row" v-if="item.images && item.images.length">
-          <span class="label">图片</span>
-          <div class="images-preview-mini">
-            <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images)" />
-            <span v-if="item.images.length > 3" class="more">+{{ item.images.length - 3 }}</span>
+      <!-- 移动端车辆卡片 -->
+      <div class="mobile-cards">
+        <div v-for="vehicle in vehicles" :key="vehicle.id" class="mobile-card" @click="selectVehicle(vehicle)">
+          <div class="mobile-card-header">
+            <span class="plate">{{ vehicle.plate_number }}</span>
+            <el-icon><ArrowRight /></el-icon>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">车辆</span>
+            <span class="value">{{ vehicle.brand }} {{ vehicle.model }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保养状态</span>
+            <span class="value">
+              <el-tag :type="getVehicleMaintenanceStatusType(vehicle)" size="small">
+                {{ getVehicleMaintenanceStatus(vehicle) }}
+              </el-tag>
+            </span>
+          </div>
+          <div class="mobile-card-row" v-if="vehicle.latestMaintenance">
+            <span class="label">最近保养</span>
+            <span class="value"><span v-if="vehicle.latestMaintenance.mileage" class="mileage-main">{{ vehicle.latestMaintenance.mileage }}km</span><span class="date-sub">{{ vehicle.latestMaintenance.maintenance_date }}</span></span>
+          </div>
+          <div class="mobile-card-row" v-if="vehicle.latestMaintenance?.next_maintenance_date">
+            <span class="label">下次保养</span>
+            <span class="value" :class="{ 'text-danger': isOverdue(vehicle.latestMaintenance.next_maintenance_date), 'text-warning': isDueSoon(vehicle.latestMaintenance.next_maintenance_date) }">
+              <span v-if="vehicle.latestMaintenance.next_maintenance_mileage" class="mileage-main">{{ vehicle.latestMaintenance.next_maintenance_mileage }}km</span><span class="date-sub">{{ vehicle.latestMaintenance.next_maintenance_date }}</span>
+            </span>
+          </div>
+          <div class="maintenance-count">
+            <el-tag size="small" type="info">{{ vehicle.maintenanceCount || 0 }} 条记录</el-tag>
           </div>
         </div>
-        <div class="mobile-card-actions">
-          <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
-          <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
-            <template #reference>
-              <el-button type="danger" size="small">删除</el-button>
+      </div>
+
+      <!-- PC端车辆表格 -->
+      <el-card shadow="never" class="table-card">
+        <el-table :data="vehicles" v-loading="loading" stripe class="hide-mobile" @row-click="selectVehicle" style="cursor: pointer">
+          <el-table-column prop="plate_number" label="车牌" width="100" />
+          <el-table-column prop="brand" label="品牌型号" min-width="120">
+            <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
+          </el-table-column>
+          <el-table-column label="保养状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getVehicleMaintenanceStatusType(row)" size="small">
+                {{ getVehicleMaintenanceStatus(row) }}
+              </el-tag>
             </template>
-          </el-popconfirm>
+          </el-table-column>
+          <el-table-column label="最近保养" min-width="150">
+            <template #default="{ row }">
+              <div v-if="row.latestMaintenance" class="maintenance-cell">
+                <span v-if="row.latestMaintenance.mileage" class="mileage-main">{{ row.latestMaintenance.mileage }}km</span>
+                <span class="date-sub">{{ row.latestMaintenance.maintenance_date }}</span>
+              </div>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="下次保养" min-width="150">
+            <template #default="{ row }">
+              <div v-if="row.latestMaintenance?.next_maintenance_date" class="maintenance-cell" :class="{ 'text-danger': isOverdue(row.latestMaintenance.next_maintenance_date), 'text-warning': isDueSoon(row.latestMaintenance.next_maintenance_date) }">
+                <span v-if="row.latestMaintenance.next_maintenance_mileage" class="mileage-main">{{ row.latestMaintenance.next_maintenance_mileage }}km</span>
+                <span class="date-sub">{{ row.latestMaintenance.next_maintenance_date }}</span>
+              </div>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="记录数" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" type="info">{{ row.maintenanceCount || 0 }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click.stop="selectVehicle(row)">查看</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          v-model:current-page="vehiclePagination.page"
+          v-model:page-size="vehiclePagination.pageSize"
+          :total="vehiclePagination.total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, prev, pager, next"
+          background
+          class="pagination"
+          @size-change="loadVehicles"
+          @current-change="loadVehicles"
+        />
+      </el-card>
+    </template>
+
+    <!-- 车辆保养记录视图 -->
+    <template v-else>
+      <!-- 返回按钮和车辆信息 -->
+      <div class="vehicle-header">
+        <el-button @click="selectedVehicle = null" class="back-btn">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </el-button>
+        <div class="vehicle-info">
+          <span class="plate">{{ selectedVehicle.plate_number }}</span>
+          <span class="brand">{{ selectedVehicle.brand }} {{ selectedVehicle.model }}</span>
         </div>
       </div>
-    </div>
 
-    <!-- PC端表格 -->
-    <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="plate_number" label="车牌" width="90" />
-        <el-table-column prop="brand" label="品牌" width="70">
-          <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
-        </el-table-column>
-        <el-table-column prop="type_text" label="类型" min-width="120" />
-        <el-table-column prop="maintenance_date" label="保养日期" width="100" />
-        <el-table-column prop="cost" label="费用" width="80">
-          <template #default="{ row }">¥{{ row.cost }}</template>
-        </el-table-column>
-        <el-table-column prop="mileage" label="里程" width="80">
-          <template #default="{ row }">{{ row.mileage }}km</template>
-        </el-table-column>
-        <el-table-column prop="garage" label="维修店" min-width="100" show-overflow-tooltip />
-        <el-table-column label="图片" width="80">
-          <template #default="{ row }">
-            <div class="images-mini" v-if="row.images && row.images.length">
-              <img :src="getImageUrl(row.images[0])" @click="previewImages(row.images)" />
-              <span v-if="row.images.length > 1" class="badge">{{ row.images.length }}</span>
+      <!-- 操作栏 -->
+      <div class="action-bar">
+        <el-button type="primary" @click="openDialog()">
+          <el-icon><Plus /></el-icon> 添加保养
+        </el-button>
+      </div>
+
+      <!-- 移动端保养卡片 -->
+      <div class="mobile-cards">
+        <div v-for="item in maintenanceRecords" :key="item.id" class="mobile-card">
+          <div class="mobile-card-header">
+            <span class="type">{{ item.type_text }}</span>
+            <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保养日期</span>
+            <span class="value">{{ item.maintenance_date }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">费用</span>
+            <span class="value text-danger">¥{{ item.cost }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.mileage">
+            <span class="label">里程</span>
+            <span class="value">{{ item.mileage }}km</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.garage">
+            <span class="label">维修店</span>
+            <span class="value">{{ item.garage }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.next_maintenance_date">
+            <span class="label">下次保养</span>
+            <span class="value text-warning">{{ item.next_maintenance_date }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.images && item.images.length">
+            <span class="label">图片</span>
+            <div class="images-preview-mini">
+              <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images, idx)" />
+              <span v-if="item.images.length > 3" class="more">+{{ item.images.length - 3 }}</span>
             </div>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="next_maintenance_date" label="下次保养" width="100">
-          <template #default="{ row }">
-            <span v-if="row.next_maintenance_date" class="text-warning">{{ row.next_maintenance_date }}</span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status_text" label="状态" width="70">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" fixed="right" width="130">
-          <template #default="{ row }">
-            <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
-            <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
+          </div>
+          <div class="mobile-card-actions">
+            <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
+            <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
               <template #reference>
-                <el-button type="danger" link size="small">删除</el-button>
+                <el-button type="danger" size="small">删除</el-button>
               </template>
             </el-popconfirm>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, prev, pager, next"
-        background
-        class="pagination"
-        @size-change="loadData"
-        @current-change="loadData"
-      />
-    </el-card>
+          </div>
+        </div>
+        <div v-if="maintenanceRecords.length === 0 && !loading" class="empty-tip">
+          暂无保养记录，点击上方"添加保养"按钮添加
+        </div>
+      </div>
+
+      <!-- PC端保养表格 -->
+      <el-card shadow="never" class="table-card">
+        <el-table :data="maintenanceRecords" v-loading="loading" stripe class="hide-mobile">
+          <el-table-column prop="type_text" label="类型" min-width="120" />
+          <el-table-column prop="maintenance_date" label="保养日期" width="100" />
+          <el-table-column prop="cost" label="费用" width="80">
+            <template #default="{ row }">¥{{ row.cost }}</template>
+          </el-table-column>
+          <el-table-column prop="mileage" label="里程" width="80">
+            <template #default="{ row }">{{ row.mileage }}km</template>
+          </el-table-column>
+          <el-table-column prop="garage" label="维修店" min-width="100" show-overflow-tooltip />
+          <el-table-column label="图片" width="80">
+            <template #default="{ row }">
+              <div class="images-mini" v-if="row.images && row.images.length">
+                <img :src="getImageUrl(row.images[0])" @click="previewImages(row.images)" />
+                <span v-if="row.images.length > 1" class="badge">{{ row.images.length }}</span>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="next_maintenance_date" label="下次保养" width="100">
+            <template #default="{ row }">
+              <span v-if="row.next_maintenance_date" class="text-warning">{{ row.next_maintenance_date }}</span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status_text" label="状态" width="70">
+            <template #default="{ row }">
+              <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" fixed="right" width="130">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
+              <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
+                <template #reference>
+                  <el-button type="danger" link size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
 
     <!-- 添加/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="editingId ? '编辑保养' : '添加保养'" width="90%" :style="{ maxWidth: '500px' }">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
-        <el-form-item label="车辆" prop="vehicle_id">
-          <el-select v-model="form.vehicle_id" placeholder="选择车辆" style="width: 100%" @change="onVehicleChange">
-            <el-option 
-              v-for="v in vehicles" 
-              :key="v.id" 
-              :label="`${v.plate_number} - ${v.brand} ${v.model}`" 
-              :value="v.id" 
-            />
-          </el-select>
+        <el-form-item label="车辆">
+          <el-input :value="`${selectedVehicle?.plate_number} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`" disabled />
         </el-form-item>
         <el-form-item label="保养类型" prop="type">
           <el-checkbox-group v-model="form.type" class="type-checkbox-group">
@@ -243,7 +323,7 @@
     <!-- 图片预览 -->
     <el-dialog v-model="imagePreviewVisible" title="保养图片" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside">
-        <el-carousel-item v-for="(img, idx) in previewImages" :key="idx">
+        <el-carousel-item v-for="(img, idx) in previewImagesList" :key="idx">
           <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
         </el-carousel-item>
       </el-carousel>
@@ -258,14 +338,15 @@ import { maintenanceApi, vehicleApi, uploadApi } from '../api'
 
 const loading = ref(false)
 const submitting = ref(false)
-const tableData = ref<any[]>([])
+const vehicles = ref<any[]>([])
+const selectedVehicle = ref<any>(null)
+const maintenanceRecords = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const fileInput = ref<HTMLInputElement>()
 const editingId = ref('')
-const vehicles = ref<any[]>([])
 const imagePreviewVisible = ref(false)
-const previewImages = ref<string[]>([])
+const previewImagesList = ref<string[]>([])
 const previewIndex = ref(0)
 
 // 保养类型选项
@@ -283,13 +364,11 @@ const typeOptions = [
   { value: 'other', label: '其它' }
 ]
 
-const searchForm = reactive({ keyword: '', type: '' })
-const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const stats = reactive({ thisMonth: 0, pending: 0, thisMonthCost: 0, upcomingExpire: [] })
+const vehicleSearchForm = reactive({ keyword: '' })
+const vehiclePagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const stats = reactive({ thisMonth: 0, pending: 0, thisMonthCost: 0 })
 
 const form = reactive({
-  vehicle_id: '',
-  plate_number: '',
   type: [] as string[],
   maintenance_date: '',
   cost: 0,
@@ -303,7 +382,6 @@ const form = reactive({
 })
 
 const rules: FormRules = {
-  vehicle_id: [{ required: true, message: '请选择车辆', trigger: 'change' }],
   type: [{ 
     required: true, 
     validator: (_rule, value, callback) => {
@@ -328,6 +406,54 @@ function getStatusType(status: string) {
   return statusTypeMap[status] || 'info'
 }
 
+function isOverdue(date: string) {
+  return new Date(date) < new Date()
+}
+
+function isDueSoon(date: string) {
+  const now = new Date()
+  const target = new Date(date)
+  const diff = target.getTime() - now.getTime()
+  const days = diff / (1000 * 60 * 60 * 24)
+  return days > 0 && days <= 30
+}
+
+function getVehicleMaintenanceStatus(vehicle: any) {
+  if (!vehicle.latestMaintenance) return '无记录'
+  if (vehicle.latestMaintenance.status === 'pending') return '待保养'
+  
+  const currentMileage = vehicle.mileage || 0
+  const nextMileage = vehicle.latestMaintenance.next_maintenance_mileage
+  
+  // 按里程判断
+  if (nextMileage && currentMileage >= nextMileage) return '已超期'
+  if (nextMileage && currentMileage >= nextMileage - 1000) return '待保养'
+  
+  // 按日期判断
+  if (vehicle.latestMaintenance.next_maintenance_date && isOverdue(vehicle.latestMaintenance.next_maintenance_date)) return '已超期'
+  if (vehicle.latestMaintenance.next_maintenance_date && isDueSoon(vehicle.latestMaintenance.next_maintenance_date)) return '即将到期'
+  
+  return '正常'
+}
+
+function getVehicleMaintenanceStatusType(vehicle: any) {
+  if (!vehicle.latestMaintenance) return 'info'
+  if (vehicle.latestMaintenance.status === 'pending') return 'warning'
+  
+  const currentMileage = vehicle.mileage || 0
+  const nextMileage = vehicle.latestMaintenance.next_maintenance_mileage
+  
+  // 按里程判断
+  if (nextMileage && currentMileage >= nextMileage) return 'danger'
+  if (nextMileage && currentMileage >= nextMileage - 1000) return 'warning'
+  
+  // 按日期判断
+  if (vehicle.latestMaintenance.next_maintenance_date && isOverdue(vehicle.latestMaintenance.next_maintenance_date)) return 'danger'
+  if (vehicle.latestMaintenance.next_maintenance_date && isDueSoon(vehicle.latestMaintenance.next_maintenance_date)) return 'warning'
+  
+  return 'success'
+}
+
 function getImageUrl(url: string) {
   if (!url) return ''
   if (url.startsWith('http') || url.startsWith('data:')) return url
@@ -335,17 +461,36 @@ function getImageUrl(url: string) {
   return baseUrl + url
 }
 
-async function loadData() {
+// 加载车辆列表（带保养信息）
+async function loadVehicles() {
   loading.value = true
   try {
-    const [listRes, statsRes]: any[] = await Promise.all([
-      maintenanceApi.getList({ ...searchForm, ...pagination }),
+    const [vehicleRes, statsRes]: any[] = await Promise.all([
+      vehicleApi.getList({ ...vehicleSearchForm, ...vehiclePagination }),
       maintenanceApi.getStats()
     ])
-    if (listRes.success) {
-      tableData.value = listRes.data.data
-      pagination.total = listRes.data.total
+    
+    if (vehicleRes.success) {
+      const vehicleList = vehicleRes.data.data
+      const vehiclesWithMaintenance = await Promise.all(
+        vehicleList.map(async (v: any) => {
+          try {
+            const maintenanceRes: any = await maintenanceApi.getList({ vehicle_id: v.id, pageSize: 100 })
+            const records = maintenanceRes.success ? maintenanceRes.data.data : []
+            return {
+              ...v,
+              maintenanceCount: records.length,
+              latestMaintenance: records.length > 0 ? records[0] : null
+            }
+          } catch {
+            return { ...v, maintenanceCount: 0, latestMaintenance: null }
+          }
+        })
+      )
+      vehicles.value = vehiclesWithMaintenance
+      vehiclePagination.total = vehicleRes.data.total
     }
+    
     if (statsRes.success) {
       Object.assign(stats, statsRes.data)
     }
@@ -356,22 +501,31 @@ async function loadData() {
   }
 }
 
-async function loadVehicles() {
+// 选择车辆，加载其保养记录
+async function selectVehicle(vehicle: any) {
+  selectedVehicle.value = vehicle
+  await loadMaintenanceRecords()
+}
+
+// 加载选中车辆的保养记录
+async function loadMaintenanceRecords() {
+  if (!selectedVehicle.value) return
+  loading.value = true
   try {
-    const res: any = await vehicleApi.getList({ pageSize: 1000 })
+    const res: any = await maintenanceApi.getList({ vehicle_id: selectedVehicle.value.id, pageSize: 100 })
     if (res.success) {
-      vehicles.value = res.data.data
+      maintenanceRecords.value = res.data.data
     }
   } catch (error) {
-    console.error('加载车辆失败', error)
+    console.error('加载保养记录失败', error)
+  } finally {
+    loading.value = false
   }
 }
 
 function openDialog(item?: any) {
   editingId.value = item?.id || ''
   Object.assign(form, {
-    vehicle_id: item?.vehicle_id || '',
-    plate_number: item?.plate_number || '',
     type: item?.types || (item?.type ? [item.type] : []),
     maintenance_date: item?.maintenance_date || '',
     cost: item?.cost ?? 0,
@@ -383,15 +537,7 @@ function openDialog(item?: any) {
     status: item?.status || 'completed',
     remarks: item?.remarks || ''
   })
-  loadVehicles()
   dialogVisible.value = true
-}
-
-function onVehicleChange(id: string) {
-  const vehicle = vehicles.value.find(v => v.id === id)
-  if (vehicle) {
-    form.plate_number = vehicle.plate_number
-  }
 }
 
 function triggerUpload() {
@@ -403,19 +549,16 @@ async function handleImageSelect(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  // 检查文件类型
   if (!file.type.startsWith('image/')) {
     ElMessage.error('请选择图片文件')
     return
   }
 
-  // 检查文件大小
   if (file.size > 10 * 1024 * 1024) {
     ElMessage.error('图片大小不能超过10MB')
     return
   }
 
-  // 上传
   try {
     const res = await uploadApi.uploadMaintenance(file)
     if (res.success && res.data) {
@@ -429,7 +572,6 @@ async function handleImageSelect(e: Event) {
     ElMessage.error('上传失败')
   }
 
-  // 清空 input
   target.value = ''
 }
 
@@ -437,8 +579,8 @@ function removeImage(index: number) {
   form.images.splice(index, 1)
 }
 
-function previewImagesList(images: string[], index = 0) {
-  previewImages.value = images
+function previewImages(images: string[], index = 0) {
+  previewImagesList.value = images
   previewIndex.value = index
   imagePreviewVisible.value = true
 }
@@ -449,16 +591,23 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
+    const data = {
+      ...form,
+      vehicle_id: selectedVehicle.value.id,
+      plate_number: selectedVehicle.value.plate_number
+    }
+    
     let res: any
     if (editingId.value) {
-      res = await maintenanceApi.update(editingId.value, form)
+      res = await maintenanceApi.update(editingId.value, data)
     } else {
-      res = await maintenanceApi.create(form)
+      res = await maintenanceApi.create(data)
     }
     if (res.success) {
       ElMessage.success(editingId.value ? '修改成功' : '添加成功')
       dialogVisible.value = false
-      loadData()
+      loadMaintenanceRecords()
+      loadVehicles()
     }
   } catch (error) {
     console.error('提交失败', error)
@@ -472,14 +621,15 @@ async function handleDelete(id: string) {
     const res: any = await maintenanceApi.delete(id)
     if (res.success) {
       ElMessage.success('删除成功')
-      loadData()
+      loadMaintenanceRecords()
+      loadVehicles()
     }
   } catch (error) {
     console.error('删除失败', error)
   }
 }
 
-onMounted(() => loadData())
+onMounted(() => loadVehicles())
 </script>
 
 <style scoped>
@@ -540,6 +690,38 @@ onMounted(() => loadData())
   margin-top: 4px;
 }
 
+/* 车辆头部 */
+.vehicle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.back-btn {
+  padding: 8px 12px;
+}
+
+.vehicle-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-info .plate {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.vehicle-info .brand {
+  font-size: 13px;
+  color: #909399;
+}
+
 .mobile-cards {
   display: flex;
   flex-direction: column;
@@ -552,6 +734,7 @@ onMounted(() => loadData())
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
 }
 
 .mobile-card-header {
@@ -561,7 +744,7 @@ onMounted(() => loadData())
   margin-bottom: 10px;
 }
 
-.plate {
+.plate, .type {
   font-size: 15px;
   font-weight: 600;
   color: #303133;
@@ -593,6 +776,13 @@ onMounted(() => loadData())
   font-weight: 500;
 }
 
+.maintenance-count {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+
 .mobile-card-actions {
   display: flex;
   justify-content: flex-end;
@@ -600,6 +790,13 @@ onMounted(() => loadData())
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #eee;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 30px;
+  color: #909399;
+  font-size: 14px;
 }
 
 .hide-mobile {
@@ -610,8 +807,37 @@ onMounted(() => loadData())
   display: none;
 }
 
+.text-danger {
+  color: #F56C6C;
+}
+
 .text-warning {
   color: #E6A23C;
+}
+
+.text-muted {
+  color: #909399;
+}
+
+.mileage {
+  font-size: 11px;
+  color: #909399;
+  margin-left: 2px;
+}
+
+.mileage-main {
+  font-weight: 500;
+  color: #303133;
+  margin-right: 6px;
+}
+
+.date-sub {
+  font-size: 12px;
+  color: #909399;
+}
+
+.maintenance-cell {
+  white-space: nowrap;
 }
 
 @media (min-width: 768px) {

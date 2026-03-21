@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3001;
 
 // 创建uploads目录及子目录
 const UPLOADS_DIR = join(__dirname, '../uploads');
-const UPLOAD_SUBDIRS = ['inspection', 'insurance', 'violation', 'maintenance', 'other'];
+const UPLOAD_SUBDIRS = ['inspection', 'insurance', 'violation', 'maintenance', 'vehicle', 'customer', 'other'];
 
 if (!existsSync(UPLOADS_DIR)) {
   mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -72,6 +72,8 @@ const uploaders = {
   insurance: createUploader('insurance', 'insurance', true), // 支持图片和PDF
   violation: createUploader('violation', 'violation'),
   maintenance: createUploader('maintenance', 'maintenance'),
+  vehicle: createUploader('vehicle', 'vehicle'),
+  customer: createUploader('customer', 'customer'),
   other: createUploader('other', 'file')
 };
 
@@ -141,6 +143,12 @@ app.post('/api/upload/violation', authMiddleware, handleUpload(uploaders.violati
 // 保养图片上传接口
 app.post('/api/upload/maintenance', authMiddleware, handleUpload(uploaders.maintenance, 'maintenance'));
 
+// 车辆图片上传接口
+app.post('/api/upload/vehicle', authMiddleware, handleUpload(uploaders.vehicle, 'vehicle'));
+
+// 客户图片上传接口
+app.post('/api/upload/customer', authMiddleware, handleUpload(uploaders.customer, 'customer'));
+
 // 其他图片上传接口
 app.post('/api/upload', authMiddleware, handleUpload(uploaders.other, 'other'));
 
@@ -163,7 +171,7 @@ async function start() {
   try {
     await initDatabase();
     
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n🚀 服务器启动成功!`);
       console.log(`📍 地址: http://localhost:${PORT}`);
       console.log(`📚 API: http://localhost:${PORT}/api`);
