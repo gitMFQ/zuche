@@ -165,6 +165,14 @@ npm run dev
 
 ### 2026-03-21
 
+#### 服务类型标签简化
+- **修改文件**:
+  - `frontend/src/views/Orders.vue`
+  - `frontend/src/views/OrderDetail.vue`
+- **变更内容**:
+  - 服务类型标签从"基础服务/优享服务/尊享服务"简化为"基础/优享/尊享"
+  - 优化移动端显示效果
+
 #### 订单合同号功能
 - **修改文件**:
   - `backend/src/db/index.ts`

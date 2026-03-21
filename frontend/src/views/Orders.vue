@@ -266,9 +266,9 @@
         </el-form-item>
         <el-form-item label="服务类型">
           <el-radio-group v-model="form.service_type" class="service-radio-group">
-            <el-radio-button value="basic">基础服务</el-radio-button>
-            <el-radio-button value="premium">优享服务</el-radio-button>
-            <el-radio-button value="vip">尊享服务</el-radio-button>
+            <el-radio-button value="basic">基础</el-radio-button>
+            <el-radio-button value="premium">优享</el-radio-button>
+            <el-radio-button value="vip">尊享</el-radio-button>
           </el-radio-group>
         </el-form-item>
         
@@ -357,9 +357,9 @@
         </el-form-item>
         <el-form-item label="服务类型">
           <el-radio-group v-model="editForm.service_type" class="service-radio-group">
-            <el-radio-button value="basic">基础服务</el-radio-button>
-            <el-radio-button value="premium">优享服务</el-radio-button>
-            <el-radio-button value="vip">尊享服务</el-radio-button>
+            <el-radio-button value="basic">基础</el-radio-button>
+            <el-radio-button value="premium">优享</el-radio-button>
+            <el-radio-button value="vip">尊享</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="订单来源">
@@ -951,9 +951,9 @@ function getServiceTagType(type: string) {
 // 服务类型标签文字
 function getServiceLabel(type: string) {
   const labelMap: Record<string, string> = {
-    basic: '基础服务',
-    premium: '优享服务',
-    vip: '尊享服务'
+    basic: '基础',
+    premium: '优享',
+    vip: '尊享'
   }
   return labelMap[type] || type
 }
