@@ -45,6 +45,7 @@
         </div>
         <div class="mobile-card-actions">
           <el-button type="info" size="small" plain @click="openViewDialog(item)">查看</el-button>
+          <el-button type="warning" size="small" plain @click="viewOrders(item)">订单</el-button>
           <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
           <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
             <template #reference>
@@ -77,9 +78,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="240">
+        <el-table-column label="操作" fixed="right" width="280">
           <template #default="{ row }">
             <el-button type="info" link size="small" @click="openViewDialog(row)">查看</el-button>
+            <el-button type="warning" link size="small" @click="viewOrders(row)">订单</el-button>
             <el-button :type="row.is_regular ? 'warning' : 'default'" link size="small" @click="toggleRegular(row)">
               {{ row.is_regular ? '取消常用' : '设为常用' }}
             </el-button>
@@ -233,10 +235,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Star } from '@element-plus/icons-vue'
 import { customerApi, blacklistApi, uploadApi } from '../api'
 
+const router = useRouter()
 const loading = ref(false)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
@@ -478,6 +482,11 @@ async function toggleRegular(customer: any) {
   } catch (error) {
     console.error('设置常用客户失败', error)
   }
+}
+
+// 查看客户订单
+function viewOrders(customer: any) {
+  router.push({ path: '/orders', query: { customer_id: customer.id, customer_name: customer.name } })
 }
 
 onMounted(() => loadData())

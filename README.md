@@ -165,6 +165,14 @@ npm run dev
 
 ### 2026-03-21
 
+#### 客户管理添加查订单功能
+- **修改文件**:
+  - `frontend/src/views/Customers.vue`
+  - `frontend/src/views/Orders.vue`
+- **变更内容**:
+  - 客户列表添加"订单"按钮，点击跳转到订单页面查看该客户的订单
+  - 订单页面支持通过 URL 参数 customer_id 筛选客户订单
+
 #### 侧边栏菜单顺序调整
 - **修改文件**:
   - `frontend/src/layouts/MainLayout.vue`

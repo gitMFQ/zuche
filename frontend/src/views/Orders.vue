@@ -486,11 +486,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
@@ -1290,6 +1291,10 @@ async function handleCancel(row: any) {
 }
 
 onMounted(() => {
+  // 检查是否从客户管理跳转过来查看订单
+  if (route.query.customer_id) {
+    searchForm.keyword = route.query.customer_name as string || ''
+  }
   loadData()
   loadTabCounts()
 })
