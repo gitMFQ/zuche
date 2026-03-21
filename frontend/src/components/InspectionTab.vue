@@ -43,7 +43,7 @@
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.vehicle_id" class="mobile-card" :class="item.inspection_status">
         <div class="mobile-card-header">
-          <span class="plate">{{ item.plate_number }}</span>
+          <span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span>
           <el-tag :type="getStatusType(item.inspection_status)" size="small">{{ item.status_text }}</el-tag>
         </div>
         <div class="mobile-card-row">
@@ -76,7 +76,11 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="plate_number" label="车牌" width="100" />
+        <el-table-column prop="plate_number" label="车牌" width="120">
+          <template #default="{ row }">
+            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="brand" label="车辆" width="140">
           <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
         </el-table-column>
@@ -129,7 +133,7 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
         <el-form-item label="车辆">
           <div class="vehicle-info">
-            <span class="plate">{{ currentVehicle?.plate_number }}</span>
+            <span class="plate-number" :class="currentVehicle?.is_new_energy ? 'new-energy' : 'fuel'">{{ currentVehicle?.plate_number }}</span>
             <span class="detail">{{ currentVehicle?.brand }} {{ currentVehicle?.model }}</span>
           </div>
         </el-form-item>

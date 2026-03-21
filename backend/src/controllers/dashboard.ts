@@ -38,7 +38,7 @@ export function getDashboardStats(req: AuthRequest, res: Response): void {
     // 最近订单
     const recentOrders = query(`
       SELECT o.order_no, o.status, o.total_amount, o.created_at,
-        c.name as customer_name, v.plate_number
+        c.name as customer_name, v.plate_number, v.is_new_energy
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
@@ -49,7 +49,7 @@ export function getDashboardStats(req: AuthRequest, res: Response): void {
     // 即将到期的订单
     const expiringOrders = query(`
       SELECT o.order_no, o.end_date, o.total_amount,
-        c.name as customer_name, c.phone, v.plate_number
+        c.name as customer_name, c.phone, v.plate_number, v.is_new_energy
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id

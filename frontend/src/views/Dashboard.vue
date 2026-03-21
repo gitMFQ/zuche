@@ -83,7 +83,7 @@
           </div>
           <div class="mobile-card-row">
             <span class="label">车牌</span>
-            <span class="value">{{ item.plate_number }}</span>
+            <span class="value"><span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span></span>
           </div>
           <div class="mobile-card-row">
             <span class="label">到期</span>
@@ -97,7 +97,11 @@
         <el-table-column prop="order_no" label="订单号" width="140" />
         <el-table-column prop="customer_name" label="客户" />
         <el-table-column prop="phone" label="电话" width="120" />
-        <el-table-column prop="plate_number" label="车牌" width="100" />
+        <el-table-column prop="plate_number" label="车牌" width="120">
+          <template #default="{ row }">
+            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="end_date" label="到期日期" width="120" />
         <el-table-column prop="total_amount" label="金额" width="100">
           <template #default="{ row }">¥{{ row.total_amount }}</template>
@@ -127,7 +131,7 @@
           </div>
           <div class="mobile-card-row">
             <span class="label">车牌</span>
-            <span class="value">{{ item.plate_number }}</span>
+            <span class="value"><span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span></span>
           </div>
           <div class="mobile-card-row">
             <span class="label">金额</span>
@@ -144,7 +148,11 @@
       <el-table :data="stats.recentOrders" stripe size="small" class="hide-mobile">
         <el-table-column prop="order_no" label="订单号" width="140" />
         <el-table-column prop="customer_name" label="客户" />
-        <el-table-column prop="plate_number" label="车牌" width="100" />
+        <el-table-column prop="plate_number" label="车牌" width="120">
+          <template #default="{ row }">
+            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">

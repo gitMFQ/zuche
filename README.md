@@ -170,18 +170,22 @@ npm run dev
   - `backend/src/db/index.ts`
   - `backend/src/controllers/vehicles.ts`
   - `backend/src/controllers/orders.ts`
+  - `backend/src/controllers/inspection.ts`
+  - `backend/src/controllers/dashboard.ts`
   - `frontend/src/style.css`
   - `frontend/src/components/VehiclesTab.vue`
   - `frontend/src/components/MaintenanceTab.vue`
   - `frontend/src/components/InsuranceTab.vue`
   - `frontend/src/components/ViolationsTab.vue`
+  - `frontend/src/components/InspectionTab.vue`
   - `frontend/src/views/Orders.vue`
   - `frontend/src/views/OrderDetail.vue`
+  - `frontend/src/views/Dashboard.vue`
 - **变更内容**:
   - 车辆表新增 is_new_energy 字段（是否新能源车）
   - 车辆表单添加"新能源"开关选项
   - 所有显示车牌号的地方添加车牌样式：新能源绿底白字，非新能源蓝底白字
-  - 订单列表和详情页同步显示车牌样式
+  - 涵盖模块：车辆管理、订单、保养、保险、违章、年检证、首页仪表盘
 
 #### 订单管理标签页分类显示
 - **修改文件**:

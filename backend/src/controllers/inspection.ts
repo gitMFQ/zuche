@@ -23,6 +23,7 @@ export function getInspectionList(req: AuthRequest, res: Response): void {
         v.model,
         v.color,
         v.status as vehicle_status,
+        v.is_new_energy,
         i.id as inspection_id,
         i.expiry_date,
         i.certificate_image,
