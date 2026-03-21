@@ -165,6 +165,17 @@ npm run dev
 
 ### 2026-03-21
 
+#### 订单合同号功能
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/orders.ts`
+  - `frontend/src/views/Orders.vue`
+  - `frontend/src/views/OrderDetail.vue`
+- **变更内容**:
+  - 订单表新增 `contract_number` 字段（合同号，非必填）
+  - 新建/编辑订单时可填写合同号
+  - 订单详情页显示合同号
+
 #### 新能源车标识和车牌样式
 - **修改文件**:
   - `backend/src/db/index.ts`

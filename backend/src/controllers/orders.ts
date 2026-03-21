@@ -146,7 +146,9 @@ export function createOrder(req: AuthRequest, res: Response): void {
       // 服务类型：basic/premium/vip
       service_type,
       // 免押相关
-      deposit_waived, deposit_waived_expiry
+      deposit_waived, deposit_waived_expiry,
+      // 合同号
+      contract_number
     } = req.body;
 
     // 验证必填字段（日租金和总租金至少填一个）
@@ -253,9 +255,9 @@ export function createOrder(req: AuthRequest, res: Response): void {
 
     // 创建订单
     execute(
-      `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orderNo, customerId, vehicle_id, userId, start_date, end_date, finalDailyRate || 0, finalDeposit, totalAmount, remarks || null, source_id || null, commissionRate, netAmount, service_type || 'basic', isDepositWaived, depositWaivedExpiry, currentTime, currentTime]
+      `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, orderNo, customerId, vehicle_id, userId, start_date, end_date, finalDailyRate || 0, finalDeposit, totalAmount, remarks || null, source_id || null, commissionRate, netAmount, service_type || 'basic', isDepositWaived, depositWaivedExpiry, contract_number || null, currentTime, currentTime]
     );
 
     // 更新车辆状态
@@ -354,7 +356,8 @@ export function updateOrder(req: AuthRequest, res: Response): void {
       id_card_images, license_images,
       vehicle_id, source_id, start_date, end_date, 
       daily_rate, total_amount, deposit, remarks,
-      service_type, deposit_waived, deposit_waived_expiry
+      service_type, deposit_waived, deposit_waived_expiry,
+      contract_number
     } = req.body;
 
     const order = queryOne('SELECT * FROM orders WHERE id = ?', [id]);
@@ -496,7 +499,7 @@ export function updateOrder(req: AuthRequest, res: Response): void {
         vehicle_id = ?, source_id = ?, source_name = ?, commission_rate = ?, 
         start_date = ?, end_date = ?, daily_rate = ?, total_amount = ?, net_amount = ?, 
         deposit = ?, deposit_waived = ?, deposit_waived_expiry = ?, service_type = ?, 
-        remarks = ?, updated_at = ? 
+        contract_number = ?, remarks = ?, updated_at = ? 
        WHERE id = ?`,
       [
         vehicle_id || order.vehicle_id, 
@@ -504,7 +507,7 @@ export function updateOrder(req: AuthRequest, res: Response): void {
         startDate, endDate, 
         finalDailyRate || 0, totalAmount, netAmount, 
         finalDeposit, isDepositWaived, depositWaivedExpiry, service_type || order.service_type,
-        remarks ?? order.remarks, currentTime, id
+        contract_number ?? order.contract_number, remarks ?? order.remarks, currentTime, id
       ]
     );
 

@@ -88,6 +88,10 @@ function runMigrations(db: Database): void {
         db.run('ALTER TABLE orders ADD COLUMN return_image TEXT');
         console.log('已添加return_image字段到订单表');
       }
+      if (!columns.includes('contract_number')) {
+        db.run('ALTER TABLE orders ADD COLUMN contract_number TEXT');
+        console.log('已添加contract_number字段到订单表');
+      }
     }
     
     // 检查订单来源表是否存在

@@ -22,6 +22,10 @@
             <span class="label">订单号</span>
             <span class="value">{{ order.order_no }}</span>
           </div>
+          <div class="info-row" v-if="order.contract_number">
+            <span class="label">合同号</span>
+            <span class="value">{{ order.contract_number }}</span>
+          </div>
           <div class="info-row">
             <span class="label">客户</span>
             <span class="value">{{ order.customer_name }}</span>
@@ -379,6 +383,9 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="合同号">
+          <el-input v-model="editForm.contract_number" placeholder="合同号（选填）" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="editForm.remarks" type="textarea" :rows="2" placeholder="备注信息" />
         </el-form-item>
@@ -500,6 +507,7 @@ const editForm = reactive({
   deposit_waived: false,
   deposit_waived_expiry: '',
   service_type: 'basic',
+  contract_number: '',
   remarks: ''
 })
 
@@ -929,6 +937,7 @@ async function openEditDialog() {
     deposit_waived: order.value.deposit_waived === 1,
     deposit_waived_expiry: order.value.deposit_waived_expiry || '',
     service_type: order.value.service_type || 'basic',
+    contract_number: order.value.contract_number || '',
     remarks: order.value.remarks || ''
   })
   editDialogVisible.value = true

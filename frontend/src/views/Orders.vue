@@ -283,6 +283,9 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="合同号">
+          <el-input v-model="form.contract_number" placeholder="合同号（选填）" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
         </el-form-item>
@@ -368,6 +371,9 @@
               :value="s.id" 
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="合同号">
+          <el-input v-model="editForm.contract_number" placeholder="合同号（选填）" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="editForm.remarks" type="textarea" :rows="2" placeholder="备注信息" />
@@ -539,6 +545,7 @@ const form = reactive({
   deposit_waived: false,
   deposit_waived_expiry: '',
   service_type: 'basic',
+  contract_number: '',
   remarks: ''
 })
 
@@ -568,6 +575,7 @@ const editForm = reactive({
   deposit_waived_expiry: '',
   service_type: 'basic',
   source_id: '',
+  contract_number: '',
   remarks: ''
 })
 
@@ -847,6 +855,7 @@ function openDialog() {
     deposit_waived: false,
     deposit_waived_expiry: '',
     service_type: 'basic',
+    contract_number: '',
     remarks: ''
   })
   selectedRegularCustomer.value = ''
@@ -1019,6 +1028,7 @@ async function openEditDialog(row: any) {
     deposit_waived_expiry: row.deposit_waived_expiry || '',
     service_type: row.service_type || 'basic',
     source_id: row.source_id || '',
+    contract_number: row.contract_number || '',
     remarks: row.remarks || ''
   })
   editDialogVisible.value = true
