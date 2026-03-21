@@ -11,7 +11,10 @@
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
-          <span class="name">{{ item.name }}</span>
+          <span class="name">
+            <span class="color-dot" :style="{ background: item.color || '#409EFF' }"></span>
+            {{ item.name }}
+          </span>
         </div>
         <div class="mobile-card-row">
           <span class="label">服务费</span>
@@ -34,7 +37,12 @@
 
     <!-- PC端表格 -->
     <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-      <el-table-column prop="name" label="来源名称" min-width="150" />
+      <el-table-column prop="name" label="来源名称" min-width="150">
+        <template #default="{ row }">
+          <span class="color-dot" :style="{ background: row.color || '#409EFF' }"></span>
+          {{ row.name }}
+        </template>
+      </el-table-column>
       <el-table-column prop="commission_rate" label="服务费" width="120">
         <template #default="{ row }">
           <span class="text-warning">{{ row.commission_rate }}%</span>
@@ -61,6 +69,12 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
         <el-form-item label="来源名称" prop="name">
           <el-input v-model="form.name" placeholder="如：携程、神州租车、门店直客等" />
+        </el-form-item>
+        <el-form-item label="颜色">
+          <div class="color-picker-row">
+            <el-color-picker v-model="form.color" :predefine="predefineColors" />
+            <span class="color-value">{{ form.color }}</span>
+          </div>
         </el-form-item>
         <el-form-item label="服务费" prop="commission_rate">
           <el-input v-model.number="form.commission_rate" type="number" :min="0" :max="100" placeholder="服务费比例">
@@ -96,8 +110,23 @@ const editingId = ref('')
 const form = reactive({
   name: '',
   commission_rate: 0,
+  color: '#409EFF',
   remarks: ''
 })
+
+// 预定义颜色
+const predefineColors = [
+  '#409EFF',
+  '#67C23A',
+  '#E6A23C',
+  '#F56C6C',
+  '#909399',
+  '#00D7FF',
+  '#9C27B0',
+  '#FF9800',
+  '#795548',
+  '#607D8B'
+]
 
 const rules: FormRules = {
   name: [{ required: true, message: '请输入来源名称', trigger: 'blur' }],
@@ -124,6 +153,7 @@ function openDialog(data?: any) {
   Object.assign(form, {
     name: data?.name || '',
     commission_rate: data?.commission_rate || 0,
+    color: data?.color || '#409EFF',
     remarks: data?.remarks || ''
   })
   dialogVisible.value = true
@@ -199,6 +229,29 @@ onMounted(() => loadData())
   font-size: 15px;
   font-weight: 600;
   color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-value {
+  font-size: 13px;
+  color: #606266;
+  font-family: monospace;
 }
 
 .mobile-card-row {
