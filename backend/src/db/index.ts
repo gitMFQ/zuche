@@ -257,6 +257,10 @@ function runMigrations(db: Database): void {
         db.run('ALTER TABLE vehicles ADD COLUMN registration_image TEXT');
         console.log('已添加registration_image字段到车辆表');
       }
+      if (!columns.includes('is_new_energy')) {
+        db.run('ALTER TABLE vehicles ADD COLUMN is_new_energy INTEGER DEFAULT 0');
+        console.log('已添加is_new_energy字段到车辆表');
+      }
     }
     
     // 检查customers表是否有照片字段

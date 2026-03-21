@@ -38,7 +38,7 @@
       <div class="mobile-cards">
         <div v-for="vehicle in vehicles" :key="vehicle.id" class="mobile-card" @click="selectVehicle(vehicle)">
           <div class="mobile-card-header">
-            <span class="plate">{{ vehicle.plate_number }}</span>
+            <span class="plate-number" :class="vehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ vehicle.plate_number }}</span>
             <el-icon><ArrowRight /></el-icon>
           </div>
           <div class="mobile-card-row">
@@ -74,7 +74,11 @@
       <!-- PC端车辆表格 -->
       <el-card shadow="never" class="table-card">
         <el-table :data="vehicles" v-loading="loading" stripe class="hide-mobile" @row-click="selectVehicle" style="cursor: pointer">
-          <el-table-column prop="plate_number" label="车牌" width="100" />
+          <el-table-column prop="plate_number" label="车牌" width="120">
+            <template #default="{ row }">
+              <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="brand" label="品牌型号" min-width="120">
             <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
           </el-table-column>
@@ -133,7 +137,7 @@
           <el-icon><ArrowLeft /></el-icon> 返回
         </el-button>
         <div class="vehicle-info">
-          <span class="plate">{{ selectedVehicle.plate_number }}</span>
+          <span class="plate-number" :class="selectedVehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ selectedVehicle.plate_number }}</span>
           <span class="brand">{{ selectedVehicle.brand }} {{ selectedVehicle.model }}</span>
         </div>
       </div>

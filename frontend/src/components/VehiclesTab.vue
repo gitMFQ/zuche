@@ -30,7 +30,7 @@
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
-          <span class="plate-number">{{ item.plate_number }}</span>
+          <span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span>
           <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
         </div>
         <div class="mobile-card-row">
@@ -75,7 +75,11 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="plate_number" label="车牌号" width="100" />
+        <el-table-column prop="plate_number" label="车牌号" width="120">
+          <template #default="{ row }">
+            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="brand" label="品牌" width="80" />
         <el-table-column prop="model" label="型号" width="100" />
         <el-table-column prop="color" label="颜色" width="60" />
@@ -131,6 +135,9 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
         <el-form-item label="车牌号" prop="plate_number">
           <el-input v-model="form.plate_number" placeholder="请输入车牌号" />
+        </el-form-item>
+        <el-form-item label="新能源">
+          <el-switch v-model="form.is_new_energy" active-text="是" inactive-text="否" />
         </el-form-item>
         <el-form-item label="品牌" prop="brand">
           <el-input v-model="form.brand" placeholder="请输入品牌" />
@@ -231,7 +238,8 @@
     <el-dialog v-model="viewDialogVisible" title="车辆详情" width="90%" :style="{ maxWidth: '550px' }">
       <el-descriptions :column="2" border size="default">
         <el-descriptions-item label="车牌号" :span="2">
-          <span class="view-value highlight">{{ viewData.plate_number }}</span>
+          <span class="plate-number" :class="viewData.is_new_energy ? 'new-energy' : 'fuel'">{{ viewData.plate_number }}</span>
+          <el-tag v-if="viewData.is_new_energy" type="success" size="small" style="margin-left: 8px">新能源</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="品牌">{{ viewData.brand }}</el-descriptions-item>
         <el-descriptions-item label="型号">{{ viewData.model }}</el-descriptions-item>
@@ -306,6 +314,7 @@ const form = reactive({
   engine_number: '',
   license_image: '',
   registration_image: '',
+  is_new_energy: false,
   status: 'available',
   remarks: ''
 })
@@ -376,6 +385,7 @@ function openDialog(row?: any) {
       engine_number: row.engine_number || '',
       license_image: row.license_image || '',
       registration_image: row.registration_image || '',
+      is_new_energy: row.is_new_energy === 1,
       status: row.status || 'available',
       remarks: row.remarks || ''
     })
@@ -394,6 +404,7 @@ function openDialog(row?: any) {
       engine_number: '',
       license_image: '',
       registration_image: '',
+      is_new_energy: false,
       status: 'available',
       remarks: ''
     })

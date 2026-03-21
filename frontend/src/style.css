@@ -118,3 +118,28 @@ a:active {
     gap: 10px;
   }
 }
+
+/* 车牌号样式 */
+.plate-number {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 1px;
+}
+
+/* 新能源车牌 - 绿底白字 */
+.plate-number.new-energy {
+  background: linear-gradient(135deg, #00a870 0%, #00c853 100%);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 168, 112, 0.3);
+}
+
+/* 非新能源车牌 - 蓝底白字 */
+.plate-number.fuel {
+  background: linear-gradient(135deg, #0066cc 0%, #0080ff 100%);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+}

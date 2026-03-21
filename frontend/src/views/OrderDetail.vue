@@ -36,7 +36,10 @@
           </div>
           <div class="info-row">
             <span class="label">车辆</span>
-            <span class="value">{{ order.plate_number }} | {{ order.brand }} {{ order.model }}</span>
+            <span class="value">
+              <span class="plate-number" :class="order.is_new_energy ? 'new-energy' : 'fuel'">{{ order.plate_number }}</span>
+              | {{ order.brand }} {{ order.model }}
+            </span>
           </div>
           <div class="info-row">
             <span class="label">取车时间</span>

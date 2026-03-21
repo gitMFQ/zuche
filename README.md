@@ -165,6 +165,24 @@ npm run dev
 
 ### 2026-03-21
 
+#### 新能源车标识和车牌样式
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/vehicles.ts`
+  - `backend/src/controllers/orders.ts`
+  - `frontend/src/style.css`
+  - `frontend/src/components/VehiclesTab.vue`
+  - `frontend/src/components/MaintenanceTab.vue`
+  - `frontend/src/components/InsuranceTab.vue`
+  - `frontend/src/components/ViolationsTab.vue`
+  - `frontend/src/views/Orders.vue`
+  - `frontend/src/views/OrderDetail.vue`
+- **变更内容**:
+  - 车辆表新增 is_new_energy 字段（是否新能源车）
+  - 车辆表单添加"新能源"开关选项
+  - 所有显示车牌号的地方添加车牌样式：新能源绿底白字，非新能源蓝底白字
+  - 订单列表和详情页同步显示车牌样式
+
 #### 订单管理标签页分类显示
 - **修改文件**:
   - `frontend/src/views/Orders.vue`

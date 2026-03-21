@@ -48,7 +48,10 @@
         </div>
         <div class="mobile-card-row">
           <span class="label">车辆</span>
-          <span class="value">{{ item.plate_number }} | {{ item.brand }}</span>
+          <span class="value">
+            <span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span>
+            | {{ item.brand }}
+          </span>
         </div>
         <div class="mobile-card-row">
           <span class="label">取车</span>
@@ -87,7 +90,11 @@
         <el-table-column prop="order_no" label="订单号" width="140" />
         <el-table-column prop="customer_name" label="客户" width="80" />
         <el-table-column prop="customer_phone" label="电话" width="110" />
-        <el-table-column prop="plate_number" label="车牌" width="80" />
+        <el-table-column prop="plate_number" label="车牌" width="110">
+          <template #default="{ row }">
+            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="start_date" label="取车" width="130">
           <template #default="{ row }">{{ formatDateTime(row.start_date) }}</template>
         </el-table-column>

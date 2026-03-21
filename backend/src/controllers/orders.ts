@@ -19,7 +19,7 @@ export function getOrders(req: AuthRequest, res: Response): void {
     let sql = `
       SELECT o.*, 
         c.name as customer_name, c.phone as customer_phone,
-        v.plate_number, v.brand, v.model,
+        v.plate_number, v.brand, v.model, v.is_new_energy,
         u.name as operator_name,
         s.name as source_name
       FROM orders o
@@ -77,7 +77,7 @@ export function getOrder(req: AuthRequest, res: Response): void {
       SELECT o.*, 
         c.name as customer_name, c.phone as customer_phone, c.id_card, c.license_number,
         c.id_card_images, c.license_images,
-        v.plate_number, v.brand, v.model, v.color,
+        v.plate_number, v.brand, v.model, v.color, v.is_new_energy,
         u.name as operator_name,
         s.name as source_name
       FROM orders o
