@@ -39,8 +39,7 @@
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card" @click="$router.push(`/orders/${item.id}`)">
         <div class="mobile-card-header">
-          <span class="order-no">
-            {{ item.order_no }}
+          <span>
             <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
           </span>
           <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
@@ -53,7 +52,7 @@
           <span class="label">车辆</span>
           <span class="value">
             <span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span>
-            | {{ item.brand }}
+            | {{ item.model }}
           </span>
         </div>
         <div class="mobile-card-row">
@@ -90,7 +89,6 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile" @row-click="handleRowClick">
-        <el-table-column prop="order_no" label="订单号" width="140" />
         <el-table-column prop="customer_name" label="客户" width="80" />
         <el-table-column prop="customer_phone" label="电话" width="110" />
         <el-table-column prop="plate_number" label="车牌" width="110">
