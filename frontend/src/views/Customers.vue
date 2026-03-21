@@ -43,6 +43,12 @@
           <span class="label">驾照到期</span>
           <span class="value">{{ item.license_expiry }}</span>
         </div>
+        <div class="mobile-card-row" v-if="item.source_name">
+          <span class="label">来源</span>
+          <span class="value">
+            <span class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+          </span>
+        </div>
         <div class="mobile-card-actions">
           <el-button type="info" size="small" plain @click="openViewDialog(item)">查看</el-button>
           <el-button type="warning" size="small" plain @click="viewOrders(item)">订单</el-button>
@@ -71,6 +77,12 @@
         <el-table-column prop="id_card" label="身份证号" width="180" />
         <el-table-column prop="license_number" label="驾驶证号" width="180" />
         <el-table-column prop="license_expiry" label="驾照到期" width="100" />
+        <el-table-column prop="source_name" label="来源" width="90">
+          <template #default="{ row }">
+            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="70">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
@@ -164,6 +176,16 @@
             <el-radio :value="0">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="客户来源">
+          <el-select v-model="form.source_id" placeholder="选择客户来源（可选）" style="width: 100%" clearable>
+            <el-option 
+              v-for="s in orderSources" 
+              :key="s.id" 
+              :label="s.name" 
+              :value="s.id" 
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
         </el-form-item>
@@ -199,6 +221,10 @@
           <span :class="{ 'text-danger': isLicenseExpiringSoon(viewData.license_expiry) }">
             {{ viewData.license_expiry || '-' }}
           </span>
+        </el-descriptions-item>
+        <el-descriptions-item label="客户来源">
+          <span v-if="viewData.source_name" class="source-tag" :style="{ background: viewData.source_color || '#409EFF' }">{{ viewData.source_name }}</span>
+          <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item label="地址">{{ viewData.address || '-' }}</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -238,7 +264,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Star } from '@element-plus/icons-vue'
-import { customerApi, blacklistApi, uploadApi } from '../api'
+import { customerApi, blacklistApi, uploadApi, orderSourceApi } from '../api'
 
 const router = useRouter()
 const loading = ref(false)
@@ -254,6 +280,7 @@ const previewImagesList = ref<string[]>([])
 const previewIndex = ref(0)
 const viewDialogVisible = ref(false)
 const viewData = reactive<any>({})
+const orderSources = ref<any[]>([])
 
 const searchForm = reactive({ keyword: '', status: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
@@ -268,6 +295,7 @@ const form = reactive({
   license_expiry: '',
   address: '',
   status: 1,
+  source_id: '',
   remarks: ''
 })
 
@@ -373,6 +401,7 @@ function isLicenseExpiringSoon(date: string) {
 
 function openDialog(row?: any) {
   editingId.value = row?.id || ''
+  loadOrderSources()
   if (row) {
     Object.assign(form, {
       name: row.name,
@@ -384,6 +413,7 @@ function openDialog(row?: any) {
       license_expiry: row.license_expiry,
       address: row.address,
       status: row.status,
+      source_id: row.source_id || '',
       remarks: row.remarks
     })
   } else {
@@ -397,6 +427,7 @@ function openDialog(row?: any) {
       license_expiry: '',
       address: '',
       status: 1,
+      source_id: '',
       remarks: ''
     })
   }
@@ -481,6 +512,18 @@ async function toggleRegular(customer: any) {
     }
   } catch (error) {
     console.error('设置常用客户失败', error)
+  }
+}
+
+// 加载订单来源
+async function loadOrderSources() {
+  try {
+    const res: any = await orderSourceApi.getList({ pageSize: 100 })
+    if (res.success) {
+      orderSources.value = Array.isArray(res.data) ? res.data : (res.data.data || [])
+    }
+  } catch (error) {
+    console.error('加载订单来源失败', error)
   }
 }
 
@@ -722,5 +765,18 @@ onMounted(() => loadData())
 
 .text-danger {
   color: #F56C6C;
+}
+
+.text-muted {
+  color: #909399;
+}
+
+/* 来源标签 */
+.source-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #fff;
 }
 </style>

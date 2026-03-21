@@ -7,21 +7,26 @@ export function getCustomers(req: AuthRequest, res: Response): void {
   try {
     const { page = 1, pageSize = 10, keyword = '', status = '' } = req.query;
     
-    let sql = 'SELECT * FROM customers WHERE 1=1';
+    let sql = `
+      SELECT c.*, s.color as source_color
+      FROM customers c
+      LEFT JOIN order_sources s ON c.source_id = s.id
+      WHERE 1=1
+    `;
     const params: any[] = [];
 
     if (keyword) {
-      sql += ' AND (name LIKE ? OR phone LIKE ? OR id_card LIKE ?)';
+      sql += ' AND (c.name LIKE ? OR c.phone LIKE ? OR c.id_card LIKE ?)';
       const likeKeyword = `%${keyword}%`;
       params.push(likeKeyword, likeKeyword, likeKeyword);
     }
 
     if (status !== '') {
-      sql += ' AND status = ?';
+      sql += ' AND c.status = ?';
       params.push(Number(status));
     }
 
-    sql += ' ORDER BY created_at DESC';
+    sql += ' ORDER BY c.created_at DESC';
 
     const result = queryWithPagination(sql, params, Number(page), Number(pageSize));
     
@@ -57,7 +62,12 @@ export function getCustomers(req: AuthRequest, res: Response): void {
 export function getCustomer(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
-    const customer = queryOne('SELECT * FROM customers WHERE id = ?', [id]);
+    const customer = queryOne(`
+      SELECT c.*, s.color as source_color
+      FROM customers c
+      LEFT JOIN order_sources s ON c.source_id = s.id
+      WHERE c.id = ?
+    `, [id]);
 
     if (!customer) {
       res.status(404).json({ success: false, message: '客户不存在' });
@@ -84,7 +94,7 @@ export function getCustomer(req: AuthRequest, res: Response): void {
 // 创建客户
 export function createCustomer(req: AuthRequest, res: Response): void {
   try {
-    const { name, phone, id_card, license_number, license_expiry, address, remarks, id_card_images, license_images } = req.body;
+    const { name, phone, id_card, license_number, license_expiry, address, remarks, id_card_images, license_images, source_id } = req.body;
 
     if (!name || !phone) {
       res.status(400).json({ success: false, message: '姓名和手机号不能为空' });
@@ -107,16 +117,25 @@ export function createCustomer(req: AuthRequest, res: Response): void {
       }
     }
 
+    // 获取来源名称
+    let sourceName = null;
+    if (source_id) {
+      const source = queryOne('SELECT name FROM order_sources WHERE id = ? AND status = 1', [source_id]);
+      if (source) {
+        sourceName = source.name;
+      }
+    }
+
     const id = generateId();
     const currentTime = now();
 
     execute(
-      `INSERT INTO customers (id, name, phone, id_card, license_number, license_expiry, address, remarks, id_card_images, license_images, status, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      `INSERT INTO customers (id, name, phone, id_card, license_number, license_expiry, address, remarks, id_card_images, license_images, source_id, source_name, status, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
       [id, name, phone, id_card || null, license_number || null, license_expiry || null, address || null, remarks || null, 
        id_card_images ? JSON.stringify(id_card_images) : null, 
        license_images ? JSON.stringify(license_images) : null, 
-       currentTime, currentTime]
+       source_id || null, sourceName, currentTime, currentTime]
     );
 
     res.json({ 
@@ -134,7 +153,7 @@ export function createCustomer(req: AuthRequest, res: Response): void {
 export function updateCustomer(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
-    const { name, phone, id_card, license_number, license_expiry, address, remarks, status, id_card_images, license_images } = req.body;
+    const { name, phone, id_card, license_number, license_expiry, address, remarks, status, id_card_images, license_images, source_id } = req.body;
 
     const customer = queryOne('SELECT id FROM customers WHERE id = ?', [id]);
     if (!customer) {
@@ -151,12 +170,21 @@ export function updateCustomer(req: AuthRequest, res: Response): void {
       }
     }
 
+    // 获取来源名称
+    let sourceName = null;
+    if (source_id) {
+      const source = queryOne('SELECT name FROM order_sources WHERE id = ? AND status = 1', [source_id]);
+      if (source) {
+        sourceName = source.name;
+      }
+    }
+
     execute(
-      `UPDATE customers SET name = ?, phone = ?, id_card = ?, license_number = ?, license_expiry = ?, address = ?, remarks = ?, status = ?, id_card_images = ?, license_images = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE customers SET name = ?, phone = ?, id_card = ?, license_number = ?, license_expiry = ?, address = ?, remarks = ?, status = ?, id_card_images = ?, license_images = ?, source_id = ?, source_name = ?, updated_at = ? WHERE id = ?`,
       [name, phone, id_card || null, license_number || null, license_expiry || null, address || null, remarks || null, status, 
        id_card_images ? JSON.stringify(id_card_images) : null, 
        license_images ? JSON.stringify(license_images) : null, 
-       now(), id]
+       source_id || null, sourceName, now(), id]
     );
 
     res.json({ success: true, message: '客户更新成功' });

@@ -294,6 +294,14 @@ function runMigrations(db: Database): void {
         db.run('ALTER TABLE customers ADD COLUMN is_regular INTEGER DEFAULT 0');
         console.log('已添加is_regular字段到客户表');
       }
+      if (!columns.includes('source_id')) {
+        db.run('ALTER TABLE customers ADD COLUMN source_id TEXT');
+        console.log('已添加source_id字段到客户表');
+      }
+      if (!columns.includes('source_name')) {
+        db.run('ALTER TABLE customers ADD COLUMN source_name TEXT');
+        console.log('已添加source_name字段到客户表');
+      }
     }
     
     // 检查系统设置表是否存在

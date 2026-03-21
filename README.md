@@ -165,6 +165,16 @@ npm run dev
 
 ### 2026-03-21
 
+#### 客户来源标记功能
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/controllers/customers.ts`
+  - `frontend/src/views/Customers.vue`
+- **变更内容**:
+  - 客户表新增 source_id 和 source_name 字段
+  - 客户创建/编辑时可选择客户来源
+  - 客户列表和详情显示来源标签（带颜色）
+
 #### 客户管理添加查订单功能
 - **修改文件**:
   - `frontend/src/views/Customers.vue`
