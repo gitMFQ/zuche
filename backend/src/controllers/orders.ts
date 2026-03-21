@@ -21,7 +21,7 @@ export function getOrders(req: AuthRequest, res: Response): void {
         c.name as customer_name, c.phone as customer_phone,
         v.plate_number, v.brand, v.model, v.is_new_energy,
         u.name as operator_name,
-        s.name as source_name
+        s.name as source_name, s.color as source_color
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
@@ -79,7 +79,7 @@ export function getOrder(req: AuthRequest, res: Response): void {
         c.id_card_images, c.license_images,
         v.plate_number, v.brand, v.model, v.color, v.is_new_energy,
         u.name as operator_name,
-        s.name as source_name
+        s.name as source_name, s.color as source_color
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id

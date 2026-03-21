@@ -98,12 +98,23 @@ function runMigrations(db: Database): void {
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           commission_rate REAL DEFAULT 0,
+          color TEXT DEFAULT '#409EFF',
           remarks TEXT,
           status INTEGER DEFAULT 1,
           created_at TEXT DEFAULT CURRENT_TIMESTAMP,
           updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
       `);
+    }
+    
+    // 检查订单来源表是否有 color 字段
+    const sourceColumns = db.exec("PRAGMA table_info(order_sources)");
+    if (sourceColumns.length > 0) {
+      const columns = sourceColumns[0].values.map((col: any) => col[1]);
+      if (!columns.includes('color')) {
+        db.run('ALTER TABLE order_sources ADD COLUMN color TEXT DEFAULT "#409EFF"');
+        console.log('已添加color字段到订单来源表');
+      }
     }
     
     // 检查订单来源表是否为空，如果为空则插入默认数据

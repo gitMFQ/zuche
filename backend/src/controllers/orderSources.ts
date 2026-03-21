@@ -51,7 +51,7 @@ export function getOrderSource(req: AuthRequest, res: Response): void {
 // 创建订单来源
 export function createOrderSource(req: AuthRequest, res: Response): void {
   try {
-    const { name, commission_rate, remarks } = req.body;
+    const { name, commission_rate, color, remarks } = req.body;
 
     if (!name) {
       res.status(400).json({ success: false, message: '来源名称不能为空' });
@@ -69,13 +69,13 @@ export function createOrderSource(req: AuthRequest, res: Response): void {
     const currentTime = now();
 
     execute(
-      'INSERT INTO order_sources (id, name, commission_rate, remarks, status, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)',
-      [id, name, commission_rate || 0, remarks || null, currentTime, currentTime]
+      'INSERT INTO order_sources (id, name, commission_rate, color, remarks, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)',
+      [id, name, commission_rate || 0, color || '#409EFF', remarks || null, currentTime, currentTime]
     );
 
     res.json({ 
       success: true, 
-      data: { id, name, commission_rate: commission_rate || 0 },
+      data: { id, name, commission_rate: commission_rate || 0, color: color || '#409EFF' },
       message: '订单来源创建成功' 
     });
   } catch (error) {
@@ -88,7 +88,7 @@ export function createOrderSource(req: AuthRequest, res: Response): void {
 export function updateOrderSource(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
-    const { name, commission_rate, remarks } = req.body;
+    const { name, commission_rate, color, remarks } = req.body;
 
     const source = queryOne('SELECT * FROM order_sources WHERE id = ?', [id]);
     if (!source) {
@@ -108,8 +108,8 @@ export function updateOrderSource(req: AuthRequest, res: Response): void {
     const currentTime = now();
 
     execute(
-      'UPDATE order_sources SET name = ?, commission_rate = ?, remarks = ?, updated_at = ? WHERE id = ?',
-      [name || source.name, commission_rate ?? source.commission_rate, remarks ?? source.remarks, currentTime, id]
+      'UPDATE order_sources SET name = ?, commission_rate = ?, color = ?, remarks = ?, updated_at = ? WHERE id = ?',
+      [name || source.name, commission_rate ?? source.commission_rate, color || source.color, remarks ?? source.remarks, currentTime, id]
     );
 
     res.json({ success: true, message: '订单来源更新成功' });

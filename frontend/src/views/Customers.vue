@@ -221,7 +221,6 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="viewDialogVisible = false">关闭</el-button>
         <el-button :type="viewData.is_regular ? 'warning' : 'default'" @click="toggleRegular(viewData)">
           {{ viewData.is_regular ? '取消常用' : '设为常用' }}
         </el-button>

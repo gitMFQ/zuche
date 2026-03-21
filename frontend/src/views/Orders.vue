@@ -39,7 +39,10 @@
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card" @click="$router.push(`/orders/${item.id}`)">
         <div class="mobile-card-header">
-          <span class="order-no">{{ item.order_no }}</span>
+          <span class="order-no">
+            {{ item.order_no }}
+            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+          </span>
           <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
         </div>
         <div class="mobile-card-row">
@@ -107,6 +110,12 @@
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="source_name" label="来源" width="90">
+          <template #default="{ row }">
+            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+            <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" fixed="right" width="280">
@@ -1617,5 +1626,16 @@ onMounted(() => {
 .single-upload .upload-btn .el-icon {
   font-size: 24px;
   margin-bottom: 4px;
+}
+
+/* 来源标签 */
+.source-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #fff;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 </style>

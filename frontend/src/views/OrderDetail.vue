@@ -83,7 +83,9 @@
           </div>
           <div class="info-row" v-if="order.source_name">
             <span class="label">订单来源</span>
-            <span class="value">{{ order.source_name }}</span>
+            <span class="value">
+              <span class="source-tag" :style="{ background: order.source_color || '#409EFF' }">{{ order.source_name }}</span>
+            </span>
           </div>
           <div class="info-row" v-if="order.commission_rate > 0">
             <span class="label">服务费</span>
@@ -1337,5 +1339,14 @@ onMounted(() => loadOrder())
 .single-upload .upload-btn .el-icon {
   font-size: 24px;
   margin-bottom: 4px;
+}
+
+/* 来源标签 */
+.source-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #fff;
 }
 </style>
