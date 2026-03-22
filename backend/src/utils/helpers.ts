@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase, saveDatabase } from '../db/index.js';
+import { getDatabase } from '../db/index.js';
 
 // 生成UUID
 export function generateId(): string {
@@ -27,36 +27,28 @@ export function now(): string {
   return formatDate(new Date());
 }
 
-// 查询辅助函数
+// 查询辅助函数 - 返回所有匹配行
 export function query(sql: string, params: any[] = []): any[] {
   const db = getDatabase();
   try {
-    const result = db.exec(sql, params);
-    if (result.length === 0) return [];
-    
-    const columns = result[0].columns;
-    const values = result[0].values;
-    
-    return values.map(row => {
-      const obj: Record<string, any> = {};
-      columns.forEach((col, i) => {
-        obj[col] = row[i];
-      });
-      return obj;
-    });
+    const stmt = db.prepare(sql);
+    return stmt.all(...params);
   } catch (error) {
     console.error('查询错误:', error);
     throw error;
   }
 }
 
-// 执行SQL辅助函数
-export function execute(sql: string, params: any[] = []): { changes: number; lastInsertRowId: number } {
+// 执行SQL辅助函数 - 用于 INSERT, UPDATE, DELETE
+export function execute(sql: string, params: any[] = []): { changes: number; lastInsertRowId: number | bigint } {
   const db = getDatabase();
   try {
-    db.run(sql, params);
-    saveDatabase();
-    return { changes: db.getRowsModified(), lastInsertRowId: 0 };
+    const stmt = db.prepare(sql);
+    const info = stmt.run(...params);
+    return { 
+      changes: info.changes, 
+      lastInsertRowId: info.lastInsertRowid 
+    };
   } catch (error) {
     console.error('执行错误:', error);
     throw error;
@@ -65,8 +57,14 @@ export function execute(sql: string, params: any[] = []): { changes: number; las
 
 // 查询单条记录
 export function queryOne(sql: string, params: any[] = []): any | null {
-  const results = query(sql, params);
-  return results.length > 0 ? results[0] : null;
+  const db = getDatabase();
+  try {
+    const stmt = db.prepare(sql);
+    return stmt.get(...params) || null;
+  } catch (error) {
+    console.error('查询错误:', error);
+    throw error;
+  }
 }
 
 // 分页查询

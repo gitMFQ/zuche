@@ -5,7 +5,7 @@
 ## 项目概述
 
 这是一个完整的租车公司管理解决方案，采用前后端分离架构：
-- **后端**: Node.js + Express + TypeScript，使用 sql.js（内存 SQLite）存储数据
+- **后端**: Node.js + Express + TypeScript，使用 better-sqlite3（原生 SQLite 绑定）存储数据
 - **前端**: Vue 3 + Vite + TypeScript + Element Plus + Pinia
 
 ### 核心业务模块
@@ -43,7 +43,7 @@ car/
 │   │   ├── maintenance/    # 保养单据
 │   │   ├── violation/      # 违章照片
 │   │   └── other/          # 其他文件（如系统Logo）
-│   └── data/               # SQLite 数据库文件
+│   └── data/               # SQLite 数据库文件（rental.db）
 │
 └── frontend/
     ├── src/
@@ -165,6 +165,30 @@ pending (待取车) → active (已取车) → completed (已还车)
 - 设置项：`theme_color`, `sidebar_style`, `custom_sidebar_color_start`, `custom_sidebar_color_end`
 - 通过自定义事件通知布局组件更新
 
+## 数据库技术
+
+### better-sqlite3 特点
+- **原生绑定**: C++ 原生模块，性能优于 WebAssembly 方案
+- **同步 API**: 所有数据库操作为同步调用，代码更简洁
+- **自动持久化**: 数据自动写入磁盘，无需手动保存
+- **WAL 模式**: 启用 Write-Ahead Logging 提高并发性能
+
+### 运行环境要求
+- better-sqlite3 需要编译原生模块
+- 推荐在 Docker 容器或标准 Linux 环境中运行
+- Android Termux 环境需要 Android NDK 支持
+
+### 数据库初始化
+```typescript
+import { initDatabase, getDatabase } from './db/index.js';
+
+// 初始化数据库（同步）
+const db = initDatabase();
+
+// 获取数据库实例
+const database = getDatabase();
+```
+
 ## 默认账号
 
 - 用户名: `admin`
@@ -218,7 +242,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 
 ## 注意事项
 
-1. **数据库持久化**: sql.js 使用内存数据库，修改后需调用 `saveDatabase()`
+1. **数据库持久化**: better-sqlite3 自动持久化，数据写入即时保存
 2. **跨域**: 后端已配置 CORS，支持局域网访问
 3. **文件大小限制**: 上传文件限制 10MB
 4. **移动端优先**: UI 设计时优先考虑移动端体验

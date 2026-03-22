@@ -7,7 +7,7 @@
 ### 后端
 - Node.js + Express
 - TypeScript
-- SQLite (sql.js)
+- SQLite (better-sqlite3)
 - JWT 认证
 
 ### 前端
@@ -161,9 +161,20 @@ npm run dev
 
 ## 更新日志
 
-> **给 iFlow CLI 的提示：每次修改代码后，请在此处添加更新记录，并进行 git commit。**
-
 ### 2026-03-22
+
+#### 数据库迁移到 better-sqlite3
+- **修改文件**:
+  - `backend/src/db/index.ts`
+  - `backend/src/utils/helpers.ts`
+  - `backend/package.json`
+  - `README.md`（技术栈描述）
+- **变更内容**:
+  - 将 sql.js (WebAssembly) 替换为 better-sqlite3 (原生绑定)
+  - 数据库自动持久化，无需手动调用 saveDatabase()
+  - 启用 WAL 模式提高并发性能
+  - 同步 API，代码更简洁
+  - 注意：better-sqlite3 需要在 Docker/标准 Linux 环境运行
 
 #### 系统主题设置功能
 - **修改文件**:
