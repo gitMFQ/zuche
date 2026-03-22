@@ -163,6 +163,28 @@ npm run dev
 
 > **给 iFlow CLI 的提示：每次修改代码后，请在此处添加更新记录，并进行 git commit。**
 
+### 2026-03-22
+
+#### 系统主题设置功能
+- **修改文件**:
+  - `frontend/src/views/Settings.vue`
+  - `frontend/src/layouts/MainLayout.vue`
+  - `frontend/src/style.css`
+  - `frontend/src/components/VehiclesTab.vue`
+  - `frontend/src/components/MaintenanceTab.vue`
+  - `frontend/src/components/InsuranceTab.vue`
+  - `frontend/src/components/InspectionTab.vue`
+  - `frontend/src/components/ViolationsTab.vue`
+  - `AGENTS.md`
+- **变更内容**:
+  - 系统设置新增主题色设置（6个预设 + 调色盘自定义）
+  - 系统设置新增侧边栏风格设置（6个预设渐变 + 自定义双色渐变）
+  - 系统设置新增 Logo 上传功能
+  - 侧边栏美化：渐变背景、现代菜单样式、用户卡片
+  - 全局 CSS 变量实现主题色动态切换
+  - Element Plus 组件主题色覆盖
+  - 所有 Tab 组件应用主题色
+
 ### 2026-03-21
 
 #### 客户来源标记功能
