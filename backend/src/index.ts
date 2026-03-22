@@ -167,9 +167,9 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // 启动服务器
-async function start() {
+function start() {
   try {
-    await initDatabase();
+    initDatabase();
     
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n🚀 服务器启动成功!`);

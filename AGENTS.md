@@ -5,8 +5,8 @@
 ## 项目概述
 
 这是一个完整的租车公司管理解决方案，采用前后端分离架构：
-- **后端**: Node.js + Express + TypeScript，使用 better-sqlite3（原生 SQLite 绑定）存储数据
-- **前端**: Vue 3 + Vite + TypeScript + Element Plus + Pinia
+- **后端**: Node.js + Express 5 + TypeScript，使用 better-sqlite3（原生 SQLite 绑定）存储数据
+- **前端**: Vue 3 + Vite 8 + TypeScript + Element Plus + Pinia
 
 ### 核心业务模块
 
@@ -160,9 +160,12 @@ pending (待取车) → active (已取车) → completed (已还车)
 - 支持自定义渐变（起始色 + 结束色两个调色盘）
 - 风格通过动态 CSS 类和内联样式实现
 
-### 系统设置存储
-- 主题设置保存在 `system_settings` 表中
+### 主题设置存储
+- **主题设置**保存在用户本地 `localStorage` 中，每个用户可以有自己的主题偏好
 - 设置项：`theme_color`, `sidebar_style`, `custom_sidebar_color_start`, `custom_sidebar_color_end`
+- 通过 `userStore.themeSettings` 管理，自动同步到 localStorage
+- 主题设置即时生效，无需点击保存按钮
+- **系统标题和 Logo** 保存在 `system_settings` 表中，影响所有用户
 - 通过自定义事件通知布局组件更新
 
 ## 数据库技术
@@ -182,12 +185,43 @@ pending (待取车) → active (已取车) → completed (已还车)
 ```typescript
 import { initDatabase, getDatabase } from './db/index.js';
 
-// 初始化数据库（同步）
-const db = initDatabase();
+// 初始化数据库（同步，无需 await）
+initDatabase();
 
 // 获取数据库实例
-const database = getDatabase();
+const db = getDatabase();
 ```
+
+### better-sqlite3 API 用法
+
+**重要**: better-sqlite3 与 sql.js 或 node-sqlite3 的 API 不同，必须使用以下模式：
+
+```typescript
+const db = getDatabase();
+
+// 执行查询（返回所有行）
+const rows = db.prepare("SELECT * FROM users WHERE status = ?").all(1);
+
+// 查询单行
+const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+
+// 执行 INSERT/UPDATE/DELETE
+const stmt = db.prepare("INSERT INTO users (id, name) VALUES (?, ?)");
+const info = stmt.run(id, name);
+console.log(info.changes, info.lastInsertRowid);
+
+// DDL 语句（CREATE/ALTER TABLE）
+db.exec("CREATE TABLE IF NOT EXISTS ...");
+db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
+```
+
+**常见错误**:
+- ❌ `db.run(sql, params)` - 不存在此方法
+- ❌ `db.exec(sql, params)` - exec 不支持参数
+- ❌ `await initDatabase()` - 这是同步函数，不需要 await
+- ✅ `db.prepare(sql).run(...params)` - 正确用法
+- ✅ `db.prepare(sql).all(...params)` - 正确用法
+- ✅ `db.prepare(sql).get(...params)` - 正确用法
 
 ## 默认账号
 
@@ -242,7 +276,7 @@ const database = getDatabase();
 
 ## 注意事项
 
-1. **数据库持久化**: better-sqlite3 自动持久化，数据写入即时保存
+1. **数据库持久化**: better-sqlite3 自动持久化，数据写入即时保存，无需调用 saveDatabase
 2. **跨域**: 后端已配置 CORS，支持局域网访问
 3. **文件大小限制**: 上传文件限制 10MB
 4. **移动端优先**: UI 设计时优先考虑移动端体验

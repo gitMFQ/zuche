@@ -167,14 +167,28 @@ npm run dev
 - **修改文件**:
   - `backend/src/db/index.ts`
   - `backend/src/utils/helpers.ts`
+  - `backend/src/controllers/settings.ts`
+  - `backend/src/index.ts`
   - `backend/package.json`
   - `README.md`（技术栈描述）
+  - `AGENTS.md`
 - **变更内容**:
   - 将 sql.js (WebAssembly) 替换为 better-sqlite3 (原生绑定)
   - 数据库自动持久化，无需手动调用 saveDatabase()
   - 启用 WAL 模式提高并发性能
   - 同步 API，代码更简洁
   - 注意：better-sqlite3 需要在 Docker/标准 Linux 环境运行
+
+#### 主题设置保存到用户本地存储
+- **修改文件**:
+  - `frontend/src/stores/user.ts`
+  - `frontend/src/views/Settings.vue`
+  - `frontend/src/layouts/MainLayout.vue`
+- **变更内容**:
+  - 主题设置（主题色、侧边栏风格、自定义渐变）保存到用户本地 localStorage
+  - 每个用户可以有自己的主题偏好
+  - 主题设置即时生效，无需点击保存按钮
+  - 系统标题和 Logo 仍然是全局设置，影响所有用户
 
 #### 系统主题设置功能
 - **修改文件**:

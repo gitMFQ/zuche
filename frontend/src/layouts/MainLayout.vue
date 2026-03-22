@@ -139,16 +139,18 @@ const passwordDialogVisible = ref(false)
 const passwordFormRef = ref<FormInstance>()
 const systemTitle = ref('租车管理系统')
 const systemLogo = ref('')
-const themeColor = ref('#667eea')
-const sidebarStyle = ref('default')
-const customSidebarColorStart = ref('')
-const customSidebarColorEnd = ref('')
 
 const passwordForm = ref({
   oldPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
+
+// 主题设置从 userStore 获取
+const themeColor = computed(() => userStore.themeSettings.themeColor)
+const sidebarStyle = computed(() => userStore.themeSettings.sidebarStyle)
+const customSidebarColorStart = computed(() => userStore.themeSettings.customSidebarColorStart)
+const customSidebarColorEnd = computed(() => userStore.themeSettings.customSidebarColorEnd)
 
 const passwordRules: FormRules = {
   oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
@@ -253,22 +255,14 @@ async function loadSystemTitle() {
       if (res.data.system_logo) {
         systemLogo.value = res.data.system_logo
       }
-      if (res.data.theme_color) {
-        themeColor.value = res.data.theme_color
-        updateThemeVariables(themeColor.value)
-      }
-      if (res.data.sidebar_style) {
-        sidebarStyle.value = res.data.sidebar_style
-      }
-      if (res.data.custom_sidebar_color_start) {
-        customSidebarColorStart.value = res.data.custom_sidebar_color_start
-      }
-      if (res.data.custom_sidebar_color_end) {
-        customSidebarColorEnd.value = res.data.custom_sidebar_color_end
-      }
     }
   } catch (error) {
     console.error('加载系统设置失败', error)
+  }
+  
+  // 应用用户主题设置
+  if (themeColor.value) {
+    updateThemeVariables(themeColor.value)
   }
 }
 
@@ -283,23 +277,23 @@ function handleLogoChange(e: CustomEvent) {
 function handleThemeColorChange(e: CustomEvent) {
   const color = e.detail
   if (color && typeof color === 'string') {
-    themeColor.value = color
-    updateThemeVariables(themeColor.value)
+    userStore.setThemeColor(color)
+    updateThemeVariables(color)
   }
 }
 
 function handleSidebarStyleChange(e: CustomEvent) {
-  sidebarStyle.value = e.detail
+  userStore.setSidebarStyle(e.detail)
 }
 
 function handleCustomSidebarColorStartChange(e: CustomEvent) {
   const color = e.detail
-  customSidebarColorStart.value = (color && typeof color === 'string') ? color : ''
+  userStore.setCustomSidebarColors((color && typeof color === 'string') ? color : '', customSidebarColorEnd.value)
 }
 
 function handleCustomSidebarColorEndChange(e: CustomEvent) {
   const color = e.detail
-  customSidebarColorEnd.value = (color && typeof color === 'string') ? color : ''
+  userStore.setCustomSidebarColors(customSidebarColorStart.value, (color && typeof color === 'string') ? color : '')
 }
 
 function checkMobile() {

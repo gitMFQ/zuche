@@ -124,18 +124,34 @@ import { Plus, Check } from '@element-plus/icons-vue'
 import UsersTab from '../components/UsersTab.vue'
 import OrderSourcesTab from '../components/OrderSourcesTab.vue'
 import { settingsApi, uploadApi } from '../api'
+import { useUserStore } from '../stores/user'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const activeTab = ref('system')
 const systemTitle = ref('租车管理系统')
 const systemLogo = ref('')
-const themeColor = ref('#667eea')
-const sidebarStyle = ref('default')
-const customSidebarColorStart = ref('')
-const customSidebarColorEnd = ref('')
 const saving = ref(false)
 const logoInputRef = ref<HTMLInputElement>()
+
+// 主题设置直接使用 userStore
+const themeColor = computed({
+  get: () => userStore.themeSettings.themeColor,
+  set: (val) => userStore.setThemeColor(val)
+})
+const sidebarStyle = computed({
+  get: () => userStore.themeSettings.sidebarStyle,
+  set: (val) => userStore.setSidebarStyle(val)
+})
+const customSidebarColorStart = computed({
+  get: () => userStore.themeSettings.customSidebarColorStart,
+  set: (val) => userStore.setCustomSidebarColors(val, customSidebarColorEnd.value)
+})
+const customSidebarColorEnd = computed({
+  get: () => userStore.themeSettings.customSidebarColorEnd,
+  set: (val) => userStore.setCustomSidebarColors(customSidebarColorStart.value, val)
+})
 
 // 主题色选项
 const themeColors = [
@@ -250,7 +266,7 @@ onMounted(async () => {
     activeTab.value = tab
   }
   
-  // 从API加载系统设置
+  // 从API加载系统设置（标题和Logo）
   try {
     const res: any = await settingsApi.getAll()
     if (res.success && res.data) {
@@ -260,22 +276,12 @@ onMounted(async () => {
       if (res.data.system_logo) {
         systemLogo.value = res.data.system_logo
       }
-      if (res.data.theme_color) {
-        themeColor.value = res.data.theme_color
-      }
-      if (res.data.sidebar_style) {
-        sidebarStyle.value = res.data.sidebar_style
-      }
-      if (res.data.custom_sidebar_color_start) {
-        customSidebarColorStart.value = res.data.custom_sidebar_color_start
-      }
-      if (res.data.custom_sidebar_color_end) {
-        customSidebarColorEnd.value = res.data.custom_sidebar_color_end
-      }
     }
   } catch (error) {
     console.error('加载系统设置失败', error)
   }
+  
+  // 主题设置从 userStore 获取（已自动从 localStorage 加载）
 })
 
 // 监听标签变化，更新路由参数
@@ -313,25 +319,15 @@ function removeLogo() {
 async function saveSettings() {
   saving.value = true
   try {
-    // 保存标题
+    // 保存系统标题
     await settingsApi.update('system_title', systemTitle.value)
     // 保存logo
     await settingsApi.update('system_logo', systemLogo.value)
-    // 保存主题色
-    await settingsApi.update('theme_color', themeColor.value)
-    // 保存侧边栏风格
-    await settingsApi.update('sidebar_style', sidebarStyle.value)
-    // 保存自定义侧边栏颜色
-    await settingsApi.update('custom_sidebar_color_start', customSidebarColorStart.value)
-    await settingsApi.update('custom_sidebar_color_end', customSidebarColorEnd.value)
     
     // 触发自定义事件通知布局更新
     window.dispatchEvent(new CustomEvent('systemTitleChange', { detail: systemTitle.value }))
     window.dispatchEvent(new CustomEvent('systemLogoChange', { detail: systemLogo.value }))
-    window.dispatchEvent(new CustomEvent('themeColorChange', { detail: themeColor.value }))
-    window.dispatchEvent(new CustomEvent('sidebarStyleChange', { detail: sidebarStyle.value }))
-    window.dispatchEvent(new CustomEvent('customSidebarColorStartChange', { detail: customSidebarColorStart.value }))
-    window.dispatchEvent(new CustomEvent('customSidebarColorEndChange', { detail: customSidebarColorEnd.value }))
+    
     ElMessage.success('设置保存成功')
   } catch (error) {
     console.error('保存设置失败', error)

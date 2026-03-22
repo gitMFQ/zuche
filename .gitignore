@@ -13,6 +13,7 @@ build/
 # Database
 *.db
 *.db-journal
+backend/data/
 
 # Uploads (keep folder structure)
 backend/uploads/*
