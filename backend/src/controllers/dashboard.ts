@@ -38,10 +38,12 @@ export function getDashboardStats(req: AuthRequest, res: Response): void {
     // 最近订单
     const recentOrders = query(`
       SELECT o.order_no, o.status, o.total_amount, o.created_at,
-        c.name as customer_name, v.plate_number, v.is_new_energy
+        c.name as customer_name, v.plate_number, v.is_new_energy,
+        s.name as source_name, s.color as source_color
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
       ORDER BY o.created_at DESC
       LIMIT 5
     `);

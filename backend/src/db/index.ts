@@ -34,6 +34,8 @@ export async function initDatabase(): Promise<Database> {
     db = new SQL.Database();
     createTables(db);
     insertInitialData(db);
+    // 新数据库也需要执行迁移以确保所有字段都存在
+    runMigrations(db);
   }
 
   console.log('数据库初始化成功');
@@ -91,6 +93,14 @@ function runMigrations(db: Database): void {
       if (!columns.includes('contract_number')) {
         db.run('ALTER TABLE orders ADD COLUMN contract_number TEXT');
         console.log('已添加contract_number字段到订单表');
+      }
+      if (!columns.includes('pickup_location')) {
+        db.run('ALTER TABLE orders ADD COLUMN pickup_location TEXT');
+        console.log('已添加pickup_location字段到订单表');
+      }
+      if (!columns.includes('return_location')) {
+        db.run('ALTER TABLE orders ADD COLUMN return_location TEXT');
+        console.log('已添加return_location字段到订单表');
       }
     }
     
@@ -230,6 +240,30 @@ function runMigrations(db: Database): void {
         db.run('ALTER TABLE violations ADD COLUMN images TEXT');
         console.log('已添加images字段到违章表');
       }
+      if (!columns.includes('penalty_fee')) {
+        db.run('ALTER TABLE violations ADD COLUMN penalty_fee REAL DEFAULT 0');
+        console.log('已添加penalty_fee字段到违章表');
+      }
+      if (!columns.includes('collected_penalty')) {
+        db.run('ALTER TABLE violations ADD COLUMN collected_penalty REAL DEFAULT 0');
+        console.log('已添加collected_penalty字段到违章表');
+      }
+      if (!columns.includes('collected_fine')) {
+        db.run('ALTER TABLE violations ADD COLUMN collected_fine REAL DEFAULT 0');
+        console.log('已添加collected_fine字段到违章表');
+      }
+      if (!columns.includes('fee_remarks')) {
+        db.run('ALTER TABLE violations ADD COLUMN fee_remarks TEXT');
+        console.log('已添加fee_remarks字段到违章表');
+      }
+      if (!columns.includes('handle_type')) {
+        db.run("ALTER TABLE violations ADD COLUMN handle_type TEXT DEFAULT 'store'");
+        console.log('已添加handle_type字段到违章表');
+      }
+      if (!columns.includes('license_deposit')) {
+        db.run('ALTER TABLE violations ADD COLUMN license_deposit REAL DEFAULT 0');
+        console.log('已添加license_deposit字段到违章表');
+      }
     }
     
     // 检查insurance表是否有documents字段
@@ -317,6 +351,13 @@ function runMigrations(db: Database): void {
       // 插入默认系统标题
       db.run("INSERT INTO system_settings (key, value) VALUES ('system_title', '租车管理系统')");
       console.log('已创建系统设置表');
+    }
+    
+    // 清理旧的 rented 状态（车辆状态现在根据订单动态计算）
+    const rentedVehicles = db.exec("SELECT COUNT(*) as count FROM vehicles WHERE status = 'rented'");
+    if (rentedVehicles.length > 0 && rentedVehicles[0].values[0][0] > 0) {
+      db.run("UPDATE vehicles SET status = 'available' WHERE status = 'rented'");
+      console.log('已清理车辆的 rented 状态');
     }
     
     saveDatabase();

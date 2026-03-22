@@ -31,7 +31,7 @@
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
           <span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span>
-          <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          <el-tag :type="getStatusType(item.actual_status || item.status)" size="small">{{ item.status_text }}</el-tag>
         </div>
         <div class="mobile-card-row">
           <span class="label">品牌型号</span>
@@ -75,7 +75,7 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="plate_number" label="车牌号" width="120">
+        <el-table-column prop="plate_number" label="车牌号" width="140">
           <template #default="{ row }">
             <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
           </template>
@@ -102,7 +102,7 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
+            <el-tag :type="getStatusType(row.actual_status || row.status)" size="small">{{ row.status_text }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" fixed="right" width="180">
@@ -254,7 +254,7 @@
         <el-descriptions-item label="车架号" :span="2">{{ viewData.vin || '-' }}</el-descriptions-item>
         <el-descriptions-item label="发动机号" :span="2">{{ viewData.engine_number || '-' }}</el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="getStatusType(viewData.status)" size="small">{{ viewData.status_text }}</el-tag>
+          <el-tag :type="getStatusType(viewData.actual_status || viewData.status)" size="small">{{ viewData.status_text }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="备注" :span="2">{{ viewData.remarks || '-' }}</el-descriptions-item>
       </el-descriptions>
@@ -543,8 +543,6 @@ onMounted(() => loadData())
 
 .plate-number {
   font-size: 16px;
-  font-weight: 600;
-  color: #303133;
 }
 
 .mobile-card-row {
@@ -680,8 +678,8 @@ onMounted(() => loadData())
 }
 
 .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color, #409EFF);
+  color: var(--primary-color, #409EFF);
 }
 
 .upload-btn .el-icon {
@@ -728,6 +726,6 @@ onMounted(() => loadData())
 }
 
 .view-image-item img:hover {
-  border-color: #409EFF;
+  border-color: var(--primary-color, #409EFF);
 }
 </style>

@@ -27,9 +27,12 @@ export function getViolations(req: AuthRequest, res: Response): void {
     
     let sql = `
       SELECT v.*,
-        o.order_no
+        o.order_no,
+        s.name as source_name,
+        s.color as source_color
       FROM violations v
       LEFT JOIN orders o ON v.order_id = o.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
       WHERE 1=1
     `;
     const params: any[] = [];
@@ -101,7 +104,7 @@ export function createViolation(req: AuthRequest, res: Response): void {
     const {
       order_id, vehicle_id, customer_id, customer_name, customer_phone,
       plate_number, violation_type, violation_date, location,
-      fine_amount, penalty_points, images, remarks
+      fine_amount, penalty_points, penalty_fee, images, remarks
     } = req.body;
 
     if (!vehicle_id || !customer_name || !plate_number || !violation_type || !violation_date) {
@@ -121,10 +124,10 @@ export function createViolation(req: AuthRequest, res: Response): void {
     execute(
       `INSERT INTO violations 
         (id, order_id, vehicle_id, customer_id, customer_name, customer_phone, plate_number, 
-         violation_type, violation_date, location, fine_amount, penalty_points, images, status, remarks, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+         violation_type, violation_date, location, fine_amount, penalty_points, penalty_fee, images, status, remarks, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
       [id, order_id || null, vehicle_id, customer_id || null, customer_name, customer_phone || null, plate_number,
-       violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, imagesJson, remarks || null, currentTime, currentTime]
+       violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, penalty_fee || 0, imagesJson, remarks || null, currentTime, currentTime]
     );
 
     res.json({ 
@@ -143,7 +146,7 @@ export function updateViolation(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
     const {
-      violation_type, violation_date, location, fine_amount, penalty_points, images, remarks
+      violation_type, violation_date, location, fine_amount, penalty_points, penalty_fee, images, remarks
     } = req.body;
 
     const violation = queryOne('SELECT * FROM violations WHERE id = ?', [id]);
@@ -163,9 +166,9 @@ export function updateViolation(req: AuthRequest, res: Response): void {
     execute(
       `UPDATE violations SET 
         violation_type = ?, violation_date = ?, location = ?, 
-        fine_amount = ?, penalty_points = ?, images = ?, remarks = ?, updated_at = ? 
+        fine_amount = ?, penalty_points = ?, penalty_fee = ?, images = ?, remarks = ?, updated_at = ? 
        WHERE id = ?`,
-      [violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, imagesJson, remarks || null, currentTime, id]
+      [violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, penalty_fee || 0, imagesJson, remarks || null, currentTime, id]
     );
 
     res.json({ success: true, message: '违章记录更新成功' });
@@ -179,7 +182,7 @@ export function updateViolation(req: AuthRequest, res: Response): void {
 export function handleViolation(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
-    const { status, handle_remarks } = req.body;
+    const { status, handle_remarks, handle_type, license_deposit } = req.body;
 
     const violation = queryOne('SELECT * FROM violations WHERE id = ?', [id]);
     if (!violation) {
@@ -190,13 +193,41 @@ export function handleViolation(req: AuthRequest, res: Response): void {
     const currentTime = now();
 
     execute(
-      `UPDATE violations SET status = ?, handle_date = ?, handle_remarks = ?, updated_at = ? WHERE id = ?`,
-      [status, currentTime, handle_remarks || null, currentTime, id]
+      `UPDATE violations SET status = ?, handle_date = ?, handle_remarks = ?, handle_type = ?, license_deposit = ?, updated_at = ? WHERE id = ?`,
+      [status, currentTime, handle_remarks || null, handle_type || 'store', license_deposit || 0, currentTime, id]
     );
 
     res.json({ success: true, message: '违章状态更新成功' });
   } catch (error) {
     console.error('处理违章错误:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+}
+
+// 收取违章费用（违约金、罚款）
+export function collectFee(req: AuthRequest, res: Response): void {
+  try {
+    const { id } = req.params;
+    const { collected_penalty, collected_fine, fee_remarks } = req.body;
+
+    const violation = queryOne('SELECT * FROM violations WHERE id = ?', [id]);
+    if (!violation) {
+      res.status(404).json({ success: false, message: '违章记录不存在' });
+      return;
+    }
+
+    const currentTime = now();
+
+    execute(
+      `UPDATE violations SET 
+        collected_penalty = ?, collected_fine = ?, fee_remarks = ?, updated_at = ? 
+       WHERE id = ?`,
+      [collected_penalty || 0, collected_fine || 0, fee_remarks || null, currentTime, id]
+    );
+
+    res.json({ success: true, message: '费用记录更新成功' });
+  } catch (error) {
+    console.error('收取费用错误:', error);
     res.status(500).json({ success: false, message: '服务器错误' });
   }
 }

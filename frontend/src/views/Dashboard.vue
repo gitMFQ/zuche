@@ -122,7 +122,8 @@
       <div class="mobile-cards" v-if="stats.recentOrders?.length">
         <div v-for="item in stats.recentOrders" :key="item.order_no" class="mobile-card" @click="$router.push('/orders')">
           <div class="mobile-card-header">
-            <span class="order-no">{{ item.order_no }}</span>
+            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+            <span v-else class="text-muted">-</span>
             <el-tag :type="getStatusType(item.status)" size="small">{{ getStatusText(item.status) }}</el-tag>
           </div>
           <div class="mobile-card-row">
@@ -146,7 +147,12 @@
       
       <!-- PC端表格 -->
       <el-table :data="stats.recentOrders" stripe size="small" class="hide-mobile">
-        <el-table-column prop="order_no" label="订单号" width="140" />
+        <el-table-column label="来源" width="100">
+          <template #default="{ row }">
+            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="customer_name" label="客户" />
         <el-table-column prop="plate_number" label="车牌" width="120">
           <template #default="{ row }">

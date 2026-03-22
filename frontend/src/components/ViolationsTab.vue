@@ -158,7 +158,10 @@
           </div>
           <div class="mobile-card-row" v-if="item.order_no">
             <span class="label">订单</span>
-            <span class="value link" @click="$router.push(`/orders/${item.order_id}`)">{{ item.order_no }}</span>
+            <span class="value">
+              <span class="link" @click="$router.push(`/orders/${item.order_id}`)">{{ item.order_no }}</span>
+              <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+            </span>
           </div>
           <div class="mobile-card-row">
             <span class="label">客户</span>
@@ -180,6 +183,26 @@
             <span class="label">扣分</span>
             <span class="value text-warning">{{ item.penalty_points || 0 }}分</span>
           </div>
+          <div class="mobile-card-row" v-if="item.penalty_fee > 0">
+            <span class="label">违约金</span>
+            <span class="value text-danger">¥{{ item.penalty_fee }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.collected_penalty > 0 || item.collected_fine > 0">
+            <span class="label">已收</span>
+            <span class="value text-success">
+              <span v-if="item.collected_penalty > 0">违约金¥{{ item.collected_penalty }}</span>
+              <span v-if="item.collected_penalty > 0 && item.collected_fine > 0">，</span>
+              <span v-if="item.collected_fine > 0">罚款¥{{ item.collected_fine }}</span>
+            </span>
+          </div>
+          <div class="mobile-card-row" v-if="item.handle_type">
+            <span class="label">处理方式</span>
+            <span class="value">{{ item.handle_type === 'self' ? '客户自行处理' : '门店代为处理' }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.handle_type === 'self' && item.license_deposit > 0">
+            <span class="label">行驶证押金</span>
+            <span class="value text-danger">¥{{ item.license_deposit }}</span>
+          </div>
           <div class="mobile-card-row" v-if="item.images && item.images.length">
             <span class="label">图片</span>
             <div class="images-preview-mini">
@@ -188,6 +211,7 @@
             </div>
           </div>
           <div class="mobile-card-actions">
+            <el-button type="warning" size="small" @click="openFeeDialog(item)">费用</el-button>
             <el-button type="primary" size="small" @click="openHandleDialog(item)" v-if="item.status !== 'completed'">处理</el-button>
             <el-button size="small" @click="openDialog(item)">编辑</el-button>
             <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
@@ -205,9 +229,12 @@
       <!-- PC端违章表格 -->
       <el-card shadow="never" class="table-card">
         <el-table :data="violationRecords" v-loading="loading" stripe class="hide-mobile">
-          <el-table-column prop="order_no" label="订单号" width="130">
+          <el-table-column prop="order_no" label="订单号" width="180">
             <template #default="{ row }">
-              <span v-if="row.order_no" class="link" @click="$router.push(`/orders/${row.order_id}`)">{{ row.order_no }}</span>
+              <span v-if="row.order_no">
+                <span class="link" @click="$router.push(`/orders/${row.order_id}`)">{{ row.order_no }}</span>
+                <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+              </span>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -229,13 +256,40 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
+          <el-table-column label="违约金" width="80">
+            <template #default="{ row }">
+              <span v-if="row.penalty_fee > 0" class="text-danger">¥{{ row.penalty_fee }}</span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="已收" width="100">
+            <template #default="{ row }">
+              <span v-if="row.collected_penalty > 0 || row.collected_fine > 0" class="text-success">
+                {{ (row.collected_penalty || 0) + (row.collected_fine || 0) }}
+              </span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="处理方式" width="110">
+            <template #default="{ row }">
+              <span v-if="row.handle_type">{{ row.handle_type === 'self' ? '客户自处理' : '门店代处理' }}</span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="行驶证押金" width="90">
+            <template #default="{ row }">
+              <span v-if="row.handle_type === 'self' && row.license_deposit > 0" class="text-danger">¥{{ row.license_deposit }}</span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="status" label="状态" width="80">
             <template #default="{ row }">
               <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" fixed="right" width="150">
+          <el-table-column label="操作" fixed="right" width="190">
             <template #default="{ row }">
+              <el-button type="warning" link size="small" @click="openFeeDialog(row)">费用</el-button>
               <el-button type="primary" link size="small" @click="openHandleDialog(row)" v-if="row.status !== 'completed'">处理</el-button>
               <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
               <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
@@ -255,7 +309,7 @@
         <el-form-item label="车辆">
           <el-input :value="`${selectedVehicle?.plate_number} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`" disabled />
         </el-form-item>
-        <el-form-item label="违章时间" prop="violation_date">
+        <el-form-item label="时间" prop="violation_date">
           <el-date-picker 
             v-model="form.violation_date" 
             type="date" 
@@ -298,8 +352,8 @@
         <el-form-item label="手机">
           <el-input v-model="form.customer_phone" placeholder="手机号" type="tel" />
         </el-form-item>
-        <el-form-item label="违章类型" prop="violation_type">
-          <el-input v-model="form.violation_type" placeholder="违章类型" />
+        <el-form-item label="类型" prop="violation_type">
+          <el-input v-model="form.violation_type" placeholder="类型" />
         </el-form-item>
         <el-form-item label="地点">
           <el-input v-model="form.location" placeholder="违章地点" />
@@ -320,6 +374,11 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item label="违约金">
+          <el-input v-model.number="form.penalty_fee" type="number" placeholder="违约金" :min="0">
+            <template #prepend>¥</template>
+          </el-input>
+        </el-form-item>
         <el-form-item label="图片">
           <div class="multi-upload">
             <div class="image-list">
@@ -347,7 +406,18 @@
 
     <!-- 处理违章对话框 -->
     <el-dialog v-model="handleDialogVisible" title="处理违章" width="90%" :style="{ maxWidth: '400px' }">
-      <el-form :model="handleForm" label-width="70px" size="default">
+      <el-form :model="handleForm" label-width="100px" size="default">
+        <el-form-item label="处理方式">
+          <el-radio-group v-model="handleForm.handle_type">
+            <el-radio value="store">门店代为处理</el-radio>
+            <el-radio value="self">客户自行处理</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="行驶证押金" v-if="handleForm.handle_type === 'self'">
+          <el-input v-model.number="handleForm.license_deposit" type="number" :min="0" placeholder="行驶证出借押金">
+            <template #prepend>¥</template>
+          </el-input>
+        </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="handleForm.status">
             <el-radio value="processing">处理中</el-radio>
@@ -361,6 +431,34 @@
       <template #footer>
         <el-button @click="handleDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitHandle" :loading="submitting">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 费用对话框 -->
+    <el-dialog v-model="feeDialogVisible" title="费用收取" width="90%" :style="{ maxWidth: '400px' }">
+      <el-form :model="feeForm" label-width="90px" size="default">
+        <el-form-item label="违约金">
+          <el-input v-model.number="feeForm.penalty_fee" type="number" :min="0" disabled>
+            <template #prepend>¥</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="已收违约金">
+          <el-input v-model.number="feeForm.collected_penalty" type="number" :min="0" placeholder="已收取金额">
+            <template #prepend>¥</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="已收罚款">
+          <el-input v-model.number="feeForm.collected_fine" type="number" :min="0" placeholder="已收取金额">
+            <template #prepend>¥</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="feeForm.fee_remarks" type="textarea" :rows="2" placeholder="备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="feeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitFee" :loading="submitting">确定</el-button>
       </template>
     </el-dialog>
 
@@ -408,19 +506,31 @@ const form = reactive({
   location: '',
   fine_amount: 0,
   penalty_points: 0,
+  penalty_fee: 0,
   images: [] as string[],
   remarks: ''
 })
 
 const handleForm = reactive({
   status: 'completed',
+  handle_type: 'store',
+  license_deposit: 0,
   handle_remarks: ''
+})
+
+const feeDialogVisible = ref(false)
+const feeForm = reactive({
+  id: '',
+  penalty_fee: 0,
+  collected_penalty: 0,
+  collected_fine: 0,
+  fee_remarks: ''
 })
 
 const rules: FormRules = {
   customer_name: [{ required: true, message: '请输入客户姓名', trigger: 'blur' }],
   violation_date: [{ required: true, message: '请选择违章日期', trigger: 'change' }],
-  violation_type: [{ required: true, message: '请输入违章类型', trigger: 'blur' }],
+  violation_type: [{ required: true, message: '请输入类型', trigger: 'blur' }],
   fine_amount: [{ required: true, message: '请输入罚款金额', trigger: 'blur' }],
   penalty_points: [{ required: true, message: '请输入扣分', trigger: 'blur' }]
 }
@@ -559,6 +669,7 @@ function openDialog(item?: any) {
     location: item?.location || '',
     fine_amount: item?.fine_amount ?? 0,
     penalty_points: item?.penalty_points ?? 0,
+    penalty_fee: item?.penalty_fee ?? 0,
     images: item?.images || [],
     remarks: item?.remarks || ''
   })
@@ -661,7 +772,9 @@ let currentHandleItem: any = null
 function openHandleDialog(item: any) {
   currentHandleItem = item
   handleForm.status = item.status === 'pending' ? 'processing' : 'completed'
-  handleForm.handle_remarks = ''
+  handleForm.handle_type = item.handle_type || 'store'
+  handleForm.license_deposit = item.license_deposit || 0
+  handleForm.handle_remarks = item.handle_remarks || ''
   handleDialogVisible.value = true
 }
 
@@ -679,6 +792,37 @@ async function submitHandle() {
     }
   } catch (error) {
     console.error('处理失败', error)
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 打开费用对话框
+function openFeeDialog(item: any) {
+  feeForm.id = item.id
+  feeForm.penalty_fee = item.penalty_fee ?? 0
+  feeForm.collected_penalty = item.collected_penalty ?? 0
+  feeForm.collected_fine = item.collected_fine ?? 0
+  feeForm.fee_remarks = item.fee_remarks || ''
+  feeDialogVisible.value = true
+}
+
+// 提交费用
+async function submitFee() {
+  submitting.value = true
+  try {
+    const res: any = await violationApi.collectFee(feeForm.id, {
+      collected_penalty: feeForm.collected_penalty,
+      collected_fine: feeForm.collected_fine,
+      fee_remarks: feeForm.fee_remarks
+    })
+    if (res.success) {
+      ElMessage.success('费用记录成功')
+      feeDialogVisible.value = false
+      loadViolationRecords()
+    }
+  } catch (error) {
+    console.error('费用记录失败', error)
   } finally {
     submitting.value = false
   }
@@ -743,7 +887,7 @@ onMounted(() => loadVehicles())
 }
 
 .stat-card.warning { border-left: 3px solid #E6A23C; }
-.stat-card.primary { border-left: 3px solid #409EFF; }
+.stat-card.primary { border-left: 3px solid var(--primary-color, #409EFF); }
 .stat-card.success { border-left: 3px solid #67C23A; }
 .stat-card.danger { border-left: 3px solid #F56C6C; }
 
@@ -941,7 +1085,7 @@ onMounted(() => loadVehicles())
 }
 
 .link {
-  color: #409EFF;
+  color: var(--primary-color, #409EFF);
   cursor: pointer;
 }
 
@@ -950,7 +1094,7 @@ onMounted(() => loadVehicles())
 }
 
 :deep(a) {
-  color: #409EFF;
+  color: var(--primary-color, #409EFF);
   text-decoration: none;
 }
 
@@ -1031,8 +1175,8 @@ onMounted(() => loadVehicles())
 }
 
 .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color, #409EFF);
+  color: var(--primary-color, #409EFF);
 }
 
 .upload-btn .el-icon {

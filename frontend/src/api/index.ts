@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: '/api',
   timeout: 10000
 })
 
@@ -74,7 +74,8 @@ export const customerApi = {
 // ==================== 车辆管理 API ====================
 export const vehicleApi = {
   getList: (params?: any) => api.get('/vehicles', { params }),
-  getAvailable: () => api.get('/vehicles/available'),
+  getAvailable: (params?: { start_date?: string; end_date?: string; exclude_order_id?: string }) => 
+    api.get('/vehicles/available', { params }),
   getBrands: () => api.get('/vehicles/brands'),
   getOne: (id: string) => api.get(`/vehicles/${id}`),
   create: (data: any) => api.post('/vehicles', data),
@@ -103,6 +104,8 @@ export const violationApi = {
   update: (id: string, data: any) => api.put(`/violations/${id}`, data),
   handle: (id: string, data: { status: string; handle_remarks?: string }) => 
     api.put(`/violations/${id}/handle`, data),
+  collectFee: (id: string, data: { collected_penalty?: number; collected_fine?: number; fee_remarks?: string }) => 
+    api.put(`/violations/${id}/fee`, data),
   delete: (id: string) => api.delete(`/violations/${id}`)
 }
 

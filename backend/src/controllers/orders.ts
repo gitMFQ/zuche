@@ -52,7 +52,20 @@ export function getOrders(req: AuthRequest, res: Response): void {
       params.push(vehicle_id);
     }
 
-    sql += ' ORDER BY o.created_at DESC';
+    // 根据状态使用不同的排序
+    if (status === 'pending') {
+      // 待取车：按取车时间升序（近的在前）
+      sql += ' ORDER BY o.start_date ASC';
+    } else if (status === 'active') {
+      // 待还车：按还车时间升序（近的在前）
+      sql += ' ORDER BY o.end_date ASC';
+    } else if (status === 'completed') {
+      // 已完成：按还车完成时间降序（最近完成的在前）
+      sql += ' ORDER BY o.actual_end_date DESC, o.updated_at DESC';
+    } else {
+      // 其他情况：按创建时间降序
+      sql += ' ORDER BY o.created_at DESC';
+    }
 
     const result = queryWithPagination(sql, params, Number(page), Number(pageSize));
     
@@ -148,7 +161,11 @@ export function createOrder(req: AuthRequest, res: Response): void {
       // 免押相关
       deposit_waived, deposit_waived_expiry,
       // 合同号
-      contract_number
+      contract_number,
+      // 取还车位置
+      pickup_location, return_location,
+      // 预付相关
+      has_prepay, prepay_amount, prepay_method, prepay_type
     } = req.body;
 
     // 验证必填字段（日租金和总租金至少填一个）
@@ -168,10 +185,34 @@ export function createOrder(req: AuthRequest, res: Response): void {
       return;
     }
 
-    // 检查车辆是否可用
-    const vehicle = queryOne('SELECT * FROM vehicles WHERE id = ? AND status = ?', [vehicle_id, 'available']);
+    // 检查车辆是否存在且非维修/不可用状态
+    const vehicle = queryOne('SELECT * FROM vehicles WHERE id = ?', [vehicle_id]);
     if (!vehicle) {
-      res.status(400).json({ success: false, message: '车辆不存在或不可用' });
+      res.status(400).json({ success: false, message: '车辆不存在' });
+      return;
+    }
+    
+    // 检查车辆是否在维修中或不可用
+    if (['maintenance', 'unavailable'].includes(vehicle.status)) {
+      res.status(400).json({ success: false, message: '车辆当前处于维修或不可用状态' });
+      return;
+    }
+
+    // 检查车辆在指定时间段内是否与其他订单冲突
+    // 冲突条件：存在非取消状态的订单，其时间范围与新订单有交集
+    const conflictingOrder = queryOne(`
+      SELECT id FROM orders 
+      WHERE vehicle_id = ? 
+        AND status NOT IN ('cancelled', 'completed')
+        AND (
+          (start_date <= ? AND end_date > ?)
+          OR (start_date < ? AND end_date >= ?)
+          OR (start_date >= ? AND end_date <= ?)
+        )
+    `, [vehicle_id, start_date, start_date, end_date, end_date, start_date, end_date]);
+    
+    if (conflictingOrder) {
+      res.status(400).json({ success: false, message: '该车辆在指定时间段内已被预约' });
       return;
     }
 
@@ -253,19 +294,28 @@ export function createOrder(req: AuthRequest, res: Response): void {
     const finalDeposit = isDepositWaived ? 0 : (deposit || 0);
     const depositWaivedExpiry = isDepositWaived ? deposit_waived_expiry : null;
 
+    // 处理预付金额
+    const initialPaidAmount = (has_prepay && prepay_amount > 0) ? prepay_amount : 0;
+
     // 创建订单
     execute(
-      `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, orderNo, customerId, vehicle_id, userId, start_date, end_date, finalDailyRate || 0, finalDeposit, totalAmount, remarks || null, source_id || null, commissionRate, netAmount, service_type || 'basic', isDepositWaived, depositWaivedExpiry, contract_number || null, currentTime, currentTime]
+      `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, pickup_location, return_location, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, orderNo, customerId, vehicle_id, userId, start_date, end_date, finalDailyRate || 0, finalDeposit, totalAmount, initialPaidAmount, remarks || null, source_id || null, commissionRate, netAmount, service_type || 'basic', isDepositWaived, depositWaivedExpiry, contract_number || null, pickup_location || null, return_location || null, currentTime, currentTime]
     );
 
-    // 更新车辆状态
-    execute("UPDATE vehicles SET status = 'rented', updated_at = ? WHERE id = ?", [currentTime, vehicle_id]);
+    // 如果有预付，添加支付记录
+    if (has_prepay && prepay_amount > 0 && prepay_method && prepay_type) {
+      const paymentId = generateId();
+      execute(
+        'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [paymentId, id, prepay_amount, prepay_method, prepay_type, '下单时预付', currentTime]
+      );
+    }
 
     res.json({ 
       success: true, 
-      data: { id, order_no: orderNo, total_amount: totalAmount, net_amount: netAmount, commission_rate: commissionRate, days, customer_id: customerId },
+      data: { id, order_no: orderNo, total_amount: totalAmount, net_amount: netAmount, commission_rate: commissionRate, days, customer_id: customerId, paid_amount: initialPaidAmount },
       message: '订单创建成功' 
     });
   } catch (error) {
@@ -288,13 +338,9 @@ export function updateOrderStatus(req: AuthRequest, res: Response): void {
 
     const currentTime = now();
 
-    // 如果订单完成或取消，释放车辆
-    if (['completed', 'cancelled'].includes(status)) {
-      execute("UPDATE vehicles SET status = 'available', updated_at = ? WHERE id = ?", [currentTime, order.vehicle_id]);
-      // 如果有还车里程，更新车辆里程
-      if (return_mileage !== undefined && return_mileage !== null) {
-        execute('UPDATE vehicles SET mileage = ?, updated_at = ? WHERE id = ?', [return_mileage, currentTime, order.vehicle_id]);
-      }
+    // 如果还车时有里程数据，更新车辆里程
+    if (status === 'completed' && return_mileage !== undefined && return_mileage !== null) {
+      execute('UPDATE vehicles SET mileage = ?, updated_at = ? WHERE id = ?', [return_mileage, currentTime, order.vehicle_id]);
     }
 
     // 计算实际金额（如果有实际还车日期）
@@ -357,7 +403,8 @@ export function updateOrder(req: AuthRequest, res: Response): void {
       vehicle_id, source_id, start_date, end_date, 
       daily_rate, total_amount, deposit, remarks,
       service_type, deposit_waived, deposit_waived_expiry,
-      contract_number
+      contract_number,
+      pickup_location, return_location
     } = req.body;
 
     const order = queryOne('SELECT * FROM orders WHERE id = ?', [id]);
@@ -430,14 +477,35 @@ export function updateOrder(req: AuthRequest, res: Response): void {
     // 处理车辆更换（仅在待确认状态可以换车）
     if (vehicle_id && vehicle_id !== order.vehicle_id) {
       if (order.status === 'pending') {
-        const vehicle = queryOne('SELECT * FROM vehicles WHERE id = ? AND status = ?', [vehicle_id, 'available']);
-        if (!vehicle) {
-          res.status(400).json({ success: false, message: '车辆不存在或不可用' });
+        const newVehicle = queryOne('SELECT * FROM vehicles WHERE id = ?', [vehicle_id]);
+        if (!newVehicle) {
+          res.status(400).json({ success: false, message: '车辆不存在' });
           return;
         }
-        // 释放原车辆，锁定新车辆
-        execute("UPDATE vehicles SET status = 'available', updated_at = ? WHERE id = ?", [currentTime, order.vehicle_id]);
-        execute("UPDATE vehicles SET status = 'rented', updated_at = ? WHERE id = ?", [currentTime, vehicle_id]);
+        if (['maintenance', 'unavailable'].includes(newVehicle.status)) {
+          res.status(400).json({ success: false, message: '该车辆当前处于维修或不可用状态' });
+          return;
+        }
+        
+        // 检查新车辆在订单时间段是否可用
+        const startDate = start_date || order.start_date;
+        const endDate = end_date || order.end_date;
+        const conflictingOrder = queryOne(`
+          SELECT id FROM orders 
+          WHERE vehicle_id = ? 
+            AND id != ?
+            AND status NOT IN ('cancelled', 'completed')
+            AND (
+              (start_date <= ? AND end_date > ?)
+              OR (start_date < ? AND end_date >= ?)
+              OR (start_date >= ? AND end_date <= ?)
+            )
+        `, [vehicle_id, id, startDate, startDate, endDate, endDate, startDate, endDate]);
+        
+        if (conflictingOrder) {
+          res.status(400).json({ success: false, message: '该车辆在订单时间段内已被预约' });
+          return;
+        }
       } else {
         // 进行中的订单不允许换车
         res.status(400).json({ success: false, message: '进行中的订单不能更换车辆' });
@@ -499,7 +567,7 @@ export function updateOrder(req: AuthRequest, res: Response): void {
         vehicle_id = ?, source_id = ?, source_name = ?, commission_rate = ?, 
         start_date = ?, end_date = ?, daily_rate = ?, total_amount = ?, net_amount = ?, 
         deposit = ?, deposit_waived = ?, deposit_waived_expiry = ?, service_type = ?, 
-        contract_number = ?, remarks = ?, updated_at = ? 
+        contract_number = ?, pickup_location = ?, return_location = ?, remarks = ?, updated_at = ? 
        WHERE id = ?`,
       [
         vehicle_id || order.vehicle_id, 
@@ -507,7 +575,10 @@ export function updateOrder(req: AuthRequest, res: Response): void {
         startDate, endDate, 
         finalDailyRate || 0, totalAmount, netAmount, 
         finalDeposit, isDepositWaived, depositWaivedExpiry, service_type || order.service_type,
-        contract_number ?? order.contract_number, remarks ?? order.remarks, currentTime, id
+        contract_number ?? order.contract_number, 
+        pickup_location !== undefined ? pickup_location : order.pickup_location,
+        return_location !== undefined ? return_location : order.return_location,
+        remarks ?? order.remarks, currentTime, id
       ]
     );
 
@@ -526,10 +597,15 @@ export function updateOrder(req: AuthRequest, res: Response): void {
 export function extendOrder(req: AuthRequest, res: Response): void {
   try {
     const { id } = req.params;
-    const { extend_days, daily_rate } = req.body;
+    const { new_end_date, extend_amount, has_payment, payment_amount, payment_method } = req.body;
 
-    if (!extend_days || extend_days < 1) {
-      res.status(400).json({ success: false, message: '续租天数必须大于0' });
+    if (!new_end_date) {
+      res.status(400).json({ success: false, message: '新的还车时间不能为空' });
+      return;
+    }
+
+    if (extend_amount === undefined || extend_amount < 0) {
+      res.status(400).json({ success: false, message: '续租金额不能为空' });
       return;
     }
 
@@ -545,37 +621,58 @@ export function extendOrder(req: AuthRequest, res: Response): void {
       return;
     }
 
-    const currentTime = now();
-    const rate = daily_rate || order.daily_rate;
-
-    // 计算新的还车日期
+    // 检查新还车时间必须晚于当前还车时间
     const currentEndDate = new Date(order.end_date);
-    const newEndDate = new Date(currentEndDate);
-    newEndDate.setDate(newEndDate.getDate() + extend_days);
-    const newEndDateString = newEndDate.toISOString().slice(0, 10);
+    const newEndDateObj = new Date(new_end_date);
+    
+    if (newEndDateObj <= currentEndDate) {
+      res.status(400).json({ success: false, message: '新的还车时间必须晚于当前还车时间' });
+      return;
+    }
 
-    // 计算续租金额
-    const extendAmount = extend_days * rate;
-    const newTotalAmount = order.total_amount + extendAmount;
+    const currentTime = now();
+
+    // 计算续租天数（按小时精确计算，向上取整）
+    const hours = (newEndDateObj.getTime() - currentEndDate.getTime()) / (1000 * 60 * 60);
+    const extendDays = Math.max(1, Math.ceil(hours / 24));
+
+    // 使用传入的续租金额
+    const newTotalAmount = order.total_amount + extend_amount;
 
     // 重新计算到账金额
     const commissionRate = order.commission_rate || 0;
     const newNetAmount = newTotalAmount * (1 - commissionRate / 100);
 
+    // 计算新的已付金额
+    let newPaidAmount = order.paid_amount || 0;
+    if (has_payment && payment_amount > 0) {
+      newPaidAmount += payment_amount;
+    }
+
     // 更新订单
     execute(
-      'UPDATE orders SET end_date = ?, daily_rate = ?, total_amount = ?, net_amount = ?, updated_at = ? WHERE id = ?',
-      [newEndDateString, rate, newTotalAmount, newNetAmount, currentTime, id]
+      'UPDATE orders SET end_date = ?, total_amount = ?, net_amount = ?, paid_amount = ?, updated_at = ? WHERE id = ?',
+      [new_end_date, newTotalAmount, newNetAmount, newPaidAmount, currentTime, id]
     );
+
+    // 如果有支付，添加支付记录
+    if (has_payment && payment_amount > 0 && payment_method) {
+      const paymentId = generateId();
+      execute(
+        'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [paymentId, id, payment_amount, payment_method, 'rent', '续租支付', currentTime]
+      );
+    }
 
     res.json({ 
       success: true, 
       data: { 
-        new_end_date: newEndDateString, 
-        extend_days,
-        extend_amount: extendAmount,
+        new_end_date, 
+        extend_days: extendDays,
+        extend_amount: extend_amount,
         new_total_amount: newTotalAmount,
-        new_net_amount: newNetAmount
+        new_net_amount: newNetAmount,
+        new_paid_amount: newPaidAmount
       },
       message: '续租成功' 
     });
@@ -650,9 +747,6 @@ export function cancelOrder(req: AuthRequest, res: Response): void {
       "UPDATE orders SET status = 'cancelled', remarks = ?, updated_at = ? WHERE id = ?",
       [remarks || order.remarks, currentTime, id]
     );
-
-    // 释放车辆
-    execute("UPDATE vehicles SET status = 'available', updated_at = ? WHERE id = ?", [currentTime, order.vehicle_id]);
 
     res.json({ success: true, message: '订单取消成功' });
   } catch (error) {

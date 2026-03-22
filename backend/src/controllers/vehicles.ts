@@ -24,6 +24,7 @@ export function getVehicles(req: AuthRequest, res: Response): void {
       params.push(likeKeyword, likeKeyword, likeKeyword);
     }
 
+    // 注意：这里按数据库中的状态筛选，前端显示的状态会动态计算
     if (status) {
       sql += ' AND status = ?';
       params.push(status);
@@ -38,11 +39,42 @@ export function getVehicles(req: AuthRequest, res: Response): void {
 
     const result = queryWithPagination(sql, params, Number(page), Number(pageSize));
     
-    // 添加状态文本
-    result.data = result.data.map((v: any) => ({
-      ...v,
-      status_text: STATUS_MAP[v.status] || v.status
-    }));
+    // 获取当前时间
+    const currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    
+    // 添加状态文本（动态计算）
+    result.data = result.data.map((v: any) => {
+      // 如果是维修或不可用状态，保持原样
+      if (['maintenance', 'unavailable'].includes(v.status)) {
+        return {
+          ...v,
+          status_text: STATUS_MAP[v.status] || v.status
+        };
+      }
+      
+      // 检查是否有当前时间正在进行的订单
+      const activeOrder = queryOne(`
+        SELECT id FROM orders 
+        WHERE vehicle_id = ? 
+          AND status IN ('pending', 'active')
+          AND start_date <= ? 
+          AND end_date > ?
+      `, [v.id, currentTime, currentTime]);
+      
+      if (activeOrder) {
+        return {
+          ...v,
+          actual_status: 'rented',
+          status_text: '已出租'
+        };
+      }
+      
+      return {
+        ...v,
+        actual_status: 'available',
+        status_text: '可用'
+      };
+    });
 
     res.json({ success: true, data: result });
   } catch (error) {
@@ -52,14 +84,53 @@ export function getVehicles(req: AuthRequest, res: Response): void {
 }
 
 // 获取可用车辆（下拉选择用）
+// 支持时间段参数：start_date, end_date
 export function getAvailableVehicles(req: AuthRequest, res: Response): void {
   try {
-    const vehicles = query(`
-      SELECT id, plate_number, brand, model, color, daily_rate, deposit
+    const { start_date, end_date, exclude_order_id } = req.query;
+    
+    // 获取所有非维修/不可用状态的车辆
+    let sql = `
+      SELECT id, plate_number, brand, model, color, daily_rate, deposit, status
       FROM vehicles 
-      WHERE status = 'available'
+      WHERE status NOT IN ('maintenance', 'unavailable')
       ORDER BY plate_number
-    `);
+    `;
+    const vehicles = query(sql);
+
+    // 如果提供了时间段，过滤掉在该时间段内有冲突订单的车辆
+    if (start_date && end_date) {
+      const availableVehicles = vehicles.filter((v: any) => {
+        // 检查该车辆在指定时间段是否有冲突订单
+        let conflictSql = `
+          SELECT id FROM orders 
+          WHERE vehicle_id = ? 
+            AND status NOT IN ('cancelled', 'completed')
+        `;
+        const params: any[] = [v.id];
+        
+        // 如果是编辑订单，排除当前订单
+        if (exclude_order_id) {
+          conflictSql += ' AND id != ?';
+          params.push(exclude_order_id);
+        }
+        
+        conflictSql += `
+          AND (
+            (start_date <= ? AND end_date > ?)
+            OR (start_date < ? AND end_date >= ?)
+            OR (start_date >= ? AND end_date <= ?)
+          )
+        `;
+        params.push(start_date, start_date, end_date, end_date, start_date, end_date);
+        
+        const conflict = queryOne(conflictSql, params);
+        return !conflict;
+      });
+
+      res.json({ success: true, data: availableVehicles });
+      return;
+    }
 
     res.json({ success: true, data: vehicles });
   } catch (error) {

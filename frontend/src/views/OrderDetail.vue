@@ -1,6 +1,6 @@
 <template>
   <div class="page-container" v-loading="loading">
-    <el-page-header @back="$router.back()" title="返回" class="page-header">
+    <el-page-header @back="goBack" title="返回" class="page-header">
       <template #content>
         <span class="order-title">订单详情</span>
       </template>
@@ -187,8 +187,10 @@
         </el-form-item>
         <el-form-item label="类型" prop="payment_type">
           <el-select v-model="paymentForm.payment_type" style="width: 100%">
-            <el-option label="租金" value="rental" />
+            <el-option label="租金" value="rent" />
             <el-option label="押金" value="deposit" />
+            <el-option label="租金+押金" value="rent_deposit" />
+            <el-option label="违章押金" value="violation_deposit" />
             <el-option label="其他" value="other" />
           </el-select>
         </el-form-item>
@@ -401,22 +403,41 @@
 
     <!-- 续租对话框 -->
     <el-dialog v-model="extendDialogVisible" title="续租" width="90%" :style="{ maxWidth: '400px' }">
-      <el-form :model="extendForm" label-width="70px">
+      <el-form :model="extendForm" label-width="80px">
         <el-form-item label="当前还车">
-          <span>{{ order.end_date }}</span>
+          <span>{{ formatDateTime(order.end_date) }}</span>
         </el-form-item>
-        <el-form-item label="续租天数">
-          <el-input-number v-model="extendForm.extend_days" :min="1" :max="90" style="width: 100%" />
+        <el-form-item label="新时间">
+          <input 
+            type="datetime-local" 
+            :value="formatDateTimeLocal(extendForm.new_end_date)"
+            class="native-datetime-input"
+            @change="onExtendDateTimeChange"
+          />
         </el-form-item>
-        <el-form-item label="日租金">
-          <el-input-number v-model="extendForm.daily_rate" :min="0" style="width: 100%" />
+        <el-form-item label="续租时长">
+          <span>{{ extendDurationText }}</span>
         </el-form-item>
         <el-form-item label="续租金额">
-          <span class="text-primary">¥{{ extendAmount }}</span>
+          <el-input-number v-model="extendForm.extend_amount" :min="0" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="新还车日">
-          <span>{{ newEndDate }}</span>
+        <el-form-item label="已支付">
+          <el-switch v-model="extendForm.has_payment" />
         </el-form-item>
+        <template v-if="extendForm.has_payment">
+          <el-form-item label="支付金额">
+            <el-input-number v-model="extendForm.payment_amount" :min="0" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="支付方式">
+            <el-select v-model="extendForm.payment_method" placeholder="选择支付方式" style="width: 100%">
+              <el-option label="微信" value="wechat" />
+              <el-option label="支付宝" value="alipay" />
+              <el-option label="现金" value="cash" />
+              <el-option label="银行转账" value="bank" />
+              <el-option label="其他" value="other" />
+            </el-select>
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="extendDialogVisible = false">取消</el-button>
@@ -468,7 +489,7 @@ const orderSources = ref<any[]>([])
 const paymentForm = reactive({
   amount: 0,
   payment_method: 'cash',
-  payment_type: 'rental',
+  payment_type: 'rent',
   remarks: ''
 })
 
@@ -523,8 +544,11 @@ const editRules: FormRules = {
 }
 
 const extendForm = reactive({
-  extend_days: 1,
-  daily_rate: 200
+  new_end_date: '',
+  extend_amount: 0,
+  has_payment: false,
+  payment_amount: 0,
+  payment_method: 'wechat'
 })
 
 const statusTypeMap: Record<string, string> = {
@@ -641,7 +665,14 @@ function onCompleteDateTimeChange(e: Event) {
 }
 
 function getPaymentTypeText(type: string) {
-  const map: Record<string, string> = { rental: '租金', deposit: '押金', other: '其他' }
+  const map: Record<string, string> = { 
+    rental: '租金', 
+    rent: '租金', 
+    deposit: '押金', 
+    rent_deposit: '租金+押金',
+    violation_deposit: '违章押金',
+    other: '其他' 
+  }
   return map[type] || type
 }
 
@@ -693,15 +724,21 @@ const editEstimatedTotal = computed(() => {
   return editEstimatedDays.value * editForm.daily_rate
 })
 
-const extendAmount = computed(() => {
-  return extendForm.extend_days * extendForm.daily_rate
-})
-
-const newEndDate = computed(() => {
-  if (order.value.end_date) {
-    const date = new Date(order.value.end_date)
-    date.setDate(date.getDate() + extendForm.extend_days)
-    return date.toISOString().slice(0, 10)
+const extendDurationText = computed(() => {
+  if (!extendForm.new_end_date || !order.value.end_date) return ''
+  const currentEnd = new Date(order.value.end_date)
+  const newEnd = new Date(extendForm.new_end_date)
+  const diffMs = newEnd.getTime() - currentEnd.getTime()
+  if (diffMs <= 0) return ''
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const days = Math.floor(diffHours / 24)
+  const hours = diffHours % 24
+  if (days > 0 && hours > 0) {
+    return `${days}天${hours}小时`
+  } else if (days > 0) {
+    return `${days}天`
+  } else if (hours > 0) {
+    return `${hours}小时`
   }
   return ''
 })
@@ -989,18 +1026,48 @@ async function handleEditSubmit() {
 
 // 打开续租对话框
 function openExtendDialog() {
-  extendForm.extend_days = 1
-  extendForm.daily_rate = order.value.daily_rate
+  // 默认新还车时间为当前还车时间加1天
+  if (order.value.end_date) {
+    const date = new Date(order.value.end_date)
+    date.setDate(date.getDate() + 1)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    extendForm.new_end_date = `${year}-${month}-${day} ${hours}:${minutes}:00`
+  }
+  // 默认续租金额为日租金
+  extendForm.extend_amount = order.value.daily_rate || 0
+  // 重置支付字段
+  extendForm.has_payment = false
+  extendForm.payment_amount = 0
+  extendForm.payment_method = 'wechat'
   extendDialogVisible.value = true
+}
+
+// 续租日期时间变化
+function onExtendDateTimeChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    extendForm.new_end_date = target.value.replace('T', ' ') + ':00'
+  }
 }
 
 // 提交续租
 async function handleExtend() {
+  if (!extendForm.new_end_date) {
+    ElMessage.warning('请选择新的还车时间')
+    return
+  }
   submitting.value = true
   try {
     const res: any = await orderApi.extend(order.value.id, {
-      extend_days: extendForm.extend_days,
-      daily_rate: extendForm.daily_rate
+      new_end_date: extendForm.new_end_date,
+      extend_amount: extendForm.extend_amount,
+      has_payment: extendForm.has_payment,
+      payment_amount: extendForm.has_payment ? extendForm.payment_amount : undefined,
+      payment_method: extendForm.has_payment ? extendForm.payment_method : undefined
     })
     if (res.success) {
       ElMessage.success(`续租成功，续租金额 ¥${res.data.extend_amount}`)
@@ -1012,6 +1079,11 @@ async function handleExtend() {
   } finally {
     submitting.value = false
   }
+}
+
+// 返回订单列表
+function goBack() {
+  router.back()
 }
 
 onMounted(() => loadOrder())

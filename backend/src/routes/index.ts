@@ -65,6 +65,7 @@ router.get('/violations/stats', authMiddleware, violationsController.getViolatio
 router.get('/violations/:id', authMiddleware, violationsController.getViolation);
 router.post('/violations', authMiddleware, violationsController.createViolation);
 router.put('/violations/:id', authMiddleware, violationsController.updateViolation);
+router.put('/violations/:id/fee', authMiddleware, violationsController.collectFee);
 router.put('/violations/:id/handle', authMiddleware, violationsController.handleViolation);
 router.delete('/violations/:id', authMiddleware, violationsController.deleteViolation);
 

@@ -49,14 +49,14 @@
               </el-tag>
             </span>
           </div>
-          <div class="mobile-card-row" v-if="vehicle.latestMaintenance">
+          <div class="mobile-card-row" v-if="vehicle.latestOilMaintenance">
             <span class="label">最近保养</span>
-            <span class="value"><span v-if="vehicle.latestMaintenance.mileage" class="mileage-main">{{ vehicle.latestMaintenance.mileage }}km</span><span class="date-sub">{{ vehicle.latestMaintenance.maintenance_date }}</span></span>
+            <span class="value"><span v-if="vehicle.latestOilMaintenance.mileage" class="mileage-main">{{ vehicle.latestOilMaintenance.mileage }}km</span><span class="date-sub">{{ vehicle.latestOilMaintenance.maintenance_date }}</span></span>
           </div>
-          <div class="mobile-card-row" v-if="vehicle.latestMaintenance?.next_maintenance_date">
+          <div class="mobile-card-row" v-if="vehicle.latestOilMaintenance?.next_maintenance_date || vehicle.latestOilMaintenance?.next_maintenance_mileage">
             <span class="label">下次保养</span>
-            <span class="value" :class="{ 'text-danger': isOverdue(vehicle.latestMaintenance.next_maintenance_date), 'text-warning': isDueSoon(vehicle.latestMaintenance.next_maintenance_date) }">
-              <span v-if="vehicle.latestMaintenance.next_maintenance_mileage" class="mileage-main">{{ vehicle.latestMaintenance.next_maintenance_mileage }}km</span><span class="date-sub">{{ vehicle.latestMaintenance.next_maintenance_date }}</span>
+            <span class="value" :class="{ 'text-danger': vehicle.latestOilMaintenance?.next_maintenance_date && isOverdue(vehicle.latestOilMaintenance.next_maintenance_date), 'text-warning': vehicle.latestOilMaintenance?.next_maintenance_date && isDueSoon(vehicle.latestOilMaintenance.next_maintenance_date) }">
+              <span v-if="vehicle.latestOilMaintenance?.next_maintenance_mileage" class="mileage-main">{{ vehicle.latestOilMaintenance.next_maintenance_mileage }}km</span><span class="date-sub" v-if="vehicle.latestOilMaintenance?.next_maintenance_date">{{ vehicle.latestOilMaintenance.next_maintenance_date }}</span>
             </span>
           </div>
           <div class="maintenance-count">
@@ -85,18 +85,18 @@
           </el-table-column>
           <el-table-column label="最近保养" min-width="150">
             <template #default="{ row }">
-              <div v-if="row.latestMaintenance" class="maintenance-cell">
-                <span v-if="row.latestMaintenance.mileage" class="mileage-main">{{ row.latestMaintenance.mileage }}km</span>
-                <span class="date-sub">{{ row.latestMaintenance.maintenance_date }}</span>
+              <div v-if="row.latestOilMaintenance" class="maintenance-cell">
+                <span v-if="row.latestOilMaintenance.mileage" class="mileage-main">{{ row.latestOilMaintenance.mileage }}km</span>
+                <span class="date-sub">{{ row.latestOilMaintenance.maintenance_date }}</span>
               </div>
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
           <el-table-column label="下次保养" min-width="150">
             <template #default="{ row }">
-              <div v-if="row.latestMaintenance?.next_maintenance_date" class="maintenance-cell" :class="{ 'text-danger': isOverdue(row.latestMaintenance.next_maintenance_date), 'text-warning': isDueSoon(row.latestMaintenance.next_maintenance_date) }">
-                <span v-if="row.latestMaintenance.next_maintenance_mileage" class="mileage-main">{{ row.latestMaintenance.next_maintenance_mileage }}km</span>
-                <span class="date-sub">{{ row.latestMaintenance.next_maintenance_date }}</span>
+              <div v-if="row.latestOilMaintenance?.next_maintenance_date || row.latestOilMaintenance?.next_maintenance_mileage" class="maintenance-cell" :class="{ 'text-danger': row.latestOilMaintenance?.next_maintenance_date && isOverdue(row.latestOilMaintenance.next_maintenance_date), 'text-warning': row.latestOilMaintenance?.next_maintenance_date && isDueSoon(row.latestOilMaintenance.next_maintenance_date) }">
+                <span v-if="row.latestOilMaintenance?.next_maintenance_mileage" class="mileage-main">{{ row.latestOilMaintenance.next_maintenance_mileage }}km</span>
+                <span class="date-sub" v-if="row.latestOilMaintenance?.next_maintenance_date">{{ row.latestOilMaintenance.next_maintenance_date }}</span>
               </div>
               <span v-else class="text-muted">-</span>
             </template>
@@ -169,9 +169,13 @@
             <span class="label">维修店</span>
             <span class="value">{{ item.garage }}</span>
           </div>
-          <div class="mobile-card-row" v-if="item.next_maintenance_date">
+          <div class="mobile-card-row" v-if="item.next_maintenance_date || item.next_maintenance_mileage">
             <span class="label">下次保养</span>
-            <span class="value text-warning">{{ item.next_maintenance_date }}</span>
+            <span class="value text-warning">
+              <span v-if="item.next_maintenance_mileage">{{ item.next_maintenance_mileage }}km</span>
+              <span v-if="item.next_maintenance_mileage && item.next_maintenance_date"> / </span>
+              <span v-if="item.next_maintenance_date">{{ item.next_maintenance_date }}</span>
+            </span>
           </div>
           <div class="mobile-card-row" v-if="item.images && item.images.length">
             <span class="label">图片</span>
@@ -215,9 +219,13 @@
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column prop="next_maintenance_date" label="下次保养" width="100">
+          <el-table-column label="下次保养" min-width="120">
             <template #default="{ row }">
-              <span v-if="row.next_maintenance_date" class="text-warning">{{ row.next_maintenance_date }}</span>
+              <div v-if="row.next_maintenance_date || row.next_maintenance_mileage">
+                <span v-if="row.next_maintenance_mileage" class="text-warning">{{ row.next_maintenance_mileage }}km</span>
+                <span v-if="row.next_maintenance_mileage && row.next_maintenance_date" class="text-muted"> / </span>
+                <span v-if="row.next_maintenance_date" class="text-warning">{{ row.next_maintenance_date }}</span>
+              </div>
               <span v-else>-</span>
             </template>
           </el-table-column>
@@ -423,37 +431,41 @@ function isDueSoon(date: string) {
 }
 
 function getVehicleMaintenanceStatus(vehicle: any) {
-  if (!vehicle.latestMaintenance) return '无记录'
-  if (vehicle.latestMaintenance.status === 'pending') return '待保养'
+  // 只检查包含机油的保养记录
+  const oilMaintenance = vehicle.latestOilMaintenance
+  if (!oilMaintenance) return '无记录'
+  if (oilMaintenance.status === 'pending') return '待保养'
   
   const currentMileage = vehicle.mileage || 0
-  const nextMileage = vehicle.latestMaintenance.next_maintenance_mileage
+  const nextMileage = oilMaintenance.next_maintenance_mileage
   
   // 按里程判断
-  if (nextMileage && currentMileage >= nextMileage) return '已超期'
+  if (nextMileage && currentMileage >= nextMileage) return '已超公里'
   if (nextMileage && currentMileage >= nextMileage - 1000) return '待保养'
   
   // 按日期判断
-  if (vehicle.latestMaintenance.next_maintenance_date && isOverdue(vehicle.latestMaintenance.next_maintenance_date)) return '已超期'
-  if (vehicle.latestMaintenance.next_maintenance_date && isDueSoon(vehicle.latestMaintenance.next_maintenance_date)) return '即将到期'
+  if (oilMaintenance.next_maintenance_date && isOverdue(oilMaintenance.next_maintenance_date)) return '已超期'
+  if (oilMaintenance.next_maintenance_date && isDueSoon(oilMaintenance.next_maintenance_date)) return '即将到期'
   
   return '正常'
 }
 
 function getVehicleMaintenanceStatusType(vehicle: any) {
-  if (!vehicle.latestMaintenance) return 'info'
-  if (vehicle.latestMaintenance.status === 'pending') return 'warning'
+  // 只检查包含机油的保养记录
+  const oilMaintenance = vehicle.latestOilMaintenance
+  if (!oilMaintenance) return 'info'
+  if (oilMaintenance.status === 'pending') return 'warning'
   
   const currentMileage = vehicle.mileage || 0
-  const nextMileage = vehicle.latestMaintenance.next_maintenance_mileage
+  const nextMileage = oilMaintenance.next_maintenance_mileage
   
   // 按里程判断
   if (nextMileage && currentMileage >= nextMileage) return 'danger'
   if (nextMileage && currentMileage >= nextMileage - 1000) return 'warning'
   
   // 按日期判断
-  if (vehicle.latestMaintenance.next_maintenance_date && isOverdue(vehicle.latestMaintenance.next_maintenance_date)) return 'danger'
-  if (vehicle.latestMaintenance.next_maintenance_date && isDueSoon(vehicle.latestMaintenance.next_maintenance_date)) return 'warning'
+  if (oilMaintenance.next_maintenance_date && isOverdue(oilMaintenance.next_maintenance_date)) return 'danger'
+  if (oilMaintenance.next_maintenance_date && isDueSoon(oilMaintenance.next_maintenance_date)) return 'warning'
   
   return 'success'
 }
@@ -481,13 +493,16 @@ async function loadVehicles() {
           try {
             const maintenanceRes: any = await maintenanceApi.getList({ vehicle_id: v.id, pageSize: 100 })
             const records = maintenanceRes.success ? maintenanceRes.data.data : []
+            // 获取最新的包含机油的保养记录
+            const oilRecord = records.find((r: any) => r.types && r.types.includes('oil'))
             return {
               ...v,
               maintenanceCount: records.length,
-              latestMaintenance: records.length > 0 ? records[0] : null
+              latestMaintenance: records.length > 0 ? records[0] : null,
+              latestOilMaintenance: oilRecord || null
             }
           } catch {
-            return { ...v, maintenanceCount: 0, latestMaintenance: null }
+            return { ...v, maintenanceCount: 0, latestMaintenance: null, latestOilMaintenance: null }
           }
         })
       )
@@ -678,7 +693,7 @@ onMounted(() => loadVehicles())
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.primary { border-left: 3px solid #409EFF; }
+.stat-card.primary { border-left: 3px solid var(--primary-color, #409EFF); }
 .stat-card.warning { border-left: 3px solid #E6A23C; }
 .stat-card.success { border-left: 3px solid #67C23A; }
 
@@ -930,8 +945,8 @@ onMounted(() => loadVehicles())
 }
 
 .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color, #409EFF);
+  color: var(--primary-color, #409EFF);
 }
 
 .upload-btn .el-icon {

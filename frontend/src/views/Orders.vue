@@ -37,7 +37,7 @@
 
     <!-- 移动端卡片列表 -->
     <div class="mobile-cards">
-      <div v-for="item in tableData" :key="item.id" class="mobile-card" @click="$router.push(`/orders/${item.id}`)">
+      <div v-for="item in tableData" :key="item.id" class="mobile-card" @click="goToDetail(item)">
         <div class="mobile-card-header">
           <span>
             <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
@@ -57,11 +57,11 @@
         </div>
         <div class="mobile-card-row">
           <span class="label">取车</span>
-          <span class="value">{{ formatDateTime(item.start_date) }}</span>
+          <span class="value">{{ formatDateTime(item.start_date) }}<span v-if="item.pickup_location" class="location-text"> ({{ item.pickup_location }})</span></span>
         </div>
         <div class="mobile-card-row">
           <span class="label">还车</span>
-          <span class="value">{{ formatDateTime(item.end_date) }}</span>
+          <span class="value">{{ formatDateTime(item.end_date) }}<span v-if="item.return_location" class="location-text"> ({{ item.return_location }})</span></span>
         </div>
         <div class="mobile-card-footer">
           <span class="amount">¥{{ item.total_amount }}</span>
@@ -91,16 +91,22 @@
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile" @row-click="handleRowClick">
         <el-table-column prop="customer_name" label="客户" width="80" />
         <el-table-column prop="customer_phone" label="电话" width="110" />
-        <el-table-column prop="plate_number" label="车牌" width="110">
+        <el-table-column prop="plate_number" label="车牌" width="130">
           <template #default="{ row }">
             <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="start_date" label="取车" width="130">
-          <template #default="{ row }">{{ formatDateTime(row.start_date) }}</template>
+        <el-table-column prop="start_date" label="取车" width="150">
+          <template #default="{ row }">
+            {{ formatDateTime(row.start_date) }}
+            <span v-if="row.pickup_location" class="location-text">({{ row.pickup_location }})</span>
+          </template>
         </el-table-column>
-        <el-table-column prop="end_date" label="还车" width="130">
-          <template #default="{ row }">{{ formatDateTime(row.end_date) }}</template>
+        <el-table-column prop="end_date" label="还车" width="150">
+          <template #default="{ row }">
+            {{ formatDateTime(row.end_date) }}
+            <span v-if="row.return_location" class="location-text">({{ row.return_location }})</span>
+          </template>
         </el-table-column>
         <el-table-column prop="total_amount" label="总金额" width="90">
           <template #default="{ row }">¥{{ row.total_amount }}</template>
@@ -249,6 +255,32 @@
         <el-form-item label="总租金">
           <el-input-number v-model="form.total_amount" :min="0" placeholder="可直接填写总租金" style="width: 100%" />
         </el-form-item>
+        <el-form-item label="预付">
+          <el-switch v-model="form.has_prepay" />
+        </el-form-item>
+        <template v-if="form.has_prepay">
+          <el-form-item label="支付金额">
+            <el-input-number v-model="form.prepay_amount" :min="0" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="支付方式">
+            <el-select v-model="form.prepay_method" placeholder="选择支付方式" style="width: 100%">
+              <el-option label="微信" value="wechat" />
+              <el-option label="支付宝" value="alipay" />
+              <el-option label="现金" value="cash" />
+              <el-option label="银行转账" value="bank" />
+              <el-option label="其他" value="other" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="支付类型">
+            <el-select v-model="form.prepay_type" placeholder="选择支付类型" style="width: 100%">
+              <el-option label="租金" value="rent" />
+              <el-option label="押金" value="deposit" />
+              <el-option label="租金+押金" value="rent_deposit" />
+              <el-option label="违章押金" value="violation_deposit" />
+              <el-option label="其他" value="other" />
+            </el-select>
+          </el-form-item>
+        </template>
         <el-form-item label="免押">
           <el-switch v-model="form.deposit_waived" @change="onDepositWaivedChange" />
         </el-form-item>
@@ -286,6 +318,12 @@
         <el-form-item label="合同号">
           <el-input v-model="form.contract_number" placeholder="合同号（选填）" />
         </el-form-item>
+        <el-form-item label="取车位置">
+          <el-input v-model="form.pickup_location" placeholder="取车位置（选填）" />
+        </el-form-item>
+        <el-form-item label="还车位置">
+          <el-input v-model="form.return_location" placeholder="还车位置（选填）" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
         </el-form-item>
@@ -315,6 +353,55 @@
         </el-form-item>
         <el-form-item label="身份证">
           <el-input v-model="editForm.customer_id_card" placeholder="身份证号（可选）" />
+        </el-form-item>
+        <el-form-item label="身份证照片">
+          <div class="mini-upload">
+            <div class="image-list">
+              <div v-for="(img, idx) in editForm.id_card_images" :key="idx" class="image-item">
+                <img :src="getImageUrl(img)" @click="previewImage(editForm.id_card_images, idx)" />
+                <div class="image-remove" @click="removeEditIdCardImage(idx)">×</div>
+              </div>
+              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerEditUpload('id_card')">
+                <el-icon><Plus /></el-icon>
+              </div>
+            </div>
+            <input ref="editIdCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleEditUpload($event, 'id_card')" />
+          </div>
+        </el-form-item>
+        <el-form-item label="驾驶证">
+          <el-input v-model="editForm.customer_license" placeholder="驾驶证号（可选）" />
+        </el-form-item>
+        <el-form-item label="驾驶证照片">
+          <div class="mini-upload">
+            <div class="image-list">
+              <div v-for="(img, idx) in editForm.license_images" :key="idx" class="image-item">
+                <img :src="getImageUrl(img)" @click="previewImage(editForm.license_images, idx)" />
+                <div class="image-remove" @click="removeEditLicenseImage(idx)">×</div>
+              </div>
+              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerEditUpload('license')">
+                <el-icon><Plus /></el-icon>
+              </div>
+            </div>
+            <input ref="editLicenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleEditUpload($event, 'license')" />
+          </div>
+        </el-form-item>
+        
+        <el-divider content-position="left">车辆信息</el-divider>
+        <el-form-item label="车辆" prop="vehicle_id">
+          <el-select 
+            v-model="editForm.vehicle_id" 
+            placeholder="选择车辆" 
+            style="width: 100%" 
+            :disabled="currentOrder?.status === 'active'"
+            @change="onEditVehicleChange"
+          >
+            <el-option 
+              v-for="v in vehicles" 
+              :key="v.id" 
+              :label="`${v.plate_number} - ${v.brand} ${v.model} (¥${v.daily_rate}/天)`" 
+              :value="v.id" 
+            />
+          </el-select>
         </el-form-item>
         
         <el-divider content-position="left">租期信息</el-divider>
@@ -375,8 +462,17 @@
         <el-form-item label="合同号">
           <el-input v-model="editForm.contract_number" placeholder="合同号（选填）" />
         </el-form-item>
+        <el-form-item label="取车位置">
+          <el-input v-model="editForm.pickup_location" placeholder="取车位置（选填）" />
+        </el-form-item>
+        <el-form-item label="还车位置">
+          <el-input v-model="editForm.return_location" placeholder="还车位置（选填）" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="editForm.remarks" type="textarea" :rows="2" placeholder="备注信息" />
+        </el-form-item>
+        <el-form-item label="预估">
+          <span class="estimate">{{ editEstimatedDays }} 天，共 ¥{{ editEstimatedTotal }}</span>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -450,22 +546,41 @@
     
     <!-- 续租对话框 -->
     <el-dialog v-model="extendDialogVisible" title="续租" width="90%" :style="{ maxWidth: '400px' }">
-      <el-form :model="extendForm" label-width="70px">
+      <el-form :model="extendForm" label-width="80px">
         <el-form-item label="当前还车">
           <span>{{ currentOrder?.end_date ? formatDateTime(currentOrder.end_date) : '' }}</span>
         </el-form-item>
-        <el-form-item label="续租天数">
-          <el-input-number v-model="extendForm.extend_days" :min="1" :max="90" style="width: 100%" />
+        <el-form-item label="新时间">
+          <input 
+            type="datetime-local" 
+            :value="formatDateTimeLocal(extendForm.new_end_date)"
+            class="native-datetime-input"
+            @change="onExtendDateTimeChange"
+          />
         </el-form-item>
-        <el-form-item label="日租金">
-          <el-input-number v-model="extendForm.daily_rate" :min="0" style="width: 100%" />
+        <el-form-item label="续租时长">
+          <span>{{ extendDurationText }}</span>
         </el-form-item>
         <el-form-item label="续租金额">
-          <span class="text-primary">¥{{ extendAmount }}</span>
+          <el-input-number v-model="extendForm.extend_amount" :min="0" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="新还车日">
-          <span>{{ newEndDate }}</span>
+        <el-form-item label="已支付">
+          <el-switch v-model="extendForm.has_payment" />
         </el-form-item>
+        <template v-if="extendForm.has_payment">
+          <el-form-item label="支付金额">
+            <el-input-number v-model="extendForm.payment_amount" :min="0" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="支付方式">
+            <el-select v-model="extendForm.payment_method" placeholder="选择支付方式" style="width: 100%">
+              <el-option label="微信" value="wechat" />
+              <el-option label="支付宝" value="alipay" />
+              <el-option label="现金" value="cash" />
+              <el-option label="银行转账" value="bank" />
+              <el-option label="其他" value="other" />
+            </el-select>
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="extendDialogVisible = false">取消</el-button>
@@ -510,6 +625,8 @@ const blacklistWarning = ref('')
 const blacklistReason = ref('')
 const idCardInput = ref<HTMLInputElement>()
 const licenseInput = ref<HTMLInputElement>()
+const editIdCardInput = ref<HTMLInputElement>()
+const editLicenseInput = ref<HTMLInputElement>()
 const pickupImageInput = ref<HTMLInputElement>()
 const returnImageInput = ref<HTMLInputElement>()
 const imagePreviewVisible = ref(false)
@@ -547,7 +664,14 @@ const form = reactive({
   deposit_waived_expiry: '',
   service_type: 'basic',
   contract_number: '',
-  remarks: ''
+  pickup_location: '',
+  return_location: '',
+  remarks: '',
+  // 预付相关
+  has_prepay: false,
+  prepay_amount: 0,
+  prepay_method: 'wechat',
+  prepay_type: 'rent'
 })
 
 const rules: FormRules = {
@@ -567,6 +691,10 @@ const editForm = reactive({
   customer_name: '',
   customer_phone: '',
   customer_id_card: '',
+  id_card_images: [] as string[],
+  customer_license: '',
+  license_images: [] as string[],
+  vehicle_id: '',
   start_date: '',
   end_date: '',
   daily_rate: 0,
@@ -577,6 +705,8 @@ const editForm = reactive({
   service_type: 'basic',
   source_id: '',
   contract_number: '',
+  pickup_location: '',
+  return_location: '',
   remarks: ''
 })
 
@@ -606,8 +736,11 @@ const pickupForm = reactive({
 
 // 续租表单
 const extendForm = reactive({
-  extend_days: 1,
-  daily_rate: 200
+  new_end_date: '',
+  extend_amount: 0,
+  has_payment: false,
+  payment_amount: 0,
+  payment_method: 'wechat'
 })
 
 const statusTypeMap: Record<string, string> = {
@@ -702,12 +835,20 @@ function onStartDateTimeChange(e: Event) {
     // datetime-local 格式: YYYY-MM-DDTHH:mm -> YYYY-MM-DD HH:mm:ss
     form.start_date = target.value.replace('T', ' ') + ':00'
   }
+  // 如果已经填写了结束日期，重新加载可用车辆
+  if (form.start_date && form.end_date) {
+    loadVehicles(form.start_date, form.end_date)
+  }
 }
 
 function onEndDateTimeChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.value) {
     form.end_date = target.value.replace('T', ' ') + ':00'
+  }
+  // 如果已经填写了开始日期，重新加载可用车辆
+  if (form.start_date && form.end_date) {
+    loadVehicles(form.start_date, form.end_date)
   }
 }
 
@@ -747,6 +888,27 @@ const netAmount = computed(() => {
     return Math.round(estimatedTotal.value * (100 - rate) / 100)
   }
   return estimatedTotal.value
+})
+
+// 编辑表单预估天数
+const editEstimatedDays = computed(() => {
+  if (editForm.start_date && editForm.end_date) {
+    const start = new Date(editForm.start_date)
+    const end = new Date(editForm.end_date)
+    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+    return Math.max(1, Math.ceil(hours / 24))
+  }
+  return 0
+})
+
+// 编辑表单预估总金额
+const editEstimatedTotal = computed(() => {
+  // 如果填了总租金则使用总租金
+  if (editForm.total_amount && editForm.total_amount > 0) {
+    return editForm.total_amount
+  }
+  // 否则按日租金计算
+  return editEstimatedDays.value * editForm.daily_rate
 })
 
 // 标签页切换
@@ -790,9 +952,17 @@ async function loadData() {
   }
 }
 
-async function loadVehicles() {
+async function loadVehicles(startDate?: string, endDate?: string, excludeOrderId?: string) {
   try {
-    const res: any = await vehicleApi.getAvailable()
+    const params: any = {}
+    if (startDate && endDate) {
+      params.start_date = startDate
+      params.end_date = endDate
+    }
+    if (excludeOrderId) {
+      params.exclude_order_id = excludeOrderId
+    }
+    const res: any = await vehicleApi.getAvailable(params)
     if (res.success) {
       vehicles.value = res.data
     }
@@ -839,6 +1009,22 @@ function onRegularCustomerChange(customerId: string) {
 }
 
 function openDialog() {
+  // 设置默认日期时间（当前时间）
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const defaultStart = `${year}-${month}-${day} ${hours}:${minutes}:00`
+  
+  // 默认还车时间为第二天同一时间
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  const tYear = tomorrow.getFullYear()
+  const tMonth = String(tomorrow.getMonth() + 1).padStart(2, '0')
+  const tDay = String(tomorrow.getDate()).padStart(2, '0')
+  const defaultEnd = `${tYear}-${tMonth}-${tDay} ${hours}:${minutes}:00`
+  
   Object.assign(form, {
     customer_name: '',
     customer_phone: '',
@@ -848,8 +1034,8 @@ function openDialog() {
     license_images: [],
     vehicle_id: '',
     source_id: '',
-    start_date: '',
-    end_date: '',
+    start_date: defaultStart,
+    end_date: defaultEnd,
     daily_rate: 0,
     total_amount: 0,
     deposit: 0,
@@ -857,12 +1043,19 @@ function openDialog() {
     deposit_waived_expiry: '',
     service_type: 'basic',
     contract_number: '',
-    remarks: ''
+    pickup_location: '',
+    return_location: '',
+    remarks: '',
+    has_prepay: false,
+    prepay_amount: 0,
+    prepay_method: 'wechat',
+    prepay_type: 'rent'
   })
   selectedRegularCustomer.value = ''
   blacklistWarning.value = ''
   blacklistReason.value = ''
-  loadVehicles()
+  // 加载当前时间段可用的车辆
+  loadVehicles(defaultStart, defaultEnd)
   loadOrderSources()
   loadRegularCustomers()
   dialogVisible.value = true
@@ -984,7 +1177,16 @@ async function handleSubmit() {
 }
 
 function handleRowClick(row: any) {
+  // 保存当前标签页状态
+  sessionStorage.setItem('orderListTab', activeTab.value)
   router.push(`/orders/${row.id}`)
+}
+
+// 跳转到订单详情
+function goToDetail(item: any) {
+  // 保存当前标签页状态
+  sessionStorage.setItem('orderListTab', activeTab.value)
+  router.push(`/orders/${item.id}`)
 }
 
 // 从订单列表拉黑客户
@@ -1016,21 +1218,34 @@ async function handleAddToBlacklist(row: any) {
 async function openEditDialog(row: any) {
   currentOrder.value = row
   await loadOrderSources()
+  // 加载当前时间段可用的车辆（排除当前订单）
+  await loadVehicles(row.start_date, row.end_date, row.id)
+  
+  // 获取订单详情以获取完整信息
+  const detailRes: any = await orderApi.getOne(row.id)
+  const detail = detailRes.success ? detailRes.data : row
+  
   Object.assign(editForm, {
-    customer_name: row.customer_name,
-    customer_phone: row.customer_phone,
-    customer_id_card: row.customer_id_card || '',
-    start_date: row.start_date,
-    end_date: row.end_date,
-    daily_rate: row.daily_rate || 0,
-    total_amount: row.total_amount || 0,
-    deposit: row.deposit || 0,
-    deposit_waived: row.deposit_waived === 1,
-    deposit_waived_expiry: row.deposit_waived_expiry || '',
-    service_type: row.service_type || 'basic',
-    source_id: row.source_id || '',
-    contract_number: row.contract_number || '',
-    remarks: row.remarks || ''
+    customer_name: detail.customer_name,
+    customer_phone: detail.customer_phone,
+    customer_id_card: detail.customer_id_card || detail.id_card || '',
+    id_card_images: detail.id_card_images || [],
+    customer_license: detail.customer_license || detail.license_number || '',
+    license_images: detail.license_images || [],
+    vehicle_id: detail.vehicle_id,
+    start_date: detail.start_date,
+    end_date: detail.end_date,
+    daily_rate: detail.daily_rate || 0,
+    total_amount: detail.total_amount || 0,
+    deposit: detail.deposit || 0,
+    deposit_waived: detail.deposit_waived === 1,
+    deposit_waived_expiry: detail.deposit_waived_expiry || '',
+    service_type: detail.service_type || 'basic',
+    source_id: detail.source_id || '',
+    contract_number: detail.contract_number || '',
+    pickup_location: detail.pickup_location || '',
+    return_location: detail.return_location || '',
+    remarks: detail.remarks || ''
   })
   editDialogVisible.value = true
 }
@@ -1041,12 +1256,20 @@ function onEditStartDateTimeChange(e: Event) {
   if (target.value) {
     editForm.start_date = target.value.replace('T', ' ') + ':00'
   }
+  // 如果已经填写了结束日期，重新加载可用车辆
+  if (editForm.start_date && editForm.end_date) {
+    loadVehicles(editForm.start_date, editForm.end_date, currentOrder.value?.id)
+  }
 }
 
 function onEditEndDateTimeChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.value) {
     editForm.end_date = target.value.replace('T', ' ') + ':00'
+  }
+  // 如果已经填写了开始日期，重新加载可用车辆
+  if (editForm.start_date && editForm.end_date) {
+    loadVehicles(editForm.start_date, editForm.end_date, currentOrder.value?.id)
   }
 }
 
@@ -1231,33 +1454,73 @@ async function handleReturn() {
 // 打开续租对话框
 function openExtendDialog(row: any) {
   currentOrder.value = row
-  extendForm.extend_days = 1
-  extendForm.daily_rate = row.daily_rate || 200
+  // 默认新还车时间为当前还车时间加1天
+  if (row.end_date) {
+    const date = new Date(row.end_date)
+    date.setDate(date.getDate() + 1)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    extendForm.new_end_date = `${year}-${month}-${day} ${hours}:${minutes}:00`
+  }
+  // 默认续租金额为日租金
+  extendForm.extend_amount = row.daily_rate || 0
+  // 重置支付字段
+  extendForm.has_payment = false
+  extendForm.payment_amount = 0
+  extendForm.payment_method = 'wechat'
   extendDialogVisible.value = true
 }
 
-// 续租金额计算
-const extendAmount = computed(() => {
-  return extendForm.extend_days * extendForm.daily_rate
+// 续租日期时间变化
+function onExtendDateTimeChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    extendForm.new_end_date = target.value.replace('T', ' ') + ':00'
+  }
+}
+
+// 续租时长计算（小时数）
+const extendHours = computed(() => {
+  if (currentOrder.value?.end_date && extendForm.new_end_date) {
+    const oldEnd = new Date(currentOrder.value.end_date)
+    const newEnd = new Date(extendForm.new_end_date)
+    return Math.max(0, Math.ceil((newEnd.getTime() - oldEnd.getTime()) / (1000 * 60 * 60)))
+  }
+  return 0
 })
 
-// 新还车日期计算
-const newEndDate = computed(() => {
-  if (currentOrder.value?.end_date) {
-    const date = new Date(currentOrder.value.end_date)
-    date.setDate(date.getDate() + extendForm.extend_days)
-    return date.toISOString().slice(0, 10)
+// 续租时长文本（几天几小时）
+const extendDurationText = computed(() => {
+  const totalHours = extendHours.value
+  if (totalHours <= 0) return '0小时'
+  const days = Math.floor(totalHours / 24)
+  const hours = totalHours % 24
+  if (days > 0 && hours > 0) {
+    return `${days}天${hours}小时`
+  } else if (days > 0) {
+    return `${days}天`
+  } else {
+    return `${hours}小时`
   }
-  return ''
 })
 
 // 确认续租
 async function handleExtend() {
+  if (!extendForm.new_end_date) {
+    ElMessage.warning('请选择新的还车时间')
+    return
+  }
   submitting.value = true
   try {
     const res: any = await orderApi.extend(currentOrder.value.id, {
-      extend_days: extendForm.extend_days,
-      daily_rate: extendForm.daily_rate
+      new_end_date: extendForm.new_end_date,
+      extend_amount: extendForm.extend_amount,
+      has_payment: extendForm.has_payment,
+      payment_amount: extendForm.has_payment ? extendForm.payment_amount : undefined,
+      payment_method: extendForm.has_payment ? extendForm.payment_method : undefined
     })
     if (res.success) {
       ElMessage.success(`续租成功，续租金额 ¥${res.data.extend_amount}`)
@@ -1294,6 +1557,11 @@ onMounted(() => {
   // 检查是否从客户管理跳转过来查看订单
   if (route.query.customer_id) {
     searchForm.keyword = route.query.customer_name as string || ''
+  }
+  // 从 sessionStorage 恢复之前的标签页状态
+  const savedTab = sessionStorage.getItem('orderListTab')
+  if (savedTab && ['pending', 'active', 'completed', 'cancelled'].includes(savedTab)) {
+    activeTab.value = savedTab
   }
   loadData()
   loadTabCounts()

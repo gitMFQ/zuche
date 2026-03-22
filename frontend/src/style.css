@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* 主题色变量 - 默认值，会被JS动态更新 */
+  --primary-color: #667eea;
+  --primary-color-light: #8b9cf0;
+  --primary-color-dark: #4c5fc9;
+  --primary-color-rgb: 102, 126, 234;
+}
+
 html, body, #app {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -13,6 +21,255 @@ html, body, #app {
 body {
   background-color: #f0f2f5;
   font-size: 14px;
+}
+
+/* Element Plus 主题色覆盖 */
+.el-button--primary {
+  --el-button-bg-color: var(--primary-color);
+  --el-button-border-color: var(--primary-color);
+  --el-button-hover-bg-color: var(--primary-color-light);
+  --el-button-hover-border-color: var(--primary-color-light);
+  --el-button-active-bg-color: var(--primary-color-dark);
+  --el-button-active-border-color: var(--primary-color-dark);
+  --el-button-disabled-bg-color: var(--primary-color-light);
+  --el-button-disabled-border-color: var(--primary-color-light);
+}
+
+.el-button--primary.is-link,
+.el-button--primary.is-text {
+  color: var(--primary-color);
+}
+
+.el-button--primary.is-link:hover,
+.el-button--primary.is-text:hover {
+  color: var(--primary-color-light);
+}
+
+/* 主要链接颜色 */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:active {
+  opacity: 0.7;
+}
+
+/* Tab 激活颜色 */
+.el-tabs__item.is-active {
+  color: var(--primary-color);
+}
+
+.el-tabs__active-bar {
+  background-color: var(--primary-color);
+}
+
+/* Tab 激活颜色 - border-card 类型 */
+.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+  color: var(--primary-color);
+  background-color: #fff;
+  border-right-color: var(--primary-color);
+  border-left-color: var(--primary-color);
+}
+
+.el-tabs--border-card > .el-tabs__header .el-tabs__item:not(.is-disabled):hover {
+  color: var(--primary-color);
+}
+
+/* Tab 激活颜色 - card 类型 */
+.el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__item:hover {
+  color: var(--primary-color);
+}
+
+/* 开关组件激活颜色 */
+.el-switch.is-checked .el-switch__core {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 复选框激活颜色 */
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 单选框激活颜色 */
+.el-radio__input.is-checked .el-radio__inner {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 输入框聚焦颜色 */
+.el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+.el-textarea__inner:focus {
+  border-color: var(--primary-color);
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--primary-color) inset;
+}
+
+/* 分页组件激活颜色 */
+.el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: var(--primary-color);
+}
+
+.el-pagination button:hover {
+  color: var(--primary-color);
+}
+
+/* 标签页选中样式 */
+.el-segmented__item-selected {
+  background-color: var(--primary-color);
+}
+
+/* 标签页项悬停 */
+.el-tabs__item:hover {
+  color: var(--primary-color);
+}
+
+/* 滑块组件 */
+.el-slider__bar {
+  background-color: var(--primary-color);
+}
+
+.el-slider__button {
+  border-color: var(--primary-color);
+}
+
+/* 日期选择器 */
+.el-date-editor .el-range-input:focus {
+  color: var(--primary-color);
+}
+
+.el-date-table td.today .el-date-table-cell__text {
+  color: var(--primary-color);
+}
+
+.el-date-table td.current:not(.disabled) .el-date-table-cell__text {
+  background-color: var(--primary-color);
+}
+
+.el-date-table td.available:hover .el-date-table-cell__text {
+  color: var(--primary-color);
+}
+
+.el-picker-panel__shortcut:hover {
+  color: var(--primary-color);
+}
+
+/* 时间选择器 */
+.el-time-panel__btn.confirm {
+  color: var(--primary-color);
+}
+
+/* 选择器下拉菜单 */
+.el-select-dropdown__item.is-selected {
+  color: var(--primary-color);
+}
+
+.el-select-dropdown__item:hover {
+  color: var(--primary-color);
+}
+
+/* 树形组件 */
+.el-tree-node__content:hover {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.el-tree-node.is-current > .el-tree-node__content {
+  background-color: rgba(var(--primary-color-rgb), 0.15);
+  color: var(--primary-color);
+}
+
+/* 加载动画 */
+.el-loading-spinner .circular {
+  stroke: var(--primary-color);
+}
+
+.el-loading-spinner .el-loading-text {
+  color: var(--primary-color);
+}
+
+/* 进度条 */
+.el-progress-bar__inner {
+  background-color: var(--primary-color);
+}
+
+/* 步骤条 */
+.el-step__head.is-finish {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.el-step__title.is-finish {
+  color: var(--primary-color);
+}
+
+.el-step__head.is-process {
+  color: var(--primary-color);
+}
+
+/* 标签组件 */
+.el-tag--primary {
+  --el-tag-bg-color: rgba(var(--primary-color-rgb), 0.1);
+  --el-tag-border-color: rgba(var(--primary-color-rgb), 0.2);
+  --el-tag-text-color: var(--primary-color);
+}
+
+.el-tag.el-tag--primary {
+  --el-tag-bg-color: rgba(var(--primary-color-rgb), 0.1);
+  --el-tag-border-color: rgba(var(--primary-color-rgb), 0.2);
+  --el-tag-text-color: var(--primary-color);
+}
+
+/* 默认标签主题色 */
+.el-tag:not(.el-tag--success):not(.el-tag--warning):not(.el-tag--danger):not(.el-tag--info) {
+  --el-tag-bg-color: rgba(var(--primary-color-rgb), 0.1);
+  --el-tag-border-color: rgba(var(--primary-color-rgb), 0.2);
+  --el-tag-text-color: var(--primary-color);
+}
+
+/* 徽章组件 */
+.el-badge__content {
+  background-color: var(--primary-color);
+}
+
+/* 表格选中行 */
+.el-table__body tr.current-row > td {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.el-table__body tr.hover-row > td {
+  background-color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+/* 链接按钮 */
+.el-button.is-link:hover {
+  color: var(--primary-color);
+}
+
+/* 空状态图标 */
+.el-empty__description {
+  color: var(--primary-color);
+}
+
+/* 统计卡片主题色 */
+.stat-card.primary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%) !important;
+}
+
+/* 文本主题色 */
+.text-primary {
+  color: var(--primary-color) !important;
 }
 
 /* 移动端优化 */
@@ -62,16 +319,6 @@ body {
 
 ::-webkit-scrollbar-track {
   background-color: #f5f7fa;
-}
-
-/* 链接样式 */
-a {
-  color: #409EFF;
-  text-decoration: none;
-}
-
-a:active {
-  opacity: 0.7;
 }
 
 /* Element Plus 覆盖 */
@@ -142,4 +389,32 @@ a:active {
   background: linear-gradient(135deg, #0066cc 0%, #0080ff 100%);
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+}
+
+/* 来源标签样式 */
+.source-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #fff;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* 位置文字样式 */
+.location-text {
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+/* 隐藏数字输入框的加减按钮 */
+.el-input-number__decrease,
+.el-input-number__increase {
+  display: none;
+}
+
+.el-input-number .el-input__wrapper {
+  padding-left: 11px;
+  padding-right: 11px;
 }

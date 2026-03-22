@@ -592,8 +592,8 @@ onMounted(() => loadData())
 }
 
 .upload-trigger:hover {
-  border-color: #409EFF;
-  background: #f0f7ff;
+  border-color: var(--primary-color, #409EFF);
+  background: rgba(var(--primary-color-rgb, 64, 158, 255), 0.05);
 }
 
 .upload-icon {

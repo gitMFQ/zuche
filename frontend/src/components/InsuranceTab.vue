@@ -663,7 +663,7 @@ onMounted(() => loadVehicles())
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.primary { border-left: 3px solid #409EFF; }
+.stat-card.primary { border-left: 3px solid var(--primary-color, #409EFF); }
 .stat-card.warning { border-left: 3px solid #E6A23C; }
 .stat-card.danger { border-left: 3px solid #F56C6C; }
 .stat-card.success { border-left: 3px solid #67C23A; }
@@ -913,8 +913,8 @@ onMounted(() => loadVehicles())
 }
 
 .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color, #409EFF);
+  color: var(--primary-color, #409EFF);
 }
 
 .upload-btn .el-icon {

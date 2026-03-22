@@ -108,13 +108,15 @@ export function getMaintenanceStats(req: AuthRequest, res: Response): void {
       WHERE strftime('%Y-%m', maintenance_date) = strftime('%Y-%m', 'now')
     `);
     
-    // 待保养数量（状态为pending 或 里程接近下次保养里程1000km内）
+    // 待保养数量（只检查包含机油的记录）
+    // 检查type字段是否包含"oil"
     const pending = queryOne(`
       SELECT COUNT(DISTINCT m.vehicle_id) as count FROM maintenance m
       LEFT JOIN vehicles v ON m.vehicle_id = v.id
-      WHERE m.status = 'pending'
+      WHERE (m.type LIKE '%"oil"%' OR m.type = 'oil')
+      AND (m.status = 'pending'
       OR (m.next_maintenance_mileage IS NOT NULL 
-          AND v.mileage >= m.next_maintenance_mileage - 1000)
+          AND v.mileage >= m.next_maintenance_mileage - 1000))
     `);
     
     // 本月保养费用
@@ -123,15 +125,18 @@ export function getMaintenanceStats(req: AuthRequest, res: Response): void {
       WHERE strftime('%Y-%m', maintenance_date) = strftime('%Y-%m', 'now')
     `);
     
-    // 即将到期保养（根据next_maintenance_date或里程）
+    // 即将到期保养（只检查包含机油的记录，根据next_maintenance_date或里程）
     const upcomingExpire = query(`
       SELECT m.*, v.brand, v.model, v.mileage as vehicle_mileage FROM maintenance m
       LEFT JOIN vehicles v ON m.vehicle_id = v.id
-      WHERE m.next_maintenance_date IS NOT NULL 
-      AND m.next_maintenance_date >= date('now')
-      AND m.next_maintenance_date <= date('now', '+30 days')
-      OR (m.next_maintenance_mileage IS NOT NULL 
-          AND v.mileage >= m.next_maintenance_mileage - 1000)
+      WHERE (m.type LIKE '%"oil"%' OR m.type = 'oil')
+      AND (
+        (m.next_maintenance_date IS NOT NULL 
+         AND m.next_maintenance_date >= date('now')
+         AND m.next_maintenance_date <= date('now', '+30 days'))
+        OR (m.next_maintenance_mileage IS NOT NULL 
+            AND v.mileage >= m.next_maintenance_mileage - 1000)
+      )
       ORDER BY m.next_maintenance_date ASC
     `);
 
