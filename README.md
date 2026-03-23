@@ -161,6 +161,41 @@ npm run dev
 
 ## 更新日志
 
+### 2026-03-23
+
+#### 支付功能增强
+- **修改文件**:
+  - `frontend/src/views/Orders.vue`
+  - `frontend/src/views/OrderDetail.vue`
+- **变更内容**:
+  - 支付方式新增"平台支付"选项
+  - 支付类型新增"车损"选项
+  - 已还车(completed)状态的订单也可以添加支付记录
+  - 订单列表页添加支付按钮，支持快捷添加支付记录
+
+#### 代码复用优化
+- **新增文件**:
+  - `frontend/src/utils/constants.ts` - 公共常量定义
+  - `frontend/src/utils/helpers.ts` - 公共工具函数
+- **修改文件**:
+  - `frontend/src/views/Orders.vue`
+  - `frontend/src/views/OrderDetail.vue`
+  - `AGENTS.md`
+- **变更内容**:
+  - 创建公共常量文件，集中管理支付方式、支付类型、服务类型等选项列表
+  - 创建公共工具函数文件，统一管理 getImageUrl、formatDateTime、getPaymentMethodText 等函数
+  - 重构 Orders.vue 和 OrderDetail.vue，使用公共模块替代重复代码
+  - 减少约 100+ 行重复代码，提高代码可维护性
+
+#### 更新项目文档
+- **修改文件**:
+  - `AGENTS.md`
+- **变更内容**:
+  - 更新目录结构，添加 utils/ 目录说明
+  - 新增代码复用规范章节
+  - 添加支付方式和支付类型表格说明
+  - 新增"添加新的选项常量"开发任务指南
+
 ### 2026-03-22
 
 #### 数据库迁移到 better-sqlite3

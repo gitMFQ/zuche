@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { query, queryOne, execute, generateId, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 获取客户列表
@@ -138,6 +138,9 @@ export function createCustomer(req: AuthRequest, res: Response): void {
        source_id || null, sourceName, currentTime, currentTime]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '创建客户', 'customer', id, `创建客户 ${name}，手机：${phone}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id, name, phone },
@@ -187,6 +190,9 @@ export function updateCustomer(req: AuthRequest, res: Response): void {
        source_id || null, sourceName, now(), id]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '更新客户', 'customer', id, `更新客户 ${name}`, req.ip);
+
     res.json({ success: true, message: '客户更新成功' });
   } catch (error) {
     console.error('更新客户错误:', error);
@@ -210,7 +216,12 @@ export function deleteCustomer(req: AuthRequest, res: Response): void {
       return;
     }
 
+    const customer = queryOne('SELECT name FROM customers WHERE id = ?', [id]);
     execute('DELETE FROM customers WHERE id = ?', [id]);
+
+    // 记录操作日志
+    logAction(req.user?.id || '', '删除客户', 'customer', id, `删除客户 ${customer?.name || ''}`, req.ip);
+
     res.json({ success: true, message: '客户删除成功' });
   } catch (error) {
     console.error('删除客户错误:', error);

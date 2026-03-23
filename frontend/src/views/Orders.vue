@@ -73,13 +73,19 @@
           <template v-if="item.status === 'pending'">
             <el-button type="primary" size="small" @click="openEditDialog(item)">编辑</el-button>
             <el-button type="success" size="small" @click="openPickupDialog(item)">取车</el-button>
+            <el-button type="warning" size="small" @click="openPaymentDialog(item)">支付</el-button>
             <el-button type="danger" size="small" @click="handleCancel(item)">取消</el-button>
           </template>
           <template v-else-if="item.status === 'active'">
             <el-button type="primary" size="small" @click="openEditDialog(item)">编辑</el-button>
             <el-button type="success" size="small" @click="openReturnDialog(item)">还车</el-button>
             <el-button type="warning" size="small" @click="openExtendDialog(item)">续租</el-button>
+            <el-button type="info" size="small" @click="openPaymentDialog(item)">支付</el-button>
             <el-button type="danger" size="small" @click="handleCancel(item)">取消</el-button>
+          </template>
+          <template v-else-if="item.status === 'completed'">
+            <el-button type="primary" size="small" @click="openPaymentDialog(item)">支付</el-button>
+            <el-button disabled size="small">已结束</el-button>
           </template>
           <el-button v-else disabled size="small">已结束</el-button>
         </div>
@@ -122,18 +128,24 @@
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="280">
+        <el-table-column label="操作" fixed="right" width="320">
           <template #default="{ row }">
             <template v-if="row.status === 'pending'">
               <el-button type="primary" link size="small" @click.stop="openEditDialog(row)">编辑</el-button>
               <el-button type="success" link size="small" @click.stop="openPickupDialog(row)">取车</el-button>
+              <el-button type="warning" link size="small" @click.stop="openPaymentDialog(row)">支付</el-button>
               <el-button type="danger" link size="small" @click.stop="handleCancel(row)">取消</el-button>
             </template>
             <template v-else-if="row.status === 'active'">
               <el-button type="primary" link size="small" @click.stop="openEditDialog(row)">编辑</el-button>
               <el-button type="success" link size="small" @click.stop="openReturnDialog(row)">还车</el-button>
               <el-button type="warning" link size="small" @click.stop="openExtendDialog(row)">续租</el-button>
+              <el-button type="info" link size="small" @click.stop="openPaymentDialog(row)">支付</el-button>
               <el-button type="danger" link size="small" @click.stop="handleCancel(row)">取消</el-button>
+            </template>
+            <template v-else-if="row.status === 'completed'">
+              <el-button type="primary" link size="small" @click.stop="openPaymentDialog(row)">支付</el-button>
+              <span class="text-muted">已结束</span>
             </template>
             <span v-else class="text-muted">已结束</span>
           </template>
@@ -264,20 +276,12 @@
           </el-form-item>
           <el-form-item label="支付方式">
             <el-select v-model="form.prepay_method" placeholder="选择支付方式" style="width: 100%">
-              <el-option label="微信" value="wechat" />
-              <el-option label="支付宝" value="alipay" />
-              <el-option label="现金" value="cash" />
-              <el-option label="银行转账" value="bank" />
-              <el-option label="其他" value="other" />
+              <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="支付类型">
             <el-select v-model="form.prepay_type" placeholder="选择支付类型" style="width: 100%">
-              <el-option label="租金" value="rent" />
-              <el-option label="押金" value="deposit" />
-              <el-option label="租金+押金" value="rent_deposit" />
-              <el-option label="违章押金" value="violation_deposit" />
-              <el-option label="其他" value="other" />
+              <el-option v-for="item in PAYMENT_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
         </template>
@@ -573,11 +577,7 @@
           </el-form-item>
           <el-form-item label="支付方式">
             <el-select v-model="extendForm.payment_method" placeholder="选择支付方式" style="width: 100%">
-              <el-option label="微信" value="wechat" />
-              <el-option label="支付宝" value="alipay" />
-              <el-option label="现金" value="cash" />
-              <el-option label="银行转账" value="bank" />
-              <el-option label="其他" value="other" />
+              <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
         </template>
@@ -587,7 +587,33 @@
         <el-button type="primary" @click="handleExtend" :loading="submitting">确定续租</el-button>
       </template>
     </el-dialog>
-    
+
+    <!-- 支付对话框 -->
+    <el-dialog v-model="paymentDialogVisible" title="添加支付" width="90%" :style="{ maxWidth: '400px' }">
+      <el-form ref="paymentFormRef" :model="paymentForm" :rules="paymentRules" label-width="70px">
+        <el-form-item label="金额" prop="amount">
+          <el-input-number v-model="paymentForm.amount" :min="0" :precision="0" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="方式" prop="payment_method">
+          <el-select v-model="paymentForm.payment_method" style="width: 100%">
+            <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="类型" prop="payment_type">
+          <el-select v-model="paymentForm.payment_type" style="width: 100%">
+            <el-option v-for="item in PAYMENT_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="paymentForm.remarks" placeholder="备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="paymentDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleAddPayment" :loading="submitting">确定</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 图片预览 -->
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside">
@@ -604,6 +630,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
+import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, SERVICE_TYPE_OPTIONS, ORDER_STATUS_TYPE_MAP } from '../utils/constants'
+import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getServiceLabel, getServiceTagType } from '../utils/helpers'
 
 const router = useRouter()
 const route = useRoute()
@@ -615,6 +643,7 @@ const editDialogVisible = ref(false)
 const pickupDialogVisible = ref(false)
 const returnDialogVisible = ref(false)
 const extendDialogVisible = ref(false)
+const paymentDialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
 const vehicles = ref<any[]>([])
@@ -743,33 +772,19 @@ const extendForm = reactive({
   payment_method: 'wechat'
 })
 
-const statusTypeMap: Record<string, string> = {
-  pending: 'warning',
-  active: 'primary',
-  completed: 'success',
-  cancelled: 'info',
-  overdue: 'danger'
-}
+// 支付表单
+const paymentFormRef = ref<FormInstance>()
+const paymentForm = reactive({
+  amount: 0,
+  payment_method: 'cash',
+  payment_type: 'rent',
+  remarks: ''
+})
 
-function getStatusType(status: string) {
-  return statusTypeMap[status] || 'info'
-}
-
-function formatDateTime(dateStr: string) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${month}-${day} ${hours}:${minutes}`
-}
-
-function getImageUrl(url: string) {
-  if (!url) return ''
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
+const paymentRules: FormRules = {
+  amount: [{ required: true, message: '请输入金额', trigger: 'blur' }],
+  payment_method: [{ required: true, message: '请选择支付方式', trigger: 'change' }],
+  payment_type: [{ required: true, message: '请选择支付类型', trigger: 'change' }]
 }
 
 function previewImage(images: string[], index: number) {
@@ -850,13 +865,6 @@ function onEndDateTimeChange(e: Event) {
   if (form.start_date && form.end_date) {
     loadVehicles(form.start_date, form.end_date)
   }
-}
-
-// 格式化日期时间供原生输入框显示
-function formatDateTimeLocal(dateStr: string) {
-  if (!dateStr) return ''
-  // YYYY-MM-DD HH:mm:ss -> YYYY-MM-DDTHH:mm
-  return dateStr.replace(' ', 'T').slice(0, 16)
 }
 
 const estimatedDays = computed(() => {
@@ -1130,26 +1138,6 @@ function onDepositWaivedChange(waived: boolean) {
   } else {
     form.deposit_waived_expiry = ''
   }
-}
-
-// 服务类型标签颜色
-function getServiceTagType(type: string) {
-  const typeMap: Record<string, string> = {
-    basic: '',
-    premium: 'warning',
-    vip: 'danger'
-  }
-  return typeMap[type] || ''
-}
-
-// 服务类型标签文字
-function getServiceLabel(type: string) {
-  const labelMap: Record<string, string> = {
-    basic: '基础',
-    premium: '优享',
-    vip: '尊享'
-  }
-  return labelMap[type] || type
 }
 
 function onSourceChange() {
@@ -1529,6 +1517,41 @@ async function handleExtend() {
     }
   } catch (error) {
     console.error('续租失败', error)
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 打开支付对话框
+function openPaymentDialog(row: any) {
+  currentOrder.value = row
+  paymentForm.amount = 0
+  paymentForm.payment_method = 'cash'
+  paymentForm.payment_type = 'rent'
+  paymentForm.remarks = ''
+  paymentDialogVisible.value = true
+}
+
+// 添加支付
+async function handleAddPayment() {
+  const valid = await paymentFormRef.value?.validate()
+  if (!valid) return
+
+  submitting.value = true
+  try {
+    const res: any = await orderApi.addPayment(currentOrder.value.id, {
+      amount: paymentForm.amount,
+      payment_method: paymentForm.payment_method,
+      payment_type: paymentForm.payment_type,
+      remarks: paymentForm.remarks
+    })
+    if (res.success) {
+      ElMessage.success('支付添加成功')
+      paymentDialogVisible.value = false
+      loadData()
+    }
+  } catch (error) {
+    console.error('添加支付失败', error)
   } finally {
     submitting.value = false
   }

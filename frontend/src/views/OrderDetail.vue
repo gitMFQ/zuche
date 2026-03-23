@@ -127,9 +127,9 @@
         <template #header>
           <div class="card-header-row">
             <span class="section-title">支付记录</span>
-            <el-button 
-              v-if="['pending', 'active'].includes(order.status)" 
-              type="primary" 
+            <el-button
+              v-if="['pending', 'active', 'completed'].includes(order.status)"
+              type="primary"
               size="small"
               @click="paymentDialogVisible = true"
             >添加</el-button>
@@ -179,19 +179,12 @@
         </el-form-item>
         <el-form-item label="方式" prop="payment_method">
           <el-select v-model="paymentForm.payment_method" style="width: 100%">
-            <el-option label="现金" value="cash" />
-            <el-option label="微信" value="wechat" />
-            <el-option label="支付宝" value="alipay" />
-            <el-option label="银行卡" value="bank" />
+            <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="类型" prop="payment_type">
           <el-select v-model="paymentForm.payment_type" style="width: 100%">
-            <el-option label="租金" value="rent" />
-            <el-option label="押金" value="deposit" />
-            <el-option label="租金+押金" value="rent_deposit" />
-            <el-option label="违章押金" value="violation_deposit" />
-            <el-option label="其他" value="other" />
+            <el-option v-for="item in PAYMENT_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -430,11 +423,7 @@
           </el-form-item>
           <el-form-item label="支付方式">
             <el-select v-model="extendForm.payment_method" placeholder="选择支付方式" style="width: 100%">
-              <el-option label="微信" value="wechat" />
-              <el-option label="支付宝" value="alipay" />
-              <el-option label="现金" value="cash" />
-              <el-option label="银行转账" value="bank" />
-              <el-option label="其他" value="other" />
+              <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
         </template>
@@ -462,6 +451,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { orderApi, blacklistApi, vehicleApi, orderSourceApi, uploadApi } from '../api'
+import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, SERVICE_TYPE_OPTIONS, ORDER_STATUS_TYPE_MAP } from '../utils/constants'
+import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getPaymentMethodText, getPaymentTypeText, getServiceLabel, getServiceTagType } from '../utils/helpers'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -551,35 +542,6 @@ const extendForm = reactive({
   payment_method: 'wechat'
 })
 
-const statusTypeMap: Record<string, string> = {
-  pending: 'warning',
-  active: 'primary',
-  completed: 'success',
-  cancelled: 'info',
-  overdue: 'danger'
-}
-
-function getStatusType(status: string) {
-  return statusTypeMap[status] || 'info'
-}
-
-function formatDateTime(dateStr: string) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${month}-${day} ${hours}:${minutes}`
-}
-
-function getImageUrl(url: string) {
-  if (!url) return ''
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
-}
-
 function previewImage(images: string[], index: number) {
   previewImagesList.value = images
   previewIndex.value = index
@@ -636,13 +598,6 @@ function removeEditLicenseImage(index: number) {
   editForm.license_images.splice(index, 1)
 }
 
-// 处理原生日期时间输入
-function formatDateTimeLocal(dateStr: string) {
-  if (!dateStr) return ''
-  // YYYY-MM-DD HH:mm:ss -> YYYY-MM-DDTHH:mm
-  return dateStr.replace(' ', 'T').slice(0, 16)
-}
-
 function onEditStartDateTimeChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.value) {
@@ -662,43 +617,6 @@ function onCompleteDateTimeChange(e: Event) {
   if (target.value) {
     completeForm.actual_end_date = target.value.replace('T', ' ') + ':00'
   }
-}
-
-function getPaymentTypeText(type: string) {
-  const map: Record<string, string> = { 
-    rental: '租金', 
-    rent: '租金', 
-    deposit: '押金', 
-    rent_deposit: '租金+押金',
-    violation_deposit: '违章押金',
-    other: '其他' 
-  }
-  return map[type] || type
-}
-
-function getPaymentMethodText(method: string) {
-  const map: Record<string, string> = { cash: '现金', wechat: '微信', alipay: '支付宝', bank: '银行卡' }
-  return map[method] || method
-}
-
-// 服务类型标签颜色
-function getServiceTagType(type: string) {
-  const typeMap: Record<string, string> = {
-    basic: '',
-    premium: 'warning',
-    vip: 'danger'
-  }
-  return typeMap[type] || ''
-}
-
-// 服务类型标签文字
-function getServiceLabel(type: string) {
-  const labelMap: Record<string, string> = {
-    basic: '基础',
-    premium: '优享',
-    vip: '尊享'
-  }
-  return labelMap[type] || type
 }
 
 const unpaidAmount = computed(() => {

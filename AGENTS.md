@@ -21,6 +21,7 @@
 | 保养管理 | 保养记录、多类型支持、里程提醒 |
 | 保险管理 | 保险记录、多类型（交强险/商业险/座位险）、图片/PDF上传 |
 | 年检证管理 | 年检登记、到期提醒、证书图片 |
+| 操作日志 | 操作记录、用户行为追踪、筛选查询（管理员可见） |
 | 系统设置 | 系统标题/Logo配置、主题色设置、侧边栏风格设置 |
 
 ## 目录结构
@@ -30,10 +31,11 @@ car/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/    # 业务控制器（按模块划分）
+│   │   │   ├── logs.ts     # 操作日志控制器
 │   │   ├── db/index.ts     # 数据库初始化、表结构、迁移
 │   │   ├── middleware/     # 认证中间件
 │   │   ├── routes/index.ts # API 路由定义
-│   │   ├── utils/helpers.ts# 工具函数（query、execute、分页等）
+│   │   ├── utils/helpers.ts# 工具函数（query、execute、logAction等）
 │   │   └── index.ts        # 入口文件、上传路由
 │   ├── uploads/            # 上传文件存储（按类型分子目录）
 │   │   ├── customer/       # 客户证件照片
@@ -53,7 +55,11 @@ car/
     │   ├── router/index.ts # 路由配置
     │   ├── stores/user.ts  # Pinia 用户状态
     │   ├── style.css       # 全局样式、CSS 变量、主题覆盖
+    │   ├── utils/          # 公共工具模块
+    │   │   ├── constants.ts# 常量定义（选项列表、文本映射）
+    │   │   └── helpers.ts  # 工具函数（日期格式化、图片URL等）
     │   └── views/          # 页面视图
+    │       ├── Logs.vue    # 操作日志页面
     └── public/             # 静态资源
 ```
 
@@ -79,19 +85,28 @@ cd frontend && npm run build
 
 1. **数据库操作**: 使用 `utils/helpers.ts` 中的辅助函数
    ```typescript
-   import { query, queryOne, execute, queryWithPagination, generateId, now } from '../utils/helpers.js';
+   import { query, queryOne, execute, queryWithPagination, generateId, now, logAction } from '../utils/helpers.js';
    ```
 
-2. **认证**: 所有 API 需要 `authMiddleware`，管理员操作需要 `adminOnly`
+2. **操作日志记录**: 在关键操作后调用 `logAction` 函数
+   ```typescript
+   // 函数签名
+   logAction(userId, action, entityType?, entityId?, details?, ipAddress?)
+   
+   // 使用示例
+   logAction(req.user?.id || '', '创建订单', 'order', orderId, `创建订单 ${orderNo}，客户：${customerName}`, req.ip);
+   ```
+
+3. **认证**: 所有 API 需要 `authMiddleware`，管理员操作需要 `adminOnly`
    ```typescript
    router.get('/users', authMiddleware, adminOnly, usersController.getUsers);
    ```
 
-3. **响应格式**: 统一返回 `{ success: boolean, data?: any, message?: string }`
+4. **响应格式**: 统一返回 `{ success: boolean, data?: any, message?: string }`
 
-4. **数据库迁移**: 在 `db/index.ts` 的 `runMigrations()` 中添加新字段/表
+5. **数据库迁移**: 在 `db/index.ts` 的 `runMigrations()` 中添加新字段/表
 
-5. **文件上传**: 使用 Multer，按类型分目录存储
+6. **文件上传**: 使用 Multer，按类型分目录存储
    - 接口格式: `POST /api/upload/:type`
    - 类型: `inspection`, `insurance`, `violation`, `maintenance`, `vehicle`, `customer`, `other`
 
@@ -99,19 +114,31 @@ cd frontend && npm run build
 
 1. **API 调用**: 使用 `src/api/index.ts` 中封装的 API 对象
    ```typescript
-   import { orderApi, vehicleApi, uploadApi } from '../api';
+   import { orderApi, vehicleApi, uploadApi, logApi } from '../api';
    const res = await orderApi.getList({ page: 1, pageSize: 10 });
    ```
 
-2. **路由守卫**: 已配置 token 检查，未登录自动跳转 `/login`
+2. **公共常量**: 使用 `src/utils/constants.ts` 中的常量
+   ```typescript
+   import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, SERVICE_TYPE_OPTIONS } from '../utils/constants';
+   // 模板中使用
+   <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
+   ```
 
-3. **移动端适配**: 使用 CSS 媒体查询 `@media (min-width: 768px)`
+3. **工具函数**: 使用 `src/utils/helpers.ts` 中的函数
+   ```typescript
+   import { getImageUrl, formatDateTime, getPaymentMethodText, getPaymentTypeText } from '../utils/helpers';
+   ```
+
+4. **路由守卫**: 已配置 token 检查，未登录自动跳转 `/login`
+
+5. **移动端适配**: 使用 CSS 媒体查询 `@media (min-width: 768px)`
    - 移动端显示卡片列表
    - PC 端显示表格
 
-4. **时间选择器**: 移动端优先使用原生 `datetime-local` 输入框
+6. **时间选择器**: 移动端优先使用原生 `datetime-local` 输入框
 
-5. **图片上传**: 使用 `uploadApi.uploadXxx(file)` 方法
+7. **图片上传**: 使用 `uploadApi.uploadXxx(file)` 方法
    ```typescript
    const res = await uploadApi.uploadCustomer(file);
    if (res.success && res.data) {
@@ -119,7 +146,7 @@ cd frontend && npm run build
    }
    ```
 
-6. **主题系统**: 使用 CSS 变量实现动态主题
+8. **主题系统**: 使用 CSS 变量实现动态主题
    - 核心变量: `--primary-color`, `--primary-color-light`, `--primary-color-dark`, `--primary-color-rgb`
    - 在 `style.css` 中定义默认值，通过 JS 动态更新
    - Element Plus 组件主题覆盖在 `style.css` 中定义
@@ -147,6 +174,54 @@ pending (待取车) → active (已取车) → completed (已还车)
 ### 车牌样式
 - 新能源车：绿底白字（显示 `is_new_energy` 标识）
 - 非新能源：蓝底白字
+
+### 支付方式
+| 值 | 显示文本 |
+|------|----------|
+| platform | 平台支付 |
+| wechat | 微信 |
+| alipay | 支付宝 |
+| cash | 现金 |
+| bank | 银行转账 |
+| other | 其他 |
+
+### 支付类型
+| 值 | 显示文本 |
+|------|----------|
+| rent | 租金 |
+| deposit | 押金 |
+| rent_deposit | 租金+押金 |
+| violation_deposit | 违章押金 |
+| damage | 车损 |
+| other | 其他 |
+
+### 支付记录添加权限
+- 待取车(pending)、待还车(active)、已完成(completed) 状态的订单均可添加支付记录
+
+## 操作日志
+
+### 记录的操作类型
+
+| 模块 | 记录的操作 |
+|------|-----------|
+| 认证 | 登录 |
+| 用户 | 创建、更新、删除 |
+| 客户 | 创建、更新、删除 |
+| 车辆 | 创建、更新、删除 |
+| 订单 | 创建、取车、还车、取消、续租、添加支付 |
+| 违章 | 创建、处理、删除 |
+| 黑名单 | 添加、移除 |
+| 订单来源 | 创建、更新、删除 |
+
+### 日志记录规范
+
+在添加新的操作日志时，遵循以下规范：
+- `userId`: 操作用户ID（从 `req.user?.id` 获取）
+- `action`: 操作类型（中文，如"创建订单"、"取车"）
+- `entityType`: 实体类型（user/customer/vehicle/order/violation/blacklist/order_source）
+- `entityId`: 实体ID
+- `details`: 详细描述（包含关键信息，如订单号、客户姓名等）
+- `ipAddress`: 客户端IP（从 `req.ip` 获取）
 
 ## 主题系统
 
@@ -246,10 +321,20 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 2. 前端: 在 `views/` 创建页面，在 `router/index.ts` 添加路由
 3. 在 `layouts/MainLayout.vue` 侧边栏添加菜单项
 
+### 添加新的操作日志
+1. 在控制器中导入 `logAction`
+2. 在关键操作成功后调用 `logAction(userId, action, entityType, entityId, details, ipAddress)`
+3. 更新 `controllers/logs.ts` 中的 `ACTION_MAP` 和 `ENTITY_TYPE_MAP`（如需要）
+
 ### 添加新的主题色相关样式
 1. 在 `frontend/src/style.css` 中添加使用 CSS 变量的样式
 2. 确保 Element Plus 组件覆盖样式正确
 3. 测试主题切换后的效果
+
+### 添加新的选项常量
+1. 在 `frontend/src/utils/constants.ts` 中添加选项数组和文本映射
+2. 在需要使用的组件中导入并使用
+3. 示例：添加新的支付方式只需修改 `PAYMENT_METHOD_OPTIONS` 和 `PAYMENT_METHOD_TEXT_MAP`
 
 ## 数据库表结构要点
 
@@ -274,6 +359,38 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 - 合同字段：contract_number
 - 地址字段：pickup_location, return_location
 
+### 操作日志表 (operation_logs)
+- 主键：id
+- 用户信息：user_id（关联 users 表）
+- 操作信息：action（操作类型）、entity_type（实体类型）、entity_id（实体ID）
+- 详情：details（操作详情）、ip_address（客户端IP）
+- 时间：created_at
+
+## 代码复用规范
+
+### 公共常量文件 (`utils/constants.ts`)
+集中管理选项列表和文本映射，避免在多个组件中重复定义：
+- `PAYMENT_METHOD_OPTIONS` - 支付方式选项
+- `PAYMENT_TYPE_OPTIONS` - 支付类型选项
+- `SERVICE_TYPE_OPTIONS` - 服务类型选项
+- `ORDER_STATUS_TYPE_MAP` - 订单状态标签颜色映射
+- `PAYMENT_METHOD_TEXT_MAP` - 支付方式文本映射
+- `PAYMENT_TYPE_TEXT_MAP` - 支付类型文本映射
+
+### 公共工具函数 (`utils/helpers.ts`)
+集中管理通用工具函数：
+- `getImageUrl(url)` - 获取图片完整URL
+- `formatDateTime(dateStr)` - 格式化日期时间 (MM-DD HH:mm)
+- `formatFullDateTime(dateStr)` - 格式化完整日期时间
+- `formatDateTimeLocal(dateStr)` - 格式化为 datetime-local 输入格式
+- `getOrderStatusType(status)` - 获取订单状态标签类型
+- `getPaymentMethodText(method)` - 获取支付方式文本
+- `getPaymentTypeText(type)` - 获取支付类型文本
+- `getServiceLabel(type)` - 获取服务类型文本
+- `getServiceTagType(type)` - 获取服务类型标签颜色
+- `isExpired(date)` - 检查是否过期
+- `isExpiringSoon(date, days)` - 检查是否即将到期
+
 ## 注意事项
 
 1. **数据库持久化**: better-sqlite3 自动持久化，数据写入即时保存，无需调用 saveDatabase
@@ -282,4 +399,6 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 4. **移动端优先**: UI 设计时优先考虑移动端体验
 5. **响应式设计**: 使用 Element Plus 的栅格系统配合媒体查询
 6. **主题一致性**: 新增组件样式应使用 CSS 变量以支持主题切换
-7. **代码提交规范**: 每次修改代码后，必须更新 `README.md` 的更新日志部分，然后进行 `git commit` 提交更改
+7. **操作日志**: 新增关键操作时应添加日志记录
+8. **代码复用**: 新增选项列表时优先添加到 `utils/constants.ts`，新工具函数添加到 `utils/helpers.ts`
+9. **代码提交规范**: 每次修改代码后，必须更新 `README.md` 的更新日志部分，然后进行 `git commit` 提交更改

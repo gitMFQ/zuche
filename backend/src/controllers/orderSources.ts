@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { query, queryOne, execute, generateId, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 获取订单来源列表
@@ -73,6 +73,9 @@ export function createOrderSource(req: AuthRequest, res: Response): void {
       [id, name, commission_rate || 0, color || '#409EFF', remarks || null, currentTime, currentTime]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '创建订单来源', 'order_source', id, `创建订单来源：${name}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id, name, commission_rate: commission_rate || 0, color: color || '#409EFF' },
@@ -112,6 +115,9 @@ export function updateOrderSource(req: AuthRequest, res: Response): void {
       [name || source.name, commission_rate ?? source.commission_rate, color || source.color, remarks ?? source.remarks, currentTime, id]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '更新订单来源', 'order_source', id, `更新订单来源：${name || source.name}`, req.ip);
+
     res.json({ success: true, message: '订单来源更新成功' });
   } catch (error) {
     console.error('更新订单来源错误:', error);
@@ -138,6 +144,9 @@ export function deleteOrderSource(req: AuthRequest, res: Response): void {
     }
 
     execute('UPDATE order_sources SET status = 0, updated_at = ? WHERE id = ?', [now(), id]);
+
+    // 记录操作日志
+    logAction(req.user?.id || '', '删除订单来源', 'order_source', id, `删除订单来源：${source.name}`, req.ip);
 
     res.json({ success: true, message: '订单来源删除成功' });
   } catch (error) {

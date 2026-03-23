@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { query, queryOne, execute, generateId, generateOrderNo, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, generateOrderNo, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 订单状态映射
@@ -313,6 +313,9 @@ export function createOrder(req: AuthRequest, res: Response): void {
       );
     }
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '创建订单', 'order', id, `创建订单 ${orderNo}，客户：${customer_name}，车辆：${vehicle.plate_number}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id, order_no: orderNo, total_amount: totalAmount, net_amount: netAmount, commission_rate: commissionRate, days, customer_id: customerId, paid_amount: initialPaidAmount },
@@ -385,6 +388,11 @@ export function updateOrderStatus(req: AuthRequest, res: Response): void {
     updateParams.push(id);
 
     execute(updateSql, updateParams);
+
+    // 记录操作日志
+    const statusText = STATUS_MAP[status] || status;
+    const vehicle = queryOne('SELECT plate_number FROM vehicles WHERE id = ?', [order.vehicle_id]);
+    logAction(req.user?.id || '', `${statusText}`, 'order', id, `订单 ${order.order_no} 状态变更为${statusText}，车辆：${vehicle?.plate_number || ''}`, req.ip);
 
     res.json({ success: true, message: '订单状态更新成功' });
   } catch (error) {
@@ -664,6 +672,10 @@ export function extendOrder(req: AuthRequest, res: Response): void {
       );
     }
 
+    // 记录操作日志
+    const vehicle = queryOne('SELECT plate_number FROM vehicles WHERE id = ?', [order.vehicle_id]);
+    logAction(req.user?.id || '', '续租订单', 'order', id, `订单 ${order.order_no} 续租 ${extendDays} 天，金额：${extend_amount}，车辆：${vehicle?.plate_number || ''}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { 
@@ -712,6 +724,9 @@ export function addPayment(req: AuthRequest, res: Response): void {
     const newPaidAmount = (order.paid_amount || 0) + amount;
     execute('UPDATE orders SET paid_amount = ?, updated_at = ? WHERE id = ?', [newPaidAmount, currentTime, id]);
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '添加支付', 'order', id, `订单 ${order.order_no} 添加支付记录：${amount} 元，类型：${payment_type}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id: paymentId, amount, new_paid_amount: newPaidAmount },
@@ -747,6 +762,10 @@ export function cancelOrder(req: AuthRequest, res: Response): void {
       "UPDATE orders SET status = 'cancelled', remarks = ?, updated_at = ? WHERE id = ?",
       [remarks || order.remarks, currentTime, id]
     );
+
+    // 记录操作日志
+    const vehicle = queryOne('SELECT plate_number FROM vehicles WHERE id = ?', [order.vehicle_id]);
+    logAction(req.user?.id || '', '取消订单', 'order', id, `取消订单 ${order.order_no}，车辆：${vehicle?.plate_number || ''}`, req.ip);
 
     res.json({ success: true, message: '订单取消成功' });
   } catch (error) {

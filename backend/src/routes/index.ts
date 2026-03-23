@@ -15,6 +15,7 @@ import * as maintenanceController from '../controllers/maintenance.js';
 import * as insuranceController from '../controllers/insurance.js';
 import * as inspectionController from '../controllers/inspection.js';
 import * as settingsController from '../controllers/settings.js';
+import * as logsController from '../controllers/logs.js';
 
 const router = Router();
 
@@ -114,5 +115,12 @@ router.delete('/inspections/:vehicle_id', authMiddleware, inspectionController.d
 router.get('/settings', authMiddleware, settingsController.getSettings);
 router.get('/settings/:key', authMiddleware, settingsController.getSetting);
 router.put('/settings', authMiddleware, adminOnly, settingsController.updateSettings);
+
+// ==================== 操作日志路由 ====================
+router.get('/logs', authMiddleware, adminOnly, logsController.getLogs);
+router.get('/logs/action-types', authMiddleware, logsController.getActionTypes);
+router.get('/logs/entity-types', authMiddleware, logsController.getEntityTypes);
+router.get('/logs/users', authMiddleware, logsController.getLogUsers);
+router.get('/logs/:id', authMiddleware, adminOnly, logsController.getLog);
 
 export default router;

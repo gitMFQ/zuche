@@ -27,6 +27,30 @@ export function now(): string {
   return formatDate(new Date());
 }
 
+// 记录操作日志
+export function logAction(
+  userId: string,
+  action: string,
+  entityType?: string,
+  entityId?: string,
+  details?: string,
+  ipAddress?: string
+): void {
+  try {
+    const db = getDatabase();
+    const id = generateId();
+    const currentTime = now();
+    
+    db.prepare(
+      `INSERT INTO operation_logs (id, user_id, action, entity_type, entity_id, details, ip_address, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(id, userId || null, action, entityType || null, entityId || null, details || null, ipAddress || null, currentTime);
+  } catch (error) {
+    // 日志记录失败不应影响主业务
+    console.error('记录日志失败:', error);
+  }
+}
+
 // 查询辅助函数 - 返回所有匹配行
 export function query(sql: string, params: any[] = []): any[] {
   const db = getDatabase();

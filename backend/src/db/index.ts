@@ -335,6 +335,24 @@ function runMigrations(db: Database.Database): void {
       console.log('已创建系统设置表');
     }
 
+    // 检查操作日志表是否存在
+    const logsTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='operation_logs'").all();
+    if (logsTables.length === 0) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS operation_logs (
+          id TEXT PRIMARY KEY,
+          user_id TEXT,
+          action TEXT NOT NULL,
+          entity_type TEXT,
+          entity_id TEXT,
+          details TEXT,
+          ip_address TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('已创建操作日志表');
+    }
+
     // 清理旧的 rented 状态（车辆状态现在根据订单动态计算）
     const rentedCount = db.prepare("SELECT COUNT(*) as count FROM vehicles WHERE status = 'rented'").get() as { count: number };
     if (rentedCount.count > 0) {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { query, queryOne, execute, generateId, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 获取用户列表
@@ -84,6 +84,9 @@ export function createUser(req: AuthRequest, res: Response): void {
       [id, username, hashedPassword, name, role, phone || null, email || null, currentTime, currentTime]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '创建用户', 'user', id, `创建用户 ${name}（${role === 'admin' ? '管理员' : '员工'}）`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id, username, name, role, phone, email },
@@ -112,6 +115,9 @@ export function updateUser(req: AuthRequest, res: Response): void {
       [name, role, phone || null, email || null, status, now(), id]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '更新用户', 'user', id, `更新用户 ${name}`, req.ip);
+
     res.json({ success: true, message: '用户更新成功' });
   } catch (error) {
     console.error('更新用户错误:', error);
@@ -129,13 +135,17 @@ export function deleteUser(req: AuthRequest, res: Response): void {
       return;
     }
 
-    const user = queryOne('SELECT id FROM users WHERE id = ?', [id]);
+    const user = queryOne('SELECT id, name FROM users WHERE id = ?', [id]);
     if (!user) {
       res.status(404).json({ success: false, message: '用户不存在' });
       return;
     }
 
     execute('DELETE FROM users WHERE id = ?', [id]);
+
+    // 记录操作日志
+    logAction(req.user?.id || '', '删除用户', 'user', id, `删除用户 ${user.name}`, req.ip);
+
     res.json({ success: true, message: '用户删除成功' });
   } catch (error) {
     console.error('删除用户错误:', error);

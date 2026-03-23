@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { query, queryOne, execute, generateId, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 违章状态映射
@@ -130,6 +130,9 @@ export function createViolation(req: AuthRequest, res: Response): void {
        violation_type, violation_date, location || null, fine_amount || 0, penalty_points || 0, penalty_fee || 0, imagesJson, remarks || null, currentTime, currentTime]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '创建违章', 'violation', id, `创建违章记录：${plate_number}，${TYPE_MAP[violation_type] || violation_type}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id },
@@ -197,6 +200,10 @@ export function handleViolation(req: AuthRequest, res: Response): void {
       [status, currentTime, handle_remarks || null, handle_type || 'store', license_deposit || 0, currentTime, id]
     );
 
+    // 记录操作日志
+    const statusText = STATUS_MAP[status] || status;
+    logAction(req.user?.id || '', '处理违章', 'violation', id, `违章处理：${violation.plate_number}，状态：${statusText}`, req.ip);
+
     res.json({ success: true, message: '违章状态更新成功' });
   } catch (error) {
     console.error('处理违章错误:', error);
@@ -244,6 +251,10 @@ export function deleteViolation(req: AuthRequest, res: Response): void {
     }
 
     execute('DELETE FROM violations WHERE id = ?', [id]);
+
+    // 记录操作日志
+    logAction(req.user?.id || '', '删除违章', 'violation', id, `删除违章记录：${violation.plate_number}`, req.ip);
+
     res.json({ success: true, message: '删除成功' });
   } catch (error) {
     console.error('删除违章记录错误:', error);

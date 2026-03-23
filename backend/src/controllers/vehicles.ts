@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { query, queryOne, execute, generateId, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 车辆状态映射
@@ -200,6 +200,9 @@ export function createVehicle(req: AuthRequest, res: Response): void {
       [id, plate_number, brand, model, color || null, year || null, seats || 5, daily_rate || 0, deposit || 0, mileage || 0, vin || null, engine_number || null, license_image || null, registration_image || null, is_new_energy ? 1 : 0, remarks || null, currentTime, currentTime]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '创建车辆', 'vehicle', id, `创建车辆 ${plate_number}（${brand} ${model}）`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id, plate_number, brand, model },
@@ -237,6 +240,9 @@ export function updateVehicle(req: AuthRequest, res: Response): void {
       [plate_number, brand, model, color || null, year || null, seats || 5, daily_rate || 0, deposit || 0, status, mileage || 0, last_maintenance || null, vin || null, engine_number || null, license_image || null, registration_image || null, is_new_energy ? 1 : 0, remarks || null, now(), id]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '更新车辆', 'vehicle', id, `更新车辆 ${plate_number}`, req.ip);
+
     res.json({ success: true, message: '车辆更新成功' });
   } catch (error) {
     console.error('更新车辆错误:', error);
@@ -260,7 +266,12 @@ export function deleteVehicle(req: AuthRequest, res: Response): void {
       return;
     }
 
+    const vehicle = queryOne('SELECT plate_number FROM vehicles WHERE id = ?', [id]);
     execute('DELETE FROM vehicles WHERE id = ?', [id]);
+
+    // 记录操作日志
+    logAction(req.user?.id || '', '删除车辆', 'vehicle', id, `删除车辆 ${vehicle?.plate_number || ''}`, req.ip);
+
     res.json({ success: true, message: '车辆删除成功' });
   } catch (error) {
     console.error('删除车辆错误:', error);

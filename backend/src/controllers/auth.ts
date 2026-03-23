@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { queryOne, query, execute, generateId, now } from '../utils/helpers.js';
+import { queryOne, query, execute, generateId, now, logAction } from '../utils/helpers.js';
 import { generateToken, AuthRequest } from '../middleware/auth.js';
 
 // 登录
@@ -36,6 +36,9 @@ export async function login(req: Request, res: Response): Promise<void> {
       role: user.role,
       name: user.name
     });
+
+    // 记录登录日志
+    logAction(user.id, '登录', 'user', user.id, `用户 ${user.name} 登录系统`, req.ip);
 
     res.json({
       success: true,

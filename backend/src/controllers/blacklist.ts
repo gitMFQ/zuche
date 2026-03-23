@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { query, queryOne, execute, generateId, now, queryWithPagination } from '../utils/helpers.js';
+import { query, queryOne, execute, generateId, now, queryWithPagination, logAction } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 获取黑名单列表
@@ -89,6 +89,9 @@ export function addToBlacklist(req: AuthRequest, res: Response): void {
       [id, customer_id || null, name, phone, id_card || null, reason, order_id || null, operatorId, operatorName, currentTime, currentTime]
     );
 
+    // 记录操作日志
+    logAction(req.user?.id || '', '添加黑名单', 'blacklist', id, `添加黑名单：${name}，原因：${reason}`, req.ip);
+
     res.json({ 
       success: true, 
       data: { id },
@@ -111,9 +114,17 @@ export function removeFromBlacklist(req: AuthRequest, res: Response): void {
       return;
     }
 
-    execute('UPDATE blacklist SET status = 0, updated_at = ? WHERE id = ?', [now(), id]);
+        execute('UPDATE blacklist SET status = 0, updated_at = ? WHERE id = ?', [now(), id]);
 
-    res.json({ success: true, message: '已从黑名单移除' });
+    
+
+        // 记录操作日志
+
+        logAction(req.user?.id || '', '移除黑名单', 'blacklist', id, `移除黑名单：${record.name}`, req.ip);
+
+    
+
+        res.json({ success: true, message: '已从黑名单移除' });
   } catch (error) {
     console.error('移除黑名单错误:', error);
     res.status(500).json({ success: false, message: '服务器错误' });

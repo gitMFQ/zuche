@@ -170,6 +170,15 @@ export const settingsApi = {
   update: (key: string, value: string) => api.put('/settings', { key, value })
 }
 
+// ==================== 操作日志 API ====================
+export const logApi = {
+  getList: (params?: any) => api.get('/logs', { params }),
+  getOne: (id: string) => api.get(`/logs/${id}`),
+  getActionTypes: () => api.get('/logs/action-types'),
+  getEntityTypes: () => api.get('/logs/entity-types'),
+  getUsers: () => api.get('/logs/users')
+}
+
 // ==================== 文件上传 API ====================
 export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance' | 'vehicle' | 'customer' | 'other'
 

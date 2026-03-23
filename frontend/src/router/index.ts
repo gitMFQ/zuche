@@ -50,6 +50,12 @@ const routes = [
         meta: { title: '黑名单' }
       },
       {
+        path: 'logs',
+        name: 'Logs',
+        component: () => import('../views/Logs.vue'),
+        meta: { title: '操作日志' }
+      },
+      {
         path: 'settings',
         name: 'Settings',
         component: () => import('../views/Settings.vue'),
