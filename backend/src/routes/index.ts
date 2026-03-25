@@ -16,6 +16,7 @@ import * as insuranceController from '../controllers/insurance.js';
 import * as inspectionController from '../controllers/inspection.js';
 import * as settingsController from '../controllers/settings.js';
 import * as logsController from '../controllers/logs.js';
+import * as schedulesController from '../controllers/schedules.js';
 
 const router = Router();
 
@@ -122,5 +123,8 @@ router.get('/logs/action-types', authMiddleware, logsController.getActionTypes);
 router.get('/logs/entity-types', authMiddleware, logsController.getEntityTypes);
 router.get('/logs/users', authMiddleware, logsController.getLogUsers);
 router.get('/logs/:id', authMiddleware, adminOnly, logsController.getLog);
+
+// ==================== 调度路由 ====================
+router.get('/schedules/recent', authMiddleware, schedulesController.getRecentSchedules);
 
 export default router;

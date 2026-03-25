@@ -50,8 +50,16 @@
             <span class="value">{{ formatDateTime(order.start_date) }}</span>
           </div>
           <div class="info-row">
+            <span class="label">取车地点</span>
+            <span class="value">{{ order.pickup_location || '-' }}</span>
+          </div>
+          <div class="info-row">
             <span class="label">还车时间</span>
             <span class="value">{{ formatDateTime(order.end_date) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">还车地点</span>
+            <span class="value">{{ order.return_location || '-' }}</span>
           </div>
           <div class="info-row" v-if="order.pickup_mileage">
             <span class="label">取车里程</span>
@@ -106,6 +114,18 @@
           <div class="info-row" v-if="unpaidAmount > 0">
             <span class="label">待付金额</span>
             <span class="value text-danger">¥{{ unpaidAmount }}</span>
+          </div>
+          <div class="info-row" v-if="order.remarks">
+            <span class="label">备注</span>
+            <span class="value">{{ order.remarks }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">创建时间</span>
+            <span class="value">{{ formatDateTime(order.created_at) }}</span>
+          </div>
+          <div class="info-row" v-if="order.updated_at && order.updated_at !== order.created_at">
+            <span class="label">更新时间</span>
+            <span class="value">{{ formatDateTime(order.updated_at) }}</span>
           </div>
         </div>
         
@@ -332,6 +352,9 @@
             @change="onEditStartDateTimeChange"
           />
         </el-form-item>
+        <el-form-item label="取车地点">
+          <el-input v-model="editForm.pickup_location" placeholder="取车地点（选填）" />
+        </el-form-item>
         <el-form-item label="还车" prop="end_date">
           <input 
             type="datetime-local" 
@@ -339,6 +362,9 @@
             class="native-datetime-input"
             @change="onEditEndDateTimeChange"
           />
+        </el-form-item>
+        <el-form-item label="还车地点">
+          <el-input v-model="editForm.return_location" placeholder="还车地点（选填）" />
         </el-form-item>
         <el-form-item label="日租金">
           <el-input-number v-model="editForm.daily_rate" :min="0" placeholder="选填" style="width: 100%" />
@@ -512,7 +538,9 @@ const editForm = reactive({
   vehicle_id: '',
   source_id: '',
   start_date: '',
+  pickup_location: '',
   end_date: '',
+  return_location: '',
   daily_rate: 0,
   total_amount: 0,
   deposit: 0,
@@ -885,7 +913,9 @@ async function openEditDialog() {
     vehicle_id: order.value.vehicle_id,
     source_id: order.value.source_id || '',
     start_date: order.value.start_date,
+    pickup_location: order.value.pickup_location || '',
     end_date: order.value.end_date,
+    return_location: order.value.return_location || '',
     daily_rate: order.value.daily_rate || 0,
     total_amount: order.value.total_amount || 0,
     deposit: order.value.deposit || 0,

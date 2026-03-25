@@ -359,6 +359,27 @@ function runMigrations(db: Database.Database): void {
       db.exec("UPDATE vehicles SET status = 'available' WHERE status = 'rented'");
       console.log('已清理车辆的 rented 状态');
     }
+
+    // 检查调度表是否存在
+    const schedulesTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='schedules'").all();
+    if (schedulesTables.length === 0) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS schedules (
+          id TEXT PRIMARY KEY,
+          schedule_time TEXT NOT NULL,
+          type TEXT NOT NULL,
+          plate_number TEXT NOT NULL,
+          platform TEXT NOT NULL,
+          location TEXT NOT NULL,
+          order_id TEXT,
+          remarks TEXT,
+          status INTEGER DEFAULT 1,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log('已创建调度表');
+    }
   } catch (error) {
     console.error('数据库迁移错误:', error);
   }

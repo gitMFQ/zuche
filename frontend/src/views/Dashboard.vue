@@ -62,7 +62,65 @@
       </el-col>
     </el-row>
 
-    <!-- 即将到期订单 -->
+    <!-- 调度表格区域 -->
+    <el-row :gutter="20" class="schedule-section">
+      <!-- 左侧：调度表格 -->
+      <el-col :xs="24" :sm="12">
+        <el-card class="section-card schedule-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span><el-icon><Calendar /></el-icon> 调度安排</span>
+              <div class="header-actions">
+                <el-button type="primary" link @click="scheduleDialogVisible = true">
+                  <el-icon><FullScreen /></el-icon> 完整视图
+                </el-button>
+                <el-button type="primary" link @click="shareSchedule" :loading="shareLoading">
+                  <el-icon><Download /></el-icon> 下载
+                </el-button>
+              </div>
+            </div>
+          </template>
+          
+          <!-- 调度表格（移动端和PC端都用表格） -->
+          <table class="schedule-table" v-if="schedules.length">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>送/收</th>
+                <th>车牌</th>
+                <th>平台</th>
+                <th>位置</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in schedules" :key="item.id" @click="goToOrder(item.id)" class="schedule-row">
+                <td>{{ formatScheduleTime(item.schedule_time) }}</td>
+                <td><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
+                <td class="schedule-plate">{{ item.plate_number }}</td>
+                <td><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
+                <td>{{ item.location || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="empty-text">暂无调度安排</div>
+        </el-card>
+      </el-col>
+      
+      <!-- 右侧：占位容器（PC端显示） -->
+      <el-col :xs="0" :sm="12">
+        <el-card class="section-card placeholder-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span><el-icon><Grid /></el-icon> 快捷操作</span>
+            </div>
+          </template>
+          <div class="placeholder-content">
+            <p>待开发功能区域</p>
+            <p class="placeholder-hint">可添加常用快捷操作入口</p>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>    <!-- 即将到期订单 -->
     <el-card v-if="stats.expiringOrders?.length" class="section-card" shadow="hover">
       <template #header>
         <div class="card-header">
@@ -174,13 +232,42 @@
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 调度完整视图对话框 -->
+    <el-dialog v-model="scheduleDialogVisible" title="调度安排 - 完整视图" width="90%" :style="{ maxWidth: '1200px' }">
+      <table class="schedule-table full-view-table" v-if="schedules.length">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>送/收</th>
+            <th>车牌</th>
+            <th>平台</th>
+            <th>位置</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in schedules" :key="item.id" @click="goToOrder(item.id)" class="schedule-row">
+            <td>{{ formatScheduleTime(item.schedule_time) }}</td>
+            <td><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
+            <td class="schedule-plate">{{ item.plate_number }}</td>
+            <td><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
+            <td>{{ item.location || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else class="empty-text">暂无调度安排</div>
+    </el-dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { dashboardApi } from '../api'
+import { useRouter } from 'vue-router'
+import { dashboardApi, scheduleApi } from '../api'
 import dayjs from 'dayjs'
+
+const router = useRouter()
 
 const stats = ref<any>({
   vehicles: {},
@@ -190,6 +277,10 @@ const stats = ref<any>({
   recentOrders: [],
   expiringOrders: []
 })
+
+const schedules = ref<any[]>([])
+const scheduleDialogVisible = ref(false)
+const shareLoading = ref(false)
 
 const statusMap: Record<string, { text: string; type: string }> = {
   pending: { text: '待取车', type: 'warning' },
@@ -215,6 +306,67 @@ function formatDate(date: string) {
   return dayjs(date).format('MM-DD HH:mm')
 }
 
+function formatScheduleTime(date: string) {
+  // 使用完整的日期+时间格式
+  return dayjs(date).format('MM-DD HH:mm')
+}
+
+async function loadSchedules() {
+  try {
+    const res: any = await scheduleApi.getRecent()
+    if (res.success) {
+      schedules.value = res.data
+    }
+  } catch (error) {
+    console.error('获取调度数据失败', error)
+  }
+}
+
+function goToOrder(orderId: string) {
+  router.push(`/orders/${orderId}`)
+}
+
+async function shareSchedule() {
+  try {
+    shareLoading.value = true
+    
+    // 动态导入html2canvas
+    const html2canvas = (await import('html2canvas')).default
+    
+    // 获取表格元素
+    const tableElement = document.querySelector('.schedule-table') as HTMLElement
+    if (!tableElement) {
+      throw new Error('找不到表格元素')
+    }
+    
+    // 创建canvas
+    const canvas = await html2canvas(tableElement, {
+      backgroundColor: '#ffffff',
+      scale: 2, // 提高清晰度
+      useCORS: true
+    })
+    
+    // 转换为图片
+    const imageData = canvas.toDataURL('image/png')
+    
+    // 创建下载链接
+    const link = document.createElement('a')
+    link.download = `调度安排_${dayjs().format('YYYY-MM-DD_HH-mm')}.png`
+    link.href = imageData
+    link.click()
+    
+  } catch (error) {
+    console.error('分享失败:', error)
+    if (error instanceof Error && error.message.includes('html2canvas')) {
+      alert('需要安装 html2canvas 库：npm install html2canvas')
+    } else {
+      alert('分享失败，请重试')
+    }
+  } finally {
+    shareLoading.value = false
+  }
+}
+
 onMounted(async () => {
   try {
     const res: any = await dashboardApi.getStats()
@@ -224,6 +376,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取统计数据失败', error)
   }
+  loadSchedules()
 })
 </script>
 
@@ -336,6 +489,212 @@ onMounted(async () => {
   gap: 8px;
   font-weight: 500;
   font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 调度表格样式 */
+.schedule-section {
+  margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  .schedule-section {
+    margin-bottom: 20px;
+  }
+}
+
+.schedule-card {
+  padding: 0 !important;
+  margin-bottom: 0 !important;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-card :deep(.el-card__body) {
+  padding: 0 !important;
+  flex: 1;
+  overflow: auto;
+}
+
+/* 占位容器样式 */
+.placeholder-card {
+  height: 400px;
+}
+
+.placeholder-content {
+  padding: 40px 20px;
+  text-align: center;
+  color: #909399;
+}
+
+.placeholder-content p {
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.placeholder-hint {
+  font-size: 12px;
+  color: #c0c4cc;
+}
+
+.schedule-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+  margin: 0;
+  border: 1px solid #dcdfe6;
+}
+
+@media (min-width: 768px) {
+  .schedule-table {
+    font-size: 14px;
+  }
+}
+
+.schedule-table th {
+  background-color: #FFE4B5;
+  color: #333;
+  font-weight: 700;
+  padding: 8px 6px;
+  text-align: center;
+  white-space: nowrap;
+  border: 1px solid #dcdfe6;
+}
+
+/* 移动端列宽限制 */
+@media (max-width: 767px) {
+  .schedule-table th:nth-child(1),
+  .schedule-table td:nth-child(1) {
+    min-width: 80px;
+    max-width: 80px;
+  }
+
+  .schedule-table th:nth-child(2),
+  .schedule-table td:nth-child(2) {
+    min-width: 50px;
+    max-width: 50px;
+  }
+
+  .schedule-table th:nth-child(3),
+  .schedule-table td:nth-child(3) {
+    min-width: 70px;
+    max-width: 70px;
+  }
+
+  /* 平台列：3个汉字宽，超出滑动显示 */
+  .schedule-table th:nth-child(4),
+  .schedule-table td:nth-child(4) {
+    min-width: 3em;
+    max-width: 3em;
+    overflow-x: auto;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .schedule-table td:nth-child(4)::-webkit-scrollbar {
+    height: 3px;
+  }
+
+  .schedule-table td:nth-child(4)::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 3px;
+  }
+
+  /* 位置列：5个汉字宽，超出滑动显示 */
+  .schedule-table th:nth-child(5),
+  .schedule-table td:nth-child(5) {
+    min-width: 5em;
+    max-width: 5em;
+    overflow-x: auto;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .schedule-table td:nth-child(5)::-webkit-scrollbar {
+    height: 3px;
+  }
+
+  .schedule-table td:nth-child(5)::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 3px;
+  }
+}
+
+@media (min-width: 768px) {
+  .schedule-table th {
+    padding: 10px 12px;
+  }
+}
+
+.schedule-table td {
+  padding: 8px 6px;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid #dcdfe6;
+  border-left: 1px solid #dcdfe6;
+  border-right: 1px solid #dcdfe6;
+}
+
+@media (min-width: 768px) {
+  .schedule-table td {
+    padding: 10px 12px;
+  }
+}
+
+.schedule-table tr:nth-child(even) {
+  background-color: #F5F5F5;
+}
+
+.schedule-table tr:hover {
+  background-color: #e6f0ff;
+  cursor: pointer;
+}
+
+.schedule-row {
+  transition: background-color 0.2s;
+}
+
+.schedule-type {
+  font-weight: 600;
+}
+
+.schedule-type.send {
+  color: #dc3545;
+}
+
+.schedule-type.receive {
+  color: #28a745;
+}
+
+.schedule-plate {
+  color: #007bff;
+  font-weight: 500;
+}
+
+.schedule-platform {
+  font-weight: 500;
+}
+
+.empty-text {
+  text-align: center;
+  color: #909399;
+  padding: 20px;
+  font-size: 14px;
+}
+
+/* 完整视图表格样式 */
+.full-view-table {
+  font-size: 14px;
+}
+
+.full-view-table th,
+.full-view-table td {
+  padding: 12px;
 }
 
 /* 移动端卡片样式 */

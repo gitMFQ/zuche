@@ -7,6 +7,7 @@
 这是一个完整的租车公司管理解决方案，采用前后端分离架构：
 - **后端**: Node.js + Express 5 + TypeScript，使用 better-sqlite3（原生 SQLite 绑定）存储数据
 - **前端**: Vue 3 + Vite 8 + TypeScript + Element Plus + Pinia
+- **特色功能**: 智能调度系统（从订单自动生成取还车安排）、主题系统、移动端优先
 
 ### 核心业务模块
 
@@ -15,12 +16,13 @@
 | 用户管理 | 登录认证、角色权限（admin/staff）、用户 CRUD |
 | 客户管理 | 客户信息、驾照信息、身份证/驾照照片上传、常用客户标记、来源标记 |
 | 车辆管理 | 车辆 CRUD、状态管理（可用/已出租/维修中）、新能源标识、行驶证/登记证上传 |
-| 订单管理 | 租车订单、状态流转、续租、支付记录、订单来源佣金计算、免押选项、取还车里程/照片 |
+| 订单管理 | 租车订单、状态流转、续租、支付记录、订单来源佣金计算、免押选项、取还车里程/照片/地点 |
 | 违章管理 | 违章记录、多图上传、处理状态 |
 | 黑名单管理 | 黑名单添加/移除、手机号/身份证检查 |
 | 保养管理 | 保养记录、多类型支持、里程提醒 |
 | 保险管理 | 保险记录、多类型（交强险/商业险/座位险）、图片/PDF上传 |
 | 年检证管理 | 年检登记、到期提醒、证书图片 |
+| **调度管理** | **从订单自动生成取还车调度安排，按时间实时显示，支持完整视图和图片导出** |
 | 操作日志 | 操作记录、用户行为追踪、筛选查询（管理员可见） |
 | 系统设置 | 系统标题/Logo配置、主题色设置、侧边栏风格设置 |
 
@@ -31,9 +33,24 @@ car/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/    # 业务控制器（按模块划分）
-│   │   │   ├── logs.ts     # 操作日志控制器
+│   │   │   ├── auth.ts     # 认证控制器
+│   │   │   ├── users.ts    # 用户管理控制器
+│   │   │   ├── customers.ts # 客户管理控制器
+│   │   │   ├── vehicles.ts # 车辆管理控制器
+│   │   │   ├── orders.ts   # 订单管理控制器
+│   │   │   ├── violations.ts # 违章管理控制器
+│   │   │   ├── blacklist.ts # 黑名单管理控制器
+│   │   │   ├── orderSources.ts # 订单来源管理控制器
+│   │   │   ├── maintenance.ts # 保养管理控制器
+│   │   │   ├── insurance.ts # 保险管理控制器
+│   │   │   ├── inspection.ts # 年检证管理控制器
+│   │   │   ├── schedules.ts # 调度管理控制器
+│   │   │   ├── dashboard.ts # 仪表盘统计控制器
+│   │   │   ├── settings.ts # 系统设置控制器
+│   │   │   └── logs.ts     # 操作日志控制器
 │   │   ├── db/index.ts     # 数据库初始化、表结构、迁移
 │   │   ├── middleware/     # 认证中间件
+│   │   │   └── auth.ts     # JWT 认证中间件
 │   │   ├── routes/index.ts # API 路由定义
 │   │   ├── utils/helpers.ts# 工具函数（query、execute、logAction等）
 │   │   └── index.ts        # 入口文件、上传路由
@@ -59,7 +76,18 @@ car/
     │   │   ├── constants.ts# 常量定义（选项列表、文本映射）
     │   │   └── helpers.ts  # 工具函数（日期格式化、图片URL等）
     │   └── views/          # 页面视图
-    │       ├── Logs.vue    # 操作日志页面
+    │       ├── Login.vue   # 登录页面
+    │       ├── Dashboard.vue # 仪表盘（含调度表格）
+    │       ├── Customers.vue # 客户管理页面
+    │       ├── Vehicles.vue # 车辆管理页面
+    │       ├── Orders.vue  # 订单管理页面
+    │       ├── OrderDetail.vue # 订单详情页面
+    │       ├── Violations.vue # 违章管理页面
+    │       ├── Blacklist.vue # 黑名单管理页面
+    │       ├── OrderSources.vue # 订单来源管理页面
+    │       ├── Settings.vue # 系统设置页面
+    │       ├── Users.vue   # 用户管理页面
+    │       └── Logs.vue    # 操作日志页面
     └── public/             # 静态资源
 ```
 
@@ -77,6 +105,9 @@ cd backend && npm run start
 
 # 前端构建
 cd frontend && npm run build
+
+# 前端预览构建结果
+cd frontend && npm run preview
 ```
 
 ## 技术约定
@@ -114,7 +145,7 @@ cd frontend && npm run build
 
 1. **API 调用**: 使用 `src/api/index.ts` 中封装的 API 对象
    ```typescript
-   import { orderApi, vehicleApi, uploadApi, logApi } from '../api';
+   import { orderApi, vehicleApi, uploadApi, logApi, scheduleApi } from '../api';
    const res = await orderApi.getList({ page: 1, pageSize: 10 });
    ```
 
@@ -150,6 +181,13 @@ cd frontend && npm run build
    - 核心变量: `--primary-color`, `--primary-color-light`, `--primary-color-dark`, `--primary-color-rgb`
    - 在 `style.css` 中定义默认值，通过 JS 动态更新
    - Element Plus 组件主题覆盖在 `style.css` 中定义
+
+9. **图片导出**: 使用 `html2canvas` 库将 DOM 元素转换为图片下载
+   ```typescript
+   import html2canvas from 'html2canvas';
+   const canvas = await html2canvas(element, { scale: 2 });
+   // canvas.toDataURL() 生成图片数据
+   ```
 
 ## 业务规则
 
@@ -197,6 +235,34 @@ pending (待取车) → active (已取车) → completed (已还车)
 
 ### 支付记录添加权限
 - 待取车(pending)、待还车(active)、已完成(completed) 状态的订单均可添加支付记录
+
+### 调度数据生成规则
+- **送车**：从待取车(pending)订单中提取，显示取车时间和取车位置
+- **收车**：从已取车(active)订单中提取，显示还车时间和还车位置
+- **时间范围**：显示当前时间及以后的调度安排，过去的不显示
+- **状态判断**：
+  - 待取车订单：只显示 `status='pending'` 且 `start_date >= 当前时间` 的送车条目
+  - 已取车订单：只显示 `status='active'` 且 `end_date >= 当前时间` 的收车条目
+  - 当取车时间已过但还车时间未到时，如果订单状态已变为 active，则只显示还车条目
+- **排序**：按时间升序排列
+- **数据来源**：直接从订单表查询，不单独存储
+- **只读功能**：调度表格为只读展示，不支持手动添加/编辑/删除
+
+### 调度表格样式规则
+- **移动端**：
+  - 表格宽度 100%，无内边距
+  - 平台列：3个汉字宽，超出滑动显示
+  - 位置列：5个汉字宽，超出滑动显示
+  - 字体 13px，内边距 8px 6px
+- **PC端**：
+  - 表格宽度 90%，居中显示
+  - 容器最大宽度 800px
+  - 无列宽限制
+  - 字体 14px，内边距 10px 12px
+- **完整视图**：
+  - 无列宽限制
+  - 使用稍大的字体和内边距（14px, 12px）
+  - 支持点击行跳转到订单详情
 
 ## 操作日志
 
@@ -336,6 +402,17 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 2. 在需要使用的组件中导入并使用
 3. 示例：添加新的支付方式只需修改 `PAYMENT_METHOD_OPTIONS` 和 `PAYMENT_METHOD_TEXT_MAP`
 
+### 添加仪表盘统计模块
+1. 后端: 在 `controllers/dashboard.ts` 的 `getDashboardStats` 函数中添加数据查询
+2. 前端: 在 `views/Dashboard.vue` 中添加对应的展示组件
+3. 更新 stats 接口类型定义（如使用 TypeScript）
+
+### 添加图片导出功能
+1. 安装依赖：`npm install html2canvas`
+2. 在组件中动态导入：`const html2canvas = (await import('html2canvas')).default`
+3. 使用 html2canvas 捕获 DOM 元素并转换为图片
+4. 创建临时链接下载图片
+
 ## 数据库表结构要点
 
 ### 用户表 (users)
@@ -358,6 +435,8 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 - 照片字段：pickup_image, return_image
 - 合同字段：contract_number
 - 地址字段：pickup_location, return_location
+- 时间字段：start_date, end_date, actual_end_date, created_at, updated_at
+- 其他字段：remarks（备注）
 
 ### 操作日志表 (operation_logs)
 - 主键：id
@@ -365,6 +444,18 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 - 操作信息：action（操作类型）、entity_type（实体类型）、entity_id（实体ID）
 - 详情：details（操作详情）、ip_address（客户端IP）
 - 时间：created_at
+
+### 订单来源表 (order_sources)
+- 主键：id
+- 名称：name
+- 佣金比例：commission_rate（百分比）
+- 颜色：color（用于前端显示标签颜色）
+- 状态：status（1: 启用, 0: 禁用）
+
+### 系统设置表 (system_settings)
+- 主键：key
+- 值：value（JSON 字符串）
+- 更新时间：updated_at
 
 ## 代码复用规范
 
@@ -391,6 +482,63 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 - `isExpired(date)` - 检查是否过期
 - `isExpiringSoon(date, days)` - 检查是否即将到期
 
+## API 接口说明
+
+### 调度相关接口
+
+#### 获取最近调度安排
+```
+GET /api/schedules/recent
+```
+- 描述：获取当前时间及以后的取还车调度安排
+- 认证：需要登录
+- 返回数据：
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "订单ID",
+        "schedule_time": "2026-03-25 10:00:00",
+        "type": "送",
+        "plate_number": "宁A173GV",
+        "platform": "携程",
+        "platform_color": "#0056b3",
+        "location": "银川汽车站",
+        "order_no": "订单号"
+      }
+    ]
+  }
+  ```
+- 数据来源：
+  - 送车：从 status='pending' 且 start_date >= 当前时间 的订单中查询取车时间和取车位置
+  - 收车：从 status='active' 且 end_date >= 当前时间 的订单中查询还车时间和还车位置
+- 排序：按 schedule_time 升序
+- 特性：取车时间已过但还车时间未到时，只显示还车条目
+
+### 仪表盘相关接口
+
+#### 获取统计数据
+```
+GET /api/dashboard/stats
+```
+- 描述：获取仪表盘各项统计数据
+- 认证：需要登录
+- 返回数据：
+  ```json
+  {
+    "success": true,
+    "data": {
+      "vehicles": { "total": 10, "available": 7, "rented": 3 },
+      "orders": { "total": 50, "active": 3 },
+      "customerCount": 25,
+      "monthIncome": 15000,
+      "recentOrders": [...],
+      "expiringOrders": [...]
+    }
+  }
+  ```
+
 ## 注意事项
 
 1. **数据库持久化**: better-sqlite3 自动持久化，数据写入即时保存，无需调用 saveDatabase
@@ -402,3 +550,5 @@ db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 7. **操作日志**: 新增关键操作时应添加日志记录
 8. **代码复用**: 新增选项列表时优先添加到 `utils/constants.ts`，新工具函数添加到 `utils/helpers.ts`
 9. **代码提交规范**: 每次修改代码后，必须更新 `README.md` 的更新日志部分，然后进行 `git commit` 提交更改
+10. **调度功能**: 调度数据从订单自动生成，不需要手动添加，修改订单会自动更新调度显示
+11. **图片导出**: 使用 html2canvas 库实现调度表格导出为图片功能，需要在前端安装该依赖

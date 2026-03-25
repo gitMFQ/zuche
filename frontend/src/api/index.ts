@@ -179,6 +179,11 @@ export const logApi = {
   getUsers: () => api.get('/logs/users')
 }
 
+// ==================== 调度 API ====================
+export const scheduleApi = {
+  getRecent: () => api.get('/schedules/recent')
+}
+
 // ==================== 文件上传 API ====================
 export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance' | 'vehicle' | 'customer' | 'other'
 
