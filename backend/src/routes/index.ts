@@ -126,5 +126,6 @@ router.get('/logs/:id', authMiddleware, adminOnly, logsController.getLog);
 
 // ==================== 调度路由 ====================
 router.get('/schedules/recent', authMiddleware, schedulesController.getRecentSchedules);
+router.get('/schedules/gantt', authMiddleware, schedulesController.getGanttData);
 
 export default router;

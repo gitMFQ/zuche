@@ -265,6 +265,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Star } from '@element-plus/icons-vue'
 import { customerApi, blacklistApi, uploadApi, orderSourceApi } from '../api'
+import { getImageUrl } from '../utils/helpers'
 
 const router = useRouter()
 const loading = ref(false)
@@ -305,13 +306,6 @@ const rules: FormRules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ]
-}
-
-function getImageUrl(url: string) {
-  if (!url) return ''
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
 }
 
 function previewImage(images: string[], index: number) {

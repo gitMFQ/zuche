@@ -30,34 +30,11 @@ export function formatDateTime(dateStr: string): string {
 }
 
 /**
- * 格式化完整日期时间 (YYYY-MM-DD HH:mm:ss)
- */
-export function formatFullDateTime(dateStr: string): string {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
-
-/**
  * 格式化为 datetime-local 输入格式
  */
 export function formatDateTimeLocal(dateStr: string): string {
   if (!dateStr) return ''
   return dateStr.replace(' ', 'T').slice(0, 16)
-}
-
-/**
- * 从 datetime-local 解析为数据库格式
- */
-export function parseDateTimeLocal(value: string): string {
-  if (!value) return ''
-  return value.replace('T', ' ') + ':00'
 }
 
 /**
@@ -113,29 +90,4 @@ export function isExpiringSoon(date: string, days: number = 30): boolean {
   const diff = target.getTime() - now.getTime()
   const daysDiff = diff / (1000 * 60 * 60 * 24)
   return daysDiff > 0 && daysDiff <= days
-}
-
-/**
- * 计算两个日期之间的天数
- */
-export function getDaysBetween(startDate: string, endDate: string): number {
-  if (!startDate || !endDate) return 0
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  const diff = end.getTime() - start.getTime()
-  return Math.ceil(diff / (1000 * 60 * 60 * 24))
-}
-
-/**
- * 格式化金额
- */
-export function formatAmount(amount: number): string {
-  return `¥${amount.toFixed(2)}`
-}
-
-/**
- * 生成唯一ID
- */
-export function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9)
 }

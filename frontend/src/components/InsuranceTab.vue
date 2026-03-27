@@ -343,6 +343,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { insuranceApi, vehicleApi, uploadApi } from '../api'
+import { isExpired, isExpiringSoon } from '../utils/helpers'
 
 interface DocumentItem {
   url: string
@@ -404,18 +405,6 @@ const statusTypeMap: Record<string, string> = {
 
 function getStatusType(status: string) {
   return statusTypeMap[status] || 'info'
-}
-
-function isExpired(date: string) {
-  return new Date(date) < new Date()
-}
-
-function isExpiringSoon(date: string) {
-  const now = new Date()
-  const target = new Date(date)
-  const diff = target.getTime() - now.getTime()
-  const days = diff / (1000 * 60 * 60 * 24)
-  return days > 0 && days <= 30
 }
 
 function getVehicleInsuranceStatus(vehicle: any) {

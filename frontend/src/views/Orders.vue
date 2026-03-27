@@ -630,7 +630,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
-import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, SERVICE_TYPE_OPTIONS, ORDER_STATUS_TYPE_MAP } from '../utils/constants'
+import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getServiceLabel, getServiceTagType } from '../utils/helpers'
 
 const router = useRouter()

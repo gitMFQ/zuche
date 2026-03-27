@@ -62,6 +62,56 @@
       </el-col>
     </el-row>
 
+    <!-- 甘特图表格区域 -->
+    <el-card class="section-card gantt-card" shadow="hover">
+      <template #header>
+        <div class="card-header">
+          <span><el-icon><Calendar /></el-icon> 库存日历</span>
+          <div class="header-actions">
+            <el-button type="primary" link @click="ganttDialogVisible = true">
+              <el-icon><FullScreen /></el-icon> 完整视图
+            </el-button>
+          </div>
+        </div>
+      </template>
+      <div class="gantt-container">
+        <div class="gantt-grid" v-if="Object.keys(ganttData).length">
+          <!-- 表头行 -->
+          <div class="gantt-header-row">
+            <div class="gantt-header-cell gantt-header-plate">车牌</div>
+            <div v-for="(dateInfo, index) in ganttDateColumns" :key="index"
+                 class="gantt-header-cell gantt-header-date"
+                 :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
+              <div class="date-text">{{ dateInfo.dateStr }}</div>
+              <div class="week-text">{{ dateInfo.weekStr }}</div>
+            </div>
+          </div>
+          
+          <!-- 数据行 -->
+          <div v-for="(orders, plateNumber, rowIndex) in ganttData" :key="plateNumber" class="gantt-row">
+            <div class="gantt-cell-plate">
+              <div class="plate-number" :class="orders[0]?.is_new_energy ? 'new-energy' : 'fuel'">{{ plateNumber }}</div>
+            </div>
+            
+            <!-- 日期单元格（背景） -->
+            <div v-for="(dateInfo, index) in ganttDateColumns" :key="index"
+                 class="gantt-cell"
+                 :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
+            </div>
+            
+            <!-- 订单占用块 -->
+            <div v-for="order in orders" :key="order.id"
+                 class="gantt-occupation"
+                 :style="getOccupationGridStyle(order, rowIndex)"
+                 @click="showOrderDetail(order)">
+              <span class="occupation-text">{{ formatOccupationTime(order) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-text">暂无订单数据</div>
+      </div>
+    </el-card>
+
     <!-- 调度表格区域 -->
     <el-row :gutter="20" class="schedule-section">
       <!-- 左侧：调度表格 -->
@@ -258,11 +308,67 @@
       <div v-else class="empty-text">暂无调度安排</div>
     </el-dialog>
 
+    <!-- 甘特图完整视图对话框 -->
+    <el-dialog v-model="ganttDialogVisible" title="库存日历 - 完整视图" width="95%" :style="{ maxWidth: '1400px' }">
+      <div class="gantt-container full-view">
+        <div class="gantt-grid" v-if="Object.keys(ganttData).length">
+          <!-- 表头行 -->
+          <div class="gantt-header-row">
+            <div class="gantt-header-cell gantt-header-plate">车牌</div>
+            <div v-for="(dateInfo, index) in ganttDateColumns" :key="index"
+                 class="gantt-header-cell gantt-header-date"
+                 :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
+              <div class="date-text">{{ dateInfo.dateStr }}</div>
+              <div class="week-text">{{ dateInfo.weekStr }}</div>
+            </div>
+          </div>
+          
+          <!-- 数据行 -->
+          <div v-for="(orders, plateNumber, rowIndex) in ganttData" :key="plateNumber" class="gantt-row">
+            <div class="gantt-cell-plate">
+              <div class="plate-number" :class="orders[0]?.is_new_energy ? 'new-energy' : 'fuel'">{{ plateNumber }}</div>
+            </div>
+            
+            <!-- 日期单元格（背景） -->
+            <div v-for="(dateInfo, index) in ganttDateColumns" :key="index"
+                 class="gantt-cell"
+                 :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
+            </div>
+            
+            <!-- 订单占用块 -->
+            <div v-for="order in orders" :key="order.id"
+                 class="gantt-occupation"
+                 :style="getOccupationGridStyle(order, rowIndex)"
+                 @click="showOrderDetail(order)">
+              <span class="occupation-text">{{ formatOccupationTime(order) }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-text">暂无订单数据</div>
+      </div>
+    </el-dialog>
+
+    <!-- 订单详情对话框 -->
+    <el-dialog v-model="orderDetailVisible" :title="selectedOrder?.platform || '订单详情'" width="400px">
+      <div v-if="selectedOrder" class="order-detail-content">
+        <p><strong>{{ formatOccupationTime(selectedOrder) }}</strong></p>
+        <p>{{ selectedOrder.model }} {{ selectedOrder.num }}</p>
+        <p>取：{{ selectedOrder.pickLocation || '-' }}</p>
+        <p>还：{{ selectedOrder.returnLocation || '-' }}</p>
+        <p>{{ selectedOrder.name }} {{ selectedOrder.phone }}</p>
+        <p>{{ selectedOrder.rmb }}元</p>
+      </div>
+      <template #footer>
+        <el-button @click="orderDetailVisible = false">关闭</el-button>
+        <el-button type="primary" @click="goToOrderFromGantt">查看订单</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { dashboardApi, scheduleApi } from '../api'
 import dayjs from 'dayjs'
@@ -281,6 +387,175 @@ const stats = ref<any>({
 const schedules = ref<any[]>([])
 const scheduleDialogVisible = ref(false)
 const shareLoading = ref(false)
+
+// 甘特图相关数据
+const ganttData = ref<Record<string, any[]>>({})
+const ganttDialogVisible = ref(false)
+const orderDetailVisible = ref(false)
+const selectedOrder = ref<any>(null)
+
+// 日期范围：过去30天到未来30天
+const GANTT_DAYS = 61 // 共61天
+const GANTT_PAST_DAYS = 30 // 过去30天
+
+// 生成甘特图日期列
+const ganttDateColumns = computed(() => {
+  const columns: { dateStr: string; weekStr: string; isToday: boolean; isWeekend: boolean; date: Date }[] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  for (let i = -GANTT_PAST_DAYS; i <= 30; i++) {
+    const date = new Date(today)
+    date.setDate(date.getDate() + i)
+    const dayOfWeek = date.getDay()
+    
+    columns.push({
+      dateStr: `${date.getMonth() + 1}/${date.getDate()}`,
+      weekStr: ['日', '一', '二', '三', '四', '五', '六'][dayOfWeek],
+      isToday: i === 0,
+      isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+      date: date
+    })
+  }
+  
+  return columns
+})
+
+// 平台对应的样式类
+function getPlatformClass(platform: string): string {
+  const platformMap: Record<string, string> = {
+    '携程': 'platform-xiecheng',
+    '哈啰': 'platform-haluo',
+    '租租车': 'platform-zuzuche',
+    '线下': 'platform-xianxia'
+  }
+  return platformMap[platform] || 'platform-default'
+}
+
+// 计算占用块的样式
+function getOccupationStyle(order: any, rowIndex: number): Record<string, string> {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const startDate = new Date(order.startDateTime)
+  const endDate = new Date(order.endDateTime)
+
+  // 计算开始索引（相对于今天）
+  const startDiff = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const endDiff = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  // 转换为列索引
+  let startIdx = startDiff + GANTT_PAST_DAYS
+  let endIdx = endDiff + GANTT_PAST_DAYS
+
+  // 标记是否超出范围
+  const isStartOutOfRange = startIdx < 0
+  const isEndOutOfRange = endIdx >= GANTT_DAYS
+
+  // 限制在可见范围内
+  if (startIdx < 0) startIdx = 0
+  if (endIdx >= GANTT_DAYS) endIdx = GANTT_DAYS - 1
+
+  if (startIdx > endIdx) {
+    return { display: 'none' }
+  }
+
+  // 计算开始时间和结束时间的小时偏移
+  const startHour = isStartOutOfRange ? 0 : startDate.getHours() + startDate.getMinutes() / 60
+  const endHour = isEndOutOfRange ? 24 : endDate.getHours() + endDate.getMinutes() / 60
+
+  // 单元格宽度（需要根据实际样式计算）
+  const cellWidth = 40 // 每个日期单元格宽度
+  const hourWidth = 1.5 // 每小时的宽度偏移
+  const rowHeight = 40 // 每行高度
+  const headerHeight = 45 // 表头高度
+  const plateWidth = 90 // 车牌列宽度
+
+  // border-collapse 下，边框共享，所以每个单元格实际占用宽度就是设定的宽度
+  const left = plateWidth + startIdx * cellWidth + startHour * hourWidth
+  const top = headerHeight + rowIndex * rowHeight - 4
+  const width = (endIdx - startIdx) * cellWidth + (endHour - startHour) * hourWidth
+
+  // 使用订单来源的颜色作为背景色
+  const backgroundColor = order.platform_color || '#409EFF'
+
+  return {
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${Math.max(width, 30)}px`,
+    backgroundColor: backgroundColor
+  }
+}
+
+// CSS Grid 方案：计算占用块的样式（使用绝对定位）
+function getOccupationGridStyle(order: any, rowIndex: number): Record<string, string> {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const startDate = new Date(order.startDateTime)
+  const endDate = new Date(order.endDateTime)
+
+  // 计算开始索引（相对于今天）
+  const startDiff = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const endDiff = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  // 转换为列索引（从0开始，车牌列后面）
+  let startIdx = startDiff + GANTT_PAST_DAYS
+  let endIdx = endDiff + GANTT_PAST_DAYS
+
+  // 限制在可见范围内
+  if (startIdx < 0) startIdx = 0
+  if (endIdx >= GANTT_DAYS) endIdx = GANTT_DAYS - 1
+
+  if (startIdx > endIdx) {
+    return { display: 'none' }
+  }
+
+  // 计算时间偏移（小时）
+  const startHour = startDate.getHours() + startDate.getMinutes() / 60
+  const endHour = endDate.getHours() + endDate.getMinutes() / 60
+
+  // 单元格宽度和车牌列宽度
+  const cellWidth = 40
+  const plateWidth = 90
+
+  // 计算 left 位置（相对于行的左侧）
+  const left = plateWidth + startIdx * cellWidth + (startHour / 24) * cellWidth
+  
+  // 计算宽度
+  const right = plateWidth + (endIdx + 1) * cellWidth - ((24 - endHour) / 24) * cellWidth
+  const width = right - left
+
+  // 使用订单来源的颜色作为背景色
+  const backgroundColor = order.platform_color || '#409EFF'
+
+  return {
+    left: `${left}px`,
+    width: `${Math.max(width, 20)}px`,
+    backgroundColor: backgroundColor
+  }
+}
+
+// 格式化占用时间显示
+function formatOccupationTime(order: any): string {
+  const start = dayjs(order.startDateTime).format('MM-DD HH:mm')
+  const end = dayjs(order.endDateTime).format('MM-DD HH:mm')
+  return `${start} 到 ${end}`
+}
+
+// 显示订单详情
+function showOrderDetail(order: any) {
+  selectedOrder.value = order
+  orderDetailVisible.value = true
+}
+
+// 从甘特图跳转到订单
+function goToOrderFromGantt() {
+  if (selectedOrder.value) {
+    router.push(`/orders/${selectedOrder.value.id}`)
+    orderDetailVisible.value = false
+  }
+}
 
 const statusMap: Record<string, { text: string; type: string }> = {
   pending: { text: '待取车', type: 'warning' },
@@ -319,6 +594,17 @@ async function loadSchedules() {
     }
   } catch (error) {
     console.error('获取调度数据失败', error)
+  }
+}
+
+async function loadGanttData() {
+  try {
+    const res: any = await scheduleApi.getGantt()
+    if (res.success) {
+      ganttData.value = res.data
+    }
+  } catch (error) {
+    console.error('获取甘特图数据失败', error)
   }
 }
 
@@ -377,7 +663,30 @@ onMounted(async () => {
     console.error('获取统计数据失败', error)
   }
   loadSchedules()
+  
+  // 等待甘特图数据加载完成
+  await loadGanttData()
+  
+  // 等待 DOM 更新后，将甘特图滚动到当天日期
+  await nextTick()
+  scrollGanttToToday()
 })
+
+// 滚动甘特图到当天日期
+function scrollGanttToToday() {
+  const containers = document.querySelectorAll('.gantt-container')
+  containers.forEach(container => {
+    const el = container as HTMLElement
+    // 当天日期在索引 GANTT_PAST_DAYS（30），每个日期单元格宽 40px
+    // 车牌列宽 90px
+    // 让当天日期显示在车牌列后第一个
+    const cellWidth = 40
+    const plateWidth = 90
+    const scrollLeft = plateWidth + (GANTT_PAST_DAYS - 2) * cellWidth - 10
+    console.log('滚动甘特图到当天日期:', { scrollLeft, plateWidth, cellWidth, GANTT_PAST_DAYS })
+    el.scrollLeft = Math.max(0, scrollLeft)
+  })
+}
 </script>
 
 <style scoped>
@@ -768,5 +1077,189 @@ onMounted(async () => {
   .hide-mobile {
     display: table;
   }
+}
+
+/* 甘特图样式 */
+.gantt-card {
+  padding: 0 !important;
+}
+
+.gantt-card :deep(.el-card__body) {
+  padding: 0 !important;
+}
+
+.gantt-container {
+  overflow: auto;
+  max-height: 300px;
+}
+
+.gantt-container.full-view {
+  max-height: 500px;
+}
+
+.gantt-grid {
+  width: max-content;
+  font-size: 12px;
+}
+
+/* 表头行 */
+.gantt-header-row {
+  display: flex;
+}
+
+.gantt-header-cell {
+  background-color: #FFE4B5;
+  padding: 4px 2px;
+  text-align: center;
+  font-weight: 700;
+  border: 1px solid #dcdfe6;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.gantt-header-plate {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: 90px;
+  background-color: #FFE4B5;
+}
+
+.gantt-header-date {
+  width: 40px;
+}
+
+.gantt-header-date.is-today {
+  background-color: #409EFF;
+  color: #fff;
+}
+
+.gantt-header-date.is-weekend {
+  background-color: #FFF0E5;
+}
+
+.gantt-header-date .date-text {
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.gantt-header-date .week-text {
+  font-size: 10px;
+  color: #666;
+}
+
+.gantt-header-date.is-today .week-text {
+  color: rgba(255,255,255,0.8);
+}
+
+/* 数据行 */
+.gantt-row {
+  display: flex;
+  position: relative;
+  height: 40px;
+}
+
+.gantt-cell-plate {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: #fff;
+  width: 90px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dcdfe6;
+  flex-shrink: 0;
+}
+
+.gantt-cell-plate .plate-number {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.gantt-cell {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #dcdfe6;
+  background-color: #fff;
+  flex-shrink: 0;
+}
+
+.gantt-cell.is-today {
+  background-color: #ecf5ff;
+}
+
+.gantt-cell.is-weekend {
+  background-color: #faf5f0;
+}
+
+/* 占用块样式 - Grid版本 */
+.gantt-occupation {
+  position: absolute;
+  height: 32px;
+  top: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  overflow: hidden;
+  transition: transform 0.2s;
+  color: #fff;
+}
+
+.gantt-occupation:hover {
+  transform: scaleY(1.1);
+  z-index: 2;
+}
+
+.occupation-text {
+  font-size: 10px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+/* 平台颜色样式 */
+.platform-xiecheng {
+  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+}
+
+.platform-haluo {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.platform-zuzuche {
+  background: linear-gradient(135deg, #fd7e14 0%, #dc6a0b 100%);
+}
+
+.platform-xianxia {
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+}
+
+.platform-default {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 订单详情弹窗 */
+.order-detail-content p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #303133;
+}
+
+.order-detail-content p:first-child {
+  font-size: 16px;
 }
 </style>

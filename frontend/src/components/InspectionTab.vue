@@ -197,6 +197,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { inspectionApi, uploadApi } from '../api'
+import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -240,25 +241,6 @@ function getDateClass(item: any) {
   if (isExpired(item.expiry_date)) return 'text-danger'
   if (isExpiringSoon(item.expiry_date)) return 'text-warning'
   return 'text-success'
-}
-
-function getImageUrl(url: string) {
-  if (!url) return ''
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
-}
-
-function isExpired(date: string) {
-  return new Date(date) < new Date()
-}
-
-function isExpiringSoon(date: string) {
-  const now = new Date()
-  const target = new Date(date)
-  const diff = target.getTime() - now.getTime()
-  const days = diff / (1000 * 60 * 60 * 24)
-  return days > 0 && days <= 30
 }
 
 async function loadData() {

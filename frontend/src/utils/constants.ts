@@ -18,13 +18,6 @@ export const PAYMENT_TYPE_OPTIONS = [
   { label: '其他', value: 'other' }
 ]
 
-// 服务类型选项
-export const SERVICE_TYPE_OPTIONS = [
-  { label: '基础', value: 'basic', tagType: '' },
-  { label: '优享', value: 'premium', tagType: 'warning' },
-  { label: '尊享', value: 'vip', tagType: 'danger' }
-]
-
 // 订单状态类型映射
 export const ORDER_STATUS_TYPE_MAP: Record<string, string> = {
   pending: 'warning',
@@ -67,13 +60,4 @@ export const SERVICE_TYPE_TAG_MAP: Record<string, string> = {
   basic: '',
   premium: 'warning',
   vip: 'danger'
-}
-
-// 订单状态文本映射
-export const ORDER_STATUS_TEXT_MAP: Record<string, string> = {
-  pending: '待取车',
-  active: '待还车',
-  completed: '已完成',
-  cancelled: '已取消',
-  overdue: '已逾期'
 }

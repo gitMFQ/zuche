@@ -52,7 +52,6 @@ export const authApi = {
 // ==================== 用户管理 API ====================
 export const userApi = {
   getList: (params?: any) => api.get('/users', { params }),
-  getOne: (id: string) => api.get(`/users/${id}`),
   create: (data: any) => api.post('/users', data),
   update: (id: string, data: any) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
@@ -64,7 +63,6 @@ export const userApi = {
 export const customerApi = {
   getList: (params?: any) => api.get('/customers', { params }),
   getRegular: () => api.get('/customers/regular'),
-  getOne: (id: string) => api.get(`/customers/${id}`),
   create: (data: any) => api.post('/customers', data),
   update: (id: string, data: any) => api.put(`/customers/${id}`, data),
   setRegular: (id: string, isRegular: boolean) => api.put(`/customers/${id}/regular`, { is_regular: isRegular }),
@@ -76,8 +74,6 @@ export const vehicleApi = {
   getList: (params?: any) => api.get('/vehicles', { params }),
   getAvailable: (params?: { start_date?: string; end_date?: string; exclude_order_id?: string }) => 
     api.get('/vehicles/available', { params }),
-  getBrands: () => api.get('/vehicles/brands'),
-  getOne: (id: string) => api.get(`/vehicles/${id}`),
   create: (data: any) => api.post('/vehicles', data),
   update: (id: string, data: any) => api.put(`/vehicles/${id}`, data),
   delete: (id: string) => api.delete(`/vehicles/${id}`)
@@ -99,7 +95,6 @@ export const orderApi = {
 export const violationApi = {
   getList: (params?: any) => api.get('/violations', { params }),
   getStats: () => api.get('/violations/stats'),
-  getOne: (id: string) => api.get(`/violations/${id}`),
   create: (data: any) => api.post('/violations', data),
   update: (id: string, data: any) => api.put(`/violations/${id}`, data),
   handle: (id: string, data: { status: string; handle_remarks?: string }) => 
@@ -113,7 +108,6 @@ export const violationApi = {
 export const blacklistApi = {
   getList: (params?: any) => api.get('/blacklist', { params }),
   check: (params: { phone?: string; id_card?: string }) => api.get('/blacklist/check', { params }),
-  getOne: (id: string) => api.get(`/blacklist/${id}`),
   add: (data: { customer_id?: string; name: string; phone: string; id_card?: string; reason: string; order_id?: string }) => 
     api.post('/blacklist', data),
   remove: (id: string) => api.delete(`/blacklist/${id}`)
@@ -122,7 +116,6 @@ export const blacklistApi = {
 // ==================== 订单来源 API ====================
 export const orderSourceApi = {
   getList: (params?: any) => api.get('/order-sources', { params }),
-  getOne: (id: string) => api.get(`/order-sources/${id}`),
   create: (data: { name: string; commission_rate?: number; remarks?: string }) => api.post('/order-sources', data),
   update: (id: string, data: { name?: string; commission_rate?: number; remarks?: string }) => api.put(`/order-sources/${id}`, data),
   delete: (id: string) => api.delete(`/order-sources/${id}`)
@@ -130,15 +123,13 @@ export const orderSourceApi = {
 
 // ==================== 仪表盘 API ====================
 export const dashboardApi = {
-  getStats: () => api.get('/dashboard/stats'),
-  getIncomeReport: (params?: any) => api.get('/dashboard/income', { params })
+  getStats: () => api.get('/dashboard/stats')
 }
 
 // ==================== 保养管理 API ====================
 export const maintenanceApi = {
   getList: (params?: any) => api.get('/maintenance', { params }),
   getStats: () => api.get('/maintenance/stats'),
-  getOne: (id: string) => api.get(`/maintenance/${id}`),
   create: (data: any) => api.post('/maintenance', data),
   update: (id: string, data: any) => api.put(`/maintenance/${id}`, data),
   delete: (id: string) => api.delete(`/maintenance/${id}`)
@@ -148,7 +139,6 @@ export const maintenanceApi = {
 export const insuranceApi = {
   getList: (params?: any) => api.get('/insurance', { params }),
   getStats: () => api.get('/insurance/stats'),
-  getOne: (id: string) => api.get(`/insurance/${id}`),
   create: (data: any) => api.post('/insurance', data),
   update: (id: string, data: any) => api.put(`/insurance/${id}`, data),
   delete: (id: string) => api.delete(`/insurance/${id}`)
@@ -158,7 +148,6 @@ export const insuranceApi = {
 export const inspectionApi = {
   getList: (params?: any) => api.get('/inspections', { params }),
   getStats: () => api.get('/inspections/stats'),
-  create: (data: any) => api.post('/inspections', data),
   update: (vehicleId: string, data: any) => api.put(`/inspections/${vehicleId}`, data),
   delete: (vehicleId: string) => api.delete(`/inspections/${vehicleId}`)
 }
@@ -166,14 +155,12 @@ export const inspectionApi = {
 // ==================== 系统设置 API ====================
 export const settingsApi = {
   getAll: () => api.get('/settings'),
-  get: (key: string) => api.get(`/settings/${key}`),
   update: (key: string, value: string) => api.put('/settings', { key, value })
 }
 
 // ==================== 操作日志 API ====================
 export const logApi = {
   getList: (params?: any) => api.get('/logs', { params }),
-  getOne: (id: string) => api.get(`/logs/${id}`),
   getActionTypes: () => api.get('/logs/action-types'),
   getEntityTypes: () => api.get('/logs/entity-types'),
   getUsers: () => api.get('/logs/users')
@@ -181,7 +168,8 @@ export const logApi = {
 
 // ==================== 调度 API ====================
 export const scheduleApi = {
-  getRecent: () => api.get('/schedules/recent')
+  getRecent: () => api.get('/schedules/recent'),
+  getGantt: () => api.get('/schedules/gantt')
 }
 
 // ==================== 文件上传 API ====================

@@ -283,6 +283,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { vehicleApi, uploadApi } from '../api'
+import { getImageUrl } from '../utils/helpers'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -334,13 +335,6 @@ const statusTypeMap: Record<string, string> = {
 
 function getStatusType(status: string) {
   return statusTypeMap[status] || 'info'
-}
-
-function getImageUrl(url: string) {
-  if (!url) return ''
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
 }
 
 function previewImage(url: string) {
