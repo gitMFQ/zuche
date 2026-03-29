@@ -238,13 +238,13 @@
         <div class="view-image-group" v-if="viewData.id_card_images?.length">
           <div class="view-image-label">身份证照片</div>
           <div class="view-image-list">
-            <img v-for="(img, idx) in viewData.id_card_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.id_card_images, idx)" />
+            <img v-for="(img, idx) in viewData.id_card_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.id_card_images || [], Number(idx))" />
           </div>
         </div>
         <div class="view-image-group" v-if="viewData.license_images?.length">
           <div class="view-image-label">驾驶证照片</div>
           <div class="view-image-list">
-            <img v-for="(img, idx) in viewData.license_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.license_images, idx)" />
+            <img v-for="(img, idx) in viewData.license_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.license_images || [], Number(idx))" />
           </div>
         </div>
       </div>
@@ -310,7 +310,7 @@ const rules: FormRules = {
 
 function previewImage(images: string[], index: number) {
   previewImagesList.value = images
-  previewIndex.value = index
+  previewIndex.value = Number(index)
   imagePreviewVisible.value = true
 }
 

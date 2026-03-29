@@ -163,7 +163,7 @@
             <span class="label">附件</span>
             <div class="docs-mini">
               <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
-                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents, idx)" />
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents || [], Number(idx))" />
                 <div v-else class="pdf-icon" @click="openPdf(doc.url)">
                   <el-icon><Document /></el-icon>
                 </div>
@@ -347,7 +347,7 @@ import { isExpired, isExpiringSoon } from '../utils/helpers'
 
 interface DocumentItem {
   url: string
-  type: 'image' | 'pdf'
+  type?: 'image' | 'pdf' | string
 }
 
 const loading = ref(false)
@@ -434,7 +434,7 @@ function openPdf(url: string) {
 
 function previewDoc(docs: DocumentItem[], index: number) {
   previewDocs.value = docs
-  previewIndex.value = index
+  previewIndex.value = Number(index)
   imagePreviewVisible.value = true
 }
 
@@ -545,7 +545,7 @@ async function handleFileSelect(e: Event) {
     if (res.success && res.data) {
       form.documents.push({
         url: res.data.url,
-        type: res.data.type || (isPdf ? 'pdf' : 'image')
+        type: (res.data.type || (isPdf ? 'pdf' : 'image')) as 'image' | 'pdf'
       })
       ElMessage.success('文件上传成功')
     } else {

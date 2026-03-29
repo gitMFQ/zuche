@@ -13,73 +13,144 @@
       <!-- 订单信息 -->
       <el-card shadow="never" class="info-card">
         <template #header>
-          <span class="section-title">订单信息</span>
+          <div class="card-header-row">
+            <span class="section-title"><el-icon><Document /></el-icon> 订单信息</span>
+            <el-tag :type="getStatusType(order.status)" size="large">{{ order.status_text }}</el-tag>
+          </div>
         </template>
-        
-        <!-- 移动端信息列表 -->
+
+        <!-- 订单来源和状态 -->
+        <div class="order-detail-header" v-if="order.source_name">
+          <span class="source-tag" :style="{ background: order.source_color || '#409EFF' }">
+            {{ order.source_name }}
+          </span>
+          <span class="order-no">{{ order.order_no }}</span>
+        </div>
+        <div class="order-detail-header" v-else>
+          <span class="order-no">{{ order.order_no }}</span>
+        </div>
+
+        <!-- 信息列表 -->
         <div class="info-list">
           <div class="info-row">
-            <span class="label">订单号</span>
-            <span class="value">{{ order.order_no }}</span>
-          </div>
-          <div class="info-row" v-if="order.contract_number">
             <span class="label">合同号</span>
-            <span class="value">{{ order.contract_number }}</span>
+            <span class="row-value">{{ order.contract_number || '-' }}</span>
           </div>
           <div class="info-row">
-            <span class="label">客户</span>
-            <span class="value">{{ order.customer_name }}</span>
+            <span class="label">创建时间</span>
+            <span class="row-value">{{ formatDateTime(order.created_at) }}</span>
           </div>
-          <div class="info-row">
-            <span class="label">电话</span>
-            <span class="value"><a :href="'tel:' + order.customer_phone">{{ order.customer_phone }}</a></span>
+          <div class="info-row" v-if="order.updated_at && order.updated_at !== order.created_at">
+            <span class="label">更新时间</span>
+            <span class="row-value">{{ formatDateTime(order.updated_at) }}</span>
           </div>
-          <div class="info-row" v-if="order.id_card">
-            <span class="label">身份证</span>
-            <span class="value">{{ order.id_card }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">车辆</span>
-            <span class="value">
-              <span class="plate-number" :class="order.is_new_energy ? 'new-energy' : 'fuel'">{{ order.plate_number }}</span>
-              | {{ order.brand }} {{ order.model }}
-            </span>
-          </div>
+        </div>
+      </el-card>
+
+      <!-- 租期时间 -->
+      <el-card shadow="never" class="info-card">
+        <template #header>
+          <span class="section-title"><el-icon><Clock /></el-icon> 租期时间</span>
+        </template>
+
+        <div class="info-list">
           <div class="info-row">
             <span class="label">取车时间</span>
-            <span class="value">{{ formatDateTime(order.start_date) }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">取车地点</span>
-            <span class="value">{{ order.pickup_location || '-' }}</span>
+            <span class="row-value">{{ formatDateTime(order.start_date) }}</span>
           </div>
           <div class="info-row">
             <span class="label">还车时间</span>
-            <span class="value">{{ formatDateTime(order.end_date) }}</span>
+            <span class="row-value">{{ formatDateTime(order.end_date) }}</span>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 车辆信息 -->
+      <el-card shadow="never" class="info-card">
+        <template #header>
+          <span class="section-title"><el-icon><Van /></el-icon> 车辆信息</span>
+        </template>
+
+        <div class="info-list">
+          <div class="info-row">
+            <span class="label">车牌号码</span>
+            <span class="row-value">
+              <span class="plate-number" :class="order.is_new_energy ? 'new-energy' : 'fuel'">{{ order.plate_number }}</span>
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="label">车型</span>
+            <span class="row-value">{{ order.brand }} {{ order.model }}</span>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 取还地点 -->
+      <el-card shadow="never" class="info-card">
+        <template #header>
+          <span class="section-title"><el-icon><Location /></el-icon> 取还地点</span>
+        </template>
+
+        <div class="info-list">
+          <div class="info-row">
+            <span class="label">取车地点</span>
+            <span class="row-value">{{ order.pickup_location || '-' }}</span>
           </div>
           <div class="info-row">
             <span class="label">还车地点</span>
-            <span class="value">{{ order.return_location || '-' }}</span>
+            <span class="row-value">{{ order.return_location || '-' }}</span>
           </div>
           <div class="info-row" v-if="order.pickup_mileage">
             <span class="label">取车里程</span>
-            <span class="value">{{ order.pickup_mileage }} km</span>
+            <span class="row-value">{{ order.pickup_mileage }} km</span>
           </div>
           <div class="info-row" v-if="order.return_mileage">
             <span class="label">还车里程</span>
-            <span class="value">{{ order.return_mileage }} km</span>
+            <span class="row-value">{{ order.return_mileage }} km</span>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 客户信息 -->
+      <el-card shadow="never" class="info-card">
+        <template #header>
+          <span class="section-title"><el-icon><User /></el-icon> 客户信息</span>
+        </template>
+
+        <div class="info-list">
+          <div class="info-row">
+            <span class="label">客户姓名</span>
+            <span class="row-value">{{ order.customer_name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">联系电话</span>
+            <span class="row-value"><el-link :href="'tel:' + order.customer_phone" type="primary" underline>{{ order.customer_phone }}</el-link></span>
+          </div>
+          <div class="info-row" v-if="order.id_card">
+            <span class="label">身份证</span>
+            <span class="row-value">{{ order.id_card }}</span>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 金额信息 -->
+      <el-card shadow="never" class="info-card">
+        <template #header>
+          <span class="section-title"><el-icon><Money /></el-icon> 金额信息</span>
+        </template>
+
+        <div class="info-list">
+          <div class="info-row highlight-row">
+            <span class="label">订单总额</span>
+            <span class="row-value amount">¥{{ order.total_amount }}</span>
           </div>
           <div class="info-row">
             <span class="label">日租金</span>
-            <span class="value">¥{{ order.daily_rate }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">总金额</span>
-            <span class="value text-primary">¥{{ order.total_amount }}</span>
+            <span class="row-value">¥{{ order.daily_rate }}</span>
           </div>
           <div class="info-row">
             <span class="label">押金</span>
-            <span class="value">
+            <span class="row-value">
               <template v-if="order.deposit_waived">
                 <el-tag type="success" size="small">免押</el-tag>
                 <span v-if="order.deposit_waived_expiry" class="deposit-expiry">至 {{ order.deposit_waived_expiry }}</span>
@@ -89,48 +160,44 @@
           </div>
           <div class="info-row">
             <span class="label">服务类型</span>
-            <span class="value">
+            <span class="row-value">
               <el-tag :type="getServiceTagType(order.service_type)" size="small">{{ getServiceLabel(order.service_type) }}</el-tag>
             </span>
           </div>
-          <div class="info-row" v-if="order.source_name">
-            <span class="label">订单来源</span>
-            <span class="value">
-              <span class="source-tag" :style="{ background: order.source_color || '#409EFF' }">{{ order.source_name }}</span>
-            </span>
-          </div>
-          <div class="info-row" v-if="order.commission_rate > 0">
+          <div class="info-row" v-if="order.source_name && order.commission_rate > 0">
             <span class="label">服务费</span>
-            <span class="value">{{ order.commission_rate }}%</span>
+            <span class="row-value">{{ order.commission_rate }}%</span>
           </div>
           <div class="info-row" v-if="order.net_amount">
             <span class="label">到账金额</span>
-            <span class="value text-success">¥{{ order.net_amount }}</span>
+            <span class="row-value text-success">¥{{ order.net_amount }}</span>
           </div>
           <div class="info-row">
             <span class="label">已付金额</span>
-            <span class="value" :class="unpaidAmount > 0 ? 'text-warning' : 'text-success'">¥{{ order.paid_amount }}</span>
+            <span class="row-value" :class="unpaidAmount > 0 ? 'text-warning' : 'text-success'">¥{{ order.paid_amount }}</span>
           </div>
           <div class="info-row" v-if="unpaidAmount > 0">
             <span class="label">待付金额</span>
-            <span class="value text-danger">¥{{ unpaidAmount }}</span>
-          </div>
-          <div class="info-row" v-if="order.remarks">
-            <span class="label">备注</span>
-            <span class="value">{{ order.remarks }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">创建时间</span>
-            <span class="value">{{ formatDateTime(order.created_at) }}</span>
-          </div>
-          <div class="info-row" v-if="order.updated_at && order.updated_at !== order.created_at">
-            <span class="label">更新时间</span>
-            <span class="value">{{ formatDateTime(order.updated_at) }}</span>
+            <span class="row-value text-danger">¥{{ unpaidAmount }}</span>
           </div>
         </div>
-        
-        <!-- 取车/还车照片 -->
-        <div v-if="order.pickup_image || order.return_image" class="order-images">
+      </el-card>
+
+      <!-- 备注信息 -->
+      <el-card shadow="never" class="info-card" v-if="order.remarks">
+        <template #header>
+          <span class="section-title"><el-icon><ChatDotRound /></el-icon> 备注信息</span>
+        </template>
+        <div class="remarks-content">{{ order.remarks }}</div>
+      </el-card>
+
+      <!-- 取还照片 -->
+      <el-card shadow="never" class="info-card" v-if="order.pickup_image || order.return_image">
+        <template #header>
+          <span class="section-title"><el-icon><Picture /></el-icon> 取还照片</span>
+        </template>
+
+        <div class="order-images">
           <div v-if="order.pickup_image" class="image-section">
             <span class="image-label">取车照片</span>
             <img :src="getImageUrl(order.pickup_image)" class="order-image" @click="previewImage([order.pickup_image], 0)" />
@@ -219,7 +286,7 @@
 
     <!-- 取车对话框 -->
     <el-dialog v-model="pickupDialogVisible" title="取车确认" width="90%" :style="{ maxWidth: '400px' }">
-      <el-form :model="pickupForm" label-width="80px">
+      <el-form :model="pickupForm" label-width="100px">
         <el-form-item label="取车里程">
           <el-input-number v-model="pickupForm.pickup_mileage" :min="0" placeholder="公里数（选填）" style="width: 100%" />
         </el-form-item>
@@ -235,6 +302,17 @@
             </div>
             <input ref="pickupImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handlePickupImageUpload" />
           </div>
+        </el-form-item>
+        <el-form-item label="实际取车时间">
+          <input
+            type="datetime-local"
+            :value="formatDateTimeLocal(pickupForm.actual_pickup_date)"
+            class="native-datetime-input"
+            @change="onPickupDateTimeChange"
+          />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="pickupForm.remarks" type="textarea" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -525,7 +603,9 @@ const completeForm = reactive({
 
 const pickupForm = reactive({
   pickup_mileage: undefined as number | undefined,
-  pickup_image: ''
+  pickup_image: '',
+  actual_pickup_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+  remarks: ''
 })
 
 const editForm = reactive({
@@ -647,6 +727,13 @@ function onCompleteDateTimeChange(e: Event) {
   }
 }
 
+function onPickupDateTimeChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    pickupForm.actual_pickup_date = target.value
+  }
+}
+
 const unpaidAmount = computed(() => {
   return (order.value.total_amount || 0) - (order.value.paid_amount || 0)
 })
@@ -740,16 +827,26 @@ async function handlePickupImageUpload(e: Event) {
 async function handlePickup() {
   submitting.value = true
   try {
-    const res: any = await orderApi.updateStatus(order.value.id, {
+    const data: any = {
       status: 'active',
       pickup_mileage: pickupForm.pickup_mileage,
       pickup_image: pickupForm.pickup_image || undefined
-    })
+    }
+    if (pickupForm.actual_pickup_date) {
+      data.actual_pickup_date = pickupForm.actual_pickup_date.replace('T', ' ')
+    }
+    if (pickupForm.remarks) {
+      data.remarks = pickupForm.remarks
+    }
+    
+    const res: any = await orderApi.updateStatus(order.value.id, data)
     if (res.success) {
       ElMessage.success('取车成功')
       pickupDialogVisible.value = false
       pickupForm.pickup_mileage = undefined
       pickupForm.pickup_image = ''
+      pickupForm.actual_pickup_date = dayjs().format('YYYY-MM-DDTHH:mm')
+      pickupForm.remarks = ''
       loadOrder()
     }
   } catch (error) {
@@ -1034,7 +1131,13 @@ function goBack() {
   router.back()
 }
 
-onMounted(() => loadOrder())
+onMounted(async () => {
+  await loadOrder()
+  // 检查 URL 参数，如果 edit=1 则自动打开编辑对话框
+  if (route.query.edit === '1') {
+    await openEditDialog()
+  }
+})
 </script>
 
 <style scoped>
@@ -1062,15 +1165,41 @@ onMounted(() => loadOrder())
   margin-bottom: 0;
 }
 
+/* 分区标题样式 */
 .section-title {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title .el-icon {
+  color: #409EFF;
 }
 
 .card-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* 订单头部 */
+.order-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ebef 100%);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.order-no {
+  font-weight: 600;
+  font-size: 14px;
+  color: #303133;
 }
 
 .info-list {
@@ -1082,12 +1211,38 @@ onMounted(() => loadOrder())
 .info-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
   font-size: 14px;
-  padding: 4px 0;
+}
+
+.info-row:not(:last-child) {
+  border-bottom: 1px dashed #ebeef5;
+}
+
+/* 高亮行样式 */
+.info-row.highlight-row {
+  background: linear-gradient(135deg, #fef0f0 0%, #fef7f7 100%);
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin: 0 -4px;
 }
 
 .info-row .label {
   color: #909399;
+  font-size: 13px;
+}
+
+.info-row .row-value {
+  color: #303133;
+  font-weight: 500;
+  text-align: right;
+}
+
+.info-row .row-value.amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f56c6c;
 }
 
 .info-row .value {
@@ -1099,11 +1254,54 @@ onMounted(() => loadOrder())
   text-decoration: none;
 }
 
-.text-primary { color: #409EFF; font-weight: 500; }
-.text-success { color: #67C23A; }
-.text-warning { color: #E6A23C; }
-.text-danger { color: #F56C6C; font-weight: 500; }
+/* 来源标签 */
+.source-tag {
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
 
+/* 备注内容 */
+.remarks-content {
+  padding: 12px;
+  background-color: #fafafa;
+  border-radius: 6px;
+  color: #606266;
+  line-height: 1.6;
+}
+
+/* 图片样式 */
+.order-images {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.image-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.image-label {
+  font-size: 13px;
+  color: #909399;
+}
+
+.order-image {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.order-image:hover {
+  transform: scale(1.05);
+}
+
+/* 支付记录样式 */
 .payment-list {
   display: flex;
   flex-direction: column;
@@ -1140,6 +1338,12 @@ onMounted(() => loadOrder())
   color: #909399;
   font-size: 12px;
 }
+
+/* 工具类 */
+.text-primary { color: #409EFF; font-weight: 500; }
+.text-success { color: #67C23A; }
+.text-warning { color: #E6A23C; }
+.text-danger { color: #F56C6C; font-weight: 500; }
 
 .action-buttons {
   display: flex;

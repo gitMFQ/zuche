@@ -71,9 +71,9 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
   document.title = `${to.meta.title || '租车管理系统'} - 租车管理系统`
-  
+
   const userStore = useUserStore()
   const token = userStore.token || localStorage.getItem('token')
 

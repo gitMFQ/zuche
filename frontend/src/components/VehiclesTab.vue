@@ -235,44 +235,7 @@
     </el-dialog>
 
     <!-- 查看详情对话框 -->
-    <el-dialog v-model="viewDialogVisible" title="车辆详情" width="90%" :style="{ maxWidth: '550px' }">
-      <el-descriptions :column="2" border size="default">
-        <el-descriptions-item label="车牌号" :span="2">
-          <span class="plate-number" :class="viewData.is_new_energy ? 'new-energy' : 'fuel'">{{ viewData.plate_number }}</span>
-          <el-tag v-if="viewData.is_new_energy" type="success" size="small" style="margin-left: 8px">新能源</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="品牌">{{ viewData.brand }}</el-descriptions-item>
-        <el-descriptions-item label="型号">{{ viewData.model }}</el-descriptions-item>
-        <el-descriptions-item label="颜色">{{ viewData.color || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="年份">{{ viewData.year || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="座位数">{{ viewData.seats || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="里程">{{ viewData.mileage ? viewData.mileage + ' km' : '-' }}</el-descriptions-item>
-        <el-descriptions-item label="日租金">
-          <span class="view-value text-primary">{{ viewData.daily_rate ? '¥' + viewData.daily_rate : '-' }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="押金">{{ viewData.deposit ? '¥' + viewData.deposit : '-' }}</el-descriptions-item>
-        <el-descriptions-item label="车架号" :span="2">{{ viewData.vin || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="发动机号" :span="2">{{ viewData.engine_number || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="状态">
-          <el-tag :type="getStatusType(viewData.actual_status || viewData.status)" size="small">{{ viewData.status_text }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">{{ viewData.remarks || '-' }}</el-descriptions-item>
-      </el-descriptions>
-      <div class="view-images" v-if="viewData.license_image || viewData.registration_image">
-        <div class="view-image-item" v-if="viewData.license_image">
-          <div class="view-image-label">行驶证</div>
-          <img :src="getImageUrl(viewData.license_image)" @click="previewImage(viewData.license_image)" />
-        </div>
-        <div class="view-image-item" v-if="viewData.registration_image">
-          <div class="view-image-label">登记证书</div>
-          <img :src="getImageUrl(viewData.registration_image)" @click="previewImage(viewData.registration_image)" />
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="viewDialogVisible = false">关闭</el-button>
-        <el-button type="primary" @click="viewDialogVisible = false; openDialog(viewData)">编辑</el-button>
-      </template>
-    </el-dialog>
+    <VehicleDetailDialog v-model:visible="viewDialogVisible" :vehicle="viewData" @edit="openDialog" />
 
     <!-- 隐藏的文件输入 -->
     <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleFileSelect" />
@@ -284,6 +247,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { vehicleApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
+import VehicleDetailDialog from './VehicleDetailDialog.vue'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -689,37 +653,5 @@ onMounted(() => loadData())
 .view-value.highlight {
   font-size: 16px;
   color: #303133;
-}
-
-.view-images {
-  margin-top: 16px;
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.view-image-item {
-  flex: 1;
-  min-width: 150px;
-  max-width: 200px;
-}
-
-.view-image-label {
-  font-size: 13px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.view-image-item img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #dcdfe6;
-  cursor: pointer;
-}
-
-.view-image-item img:hover {
-  border-color: var(--primary-color, #409EFF);
 }
 </style>

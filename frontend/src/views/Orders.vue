@@ -18,14 +18,60 @@
 
     <!-- 搜索栏 -->
     <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="searchForm" size="default">
-        <el-form-item>
-          <el-input v-model="searchForm.keyword" placeholder="订单号/客户/车牌" clearable @keyup.enter="loadData" style="width: 150px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="loadData">搜索</el-button>
-        </el-form-item>
-      </el-form>
+      <div class="search-header" @click="toggleSearchExpand">
+        <span class="search-title"><el-icon><Search /></el-icon> 搜索筛选</span>
+        <el-icon class="expand-icon" :class="{ 'expanded': searchExpanded }"><ArrowUp /></el-icon>
+      </div>
+      <el-collapse-transition>
+        <div v-show="searchExpanded" class="search-content">
+          <el-form :inline="true" :model="searchForm" size="default" class="search-form">
+            <el-form-item label="关键词">
+              <el-input v-model="searchForm.keyword" placeholder="订单号/客户/电话" clearable @keyup.enter="loadData" />
+            </el-form-item>
+            <el-form-item label="取车时间">
+              <div class="date-range">
+                <el-input v-model="searchForm.start_date_from" type="date" placeholder="开始" />
+                <span class="date-separator">-</span>
+                <el-input v-model="searchForm.start_date_to" type="date" placeholder="结束" />
+              </div>
+            </el-form-item>
+            <el-form-item label="还车时间">
+              <div class="date-range">
+                <el-input v-model="searchForm.end_date_from" type="date" placeholder="开始" />
+                <span class="date-separator">-</span>
+                <el-input v-model="searchForm.end_date_to" type="date" placeholder="结束" />
+              </div>
+            </el-form-item>
+            <el-form-item label="订单来源">
+              <el-select v-model="searchForm.source_id" placeholder="全部来源" clearable>
+                <el-option v-for="item in orderSources" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="车牌号">
+              <el-input v-model="searchForm.plate_number" placeholder="车牌号" clearable />
+            </el-form-item>
+            <el-form-item label="车型">
+              <el-input v-model="searchForm.vehicle_model" placeholder="车型" clearable />
+            </el-form-item>
+            <el-form-item label="排序">
+              <el-select v-model="searchForm.order_by" placeholder="默认排序" clearable>
+                <el-option label="取车时间↑" value="start_date_asc" />
+                <el-option label="取车时间↓" value="start_date_desc" />
+                <el-option label="还车时间↑" value="end_date_asc" />
+                <el-option label="还车时间↓" value="end_date_desc" />
+              </el-select>
+            </el-form-item>
+            <el-form-item class="form-actions">
+              <el-button type="primary" @click="loadData">
+                <el-icon><Search /></el-icon> 搜索
+              </el-button>
+              <el-button @click="resetSearch">
+                <el-icon><Refresh /></el-icon> 重置
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+      </el-collapse-transition>
     </el-card>
 
     <!-- 操作栏 -->
@@ -363,13 +409,13 @@
             <div class="image-list">
               <div v-for="(img, idx) in editForm.id_card_images" :key="idx" class="image-item">
                 <img :src="getImageUrl(img)" @click="previewImage(editForm.id_card_images, idx)" />
-                <div class="image-remove" @click="removeEditIdCardImage(idx)">×</div>
+                <div class="image-remove" @click="removeIdCardImage(idx)">×</div>
               </div>
-              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerEditUpload('id_card')">
+              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="editIdCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleEditUpload($event, 'id_card')" />
+            <input ref="idCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'id_card')" />
           </div>
         </el-form-item>
         <el-form-item label="驾驶证">
@@ -380,24 +426,24 @@
             <div class="image-list">
               <div v-for="(img, idx) in editForm.license_images" :key="idx" class="image-item">
                 <img :src="getImageUrl(img)" @click="previewImage(editForm.license_images, idx)" />
-                <div class="image-remove" @click="removeEditLicenseImage(idx)">×</div>
+                <div class="image-remove" @click="removeLicenseImage(idx)">×</div>
               </div>
-              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerEditUpload('license')">
+              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="editLicenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleEditUpload($event, 'license')" />
+            <input ref="licenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'license')" />
           </div>
         </el-form-item>
-        
+
         <el-divider content-position="left">车辆信息</el-divider>
         <el-form-item label="车辆" prop="vehicle_id">
-          <el-select 
-            v-model="editForm.vehicle_id" 
-            placeholder="选择车辆" 
-            style="width: 100%" 
+          <el-select
+            v-model="editForm.vehicle_id"
+            placeholder="选择车辆"
+            style="width: 100%"
             :disabled="currentOrder?.status === 'active'"
-            @change="onEditVehicleChange"
+            @change="onVehicleChange"
           >
             <el-option 
               v-for="v in vehicles" 
@@ -487,7 +533,7 @@
     
     <!-- 取车对话框 -->
     <el-dialog v-model="pickupDialogVisible" title="取车确认" width="90%" :style="{ maxWidth: '400px' }">
-      <el-form :model="pickupForm" label-width="80px">
+      <el-form :model="pickupForm" label-width="100px">
         <el-form-item label="取车里程">
           <el-input-number v-model="pickupForm.pickup_mileage" :min="0" placeholder="公里数（选填）" style="width: 100%" />
         </el-form-item>
@@ -503,6 +549,17 @@
             </div>
             <input ref="pickupImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handlePickupImageUpload" />
           </div>
+        </el-form-item>
+        <el-form-item label="实际取车时间">
+          <input
+            type="datetime-local"
+            :value="formatDateTimeLocal(pickupForm.actual_pickup_date)"
+            class="native-datetime-input"
+            @change="onPickupDateTimeChange"
+          />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="pickupForm.remarks" type="textarea" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -629,9 +686,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { Search, ArrowUp, Refresh } from '@element-plus/icons-vue'
 import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getServiceLabel, getServiceTagType } from '../utils/helpers'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
@@ -654,8 +713,6 @@ const blacklistWarning = ref('')
 const blacklistReason = ref('')
 const idCardInput = ref<HTMLInputElement>()
 const licenseInput = ref<HTMLInputElement>()
-const editIdCardInput = ref<HTMLInputElement>()
-const editLicenseInput = ref<HTMLInputElement>()
 const pickupImageInput = ref<HTMLInputElement>()
 const returnImageInput = ref<HTMLInputElement>()
 const imagePreviewVisible = ref(false)
@@ -672,7 +729,18 @@ const tabCounts = reactive({
   cancelled: 0
 })
 
-const searchForm = reactive({ keyword: '' })
+const searchExpanded = ref(false)
+const searchForm = reactive({
+  keyword: '',
+  start_date_from: '',
+  start_date_to: '',
+  end_date_from: '',
+  end_date_to: '',
+  source_id: '',
+  vehicle_model: '',
+  plate_number: '',
+  order_by: ''
+})
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
 
 const form = reactive({
@@ -760,7 +828,9 @@ const returnForm = reactive({
 // 取车表单
 const pickupForm = reactive({
   pickup_mileage: undefined as number | undefined,
-  pickup_image: ''
+  pickup_image: '',
+  actual_pickup_date: '',
+  remarks: ''
 })
 
 // 续租表单
@@ -923,6 +993,7 @@ const editEstimatedTotal = computed(() => {
 function onTabChange() {
   pagination.page = 1
   loadData()
+  loadOrderSources()
 }
 
 // 加载各状态数量
@@ -944,11 +1015,24 @@ async function loadTabCounts() {
 async function loadData() {
   loading.value = true
   try {
-    const res: any = await orderApi.getList({ 
-      ...searchForm, 
+    const params: any = {
       status: activeTab.value,
-      ...pagination 
-    })
+      page: pagination.page,
+      pageSize: pagination.pageSize
+    }
+    
+    // 添加筛选条件
+    if (searchForm.keyword) params.keyword = searchForm.keyword
+    if (searchForm.start_date_from) params.start_date_from = searchForm.start_date_from
+    if (searchForm.start_date_to) params.start_date_to = searchForm.start_date_to
+    if (searchForm.end_date_from) params.end_date_from = searchForm.end_date_from
+    if (searchForm.end_date_to) params.end_date_to = searchForm.end_date_to
+    if (searchForm.source_id) params.source_id = searchForm.source_id
+    if (searchForm.vehicle_model) params.vehicle_model = searchForm.vehicle_model
+    if (searchForm.plate_number) params.plate_number = searchForm.plate_number
+    if (searchForm.order_by) params.order_by = searchForm.order_by
+    
+    const res: any = await orderApi.getList(params)
     if (res.success) {
       tableData.value = res.data.data
       pagination.total = res.data.total
@@ -958,6 +1042,25 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+// 重置搜索
+function resetSearch() {
+  searchForm.keyword = ''
+  searchForm.start_date_from = ''
+  searchForm.start_date_to = ''
+  searchForm.end_date_from = ''
+  searchForm.end_date_to = ''
+  searchForm.source_id = ''
+  searchForm.vehicle_model = ''
+  searchForm.plate_number = ''
+  searchForm.order_by = ''
+  loadData()
+}
+
+// 切换搜索栏展开/折叠
+function toggleSearchExpand() {
+  searchExpanded.value = !searchExpanded.value
 }
 
 async function loadVehicles(startDate?: string, endDate?: string, excludeOrderId?: string) {
@@ -1140,10 +1243,6 @@ function onDepositWaivedChange(waived: boolean) {
   }
 }
 
-function onSourceChange() {
-  // 来源变化时自动重新计算到账金额
-}
-
 async function handleSubmit() {
   const valid = await formRef.value?.validate()
   if (!valid) return
@@ -1175,31 +1274,6 @@ function goToDetail(item: any) {
   // 保存当前标签页状态
   sessionStorage.setItem('orderListTab', activeTab.value)
   router.push(`/orders/${item.id}`)
-}
-
-// 从订单列表拉黑客户
-async function handleAddToBlacklist(row: any) {
-  try {
-    const { value: reason } = await ElMessageBox.prompt('请输入拉黑原因', '添加到黑名单', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      inputPlaceholder: '请输入拉黑原因',
-      inputValidator: (val) => !!val?.trim() || '请输入拉黑原因'
-    })
-    
-    const res: any = await blacklistApi.add({
-      name: row.customer_name,
-      phone: row.customer_phone,
-      id_card: row.customer_id_card,
-      reason: reason.trim()
-    })
-    
-    if (res.success) {
-      ElMessage.success('已添加到黑名单')
-    }
-  } catch (error) {
-    // 取消
-  }
 }
 
 // 打开编辑对话框
@@ -1300,6 +1374,8 @@ function openPickupDialog(row: any) {
   currentOrder.value = row
   pickupForm.pickup_mileage = undefined
   pickupForm.pickup_image = ''
+  pickupForm.actual_pickup_date = dayjs().format('YYYY-MM-DDTHH:mm')
+  pickupForm.remarks = ''
   pickupDialogVisible.value = true
 }
 
@@ -1338,11 +1414,19 @@ async function handlePickupImageUpload(e: Event) {
 async function handlePickupConfirm() {
   submitting.value = true
   try {
-    const res: any = await orderApi.updateStatus(currentOrder.value.id, {
+    const data: any = {
       status: 'active',
       pickup_mileage: pickupForm.pickup_mileage,
       pickup_image: pickupForm.pickup_image || undefined
-    })
+    }
+    if (pickupForm.actual_pickup_date) {
+      data.actual_pickup_date = pickupForm.actual_pickup_date.replace('T', ' ')
+    }
+    if (pickupForm.remarks) {
+      data.remarks = pickupForm.remarks
+    }
+    
+    const res: any = await orderApi.updateStatus(currentOrder.value.id, data)
     if (res.success) {
       ElMessage.success('取车成功')
       pickupDialogVisible.value = false
@@ -1412,6 +1496,14 @@ function onReturnDateTimeChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.value) {
     returnForm.actual_end_date = target.value.replace('T', ' ') + ':00'
+  }
+}
+
+// 取车日期时间变化
+function onPickupDateTimeChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.value) {
+    pickupForm.actual_pickup_date = target.value
   }
 }
 
@@ -1586,8 +1678,12 @@ onMounted(() => {
   if (savedTab && ['pending', 'active', 'completed', 'cancelled'].includes(savedTab)) {
     activeTab.value = savedTab
   }
+  // 移动端默认折叠搜索栏
+  const isMobile = window.innerWidth < 768
+  searchExpanded.value = !isMobile
   loadData()
   loadTabCounts()
+  loadOrderSources()
 })
 </script>
 
@@ -1613,17 +1709,125 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.search-card :deep(.el-form-item) {
-  margin-bottom: 8px;
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  cursor: pointer;
+  user-select: none;
 }
 
-@media (min-width: 768px) {
-  .search-card {
-    margin-bottom: 16px;
+.search-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #303133;
+}
+
+.expand-icon {
+  font-size: 16px;
+  color: #909399;
+  transition: transform 0.3s;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.search-content {
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.search-form .el-form-item {
+  margin-bottom: 0;
+}
+
+/* 移动端样式 */
+@media (max-width: 767px) {
+  .search-form .el-form-item {
+    width: 100%;
+    margin-bottom: 12px;
   }
-  
-  .search-card :deep(.el-form-item) {
+
+  .search-form .el-form-item:last-child {
     margin-bottom: 0;
+  }
+
+  .date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .date-range .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .date-separator {
+    color: #909399;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .form-actions .el-button {
+    flex: 1;
+  }
+}
+
+/* PC 端样式 */
+@media (min-width: 768px) {
+  .search-header {
+    display: none;
+  }
+
+  .search-content {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .search-form .el-form-item {
+    margin-bottom: 0;
+  }
+
+  .search-form .el-form-item:nth-child(-n+4) {
+    margin-right: 16px;
+  }
+
+  .date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .date-range .el-input {
+    width: 110px;
+  }
+
+  .date-separator {
+    color: #909399;
+    font-size: 14px;
+  }
+
+  .form-actions .el-button + .el-button {
+    margin-left: 8px;
   }
 }
 

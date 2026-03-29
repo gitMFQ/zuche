@@ -14,7 +14,7 @@
             </div>
           </div>
           <div class="stat-footer">
-            可用: {{ stats.vehicles?.available || 0 }} | 已租: {{ stats.vehicles?.rented || 0 }}
+            可用：{{ stats.vehicles?.available || 0 }} | 已租：{{ stats.vehicles?.rented || 0 }}
           </div>
         </el-card>
       </el-col>
@@ -30,7 +30,7 @@
             </div>
           </div>
           <div class="stat-footer">
-            进行中: {{ stats.orders?.active || 0 }}
+            进行中：{{ stats.orders?.active || 0 }}
           </div>
         </el-card>
       </el-col>
@@ -62,7 +62,7 @@
       </el-col>
     </el-row>
 
-    <!-- 甘特图表格区域 -->
+    <!-- 库存日历区域 -->
     <el-card class="section-card gantt-card" shadow="hover">
       <template #header>
         <div class="card-header">
@@ -74,7 +74,7 @@
           </div>
         </div>
       </template>
-      <div class="gantt-container">
+      <div class="gantt-container" ref="ganttContainer">
         <div class="gantt-grid" v-if="Object.keys(ganttData).length">
           <!-- 表头行 -->
           <div class="gantt-header-row">
@@ -88,8 +88,14 @@
           </div>
           
           <!-- 数据行 -->
-          <div v-for="(orders, plateNumber, rowIndex) in ganttData" :key="plateNumber" class="gantt-row">
-            <div class="gantt-cell-plate">
+          <div v-for="(orders, plateNumber) in ganttData" :key="plateNumber" class="gantt-row">
+            <div class="gantt-cell-plate"
+                 @click="showVehicleDetail(plateNumber)"
+                 @mouseenter="showVehicleTooltip"
+                 @mousemove="moveTooltip"
+                 @mouseleave="hideTooltip"
+                 :data-tooltip="getVehicleTooltip(orders)"
+                 style="cursor: pointer;">
               <div class="plate-number" :class="orders[0]?.is_new_energy ? 'new-energy' : 'fuel'">{{ plateNumber }}</div>
             </div>
             
@@ -102,9 +108,13 @@
             <!-- 订单占用块 -->
             <div v-for="order in orders" :key="order.id"
                  class="gantt-occupation"
-                 :style="getOccupationGridStyle(order, rowIndex)"
-                 @click="showOrderDetail(order)">
-              <span class="occupation-text">{{ formatOccupationTime(order) }}</span>
+                 :style="getOccupationStyle(order)"
+                 @click="showOrderDetail(order)"
+                 @mouseenter="showTooltip"
+                 @mousemove="moveTooltip"
+                 @mouseleave="hideTooltip"
+                 :data-tooltip="getOccupationTooltip(order)">
+              <span class="occupation-text">{{ getOccupationText(order) }}</span>
             </div>
           </div>
         </div>
@@ -130,8 +140,8 @@
               </div>
             </div>
           </template>
-          
-          <!-- 调度表格（移动端和PC端都用表格） -->
+
+          <!-- 调度表格（移动端和 PC 端都用表格） -->
           <table class="schedule-table" v-if="schedules.length">
             <thead>
               <tr>
@@ -143,7 +153,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in schedules" :key="item.id" @click="goToOrder(item.id)" class="schedule-row">
+              <tr v-for="item in schedules" :key="item.id" @click="showScheduleOrderDetail(item.id)" class="schedule-row">
                 <td>{{ formatScheduleTime(item.schedule_time) }}</td>
                 <td><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
                 <td class="schedule-plate">{{ item.plate_number }}</td>
@@ -155,8 +165,8 @@
           <div v-else class="empty-text">暂无调度安排</div>
         </el-card>
       </el-col>
-      
-      <!-- 右侧：占位容器（PC端显示） -->
+
+      <!-- 右侧：占位容器（PC 端显示） -->
       <el-col :xs="0" :sm="12">
         <el-card class="section-card placeholder-card" shadow="hover">
           <template #header>
@@ -170,52 +180,7 @@
           </div>
         </el-card>
       </el-col>
-    </el-row>    <!-- 即将到期订单 -->
-    <el-card v-if="stats.expiringOrders?.length" class="section-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span><el-icon><Warning /></el-icon> 即将到期</span>
-        </div>
-      </template>
-      
-      <!-- 移动端卡片 -->
-      <div class="mobile-cards">
-        <div v-for="item in stats.expiringOrders" :key="item.order_no" class="mobile-card">
-          <div class="mobile-card-row">
-            <span class="label">订单号</span>
-            <span class="value">{{ item.order_no }}</span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">客户</span>
-            <span class="value">{{ item.customer_name }} {{ item.phone }}</span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">车牌</span>
-            <span class="value"><span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span></span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">到期</span>
-            <span class="value text-warning">{{ item.end_date }}</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- PC端表格 -->
-      <el-table :data="stats.expiringOrders" stripe size="small" class="hide-mobile">
-        <el-table-column prop="order_no" label="订单号" width="140" />
-        <el-table-column prop="customer_name" label="客户" />
-        <el-table-column prop="phone" label="电话" width="120" />
-        <el-table-column prop="plate_number" label="车牌" width="120">
-          <template #default="{ row }">
-            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="end_date" label="到期日期" width="120" />
-        <el-table-column prop="total_amount" label="金额" width="100">
-          <template #default="{ row }">¥{{ row.total_amount }}</template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+    </el-row>
 
     <!-- 最近订单 -->
     <el-card class="section-card" shadow="hover">
@@ -225,7 +190,7 @@
           <el-button type="primary" link @click="$router.push('/orders')">查看全部</el-button>
         </div>
       </template>
-      
+
       <!-- 移动端卡片 -->
       <div class="mobile-cards" v-if="stats.recentOrders?.length">
         <div v-for="item in stats.recentOrders" :key="item.order_no" class="mobile-card" @click="$router.push('/orders')">
@@ -252,8 +217,8 @@
           </div>
         </div>
       </div>
-      
-      <!-- PC端表格 -->
+
+      <!-- PC 端表格 -->
       <el-table :data="stats.recentOrders" stripe size="small" class="hide-mobile">
         <el-table-column label="来源" width="100">
           <template #default="{ row }">
@@ -296,7 +261,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in schedules" :key="item.id" @click="goToOrder(item.id)" class="schedule-row">
+          <tr v-for="item in schedules" :key="item.id" @click="showScheduleOrderDetail(item.id)" class="schedule-row">
             <td>{{ formatScheduleTime(item.schedule_time) }}</td>
             <td><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
             <td class="schedule-plate">{{ item.plate_number }}</td>
@@ -310,7 +275,12 @@
 
     <!-- 甘特图完整视图对话框 -->
     <el-dialog v-model="ganttDialogVisible" title="库存日历 - 完整视图" width="95%" :style="{ maxWidth: '1400px' }">
-      <div class="gantt-container full-view">
+      <template #header>
+        <div class="card-header">
+          <span>库存日历 - 完整视图</span>
+        </div>
+      </template>
+      <div class="gantt-container full-view" id="dialogGanttContainer">
         <div class="gantt-grid" v-if="Object.keys(ganttData).length">
           <!-- 表头行 -->
           <div class="gantt-header-row">
@@ -322,25 +292,35 @@
               <div class="week-text">{{ dateInfo.weekStr }}</div>
             </div>
           </div>
-          
+
           <!-- 数据行 -->
-          <div v-for="(orders, plateNumber, rowIndex) in ganttData" :key="plateNumber" class="gantt-row">
-            <div class="gantt-cell-plate">
+          <div v-for="(orders, plateNumber) in ganttData" :key="plateNumber" class="gantt-row">
+            <div class="gantt-cell-plate"
+                 @click="showVehicleDetail(plateNumber)"
+                 @mouseenter="showVehicleTooltip"
+                 @mousemove="moveTooltip"
+                 @mouseleave="hideTooltip"
+                 :data-tooltip="getVehicleTooltip(orders)"
+                 style="cursor: pointer;">
               <div class="plate-number" :class="orders[0]?.is_new_energy ? 'new-energy' : 'fuel'">{{ plateNumber }}</div>
             </div>
-            
+
             <!-- 日期单元格（背景） -->
             <div v-for="(dateInfo, index) in ganttDateColumns" :key="index"
                  class="gantt-cell"
                  :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
             </div>
-            
+
             <!-- 订单占用块 -->
             <div v-for="order in orders" :key="order.id"
                  class="gantt-occupation"
-                 :style="getOccupationGridStyle(order, rowIndex)"
-                 @click="showOrderDetail(order)">
-              <span class="occupation-text">{{ formatOccupationTime(order) }}</span>
+                 :style="getOccupationStyle(order)"
+                 @click="showOrderDetail(order)"
+                 @mouseenter="showTooltip"
+                 @mousemove="moveTooltip"
+                 @mouseleave="hideTooltip"
+                 :data-tooltip="getOccupationTooltip(order)">
+              <span class="occupation-text">{{ getOccupationText(order) }}</span>
             </div>
           </div>
         </div>
@@ -349,29 +329,188 @@
     </el-dialog>
 
     <!-- 订单详情对话框 -->
-    <el-dialog v-model="orderDetailVisible" :title="selectedOrder?.platform || '订单详情'" width="400px">
+    <el-dialog v-model="orderDetailVisible" title="订单详情" width="90%" :style="{ maxWidth: '500px' }" :close-on-click-modal="false" class="order-detail-dialog">
       <div v-if="selectedOrder" class="order-detail-content">
-        <p><strong>{{ formatOccupationTime(selectedOrder) }}</strong></p>
-        <p>{{ selectedOrder.model }} {{ selectedOrder.num }}</p>
-        <p>取：{{ selectedOrder.pickLocation || '-' }}</p>
-        <p>还：{{ selectedOrder.returnLocation || '-' }}</p>
-        <p>{{ selectedOrder.name }} {{ selectedOrder.phone }}</p>
-        <p>{{ selectedOrder.rmb }}元</p>
+        <!-- 头部信息 -->
+        <div class="order-detail-header">
+          <div class="header-left">
+            <span v-if="selectedOrder.source_name" class="source-tag" :style="{ background: selectedOrder.source_color || '#409EFF' }">
+              {{ selectedOrder.source_name }}
+            </span>
+            <el-tag :type="getStatusType(selectedOrder.status)" size="small">
+              {{ getStatusText(selectedOrder.status) }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 时间信息 -->
+        <div class="order-detail-section">
+          <div class="section-title-compact"><el-icon><Clock /></el-icon> 租期时间</div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">取车</span>
+            <span class="row-value-compact">{{ dayjs(selectedOrder.startDateTime).format('MM-DD HH:mm') }}</span>
+          </div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">还车</span>
+            <span class="row-value-compact">{{ dayjs(selectedOrder.endDateTime).format('MM-DD HH:mm') }}</span>
+          </div>
+        </div>
+
+        <!-- 车辆信息 -->
+        <div class="order-detail-section">
+          <div class="section-title-compact"><el-icon><Van /></el-icon> 车辆</div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">车牌</span>
+            <span class="row-value-compact">
+              <span class="plate-number-compact" :class="selectedOrder.is_new_energy ? 'new-energy' : 'fuel'">
+                {{ selectedOrder.plate_number }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">车型</span>
+            <span class="row-value-compact">{{ selectedOrder.brand }} {{ selectedOrder.model }}</span>
+          </div>
+        </div>
+
+        <!-- 取还地点 -->
+        <div class="order-detail-section" v-if="selectedOrder.pickLocation || selectedOrder.returnLocation">
+          <div class="section-title-compact"><el-icon><Location /></el-icon> 取还地点</div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">取车</span>
+            <span class="row-value-compact">{{ selectedOrder.pickLocation || '-' }}</span>
+          </div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">还车</span>
+            <span class="row-value-compact">{{ selectedOrder.returnLocation || '-' }}</span>
+          </div>
+        </div>
+
+        <!-- 客户信息 -->
+        <div class="order-detail-section">
+          <div class="section-title-compact"><el-icon><User /></el-icon> 客户</div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">姓名</span>
+            <span class="row-value-compact">{{ selectedOrder.name }}</span>
+          </div>
+          <div class="detail-row-compact">
+            <span class="row-label-compact">电话</span>
+            <span class="row-value-compact"><el-link :href="`tel:${selectedOrder.phone}`" type="primary" :underline="false">{{ selectedOrder.phone }}</el-link></span>
+          </div>
+        </div>
+
+        <!-- 金额信息 -->
+        <div class="order-detail-section">
+          <div class="section-title-compact"><el-icon><Money /></el-icon> 金额</div>
+          <div class="detail-row-compact highlight-compact">
+            <span class="row-label-compact">订单金额</span>
+            <span class="row-value-compact amount-compact">¥{{ selectedOrder.rmb }}</span>
+          </div>
+        </div>
       </div>
+
       <template #footer>
-        <el-button @click="orderDetailVisible = false">关闭</el-button>
-        <el-button type="primary" @click="goToOrderFromGantt">查看订单</el-button>
+        <div class="dialog-footer-compact">
+          <el-button type="primary" plain size="small" @click="editOrder" v-if="['pending', 'active'].includes(selectedOrder?.status)">编辑</el-button>
+          <el-button type="success" size="small" @click="showPickupDialog" v-if="selectedOrder?.status === 'pending'">取车</el-button>
+          <el-button type="warning" size="small" @click="showCompleteDialog" v-if="selectedOrder?.status === 'active'">还车</el-button>
+          <el-button type="primary" size="small" @click="goToOrderFromGantt">详情</el-button>
+          <el-button size="small" @click="orderDetailVisible = false">关闭</el-button>
+        </div>
       </template>
     </el-dialog>
 
+    <!-- 取车对话框 -->
+    <el-dialog v-model="pickupDialogVisible" title="取车确认" width="90%" :style="{ maxWidth: '400px' }">
+      <el-form :model="pickupForm" label-width="100px">
+        <el-form-item label="取车里程">
+          <el-input-number v-model="pickupForm.pickup_mileage" :min="0" placeholder="公里数（选填）" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="取车照片">
+          <div class="single-upload">
+            <div v-if="pickupForm.pickup_image" class="image-preview">
+              <img :src="getImageUrl(pickupForm.pickup_image)" class="upload-preview" />
+              <div class="image-remove" @click="pickupForm.pickup_image = ''">×</div>
+            </div>
+            <div v-else class="upload-btn" @click="triggerPickupUpload">
+              <el-icon><Plus /></el-icon>
+              <span>上传照片</span>
+            </div>
+            <input ref="pickupImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handlePickupImageUpload" />
+          </div>
+        </el-form-item>
+        <el-form-item label="实际取车时间">
+          <input
+            type="datetime-local"
+            :value="formatDateTimeLocal(pickupForm.actual_pickup_date)"
+            class="native-datetime-input"
+            @change="onPickupDateTimeChange"
+          />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="pickupForm.remarks" type="textarea" :rows="2" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="pickupDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handlePickup" :loading="submitting">确定取车</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 还车对话框 -->
+    <el-dialog v-model="completeDialogVisible" title="完成订单" width="90%" :style="{ maxWidth: '400px' }">
+      <el-form :model="completeForm" label-width="100px">
+        <el-form-item label="还车里程">
+          <el-input-number v-model="completeForm.return_mileage" :min="0" placeholder="公里数（选填）" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="还车照片">
+          <div class="single-upload">
+            <div v-if="completeForm.return_image" class="image-preview">
+              <img :src="getImageUrl(completeForm.return_image)" class="upload-preview" />
+              <div class="image-remove" @click="completeForm.return_image = ''">×</div>
+            </div>
+            <div v-else class="upload-btn" @click="triggerReturnUpload">
+              <el-icon><Plus /></el-icon>
+              <span>上传照片</span>
+            </div>
+            <input ref="returnImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleReturnImageUpload" />
+          </div>
+        </el-form-item>
+        <el-form-item label="实际还车时间">
+          <input
+            type="datetime-local"
+            :value="formatDateTimeLocal(completeForm.actual_end_date)"
+            class="native-datetime-input"
+            @change="onCompleteDateTimeChange"
+          />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="completeForm.remarks" type="textarea" :rows="2" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="completeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleComplete" :loading="submitting">确定完成</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 自定义跟随鼠标的 tooltip -->
+    <div v-if="tooltipVisible" class="custom-tooltip" :style="{ left: tooltipPosition.left + 'px', top: tooltipPosition.top + 'px' }">
+      <div class="custom-tooltip-content">{{ tooltipContent }}</div>
+    </div>
+
+    <!-- 车辆详情对话框 -->
+    <VehicleDetailDialog v-model:visible="vehicleDialogVisible" :vehicle="vehicleData" @edit="goToVehicleDetail" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { dashboardApi, scheduleApi } from '../api'
+import { dashboardApi, scheduleApi, orderApi, uploadApi } from '../api'
 import dayjs from 'dayjs'
+import { ElMessage } from 'element-plus'
+import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
 
 const router = useRouter()
 
@@ -384,6 +523,120 @@ const stats = ref<any>({
   expiringOrders: []
 })
 
+// 自定义 Tooltip 状态
+const tooltipVisible = ref(false)
+const tooltipContent = ref('')
+const tooltipPosition = ref({ left: 0, top: 0 })
+const isTouchDevice = ref(false)
+
+// 车辆详情对话框状态
+const vehicleDialogVisible = ref(false)
+const vehicleData = ref<any>({})
+
+// 显示 tooltip（仅桌面端）
+function showTooltip(event: MouseEvent) {
+  // 触摸设备不显示 tooltip
+  if (isTouchDevice.value) return
+  
+  const target = event.currentTarget as HTMLElement
+  const content = target.getAttribute('data-tooltip')
+  if (content) {
+    tooltipContent.value = content
+    tooltipPosition.value = {
+      left: event.clientX + 10,
+      top: event.clientY + 10
+    }
+    tooltipVisible.value = true
+  }
+}
+
+// 显示车辆 tooltip（仅桌面端）
+function showVehicleTooltip(event: MouseEvent) {
+  // 触摸设备不显示 tooltip
+  if (isTouchDevice.value) return
+  
+  const target = event.currentTarget as HTMLElement
+  const content = target.getAttribute('data-tooltip')
+  if (content) {
+    tooltipContent.value = content
+    tooltipPosition.value = {
+      left: event.clientX + 10,
+      top: event.clientY + 10
+    }
+    tooltipVisible.value = true
+  }
+}
+
+// 移动 tooltip
+function moveTooltip(event: MouseEvent) {
+  if (isTouchDevice.value) return
+  tooltipPosition.value = {
+    left: event.clientX + 10,
+    top: event.clientY + 10
+  }
+}
+
+// 隐藏 tooltip
+function hideTooltip() {
+  if (isTouchDevice.value) return
+  tooltipVisible.value = false
+}
+
+// 获取车辆信息 tooltip
+function getVehicleTooltip(orders: any[]): string {
+  if (!orders || !orders.length) return '暂无信息'
+  const firstOrder = orders[0]
+  const lines = [
+    `车牌：${firstOrder.plate_number || '-'}`,
+    `车型：${firstOrder.brand || ''} ${firstOrder.model || ''}`.trim(),
+    `能源类型：${firstOrder.is_new_energy ? '新能源' : '燃油车'}`,
+    `当前订单数：${orders.length}`
+  ]
+  return lines.filter(line => line).join('\n')
+}
+
+// 显示车辆详情
+function showVehicleDetail(plateNumber: string) {
+  // 从甘特图数据中查找该车辆的所有订单
+  const orders = ganttData.value[plateNumber]
+  if (!orders || !orders.length) {
+    ElMessage.warning('未找到车辆信息')
+    return
+  }
+  
+  // 使用第一个订单中的车辆数据（所有订单共享同一辆车）
+  const order = orders[0]
+  vehicleData.value = {
+    id: order.vehicle_id || '',
+    plate_number: order.plate_number,
+    brand: order.brand,
+    model: order.model,
+    color: order.color || '-',
+    year: order.year || '-',
+    seats: order.seats || '-',
+    mileage: order.mileage || 0,
+    daily_rate: order.daily_rate || 0,
+    deposit: order.deposit || 0,
+    vin: order.vin || '-',
+    engine_number: order.engine_number || '-',
+    is_new_energy: order.is_new_energy,
+    status: order.vehicle_status || 'available',
+    license_image: order.license_image || '',
+    registration_image: order.registration_image || '',
+    remarks: order.remarks || '-'
+  }
+  
+  vehicleDialogVisible.value = true
+}
+
+// 跳转到车辆详情页
+function goToVehicleDetail() {
+  if (vehicleData.value.id) {
+    router.push(`/vehicles?tab=vehicles&id=${vehicleData.value.id}`)
+    vehicleDialogVisible.value = false
+  }
+}
+
 const schedules = ref<any[]>([])
 const scheduleDialogVisible = ref(false)
 const shareLoading = ref(false)
@@ -391,24 +644,51 @@ const shareLoading = ref(false)
 // 甘特图相关数据
 const ganttData = ref<Record<string, any[]>>({})
 const ganttDialogVisible = ref(false)
-const orderDetailVisible = ref(false)
+const viewMode = ref('60') // 默认 60 天
 const selectedOrder = ref<any>(null)
+const orderDetailVisible = ref(false)
 
-// 日期范围：过去30天到未来30天
-const GANTT_DAYS = 61 // 共61天
-const GANTT_PAST_DAYS = 30 // 过去30天
+// 取车/还车对话框
+const pickupDialogVisible = ref(false)
+const completeDialogVisible = ref(false)
+const submitting = ref(false)
+
+const pickupForm = ref({
+  pickup_mileage: 0,
+  pickup_image: '',
+  actual_pickup_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+  remarks: ''
+})
+
+const completeForm = ref({
+  return_mileage: 0,
+  return_image: '',
+  actual_end_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+  remarks: ''
+})
+
+const pickupImageInput = ref<HTMLInputElement | null>(null)
+const returnImageInput = ref<HTMLInputElement | null>(null)
+const ganttContainer = ref<HTMLElement | null>(null)
+
+// 日期范围配置
+const VIEW_MODES = {
+  '30': { past: 15, future: 15 },
+  '60': { past: 30, future: 30 },
+  '90': { past: 45, future: 45 }
+}
 
 // 生成甘特图日期列
-const ganttDateColumns = computed(() => {
+function generateDateColumns(mode: { past: number; future: number }) {
   const columns: { dateStr: string; weekStr: string; isToday: boolean; isWeekend: boolean; date: Date }[] = []
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  
-  for (let i = -GANTT_PAST_DAYS; i <= 30; i++) {
+
+  for (let i = -mode.past; i <= mode.future; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() + i)
     const dayOfWeek = date.getDay()
-    
+
     columns.push({
       dateStr: `${date.getMonth() + 1}/${date.getDate()}`,
       weekStr: ['日', '一', '二', '三', '四', '五', '六'][dayOfWeek],
@@ -417,145 +697,14 @@ const ganttDateColumns = computed(() => {
       date: date
     })
   }
-  
+
   return columns
+}
+
+const ganttDateColumns = computed(() => {
+  const mode = VIEW_MODES[viewMode.value as keyof typeof VIEW_MODES]
+  return generateDateColumns(mode)
 })
-
-// 平台对应的样式类
-function getPlatformClass(platform: string): string {
-  const platformMap: Record<string, string> = {
-    '携程': 'platform-xiecheng',
-    '哈啰': 'platform-haluo',
-    '租租车': 'platform-zuzuche',
-    '线下': 'platform-xianxia'
-  }
-  return platformMap[platform] || 'platform-default'
-}
-
-// 计算占用块的样式
-function getOccupationStyle(order: any, rowIndex: number): Record<string, string> {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const startDate = new Date(order.startDateTime)
-  const endDate = new Date(order.endDateTime)
-
-  // 计算开始索引（相对于今天）
-  const startDiff = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  const endDiff = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
-  // 转换为列索引
-  let startIdx = startDiff + GANTT_PAST_DAYS
-  let endIdx = endDiff + GANTT_PAST_DAYS
-
-  // 标记是否超出范围
-  const isStartOutOfRange = startIdx < 0
-  const isEndOutOfRange = endIdx >= GANTT_DAYS
-
-  // 限制在可见范围内
-  if (startIdx < 0) startIdx = 0
-  if (endIdx >= GANTT_DAYS) endIdx = GANTT_DAYS - 1
-
-  if (startIdx > endIdx) {
-    return { display: 'none' }
-  }
-
-  // 计算开始时间和结束时间的小时偏移
-  const startHour = isStartOutOfRange ? 0 : startDate.getHours() + startDate.getMinutes() / 60
-  const endHour = isEndOutOfRange ? 24 : endDate.getHours() + endDate.getMinutes() / 60
-
-  // 单元格宽度（需要根据实际样式计算）
-  const cellWidth = 40 // 每个日期单元格宽度
-  const hourWidth = 1.5 // 每小时的宽度偏移
-  const rowHeight = 40 // 每行高度
-  const headerHeight = 45 // 表头高度
-  const plateWidth = 90 // 车牌列宽度
-
-  // border-collapse 下，边框共享，所以每个单元格实际占用宽度就是设定的宽度
-  const left = plateWidth + startIdx * cellWidth + startHour * hourWidth
-  const top = headerHeight + rowIndex * rowHeight - 4
-  const width = (endIdx - startIdx) * cellWidth + (endHour - startHour) * hourWidth
-
-  // 使用订单来源的颜色作为背景色
-  const backgroundColor = order.platform_color || '#409EFF'
-
-  return {
-    left: `${left}px`,
-    top: `${top}px`,
-    width: `${Math.max(width, 30)}px`,
-    backgroundColor: backgroundColor
-  }
-}
-
-// CSS Grid 方案：计算占用块的样式（使用绝对定位）
-function getOccupationGridStyle(order: any, rowIndex: number): Record<string, string> {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const startDate = new Date(order.startDateTime)
-  const endDate = new Date(order.endDateTime)
-
-  // 计算开始索引（相对于今天）
-  const startDiff = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  const endDiff = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
-  // 转换为列索引（从0开始，车牌列后面）
-  let startIdx = startDiff + GANTT_PAST_DAYS
-  let endIdx = endDiff + GANTT_PAST_DAYS
-
-  // 限制在可见范围内
-  if (startIdx < 0) startIdx = 0
-  if (endIdx >= GANTT_DAYS) endIdx = GANTT_DAYS - 1
-
-  if (startIdx > endIdx) {
-    return { display: 'none' }
-  }
-
-  // 计算时间偏移（小时）
-  const startHour = startDate.getHours() + startDate.getMinutes() / 60
-  const endHour = endDate.getHours() + endDate.getMinutes() / 60
-
-  // 单元格宽度和车牌列宽度
-  const cellWidth = 40
-  const plateWidth = 90
-
-  // 计算 left 位置（相对于行的左侧）
-  const left = plateWidth + startIdx * cellWidth + (startHour / 24) * cellWidth
-  
-  // 计算宽度
-  const right = plateWidth + (endIdx + 1) * cellWidth - ((24 - endHour) / 24) * cellWidth
-  const width = right - left
-
-  // 使用订单来源的颜色作为背景色
-  const backgroundColor = order.platform_color || '#409EFF'
-
-  return {
-    left: `${left}px`,
-    width: `${Math.max(width, 20)}px`,
-    backgroundColor: backgroundColor
-  }
-}
-
-// 格式化占用时间显示
-function formatOccupationTime(order: any): string {
-  const start = dayjs(order.startDateTime).format('MM-DD HH:mm')
-  const end = dayjs(order.endDateTime).format('MM-DD HH:mm')
-  return `${start} 到 ${end}`
-}
-
-// 显示订单详情
-function showOrderDetail(order: any) {
-  selectedOrder.value = order
-  orderDetailVisible.value = true
-}
-
-// 从甘特图跳转到订单
-function goToOrderFromGantt() {
-  if (selectedOrder.value) {
-    router.push(`/orders/${selectedOrder.value.id}`)
-    orderDetailVisible.value = false
-  }
-}
 
 const statusMap: Record<string, { text: string; type: string }> = {
   pending: { text: '待取车', type: 'warning' },
@@ -582,8 +731,22 @@ function formatDate(date: string) {
 }
 
 function formatScheduleTime(date: string) {
-  // 使用完整的日期+时间格式
   return dayjs(date).format('MM-DD HH:mm')
+}
+
+// 获取图片完整 URL
+function getImageUrl(url: string): string {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // 假设后端上传接口返回的是相对路径，需要拼接后端地址
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+  return `${backendUrl}${url.startsWith('/') ? url : '/' + url}`
+}
+
+// 格式化为 datetime-local 输入格式
+function formatDateTimeLocal(dateStr: string): string {
+  if (!dateStr) return dayjs().format('YYYY-MM-DDTHH:mm')
+  return dayjs(dateStr).format('YYYY-MM-DDTHH:mm')
 }
 
 async function loadSchedules() {
@@ -597,6 +760,7 @@ async function loadSchedules() {
   }
 }
 
+// 加载甘特图数据
 async function loadGanttData() {
   try {
     const res: any = await scheduleApi.getGantt()
@@ -608,39 +772,326 @@ async function loadGanttData() {
   }
 }
 
-function goToOrder(orderId: string) {
-  router.push(`/orders/${orderId}`)
+// 计算占用块样式
+function getOccupationStyle(order: any): Record<string, string> {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const startDate = new Date(order.startDateTime)
+  const endDate = new Date(order.endDateTime)
+
+  // 计算开始索引（相对于今天）
+  const startDiff = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  const endDiff = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  // 获取当前视图模式的日期范围
+  const mode = VIEW_MODES[viewMode.value as keyof typeof VIEW_MODES]
+  const totalDays = mode.past + mode.future + 1
+
+  // 转换为列索引
+  let startIdx = startDiff + mode.past
+  let endIdx = endDiff + mode.past
+
+  // 限制在可见范围内
+  if (startIdx < 0) startIdx = 0
+  if (endIdx >= totalDays) endIdx = totalDays - 1
+
+  if (startIdx > endIdx) {
+    return { display: 'none' }
+  }
+
+  // 计算时间偏移（小时）
+  const startHour = startDate.getHours() + startDate.getMinutes() / 60
+  const endHour = endDate.getHours() + endDate.getMinutes() / 60
+
+  // 单元格宽度和车牌列宽度
+  const cellWidth = 40
+  const plateWidth = 90
+
+  // 计算 left 位置（相对于行的左侧）
+  const left = plateWidth + startIdx * cellWidth + (startHour / 24) * cellWidth
+
+  // 计算宽度
+  const right = plateWidth + (endIdx + 1) * cellWidth - ((24 - endHour) / 24) * cellWidth
+  const width = right - left
+
+  // 使用订单来源的颜色作为背景色
+  const backgroundColor = order.platform_color || '#409EFF'
+
+  return {
+    left: `${left}px`,
+    width: `${Math.max(width, 40)}px`,
+    backgroundColor: backgroundColor
+  }
+}
+
+// 获取占用文字
+function getOccupationText(order: any): string {
+  const start = dayjs(order.startDateTime).format('MM/DD HH:mm')
+  const end = dayjs(order.endDateTime).format('MM/DD HH:mm')
+  return `${start}-${end}`
+}
+
+// 获取悬停提示内容
+function getOccupationTooltip(order: any): string {
+  const lines = [
+    `订单号：${order.order_no || '-'}`,
+    `客户：${order.customer_name || '-'}`,
+    `电话：${order.customer_phone || '-'}`,
+    `取车：${dayjs(order.startDateTime).format('MM-DD HH:mm')}`,
+    `还车：${dayjs(order.endDateTime).format('MM-DD HH:mm')}`,
+    `平台：${order.source_name || '线下'}`,
+    `金额：¥${order.total_amount || 0}`
+  ]
+  return lines.join('\n')
+}
+
+// 显示订单详情
+function showOrderDetail(order: any) {
+  selectedOrder.value = order
+  orderDetailVisible.value = true
+}
+
+// 从甘特图跳转到订单
+function goToOrderFromGantt() {
+  if (selectedOrder.value) {
+    router.push(`/orders/${selectedOrder.value.id}`)
+    orderDetailVisible.value = false
+  }
+}
+
+// 显示调度订单详情
+async function showScheduleOrderDetail(orderId: string) {
+  try {
+    const res: any = await orderApi.getOne(orderId)
+    if (res.success && res.data) {
+      const order = res.data
+      // 将订单数据转换为弹窗需要的格式
+      selectedOrder.value = {
+        id: order.id,
+        order_no: order.order_no,
+        startDateTime: order.start_date,
+        endDateTime: order.end_date,
+        status: order.status,
+        plate_number: order.plate_number,
+        brand: order.brand,
+        model: order.model,
+        platform: order.source_name || '线下',
+        platform_color: order.source_color,
+        source_name: order.source_name,
+        source_color: order.source_color,
+        name: order.customer_name,
+        phone: order.customer_phone,
+        pickLocation: order.pickup_location,
+        returnLocation: order.return_location,
+        rmb: order.total_amount,
+        is_new_energy: order.is_new_energy
+      }
+      orderDetailVisible.value = true
+    }
+  } catch (error) {
+    console.error('获取订单详情失败', error)
+  }
+}
+
+// 编辑订单
+function editOrder() {
+  if (selectedOrder.value) {
+    // 跳转到订单详情页，并传递 edit 参数
+    router.push(`/orders/${selectedOrder.value.id}?edit=1`)
+    orderDetailVisible.value = false
+  }
+}
+
+// 显示取车对话框
+function showPickupDialog() {
+  pickupForm.value = {
+    pickup_mileage: 0,
+    pickup_image: '',
+    actual_pickup_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+    remarks: ''
+  }
+  pickupDialogVisible.value = true
+}
+
+// 显示还车对话框
+function showCompleteDialog() {
+  completeForm.value = {
+    return_mileage: 0,
+    return_image: '',
+    actual_end_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+    remarks: ''
+  }
+  completeDialogVisible.value = true
+}
+
+// 触发取车照片上传
+function triggerPickupUpload() {
+  pickupImageInput.value?.click()
+}
+
+// 触发还车照片上传
+function triggerReturnUpload() {
+  returnImageInput.value?.click()
+}
+
+// 处理取车照片上传
+async function handlePickupImageUpload(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  
+  try {
+    const res: any = await uploadApi.uploadVehicle(file)
+    if (res.success && res.data) {
+      pickupForm.value.pickup_image = res.data.url
+    }
+  } catch (error) {
+    console.error('上传失败', error)
+    ElMessage.error('上传失败，请重试')
+  }
+}
+
+// 处理还车照片上传
+async function handleReturnImageUpload(event: Event) {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  
+  try {
+    const res: any = await uploadApi.uploadVehicle(file)
+    if (res.success && res.data) {
+      completeForm.value.return_image = res.data.url
+    }
+  } catch (error) {
+    console.error('上传失败', error)
+    ElMessage.error('上传失败，请重试')
+  }
+}
+
+// 还车时间变更
+function onCompleteDateTimeChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  completeForm.value.actual_end_date = target.value
+}
+
+// 取车时间变更
+function onPickupDateTimeChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  pickupForm.value.actual_pickup_date = target.value
+}
+
+// 处理取车
+async function handlePickup() {
+  if (!selectedOrder.value) return
+  
+  try {
+    submitting.value = true
+    const data: any = {}
+    if (pickupForm.value.pickup_mileage > 0) {
+      data.pickup_mileage = pickupForm.value.pickup_mileage
+    }
+    if (pickupForm.value.pickup_image) {
+      data.pickup_image = pickupForm.value.pickup_image
+    }
+    if (pickupForm.value.actual_pickup_date) {
+      data.actual_pickup_date = pickupForm.value.actual_pickup_date.replace('T', ' ')
+    }
+    if (pickupForm.value.remarks) {
+      data.remarks = pickupForm.value.remarks
+    }
+    
+    const res: any = await orderApi.updateStatus(selectedOrder.value.id, { 
+      status: 'active',
+      ...data
+    })
+    
+    if (res.success) {
+      ElMessage.success('取车成功')
+      pickupDialogVisible.value = false
+      orderDetailVisible.value = false
+      // 刷新数据
+      loadSchedules()
+      loadGanttData()
+    }
+  } catch (error) {
+    console.error('取车失败', error)
+    ElMessage.error('取车失败，请重试')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 处理还车
+async function handleComplete() {
+  if (!selectedOrder.value) return
+  
+  try {
+    submitting.value = true
+    const data: any = {}
+    if (completeForm.value.return_mileage > 0) {
+      data.return_mileage = completeForm.value.return_mileage
+    }
+    if (completeForm.value.return_image) {
+      data.return_image = completeForm.value.return_image
+    }
+    if (completeForm.value.actual_end_date) {
+      data.actual_end_date = completeForm.value.actual_end_date.replace('T', ' ')
+    }
+    if (completeForm.value.remarks) {
+      data.remarks = completeForm.value.remarks
+    }
+    
+    const res: any = await orderApi.updateStatus(selectedOrder.value.id, { 
+      status: 'completed',
+      ...data
+    })
+    
+    if (res.success) {
+      ElMessage.success('还车成功')
+      completeDialogVisible.value = false
+      orderDetailVisible.value = false
+      // 刷新数据
+      loadSchedules()
+      loadGanttData()
+    }
+  } catch (error) {
+    console.error('还车失败', error)
+    ElMessage.error('还车失败，请重试')
+  } finally {
+    submitting.value = false
+  }
 }
 
 async function shareSchedule() {
   try {
     shareLoading.value = true
-    
-    // 动态导入html2canvas
+
+    // 动态导入 html2canvas
     const html2canvas = (await import('html2canvas')).default
-    
+
     // 获取表格元素
     const tableElement = document.querySelector('.schedule-table') as HTMLElement
     if (!tableElement) {
       throw new Error('找不到表格元素')
     }
-    
-    // 创建canvas
+
+    // 创建 canvas
     const canvas = await html2canvas(tableElement, {
       backgroundColor: '#ffffff',
-      scale: 2, // 提高清晰度
+      scale: 2,
       useCORS: true
     })
-    
+
     // 转换为图片
     const imageData = canvas.toDataURL('image/png')
-    
+
     // 创建下载链接
     const link = document.createElement('a')
     link.download = `调度安排_${dayjs().format('YYYY-MM-DD_HH-mm')}.png`
     link.href = imageData
     link.click()
-    
+
   } catch (error) {
     console.error('分享失败:', error)
     if (error instanceof Error && error.message.includes('html2canvas')) {
@@ -662,11 +1113,15 @@ onMounted(async () => {
   } catch (error) {
     console.error('获取统计数据失败', error)
   }
+
   loadSchedules()
-  
-  // 等待甘特图数据加载完成
+
+  // 加载甘特图数据
   await loadGanttData()
-  
+
+  // 检测是否为触摸设备
+  isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
   // 等待 DOM 更新后，将甘特图滚动到当天日期
   await nextTick()
   scrollGanttToToday()
@@ -674,18 +1129,15 @@ onMounted(async () => {
 
 // 滚动甘特图到当天日期
 function scrollGanttToToday() {
-  const containers = document.querySelectorAll('.gantt-container')
-  containers.forEach(container => {
-    const el = container as HTMLElement
-    // 当天日期在索引 GANTT_PAST_DAYS（30），每个日期单元格宽 40px
-    // 车牌列宽 90px
-    // 让当天日期显示在车牌列后第一个
+  // 只滚动主页面的甘特图容器（不包括对话框中的）
+  const container = document.querySelector('.gantt-container:not(.full-view)') as HTMLElement
+  if (container) {
+    const mode = VIEW_MODES[viewMode.value as keyof typeof VIEW_MODES]
     const cellWidth = 40
     const plateWidth = 90
-    const scrollLeft = plateWidth + (GANTT_PAST_DAYS - 2) * cellWidth - 10
-    console.log('滚动甘特图到当天日期:', { scrollLeft, plateWidth, cellWidth, GANTT_PAST_DAYS })
-    el.scrollLeft = Math.max(0, scrollLeft)
-  })
+    const scrollLeft = plateWidth + (mode.past - 2) * cellWidth - 10
+    container.scrollLeft = Math.max(0, scrollLeft)
+  }
 }
 </script>
 
@@ -875,65 +1327,6 @@ function scrollGanttToToday() {
   border: 1px solid #dcdfe6;
 }
 
-/* 移动端列宽限制 */
-@media (max-width: 767px) {
-  .schedule-table th:nth-child(1),
-  .schedule-table td:nth-child(1) {
-    min-width: 80px;
-    max-width: 80px;
-  }
-
-  .schedule-table th:nth-child(2),
-  .schedule-table td:nth-child(2) {
-    min-width: 50px;
-    max-width: 50px;
-  }
-
-  .schedule-table th:nth-child(3),
-  .schedule-table td:nth-child(3) {
-    min-width: 70px;
-    max-width: 70px;
-  }
-
-  /* 平台列：3个汉字宽，超出滑动显示 */
-  .schedule-table th:nth-child(4),
-  .schedule-table td:nth-child(4) {
-    min-width: 3em;
-    max-width: 3em;
-    overflow-x: auto;
-    white-space: nowrap;
-    text-align: center;
-  }
-
-  .schedule-table td:nth-child(4)::-webkit-scrollbar {
-    height: 3px;
-  }
-
-  .schedule-table td:nth-child(4)::-webkit-scrollbar-thumb {
-    background: #dcdfe6;
-    border-radius: 3px;
-  }
-
-  /* 位置列：5个汉字宽，超出滑动显示 */
-  .schedule-table th:nth-child(5),
-  .schedule-table td:nth-child(5) {
-    min-width: 5em;
-    max-width: 5em;
-    overflow-x: auto;
-    white-space: nowrap;
-    text-align: center;
-  }
-
-  .schedule-table td:nth-child(5)::-webkit-scrollbar {
-    height: 3px;
-  }
-
-  .schedule-table td:nth-child(5)::-webkit-scrollbar-thumb {
-    background: #dcdfe6;
-    border-radius: 3px;
-  }
-}
-
 @media (min-width: 768px) {
   .schedule-table th {
     padding: 10px 12px;
@@ -1034,11 +1427,6 @@ function scrollGanttToToday() {
   border-bottom: 1px solid #eee;
 }
 
-.order-no {
-  font-weight: 500;
-  color: #303133;
-}
-
 .mobile-card-row {
   display: flex;
   justify-content: space-between;
@@ -1064,7 +1452,11 @@ function scrollGanttToToday() {
   font-weight: 500;
 }
 
-/* PC端隐藏表格 */
+.text-muted {
+  color: #909399;
+}
+
+/* PC 端隐藏表格 */
 .hide-mobile {
   display: none;
 }
@@ -1073,7 +1465,7 @@ function scrollGanttToToday() {
   .mobile-cards {
     display: none;
   }
-  
+
   .hide-mobile {
     display: table;
   }
@@ -1113,7 +1505,7 @@ function scrollGanttToToday() {
   text-align: center;
   font-weight: 700;
   border: 1px solid #dcdfe6;
-  height: 40px;
+  height: 50px;  /* 稍微增加表头高度 */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1127,6 +1519,7 @@ function scrollGanttToToday() {
   z-index: 3;
   width: 90px;
   background-color: #FFE4B5;
+  height: 50px;  /* 与表头高度保持一致 */
 }
 
 .gantt-header-date {
@@ -1142,6 +1535,12 @@ function scrollGanttToToday() {
   background-color: #FFF0E5;
 }
 
+/* 今天且是周末时，今天的样式优先 */
+.gantt-header-date.is-today.is-weekend {
+  background-color: #409EFF;
+  color: #fff;
+}
+
 .gantt-header-date .date-text {
   font-weight: 600;
   font-size: 11px;
@@ -1153,6 +1552,11 @@ function scrollGanttToToday() {
 }
 
 .gantt-header-date.is-today .week-text {
+  color: rgba(255,255,255,0.8);
+}
+
+/* 今天且是周末时，week-text 也要白色 */
+.gantt-header-date.is-today.is-weekend .week-text {
   color: rgba(255,255,255,0.8);
 }
 
@@ -1175,6 +1579,15 @@ function scrollGanttToToday() {
   justify-content: center;
   border: 1px solid #dcdfe6;
   flex-shrink: 0;
+}
+
+.gantt-header-plate {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: 90px;
+  background-color: #FFE4B5;
+  height: 50px;  /* 与表头高度保持一致 */
 }
 
 .gantt-cell-plate .plate-number {
@@ -1201,7 +1614,12 @@ function scrollGanttToToday() {
   background-color: #faf5f0;
 }
 
-/* 占用块样式 - Grid版本 */
+/* 今天且是周末时，今天的样式优先 */
+.gantt-cell.is-today.is-weekend {
+  background-color: #ecf5ff;
+}
+
+/* 占用块样式 */
 .gantt-occupation {
   position: absolute;
   height: 32px;
@@ -1210,56 +1628,291 @@ function scrollGanttToToday() {
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   z-index: 1;
   overflow: hidden;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .gantt-occupation:hover {
   transform: scaleY(1.1);
-  z-index: 2;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .occupation-text {
-  font-size: 10px;
+  font-size: 11px;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 4px;
+  padding: 0 6px 0 8px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* 平台颜色样式 */
-.platform-xiecheng {
-  background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+/* 自定义 tooltip 样式 */
+.custom-tooltip {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.8;
+  max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
 }
 
-.platform-haluo {
-  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+.custom-tooltip-content {
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
-.platform-zuzuche {
-  background: linear-gradient(135deg, #fd7e14 0%, #dc6a0b 100%);
+/* 订单详情弹窗样式 - 紧凑版 */
+.order-detail-dialog .el-dialog__body {
+  padding: 12px;
 }
 
-.platform-xianxia {
-  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+.order-detail-dialog .el-dialog__header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.platform-default {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.order-detail-dialog .el-dialog__footer {
+  padding: 10px 16px;
+  border-top: 1px solid #f0f0f0;
 }
 
-/* 订单详情弹窗 */
-.order-detail-content p {
-  margin: 8px 0;
-  font-size: 14px;
+.order-detail-content {
+  padding: 0;
+}
+
+.order-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ebef 100%);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.header-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.order-detail-section {
+  margin-bottom: 12px;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background-color: #fafafa;
+}
+
+.section-title-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 13px;
   color: #303133;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #ebeef5;
 }
 
-.order-detail-content p:first-child {
+.section-title-compact .el-icon {
+  color: #409EFF;
+  font-size: 14px;
+}
+
+.detail-row-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.detail-row-compact:not(:last-child) {
+  border-bottom: 1px dashed #ebeef5;
+}
+
+.highlight-compact {
+  background: linear-gradient(135deg, #fef0f0 0%, #fef7f7 100%);
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin: 0 -4px;
+}
+
+.row-label-compact {
+  color: #909399;
+  font-size: 12px;
+}
+
+.row-value-compact {
+  color: #303133;
+  font-weight: 500;
+  text-align: right;
+  font-size: 13px;
+}
+
+.row-value-compact.amount-compact {
   font-size: 16px;
+  font-weight: 700;
+  color: #f56c6c;
+}
+
+.dialog-footer-compact {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dialog-footer-compact .el-button {
+  min-width: 64px;
+  flex: 1 1 auto;
+  max-width: 90px;
+}
+
+@media (max-width: 480px) {
+  .dialog-footer-compact {
+    gap: 4px;
+  }
+  .dialog-footer-compact .el-button {
+    min-width: 50px;
+    max-width: 70px;
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+}
+
+/* 车牌样式 - 紧凑版 */
+.plate-number-compact {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.plate-number-compact.new-energy {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: #fff;
+}
+
+.plate-number-compact.fuel {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: #fff;
+}
+
+/* 来源标签 */
+.source-tag {
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+/* 上传组件样式 */
+.single-upload {
+  width: 100%;
+}
+
+.upload-btn {
+  width: 100px;
+  height: 100px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.upload-btn:hover {
+  border-color: #409EFF;
+}
+
+.upload-btn .el-icon {
+  font-size: 24px;
+  color: #8c939d;
+  margin-bottom: 4px;
+}
+
+.upload-btn span {
+  font-size: 12px;
+  color: #8c939d;
+}
+
+.image-preview {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.upload-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+/* 原生时间选择器样式 */
+.native-datetime-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.native-datetime-input:focus {
+  border-color: #409EFF;
+}
+
+.native-datetime-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.native-datetime-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
 }
 </style>

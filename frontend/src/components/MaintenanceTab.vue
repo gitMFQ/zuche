@@ -180,7 +180,7 @@
           <div class="mobile-card-row" v-if="item.images && item.images.length">
             <span class="label">图片</span>
             <div class="images-preview-mini">
-              <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images, idx)" />
+              <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images, Number(idx))" />
               <span v-if="item.images.length > 3" class="more">+{{ item.images.length - 3 }}</span>
             </div>
           </div>
@@ -592,9 +592,9 @@ function removeImage(index: number) {
   form.images.splice(index, 1)
 }
 
-function previewImages(images: string[], index = 0) {
+function previewImages(images: string[], index: number = 0) {
   previewImagesList.value = images
-  previewIndex.value = index
+  previewIndex.value = Number(index)
   imagePreviewVisible.value = true
 }
 

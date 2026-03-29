@@ -3,14 +3,13 @@ import { query } from '../utils/helpers.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 // 获取最近调度（从订单自动生成）
-// 不按订单状态过滤，同一订单的取和还都显示，按当前时间往下排
 export function getRecentSchedules(req: AuthRequest, res: Response): void {
   try {
     const schedules: any[] = [];
 
-    // 查询待取车订单（送车）- 只显示当前时间未到取车时间的
+    // 查询待取车订单（送车）
     const pickupOrders = query(`
-      SELECT 
+      SELECT
         o.id,
         o.start_date as schedule_time,
         '送' as type,
@@ -27,9 +26,9 @@ export function getRecentSchedules(req: AuthRequest, res: Response): void {
       ORDER BY o.start_date ASC
     `);
 
-    // 查询还车订单（收车）- 显示当前时间未到还车时间的
+    // 查询还车订单（收车）
     const returnOrders = query(`
-      SELECT 
+      SELECT
         o.id,
         o.end_date as schedule_time,
         '收' as type,
@@ -47,8 +46,6 @@ export function getRecentSchedules(req: AuthRequest, res: Response): void {
     `);
 
     schedules.push(...pickupOrders, ...returnOrders);
-    
-    // 按时间排序
     schedules.sort((a, b) => new Date(a.schedule_time).getTime() - new Date(b.schedule_time).getTime());
 
     res.json({ success: true, data: schedules });
@@ -59,15 +56,13 @@ export function getRecentSchedules(req: AuthRequest, res: Response): void {
 }
 
 // 获取甘特图数据（按车辆分组的订单占用信息）
-// 返回过去30天到未来30天的订单数据，按车牌号分组
 export function getGanttData(req: AuthRequest, res: Response): void {
   try {
-    // 计算日期范围：过去30天到未来30天
     const now = new Date();
     const startDate = new Date(now);
     startDate.setDate(startDate.getDate() - 30);
     startDate.setHours(0, 0, 0, 0);
-    
+
     const endDate = new Date(now);
     endDate.setDate(endDate.getDate() + 30);
     endDate.setHours(23, 59, 59, 999);
@@ -75,9 +70,8 @@ export function getGanttData(req: AuthRequest, res: Response): void {
     const startDateStr = startDate.toISOString().replace('T', ' ').slice(0, 19);
     const endDateStr = endDate.toISOString().replace('T', ' ').slice(0, 19);
 
-    // 查询订单数据（包含车辆信息、客户信息、平台信息）
     const orders = query(`
-      SELECT 
+      SELECT
         o.id,
         o.order_no,
         o.start_date,
@@ -86,9 +80,23 @@ export function getGanttData(req: AuthRequest, res: Response): void {
         o.total_amount,
         o.pickup_location,
         o.return_location,
+        o.vehicle_id,
         v.plate_number,
-        v.brand as model,
+        v.brand,
+        v.model,
+        v.color,
+        v.year,
+        v.seats,
+        v.mileage,
+        v.daily_rate,
+        v.deposit,
+        v.vin,
+        v.engine_number,
         v.is_new_energy,
+        v.status as vehicle_status,
+        v.license_image,
+        v.registration_image,
+        v.remarks,
         c.name as customer_name,
         c.phone as customer_phone,
         s.name as platform,
@@ -106,32 +114,47 @@ export function getGanttData(req: AuthRequest, res: Response): void {
       ORDER BY v.plate_number ASC, o.start_date ASC
     `, [startDateStr, endDateStr, startDateStr, endDateStr, startDateStr, endDateStr]);
 
-    // 按车牌号分组
     const ganttData: Record<string, any[]> = {};
-    
+
     orders.forEach((order: any) => {
       const plateNumber = order.plate_number || '未知车辆';
-      
+
       if (!ganttData[plateNumber]) {
         ganttData[plateNumber] = [];
       }
-      
+
       ganttData[plateNumber].push({
         id: order.id,
         order_no: order.order_no,
         startDateTime: order.start_date,
         endDateTime: order.end_date,
         status: order.status,
+        vehicle_id: order.vehicle_id,
+        plate_number: order.plate_number,
+        brand: order.brand,
         model: order.model,
-        num: order.plate_number,
+        color: order.color,
+        year: order.year,
+        seats: order.seats,
+        mileage: order.mileage,
+        daily_rate: order.daily_rate,
+        deposit: order.deposit,
+        vin: order.vin,
+        engine_number: order.engine_number,
+        is_new_energy: order.is_new_energy,
+        vehicle_status: order.vehicle_status,
+        license_image: order.license_image,
+        registration_image: order.registration_image,
+        remarks: order.remarks,
         platform: order.platform || '线下',
         platform_color: order.platform_color,
+        source_name: order.platform,
+        source_color: order.platform_color,
         name: order.customer_name,
         phone: order.customer_phone,
         pickLocation: order.pickup_location,
         returnLocation: order.return_location,
-        rmb: order.total_amount,
-        毛利: order.total_amount // 简化处理，实际可能需要计算
+        rmb: order.total_amount
       });
     });
 

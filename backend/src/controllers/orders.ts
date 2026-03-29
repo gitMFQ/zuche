@@ -14,10 +14,25 @@ const STATUS_MAP: Record<string, string> = {
 // 获取订单列表
 export function getOrders(req: AuthRequest, res: Response): void {
   try {
-    const { page = 1, pageSize = 10, keyword = '', status = '', customer_id = '', vehicle_id = '' } = req.query;
-    
+    const { 
+      page = 1, 
+      pageSize = 10, 
+      keyword = '', 
+      status = '', 
+      customer_id = '', 
+      vehicle_id = '',
+      start_date_from = '',
+      start_date_to = '',
+      end_date_from = '',
+      end_date_to = '',
+      source_id = '',
+      vehicle_model = '',
+      plate_number = '',
+      order_by = ''
+    } = req.query;
+
     let sql = `
-      SELECT o.*, 
+      SELECT o.*,
         c.name as customer_name, c.phone as customer_phone,
         v.plate_number, v.brand, v.model, v.is_new_energy,
         u.name as operator_name,
@@ -52,23 +67,78 @@ export function getOrders(req: AuthRequest, res: Response): void {
       params.push(vehicle_id);
     }
 
-    // 根据状态使用不同的排序
-    if (status === 'pending') {
-      // 待取车：按取车时间升序（近的在前）
-      sql += ' ORDER BY o.start_date ASC';
-    } else if (status === 'active') {
-      // 待还车：按还车时间升序（近的在前）
-      sql += ' ORDER BY o.end_date ASC';
-    } else if (status === 'completed') {
-      // 已完成：按还车完成时间降序（最近完成的在前）
-      sql += ' ORDER BY o.actual_end_date DESC, o.updated_at DESC';
+    // 取车时间范围筛选
+    if (start_date_from) {
+      sql += ' AND o.start_date >= ?';
+      params.push(`${start_date_from} 00:00:00`);
+    }
+    if (start_date_to) {
+      sql += ' AND o.start_date <= ?';
+      params.push(`${start_date_to} 23:59:59`);
+    }
+
+    // 还车时间范围筛选
+    if (end_date_from) {
+      sql += ' AND o.end_date >= ?';
+      params.push(`${end_date_from} 00:00:00`);
+    }
+    if (end_date_to) {
+      sql += ' AND o.end_date <= ?';
+      params.push(`${end_date_to} 23:59:59`);
+    }
+
+    // 订单来源筛选
+    if (source_id) {
+      sql += ' AND o.source_id = ?';
+      params.push(source_id);
+    }
+
+    // 车型筛选
+    if (vehicle_model) {
+      sql += ' AND (v.brand LIKE ? OR v.model LIKE ?)';
+      const likeModel = `%${vehicle_model}%`;
+      params.push(likeModel, likeModel);
+    }
+
+    // 车牌号筛选
+    if (plate_number) {
+      sql += ' AND v.plate_number LIKE ?';
+      params.push(`%${plate_number}%`);
+    }
+
+    // 排序处理
+    if (order_by) {
+      switch (order_by) {
+        case 'start_date_asc':
+          sql += ' ORDER BY o.start_date ASC';
+          break;
+        case 'start_date_desc':
+          sql += ' ORDER BY o.start_date DESC';
+          break;
+        case 'end_date_asc':
+          sql += ' ORDER BY o.end_date ASC';
+          break;
+        case 'end_date_desc':
+          sql += ' ORDER BY o.end_date DESC';
+          break;
+        default:
+          sql += ' ORDER BY o.created_at DESC';
+      }
     } else {
-      // 其他情况：按创建时间降序
-      sql += ' ORDER BY o.created_at DESC';
+      // 默认按状态排序
+      if (status === 'pending') {
+        sql += ' ORDER BY o.start_date ASC';
+      } else if (status === 'active') {
+        sql += ' ORDER BY o.end_date ASC';
+      } else if (status === 'completed') {
+        sql += ' ORDER BY o.actual_end_date DESC, o.updated_at DESC';
+      } else {
+        sql += ' ORDER BY o.created_at DESC';
+      }
     }
 
     const result = queryWithPagination(sql, params, Number(page), Number(pageSize));
-    
+
     // 添加状态文本
     result.data = result.data.map((o: any) => ({
       ...o,
