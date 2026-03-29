@@ -59,7 +59,7 @@
         class="search-content" 
         :class="{ 'is-expanded': searchExpanded }"
       >
-        <el-form :inline="true" :model="searchForm" size="default" class="search-form">
+        <el-form :model="searchForm" size="default" class="search-form">
             <el-form-item label="取车时间" class="date-form-item">
               <!-- PC端使用框架组件 -->
               <el-date-picker
@@ -117,18 +117,22 @@
               </div>
             </el-form-item>
             <el-form-item label="订单来源">
-              <el-select v-model="searchForm.source_id" placeholder="全部来源" clearable>
+              <el-select v-model="searchForm.source_id" placeholder="全部来源" clearable style="width: 100px">
                 <el-option v-for="item in orderSources" :key="item.id" :label="item.name" :value="item.id" />
               </el-select>
             </el-form-item>
             <el-form-item label="车牌号">
-              <el-input v-model="searchForm.plate_number" placeholder="车牌号" clearable />
+              <el-select v-model="searchForm.plate_number" placeholder="全部车牌" clearable filterable style="width: 140px">
+                <el-option v-for="item in plateNumberOptions" :key="item.value" :label="item.value" :value="item.value" />
+              </el-select>
             </el-form-item>
             <el-form-item label="车型">
-              <el-input v-model="searchForm.vehicle_model" placeholder="车型" clearable />
+              <el-select v-model="searchForm.vehicle_model" placeholder="全部车型" clearable filterable style="width: 160px">
+                <el-option v-for="item in vehicleModelOptions" :key="item.value" :label="item.value" :value="item.value" />
+              </el-select>
             </el-form-item>
             <el-form-item label="排序">
-              <el-select v-model="searchForm.order_by" placeholder="默认排序" clearable>
+              <el-select v-model="searchForm.order_by" placeholder="默认排序" clearable style="width: 100px">
                 <el-option label="取车时间↑" value="start_date_asc" />
                 <el-option label="取车时间↓" value="start_date_desc" />
                 <el-option label="还车时间↑" value="end_date_asc" />
@@ -136,7 +140,7 @@
               </el-select>
             </el-form-item>
             <el-form-item label="关键词">
-              <el-input v-model="searchForm.keyword" placeholder="订单号/客户/电话" clearable @keyup.enter="loadData" />
+              <el-input v-model="searchForm.keyword" placeholder="订单号/客户/电话" clearable @keyup.enter="loadData" style="width: 140px" />
             </el-form-item>
             <el-form-item class="form-actions">
               <el-button type="primary" @click="loadData">
@@ -782,6 +786,7 @@ const paymentDialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
 const vehicles = ref<any[]>([])
+const allVehicles = ref<any[]>([])
 const orderSources = ref<any[]>([])
 const regularCustomers = ref<any[]>([])
 const selectedRegularCustomer = ref('')
@@ -833,6 +838,25 @@ const searchForm = reactive({
   order_by: ''
 })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+
+// 下拉选项
+const plateNumberOptions = computed(() => {
+  return allVehicles.value.map(v => ({
+    label: v.plate_number,
+    value: v.plate_number
+  }))
+})
+
+const vehicleModelOptions = computed(() => {
+  const models = new Map<string, string>()
+  allVehicles.value.forEach(v => {
+    const model = `${v.brand} ${v.model}`.trim()
+    if (model) {
+      models.set(model, model)
+    }
+  })
+  return Array.from(models.keys()).map(m => ({ label: m, value: m }))
+})
 onMounted(() => {
   window.addEventListener('resize', handleResize)
 })
@@ -1314,6 +1338,18 @@ async function loadVehicles(startDate?: string, endDate?: string, excludeOrderId
     }
   } catch (error) {
     console.error('加载车辆失败', error)
+  }
+}
+
+// 加载所有车辆（用于筛选下拉框）
+async function loadAllVehicles() {
+  try {
+    const res: any = await vehicleApi.getList({ pageSize: 10000 })
+    if (res.success) {
+      allVehicles.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('加载全部车辆失败', error)
   }
 }
 
@@ -1919,6 +1955,7 @@ onMounted(() => {
   loadData()
   loadTabCounts()
   loadOrderSources()
+  loadAllVehicles()
 })
 </script>
 
@@ -2115,6 +2152,7 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  padding: 16px;
 }
 
 .search-form .el-form-item {
@@ -2137,55 +2175,92 @@ onMounted(() => {
 
 /* 移动端样式 */
 @media (max-width: 767px) {
-  .search-form .el-form-item {
-    width: 100%;
-    margin-bottom: 8px;
+  .search-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 12px;
   }
 
-  .search-form .el-form-item.date-form-item {
-    width: 100%;
-    margin-bottom: 8px;
-  }
-  .search-form .el-form-item:last-child {
-    margin-bottom: 0;
+  .search-form :deep(.el-form-item) {
+    display: block;
   }
 
-  .date-range {
+  .search-form :deep(.el-form-item__label) {
+    float: none;
+    display: block;
+    text-align: left;
+    padding: 0 0 4px;
+    font-size: 13px;
+    color: #606266;
+    line-height: 20px;
+  }
+
+  .search-form :deep(.el-form-item__content) {
+    display: block;
+    margin-left: 0 !important;
+  }
+
+  .search-form .el-form-item__label {
+    width: 100%;
+    text-align: left;
+    padding: 0 0 4px;
+    font-size: 13px;
+    color: #606266;
+  }
+
+  .search-form :deep(.el-form-item__content) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .search-form :deep(.el-form-item__content .el-select),
+  .search-form :deep(.el-form-item__content .el-input) {
+    width: 100% !important;
+  }
+
+  /* 时间筛选单独占一行 */
+  .search-form :deep(.el-form-item.date-form-item) {
+    grid-column: 1 / -1;
+  }
+
+  /* 操作按钮单独占一行 */
+  .search-form :deep(.form-actions) {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+  }
+
+  .search-form :deep(.form-actions .el-button) {
+    flex: 1;
+  }
+
+  .search-form :deep(.date-range) {
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
   }
 
-  .date-range .el-input {
+  .search-form :deep(.date-range .el-input) {
     flex: 1;
     min-width: 0;
   }
 
-  .date-separator {
+  .search-form :deep(.date-separator) {
     color: #909399;
     font-size: 14px;
     flex-shrink: 0;
   }
 
-  .form-actions {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .form-actions .el-button {
-    flex: 1;
-  }
-
-  .mobile-date-range {
+  .search-form :deep(.mobile-date-range) {
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
   }
 
-  .native-date-input {
+  .search-form :deep(.native-date-input) {
     flex: 1;
     min-width: 0;
     height: 32px;
@@ -2196,7 +2271,7 @@ onMounted(() => {
     background: #fff;
   }
 
-  .native-date-input:focus {
+  .search-form :deep(.native-date-input:focus) {
     border-color: var(--primary-color);
     outline: none;
   }
