@@ -16,30 +16,104 @@
       <el-tab-pane label="已取消" name="cancelled" />
     </el-tabs>
 
+    <!-- 时间筛选按钮（仅待取车和待还车显示） -->
+    <div v-if="activeTab === 'pending' || activeTab === 'active'" class="time-filter-bar">
+      <button 
+        class="filter-btn"
+        :class="{ active: timeFilter === 'overdue' }"
+        @click="toggleTimeFilter('overdue')"
+      >
+        已逾期 <span class="filter-count" :class="{ 'has-overdue': timeFilterCounts.overdue > 0 }">({{ timeFilterCounts.overdue }})</span>
+      </button>
+      <button 
+        class="filter-btn"
+        :class="{ active: timeFilter === 'today' }"
+        @click="toggleTimeFilter('today')"
+      >
+        今天 <span class="filter-count">({{ timeFilterCounts.today }})</span>
+      </button>
+      <button 
+        class="filter-btn"
+        :class="{ active: timeFilter === 'tomorrow' }"
+        @click="toggleTimeFilter('tomorrow')"
+      >
+        明天 <span class="filter-count">({{ timeFilterCounts.tomorrow }})</span>
+      </button>
+      <button 
+        class="filter-btn"
+        :class="{ active: timeFilter === 'dayAfter' }"
+        @click="toggleTimeFilter('dayAfter')"
+      >
+        后天 <span class="filter-count">({{ timeFilterCounts.dayAfter }})</span>
+      </button>
+    </div>
+
     <!-- 搜索栏 -->
     <el-card shadow="never" class="search-card">
       <div class="search-header" @click="toggleSearchExpand">
         <span class="search-title"><el-icon><Search /></el-icon> 搜索筛选</span>
         <el-icon class="expand-icon" :class="{ 'expanded': searchExpanded }"><ArrowUp /></el-icon>
       </div>
-      <el-collapse-transition>
-        <div v-show="searchExpanded" class="search-content">
-          <el-form :inline="true" :model="searchForm" size="default" class="search-form">
-            <el-form-item label="关键词">
-              <el-input v-model="searchForm.keyword" placeholder="订单号/客户/电话" clearable @keyup.enter="loadData" />
-            </el-form-item>
-            <el-form-item label="取车时间">
-              <div class="date-range">
-                <el-input v-model="searchForm.start_date_from" type="date" placeholder="开始" />
+      <!-- 使用 CSS 过渡动画替代 el-collapse-transition -->
+      <div 
+        class="search-content" 
+        :class="{ 'is-expanded': searchExpanded }"
+      >
+        <el-form :inline="true" :model="searchForm" size="default" class="search-form">
+            <el-form-item label="取车时间" class="date-form-item">
+              <!-- PC端使用框架组件 -->
+              <el-date-picker
+                v-if="!isMobile"
+                v-model="pickupDateRange"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="开始"
+                end-placeholder="结束"
+                value-format="YYYY-MM-DD"
+                unlink-panels
+                class="date-range-picker"
+              />
+              <!-- 移动端使用原生日期输入 -->
+              <div v-else class="mobile-date-range">
+                <input 
+                  type="date" 
+                  v-model="searchForm.start_date_from" 
+                  class="native-date-input"
+                />
                 <span class="date-separator">-</span>
-                <el-input v-model="searchForm.start_date_to" type="date" placeholder="结束" />
+                <input 
+                  type="date" 
+                  v-model="searchForm.start_date_to" 
+                  class="native-date-input"
+                />
               </div>
             </el-form-item>
-            <el-form-item label="还车时间">
-              <div class="date-range">
-                <el-input v-model="searchForm.end_date_from" type="date" placeholder="开始" />
+            <el-form-item label="还车时间" class="date-form-item">
+              <!-- PC端使用框架组件 -->
+              <el-date-picker
+                v-if="!isMobile"
+                v-model="returnDateRange"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="开始"
+                end-placeholder="结束"
+                value-format="YYYY-MM-DD"
+                unlink-panels
+                class="date-range-picker"
+              />
+              <!-- 移动端使用原生日期输入 -->
+              <div v-else class="mobile-date-range">
+                <input 
+                  type="date" 
+                  v-model="searchForm.end_date_from" 
+                  class="native-date-input"
+                />
                 <span class="date-separator">-</span>
-                <el-input v-model="searchForm.end_date_to" type="date" placeholder="结束" />
+                <input 
+                  type="date" 
+                  v-model="searchForm.end_date_to" 
+                  class="native-date-input"
+                />
               </div>
             </el-form-item>
             <el-form-item label="订单来源">
@@ -61,6 +135,9 @@
                 <el-option label="还车时间↓" value="end_date_desc" />
               </el-select>
             </el-form-item>
+            <el-form-item label="关键词">
+              <el-input v-model="searchForm.keyword" placeholder="订单号/客户/电话" clearable @keyup.enter="loadData" />
+            </el-form-item>
             <el-form-item class="form-actions">
               <el-button type="primary" @click="loadData">
                 <el-icon><Search /></el-icon> 搜索
@@ -71,7 +148,6 @@
             </el-form-item>
           </el-form>
         </div>
-      </el-collapse-transition>
     </el-card>
 
     <!-- 操作栏 -->
@@ -141,40 +217,40 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile" @row-click="handleRowClick">
-        <el-table-column prop="customer_name" label="客户" width="80" />
-        <el-table-column prop="customer_phone" label="电话" width="110" />
-        <el-table-column prop="plate_number" label="车牌" width="130">
+        <el-table-column prop="customer_name" label="客户" width="80" show-overflow-tooltip />
+        <el-table-column prop="customer_phone" label="电话" width="110" show-overflow-tooltip />
+        <el-table-column prop="plate_number" label="车牌" width="130" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="start_date" label="取车" width="150">
+        <el-table-column prop="start_date" label="取车" width="170" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.start_date) }}
             <span v-if="row.pickup_location" class="location-text">({{ row.pickup_location }})</span>
           </template>
         </el-table-column>
-        <el-table-column prop="end_date" label="还车" width="150">
+        <el-table-column prop="end_date" label="还车" width="170" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.end_date) }}
             <span v-if="row.return_location" class="location-text">({{ row.return_location }})</span>
           </template>
         </el-table-column>
-        <el-table-column prop="total_amount" label="总金额" width="90">
+        <el-table-column prop="total_amount" label="总金额" width="90" show-overflow-tooltip>
           <template #default="{ row }">¥{{ row.total_amount }}</template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="status" label="状态" width="80" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="source_name" label="来源" width="90">
+        <el-table-column prop="source_name" label="来源" width="90" show-overflow-tooltip>
           <template #default="{ row }">
             <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="320">
+        <el-table-column label="操作" fixed="right" width="250">
           <template #default="{ row }">
             <template v-if="row.status === 'pending'">
               <el-button type="primary" link size="small" @click.stop="openEditDialog(row)">编辑</el-button>
@@ -683,7 +759,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, ArrowUp, Refresh } from '@element-plus/icons-vue'
@@ -729,6 +805,21 @@ const tabCounts = reactive({
   cancelled: 0
 })
 
+// 时间筛选
+const timeFilter = ref('')
+const timeFilterCounts = reactive({
+  overdue: 0,
+  today: 0,
+  tomorrow: 0,
+  dayAfter: 0
+})
+// 存储当前标签页的所有订单数据（用于前端筛选）
+const currentTabOrders = ref<any[]>([])
+
+const isMobile = ref(window.innerWidth < 768)
+function handleResize() {
+  isMobile.value = window.innerWidth < 768
+}
 const searchExpanded = ref(false)
 const searchForm = reactive({
   keyword: '',
@@ -742,6 +833,43 @@ const searchForm = reactive({
   order_by: ''
 })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
+
+// 日期范围（用于 el-date-picker）
+const pickupDateRange = computed({
+  get: () => searchForm.start_date_from && searchForm.start_date_to 
+    ? [searchForm.start_date_from, searchForm.start_date_to] 
+    : null,
+  set: (val) => {
+    if (val && val.length === 2) {
+      searchForm.start_date_from = val[0]
+      searchForm.start_date_to = val[1]
+    } else {
+      searchForm.start_date_from = ''
+      searchForm.start_date_to = ''
+    }
+  }
+})
+
+const returnDateRange = computed({
+  get: () => searchForm.end_date_from && searchForm.end_date_to 
+    ? [searchForm.end_date_from, searchForm.end_date_to] 
+    : null,
+  set: (val) => {
+    if (val && val.length === 2) {
+      searchForm.end_date_from = val[0]
+      searchForm.end_date_to = val[1]
+    } else {
+      searchForm.end_date_from = ''
+      searchForm.end_date_to = ''
+    }
+  }
+})
 
 const form = reactive({
   customer_name: '',
@@ -991,6 +1119,7 @@ const editEstimatedTotal = computed(() => {
 
 // 标签页切换
 function onTabChange() {
+  timeFilter.value = ''
   pagination.page = 1
   loadData()
   loadOrderSources()
@@ -999,13 +1128,16 @@ function onTabChange() {
 // 加载各状态数量
 async function loadTabCounts() {
   try {
-    const res: any = await orderApi.getList({ pageSize: 1000 })
+    const res: any = await orderApi.getList({ pageSize: 10000 })
     if (res.success) {
       const allOrders = res.data.data || []
       tabCounts.pending = allOrders.filter((o: any) => o.status === 'pending').length
       tabCounts.active = allOrders.filter((o: any) => o.status === 'active').length
       tabCounts.completed = allOrders.filter((o: any) => o.status === 'completed').length
       tabCounts.cancelled = allOrders.filter((o: any) => o.status === 'cancelled').length
+
+      // 更新时间筛选数量
+      updateTimeFilterCounts()
     }
   } catch (error) {
     console.error('加载统计失败', error)
@@ -1034,6 +1166,15 @@ async function loadData() {
     
     const res: any = await orderApi.getList(params)
     if (res.success) {
+      // 如果是待取车或待还车标签，存储所有数据用于前端时间筛选
+      if (activeTab.value === 'pending' || activeTab.value === 'active') {
+        // 获取完整列表（不加分页）
+        const allRes: any = await orderApi.getList({ status: activeTab.value, pageSize: 10000 })
+        if (allRes.success) {
+          currentTabOrders.value = allRes.data.data || []
+          updateTimeFilterCounts()
+        }
+      }
       tableData.value = res.data.data
       pagination.total = res.data.total
     }
@@ -1055,7 +1196,101 @@ function resetSearch() {
   searchForm.vehicle_model = ''
   searchForm.plate_number = ''
   searchForm.order_by = ''
+  timeFilter.value = ''
   loadData()
+}
+
+// 计算时间筛选数量
+function updateTimeFilterCounts() {
+  const today = dayjs().startOf('day')
+  const tomorrow = today.add(1, 'day')
+  const dayAfter = today.add(2, 'day')
+
+  const orders = currentTabOrders.value
+  const dateField = activeTab.value === 'pending' ? 'start_date' : 'end_date'
+
+  let overdue = 0, todayCount = 0, tomorrowCount = 0, dayAfterCount = 0
+
+  orders.forEach((order: any) => {
+    const orderDate = dayjs(order[dateField])
+    const orderDateStart = orderDate.startOf('day')
+
+    // 已逾期：日期已过但订单状态仍为 pending/active
+    if (orderDateStart.isBefore(today)) {
+      overdue++
+    }
+    // 今天
+    if (orderDateStart.isSame(today, 'day')) {
+      todayCount++
+    }
+    // 明天
+    if (orderDateStart.isSame(tomorrow, 'day')) {
+      tomorrowCount++
+    }
+    // 后天
+    if (orderDateStart.isSame(dayAfter, 'day')) {
+      dayAfterCount++
+    }
+  })
+
+  timeFilterCounts.overdue = overdue
+  timeFilterCounts.today = todayCount
+  timeFilterCounts.tomorrow = tomorrowCount
+  timeFilterCounts.dayAfter = dayAfterCount
+}
+
+// 切换时间筛选（点击已选中的按钮取消筛选）
+function toggleTimeFilter(filter: string) {
+  if (timeFilter.value === filter) {
+    // 点击已选中的按钮，取消筛选
+    timeFilter.value = ''
+  } else {
+    timeFilter.value = filter
+  }
+  applyTimeFilter()
+}
+
+// 应用时间筛选
+function applyTimeFilter() {
+  const today = dayjs().startOf('day')
+  const tomorrow = today.add(1, 'day')
+  const dayAfter = today.add(2, 'day')
+  const dateField = activeTab.value === 'pending' ? 'start_date' : 'end_date'
+
+  let filteredData: any[]
+
+  switch (timeFilter.value) {
+    case 'overdue':
+      filteredData = currentTabOrders.value.filter((order: any) => {
+        const orderDate = dayjs(order[dateField]).startOf('day')
+        return orderDate.isBefore(today)
+      })
+      break
+    case 'today':
+      filteredData = currentTabOrders.value.filter((order: any) => {
+        const orderDate = dayjs(order[dateField]).startOf('day')
+        return orderDate.isSame(today, 'day')
+      })
+      break
+    case 'tomorrow':
+      filteredData = currentTabOrders.value.filter((order: any) => {
+        const orderDate = dayjs(order[dateField]).startOf('day')
+        return orderDate.isSame(tomorrow, 'day')
+      })
+      break
+    case 'dayAfter':
+      filteredData = currentTabOrders.value.filter((order: any) => {
+        const orderDate = dayjs(order[dateField]).startOf('day')
+        return orderDate.isSame(dayAfter, 'day')
+      })
+      break
+    default:
+      // 无筛选时显示全部
+      filteredData = [...currentTabOrders.value]
+  }
+
+  tableData.value = filteredData
+  pagination.total = filteredData.length
 }
 
 // 切换搜索栏展开/折叠
@@ -1679,8 +1914,8 @@ onMounted(() => {
     activeTab.value = savedTab
   }
   // 移动端默认折叠搜索栏
-  const isMobile = window.innerWidth < 768
-  searchExpanded.value = !isMobile
+  isMobile.value = window.innerWidth < 768
+  searchExpanded.value = !isMobile.value
   loadData()
   loadTabCounts()
   loadOrderSources()
@@ -1705,10 +1940,134 @@ onMounted(() => {
   transform: scale(0.8);
 }
 
+.time-filter-bar {
+  margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  width: 100%;
+}
+
+.time-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-btn {
+  display: inline-block;
+  flex-shrink: 0;
+  margin-right: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #dcdfe6;
+  background: #fff;
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.filter-btn:last-child {
+  margin-right: 0;
+}
+
+.filter-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.filter-btn:active {
+  opacity: 0.8;
+}
+
+.filter-count {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.filter-btn.active .filter-count {
+  opacity: 1;
+}
+
+.filter-count.has-overdue {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.time-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.time-filter-bar :deep(.el-radio-group) {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  gap: 6px;
+}
+
+.time-filter-bar :deep(.el-radio-button) {
+  display: inline-block !important;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.time-filter-bar :deep(.el-radio-button__inner) {
+  border-radius: 20px;
+  border-left: 1px solid #dcdfe6;
+  box-shadow: none !important;
+  padding: 6px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  min-width: auto;
+  height: auto;
+}
+
+.time-filter-bar :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.time-filter-bar :deep(.el-radio-button:first-child .el-radio-button__inner) {
+  border-radius: 20px;
+}
+
+.time-filter-bar :deep(.el-radio-button:last-child .el-radio-button__inner) {
+  border-radius: 20px;
+}
+
+.time-filter-bar :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background-color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+}
+
+.filter-count {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
 .search-card {
   margin-bottom: 12px;
 }
 
+/* Collapse state for mobile: keep header visible and content hidden, limit height */
+.search-card.collapsed {
+  height: 48px;
+  overflow: hidden;
+  padding: 0;
+}
+.search-card.collapsed > .search-header {
+  height: 48px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .search-header {
   display: flex;
   justify-content: space-between;
@@ -1740,6 +2099,16 @@ onMounted(() => {
 .search-content {
   padding-top: 8px;
   border-top: 1px solid #f0f0f0;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.search-content.is-expanded {
+  max-height: 800px;
+  opacity: 1;
+  padding-top: 8px;
 }
 
 .search-form {
@@ -1752,13 +2121,31 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
+/* PC端筛选框宽度 */
+@media (min-width: 768px) {
+  .search-form .el-form-item:nth-child(3),  /* 订单来源 */
+  .search-form .el-form-item:nth-child(6)   /* 排序 */
+  {
+    min-width: 150px;
+  }
+  
+  .search-form .el-form-item:nth-child(3) .el-select,
+  .search-form .el-form-item:nth-child(6) .el-select {
+    width: 150px;
+  }
+}
+
 /* 移动端样式 */
 @media (max-width: 767px) {
   .search-form .el-form-item {
     width: 100%;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
+  .search-form .el-form-item.date-form-item {
+    width: 100%;
+    margin-bottom: 8px;
+  }
   .search-form .el-form-item:last-child {
     margin-bottom: 0;
   }
@@ -1790,6 +2177,29 @@ onMounted(() => {
   .form-actions .el-button {
     flex: 1;
   }
+
+  .mobile-date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .native-date-input {
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #fff;
+  }
+
+  .native-date-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+  }
 }
 
 /* PC 端样式 */
@@ -1803,27 +2213,26 @@ onMounted(() => {
     border-top: none;
   }
 
+  .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+  }
+
   .search-form .el-form-item {
     margin-bottom: 0;
   }
 
-  .search-form .el-form-item:nth-child(-n+4) {
-    margin-right: 16px;
+  .search-form .el-form-item:not(.form-actions) {
+    flex: 0 0 auto;
   }
 
-  .date-range {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .date-range-picker {
+    width: 200px;
   }
 
-  .date-range .el-input {
-    width: 110px;
-  }
-
-  .date-separator {
-    color: #909399;
-    font-size: 14px;
+  .form-actions {
+    margin-left: auto;
   }
 
   .form-actions .el-button + .el-button {
@@ -1950,10 +2359,16 @@ onMounted(() => {
   
   .table-card {
     display: block;
+    width: 100%;
+  }
+
+  .table-card :deep(.el-card__body) {
+    padding: 0;
   }
   
   .hide-mobile {
     display: table;
+    width: 100%;
   }
   
   :deep(.el-table__row) {
@@ -2145,5 +2560,150 @@ onMounted(() => {
   color: #fff;
   margin-left: 6px;
   vertical-align: middle;
+}
+
+/* 搜索卡片样式 - 优化折叠高度 */
+.search-card {
+  margin-bottom: 12px;
+}
+
+.search-card :deep(.el-card__body) {
+  padding: 0;
+}
+
+/* 折叠状态 */
+.search-card.collapsed :deep(.el-card__body) {
+  padding: 0;
+}
+
+.search-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 40px;
+}
+
+.search-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.search-title .el-icon {
+  font-size: 15px;
+  color: #606266;
+}
+
+.expand-icon {
+  font-size: 14px;
+  color: #909399;
+  transition: transform 0.25s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* 移动端搜索筛选优化 */
+@media (max-width: 767px) {
+  .search-header {
+    padding: 8px 12px;
+    min-height: 36px;
+  }
+
+  .search-title {
+    font-size: 13px;
+  }
+
+  .search-title .el-icon {
+    font-size: 14px;
+  }
+
+  .expand-icon {
+    font-size: 12px;
+  }
+
+  .search-content {
+    padding: 0 12px 0;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+  }
+
+  .search-content.is-expanded {
+    max-height: 600px;
+    opacity: 1;
+    padding: 0 12px 12px;
+  }
+
+  .search-card .search-form :deep(.el-form-item) {
+    margin-bottom: 10px;
+  }
+
+  .search-card .search-form :deep(.el-form-item__label) {
+    font-size: 12px;
+    padding: 0 0 4px;
+    line-height: 1.4;
+  }
+
+  .search-card .search-form :deep(.el-input__wrapper) {
+    padding: 2px 8px;
+    min-height: 30px;
+  }
+
+  .search-card .search-form :deep(.el-input__inner) {
+    font-size: 13px;
+  }
+
+  .search-card .search-form :deep(.el-select) {
+    width: 100%;
+  }
+
+  .search-card .search-form :deep(.el-date-editor) {
+    width: 100% !important;
+  }
+
+  .search-card .date-form-item {
+    margin-right: 0;
+  }
+
+  .search-card .mobile-date-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .search-card .mobile-date-range .native-date-input {
+    flex: 1;
+    height: 30px;
+    padding: 2px 8px;
+    font-size: 13px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+  }
+
+  .search-card .date-separator {
+    color: #909399;
+    font-size: 12px;
+  }
+
+  .search-card .form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .search-card .form-actions .el-button {
+    flex: 1;
+    min-height: 32px;
+    font-size: 13px;
+  }
 }
 </style>
