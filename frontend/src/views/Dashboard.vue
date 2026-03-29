@@ -129,7 +129,7 @@
         <el-card class="section-card schedule-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span><el-icon><Calendar /></el-icon> 调度安排</span>
+              <span><el-icon><Calendar /></el-icon> 待收送</span>
               <div class="header-actions">
                 <el-button type="primary" link @click="scheduleDialogVisible = true">
                   <el-icon><FullScreen /></el-icon> 完整视图
@@ -146,7 +146,7 @@
             <thead>
               <tr>
                 <th>时间</th>
-                <th>送/收</th>
+<th>待</th>
                 <th>车牌</th>
                 <th>平台</th>
                 <th>位置</th>
@@ -249,12 +249,12 @@
     </el-card>
 
     <!-- 调度完整视图对话框 -->
-    <el-dialog v-model="scheduleDialogVisible" title="调度安排 - 完整视图" width="90%" :style="{ maxWidth: '1200px' }">
+    <el-dialog v-model="scheduleDialogVisible" title="待收送 - 完整视图" width="90%" :style="{ maxWidth: '1200px' }">
       <table class="schedule-table full-view-table" v-if="schedules.length">
         <thead>
           <tr>
             <th>时间</th>
-            <th>送/收</th>
+            <th>待</th>
             <th>车牌</th>
             <th>平台</th>
             <th>位置</th>
@@ -1088,7 +1088,7 @@ async function shareSchedule() {
 
     // 创建下载链接
     const link = document.createElement('a')
-    link.download = `调度安排_${dayjs().format('YYYY-MM-DD_HH-mm')}.png`
+    link.download = `待收送_${dayjs().format('YYYY-MM-DD_HH-mm')}.png`
     link.href = imageData
     link.click()
 
