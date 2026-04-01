@@ -141,4 +141,17 @@ async function handleLogin() {
   font-size: 12px;
   margin-top: 16px;
 }
+
+/* 暗色模式 */
+html.dark .login-box {
+  background: var(--bg-color-secondary);
+}
+
+html.dark .login-header h1 {
+  color: var(--text-color);
+}
+
+html.dark .login-tip {
+  color: var(--text-color-secondary);
+}
 </style>

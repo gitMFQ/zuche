@@ -310,7 +310,16 @@
           <el-input :value="`${selectedVehicle?.plate_number} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`" disabled />
         </el-form-item>
         <el-form-item label="时间" prop="violation_date">
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="form.violation_date" 
+            class="native-date-input"
+            style="width: 100%"
+            @change="onViolationDateChange"
+          />
           <el-date-picker 
+            v-else
             v-model="form.violation_date" 
             type="date" 
             placeholder="违章日期" 
@@ -481,6 +490,7 @@ import { getImageUrl } from '../utils/helpers'
 
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const vehicles = ref<any[]>([])
 const selectedVehicle = ref<any>(null)
 const violationRecords = ref<any[]>([])
@@ -835,7 +845,12 @@ async function handleDelete(id: string) {
   }
 }
 
-onMounted(() => loadVehicles())
+onMounted(() => {
+  loadVehicles()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
 </script>
 
 <style scoped>
@@ -1222,5 +1237,57 @@ onMounted(() => loadVehicles())
 .images-preview-mini .more {
   font-size: 12px;
   color: #909399;
+}
+
+/* 暗色模式 */
+html.dark .stat-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .stat-value,
+html.dark .vehicle-info .plate,
+html.dark .mobile-card-header .plate,
+html.dark .mobile-card-header .type,
+html.dark .mobile-card-row .value,
+html.dark .date-main {
+  color: var(--text-color);
+}
+
+html.dark .stat-label,
+html.dark .vehicle-info .brand,
+html.dark .mobile-card-row .label,
+html.dark .empty-tip,
+html.dark .type-sub,
+html.dark .images-preview-mini .more {
+  color: var(--text-color-secondary);
+}
+
+html.dark .vehicle-header {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .violation-count,
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .image-item {
+  border-color: var(--border-color);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .form-tip {
+  color: #67C23A;
 }
 </style>

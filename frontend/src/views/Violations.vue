@@ -143,7 +143,16 @@
     <el-dialog v-model="dialogVisible" :title="editingId ? '编辑违章' : '添加违章'" width="90%" :style="{ maxWidth: '450px' }">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="70px" size="default">
         <el-form-item label="违章时间" prop="violation_date">
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="form.violation_date" 
+            class="native-date-input"
+            style="width: 100%"
+            @change="onViolationDateChange"
+          />
           <el-date-picker 
+            v-else
             v-model="form.violation_date" 
             type="date" 
             placeholder="违章日期" 
@@ -255,6 +264,7 @@ import { violationApi, vehicleApi, orderApi } from '../api'
 
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const handleDialogVisible = ref(false)
@@ -483,7 +493,12 @@ async function handleDelete(row: any) {
   }
 }
 
-onMounted(() => loadData())
+onMounted(() => {
+  loadData()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
 </script>
 
 <style scoped>
@@ -697,5 +712,49 @@ onMounted(() => loadData())
 
 .form-tip .el-icon {
   font-size: 14px;
+}
+
+/* 暗色模式 */
+html.dark .stat-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .stat-value {
+  color: var(--text-color);
+}
+
+html.dark .stat-label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .plate {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-footer,
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .form-tip {
+  color: #67C23A;
+}
+
+html.dark .form-tip.warning {
+  color: #E6A23C;
 }
 </style>

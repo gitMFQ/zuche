@@ -313,4 +313,26 @@ onMounted(() => loadData())
   color: #909399;
   margin-top: 4px;
 }
+
+/* 暗色模式 */
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .form-tip {
+  color: var(--text-color-secondary);
+}
 </style>

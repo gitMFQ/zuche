@@ -15,6 +15,8 @@ export interface UserThemeSettings {
   sidebarStyle: string
   customSidebarColorStart: string
   customSidebarColorEnd: string
+  darkMode: boolean
+  autoDarkMode: boolean
 }
 
 const THEME_STORAGE_KEY = 'user_theme_settings'
@@ -23,7 +25,9 @@ const defaultThemeSettings: UserThemeSettings = {
   themeColor: '#667eea',
   sidebarStyle: 'default',
   customSidebarColorStart: '',
-  customSidebarColorEnd: ''
+  customSidebarColorEnd: '',
+  darkMode: false,
+  autoDarkMode: true
 }
 
 function loadThemeSettings(): UserThemeSettings {
@@ -36,6 +40,13 @@ function loadThemeSettings(): UserThemeSettings {
     // ignore
   }
   return { ...defaultThemeSettings }
+}
+
+function getSystemPrefersDark(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) {
+    return false
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
 export const useUserStore = defineStore('user', () => {
@@ -53,6 +64,8 @@ export const useUserStore = defineStore('user', () => {
     window.dispatchEvent(new CustomEvent('sidebarStyleChange', { detail: newSettings.sidebarStyle }))
     window.dispatchEvent(new CustomEvent('customSidebarColorStartChange', { detail: newSettings.customSidebarColorStart }))
     window.dispatchEvent(new CustomEvent('customSidebarColorEndChange', { detail: newSettings.customSidebarColorEnd }))
+    window.dispatchEvent(new CustomEvent('darkModeChange', { detail: newSettings.darkMode }))
+    window.dispatchEvent(new CustomEvent('autoDarkModeChange', { detail: newSettings.autoDarkMode }))
   }, { deep: true })
 
   function setToken(newToken: string) {
@@ -106,6 +119,30 @@ export const useUserStore = defineStore('user', () => {
     if (settings.customSidebarColorEnd !== undefined) {
       themeSettings.value.customSidebarColorEnd = settings.customSidebarColorEnd
     }
+    if (settings.darkMode !== undefined) {
+      themeSettings.value.darkMode = settings.darkMode
+    }
+    if (settings.autoDarkMode !== undefined) {
+      themeSettings.value.autoDarkMode = settings.autoDarkMode
+    }
+  }
+
+  function setDarkMode(enabled: boolean) {
+    themeSettings.value.autoDarkMode = false
+    themeSettings.value.darkMode = enabled
+  }
+
+  function setAutoDarkMode(enabled: boolean) {
+    themeSettings.value.autoDarkMode = enabled
+    if (enabled) {
+      themeSettings.value.darkMode = getSystemPrefersDark()
+    }
+  }
+
+  function applySystemDarkMode() {
+    if (themeSettings.value.autoDarkMode) {
+      themeSettings.value.darkMode = getSystemPrefersDark()
+    }
   }
 
   return {
@@ -120,6 +157,10 @@ export const useUserStore = defineStore('user', () => {
     setThemeColor,
     setSidebarStyle,
     setCustomSidebarColors,
-    updateThemeSettings
+    updateThemeSettings,
+    setDarkMode,
+    setAutoDarkMode,
+    applySystemDarkMode,
+    getSystemPrefersDark
   }
 })

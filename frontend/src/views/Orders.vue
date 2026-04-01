@@ -418,7 +418,15 @@
           <el-input-number v-model="form.deposit" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item label="免押到期" v-if="form.deposit_waived">
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="form.deposit_waived_expiry" 
+            class="native-date-input"
+            style="width: 100%"
+          />
           <el-date-picker 
+            v-else
             v-model="form.deposit_waived_expiry" 
             type="date" 
             placeholder="免押到期日期" 
@@ -564,7 +572,15 @@
           <el-input-number v-model="editForm.deposit" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item label="免押到期" v-if="editForm.deposit_waived">
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="editForm.deposit_waived_expiry" 
+            class="native-date-input"
+            style="width: 100%"
+          />
           <el-date-picker 
+            v-else
             v-model="editForm.deposit_waived_expiry" 
             type="date" 
             placeholder="免押到期日期" 
@@ -2780,5 +2796,59 @@ onMounted(() => {
     min-height: 32px;
     font-size: 13px;
   }
+}
+
+/* 暗色模式样式 */
+html.dark .filter-btn {
+  border-color: var(--border-color);
+  background: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+}
+
+html.dark .filter-btn.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+html.dark .filter-count.has-overdue {
+  color: #f56c6c;
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card:active {
+  background: var(--hover-bg-color);
+}
+
+html.dark .order-no {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-footer {
+  border-top-color: var(--border-color);
+}
+
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .amount {
+  color: var(--text-color);
+}
+
+html.dark .text-muted {
+  color: var(--text-color-secondary);
 }
 </style>

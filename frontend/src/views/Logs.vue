@@ -20,6 +20,7 @@
         </el-form-item>
         <el-form-item label="日期范围">
           <el-date-picker
+            v-if="!isMobile"
             v-model="dateRange"
             type="daterange"
             range-separator="至"
@@ -28,6 +29,19 @@
             value-format="YYYY-MM-DD"
             style="width: 240px"
           />
+          <div v-else class="mobile-date-range">
+            <input 
+              type="date" 
+              v-model="filterForm.date_from" 
+              class="native-date-input"
+            />
+            <span class="date-separator">-</span>
+            <input 
+              type="date" 
+              v-model="filterForm.date_to" 
+              class="native-date-input"
+            />
+          </div>
         </el-form-item>
         <el-form-item label="关键词">
           <el-input v-model="filterForm.keyword" placeholder="搜索详情" clearable style="width: 160px" />
@@ -96,6 +110,7 @@ import { logApi } from '../api'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const logs = ref<any[]>([])
 const actionTypes = ref<Record<string, string>>({})
 const entityTypes = ref<Record<string, string>>({})
@@ -106,7 +121,9 @@ const filterForm = reactive({
   action: '',
   entityType: '',
   userId: '',
-  keyword: ''
+  keyword: '',
+  date_from: '',
+  date_to: ''
 })
 
 const pagination = reactive({
@@ -139,7 +156,10 @@ async function fetchLogs() {
       ...filterForm
     }
     
-    if (dateRange.value && dateRange.value.length === 2) {
+    if (isMobile.value) {
+      if (filterForm.date_from) params.startDate = filterForm.date_from
+      if (filterForm.date_to) params.endDate = filterForm.date_to
+    } else if (dateRange.value && dateRange.value.length === 2) {
       params.startDate = dateRange.value[0]
       params.endDate = dateRange.value[1]
     }
@@ -204,6 +224,8 @@ function handleReset() {
   filterForm.entityType = ''
   filterForm.userId = ''
   filterForm.keyword = ''
+  filterForm.date_from = ''
+  filterForm.date_to = ''
   dateRange.value = []
   pagination.page = 1
   fetchLogs()
@@ -214,6 +236,9 @@ onMounted(() => {
   fetchActionTypes()
   fetchEntityTypes()
   fetchUsers()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
 })
 </script>
 
@@ -259,5 +284,10 @@ onMounted(() => {
   .filter-form :deep(.el-date-editor) {
     width: 100% !important;
   }
+}
+
+/* 暗色模式 */
+html.dark .list-card {
+  background: var(--bg-color-secondary);
 }
 </style>

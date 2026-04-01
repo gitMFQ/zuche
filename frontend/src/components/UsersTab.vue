@@ -368,4 +368,26 @@ onMounted(() => loadData())
   margin-top: 16px;
   justify-content: flex-end;
 }
+
+/* 暗色模式 */
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card-header {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .mobile-card-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
 </style>

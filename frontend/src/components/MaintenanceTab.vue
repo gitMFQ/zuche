@@ -262,7 +262,15 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="保养日期" prop="maintenance_date">
+              <input 
+                v-if="isMobile"
+                type="date" 
+                v-model="form.maintenance_date" 
+                class="native-date-input"
+                style="width: 100%"
+              />
               <el-date-picker 
+                v-else
                 v-model="form.maintenance_date" 
                 type="date" 
                 placeholder="选择日期" 
@@ -286,7 +294,15 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="下次日期">
+              <input 
+                v-if="isMobile"
+                type="date" 
+                v-model="form.next_maintenance_date" 
+                class="native-date-input"
+                style="width: 100%"
+              />
               <el-date-picker 
+                v-else
                 v-model="form.next_maintenance_date" 
                 type="date" 
                 placeholder="下次保养日期" 
@@ -351,6 +367,7 @@ import { getImageUrl } from '../utils/helpers'
 
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const vehicles = ref<any[]>([])
 const selectedVehicle = ref<any>(null)
 const maintenanceRecords = ref<any[]>([])
@@ -642,7 +659,12 @@ async function handleDelete(id: string) {
   }
 }
 
-onMounted(() => loadVehicles())
+onMounted(() => {
+  loadVehicles()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
 </script>
 
 <style scoped>
@@ -992,5 +1014,53 @@ onMounted(() => loadVehicles())
 .images-preview-mini .more {
   font-size: 12px;
   color: #909399;
+}
+
+/* 暗色模式 */
+html.dark .stat-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .stat-value,
+html.dark .vehicle-info .plate,
+html.dark .mobile-card-header .plate,
+html.dark .mobile-card-header .type,
+html.dark .mobile-card-row .value,
+html.dark .mileage-main {
+  color: var(--text-color);
+}
+
+html.dark .stat-label,
+html.dark .vehicle-info .brand,
+html.dark .mobile-card-row .label,
+html.dark .date-sub,
+html.dark .empty-tip,
+html.dark .images-preview-mini .more {
+  color: var(--text-color-secondary);
+}
+
+html.dark .vehicle-header {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .maintenance-count,
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .image-item {
+  border-color: var(--border-color);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
 }
 </style>

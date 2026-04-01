@@ -139,7 +139,15 @@
         </el-form-item>
         
         <el-form-item label="到期日期" prop="expiry_date">
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="form.expiry_date" 
+            class="native-date-input"
+            style="width: 100%"
+          />
           <el-date-picker 
+            v-else
             v-model="form.expiry_date" 
             type="date" 
             placeholder="选择到期日期" 
@@ -201,6 +209,7 @@ import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
 
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
@@ -349,7 +358,12 @@ async function handleDelete(vehicleId: string) {
   }
 }
 
-onMounted(() => loadData())
+onMounted(() => {
+  loadData()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
 </script>
 
 <style scoped>
@@ -615,5 +629,40 @@ onMounted(() => loadData())
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+/* 暗色模式 */
+html.dark .stat-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .stat-value,
+html.dark .mobile-card-header .plate,
+html.dark .mobile-card-row .value,
+html.dark .vehicle-info .plate {
+  color: var(--text-color);
+}
+
+html.dark .stat-label,
+html.dark .mobile-card-row .label,
+html.dark .vehicle-info .detail,
+html.dark .upload-icon,
+html.dark .upload-text {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .upload-trigger {
+  border-color: var(--border-color);
+  background: var(--hover-bg-color);
 }
 </style>

@@ -61,7 +61,7 @@ watch(() => route.query.tab, (tab) => {
 }
 
 .vehicle-tabs :deep(.el-tabs__header) {
-  background: #fff;
+  background: var(--bg-color-secondary);
   margin-bottom: 16px;
 }
 
@@ -78,5 +78,10 @@ watch(() => route.query.tab, (tab) => {
     padding: 0 10px;
     font-size: 12px;
   }
+}
+
+/* 暗色模式 */
+html.dark .vehicle-tabs :deep(.el-tabs__header) {
+  background: var(--bg-color-secondary);
 }
 </style>

@@ -79,6 +79,14 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
+          <el-button
+            class="theme-toggle-btn"
+            :icon="isDarkMode ? 'Moon' : 'Sunny'"
+            circle
+            size="large"
+            @click="toggleDarkMode"
+            :title="isDarkMode ? '切换到浅色模式' : '切换到深色模式'"
+          />
           <el-dropdown @command="handleCommand" trigger="click">
             <span class="user-dropdown">
               <el-avatar :size="32" icon="UserFilled" />
@@ -155,6 +163,34 @@ const themeColor = computed(() => userStore.themeSettings.themeColor)
 const sidebarStyle = computed(() => userStore.themeSettings.sidebarStyle)
 const customSidebarColorStart = computed(() => userStore.themeSettings.customSidebarColorStart)
 const customSidebarColorEnd = computed(() => userStore.themeSettings.customSidebarColorEnd)
+const isDarkMode = computed(() => userStore.themeSettings.darkMode)
+
+// Toggle deep/shallow theme
+const toggleDarkMode = () => {
+  userStore.setDarkMode(!isDarkMode.value);
+};
+
+// Global handler for darkModeChange events to sync HTML class
+const onDarkModeChange = (ev: Event) => {
+  const detail = (ev as CustomEvent<boolean>).detail;
+  if (detail) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+};
+
+onMounted(() => {
+  // Initialize based on current setting
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark');
+  }
+  window.addEventListener('darkModeChange', onDarkModeChange as EventListener);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('darkModeChange', onDarkModeChange as EventListener);
+});
 
 const passwordRules: FormRules = {
   oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
@@ -300,6 +336,12 @@ function handleCustomSidebarColorEndChange(e: CustomEvent) {
   userStore.setCustomSidebarColors(customSidebarColorStart.value, (color && typeof color === 'string') ? color : '')
 }
 
+function handleAutoDarkModeChange(e: CustomEvent) {
+  if (e.detail) {
+    userStore.applySystemDarkMode()
+  }
+}
+
 function checkMobile() {
   isMobile.value = window.innerWidth < 768
   if (isMobile.value) {
@@ -399,6 +441,7 @@ onMounted(async () => {
   window.addEventListener('sidebarStyleChange', handleSidebarStyleChange as EventListener)
   window.addEventListener('customSidebarColorStartChange', handleCustomSidebarColorStartChange as EventListener)
   window.addEventListener('customSidebarColorEndChange', handleCustomSidebarColorEndChange as EventListener)
+  window.addEventListener('autoDarkModeChange', handleAutoDarkModeChange as EventListener)
   
   if (!userStore.user) {
     try {
@@ -420,6 +463,7 @@ onUnmounted(() => {
   window.removeEventListener('sidebarStyleChange', handleSidebarStyleChange as EventListener)
   window.removeEventListener('customSidebarColorStartChange', handleCustomSidebarColorStartChange as EventListener)
   window.removeEventListener('customSidebarColorEndChange', handleCustomSidebarColorEndChange as EventListener)
+  window.removeEventListener('autoDarkModeChange', handleAutoDarkModeChange as EventListener)
 })
 
 function handleCommand(command: string) {
@@ -758,6 +802,29 @@ async function handleChangePassword() {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle-btn {
+  font-size: 20px;
+  border: none;
+  background: #f5f7fa;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: #e8ecf1;
+  transform: scale(1.05);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 767px) {
+  .theme-toggle-btn {
+    font-size: 18px;
+  }
 }
 
 .user-dropdown {

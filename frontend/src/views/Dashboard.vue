@@ -145,20 +145,20 @@
           <table class="schedule-table" v-if="schedules.length">
             <thead>
               <tr>
-                <th>时间</th>
-<th>待</th>
-                <th>车牌</th>
-                <th>平台</th>
+                <th class="time-col">时间</th>
+<th class="type-col">待</th>
+                <th class="plate-col">车牌</th>
+                <th class="platform-col">平台</th>
                 <th>位置</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in schedules" :key="item.id" @click="showScheduleOrderDetail(item.id)" class="schedule-row">
-                <td>{{ formatScheduleTime(item.schedule_time) }}</td>
-                <td><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
-                <td class="schedule-plate">{{ item.plate_number }}</td>
-                <td><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
-                <td>{{ item.location || '-' }}</td>
+                <td class="time-cell">{{ formatScheduleTime(item.schedule_time) }}</td>
+                <td class="type-cell"><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
+                <td class="plate-cell schedule-plate">{{ item.plate_number }}</td>
+                <td class="schedule-platform-cell"><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
+                <td class="location-cell">{{ item.location || '-' }}</td>
               </tr>
             </tbody>
           </table>
@@ -249,24 +249,24 @@
     </el-card>
 
     <!-- 调度完整视图对话框 -->
-    <el-dialog v-model="scheduleDialogVisible" title="待收送 - 完整视图" width="90%" :style="{ maxWidth: '1200px' }">
+    <el-dialog v-model="scheduleDialogVisible" title="待收送 - 完整视图" width="90%" :style="{ maxWidth: '600px' }">
       <table class="schedule-table full-view-table" v-if="schedules.length">
         <thead>
           <tr>
-            <th>时间</th>
-            <th>待</th>
-            <th>车牌</th>
-            <th>平台</th>
-            <th>位置</th>
+            <th class="time-col">时间</th>
+            <th class="type-col">待</th>
+            <th class="plate-col">车牌</th>
+            <th class="platform-col">平台</th>
+            <th class="location-col">位置</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in schedules" :key="item.id" @click="showScheduleOrderDetail(item.id)" class="schedule-row">
-            <td>{{ formatScheduleTime(item.schedule_time) }}</td>
-            <td><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
-            <td class="schedule-plate">{{ item.plate_number }}</td>
-            <td><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
-            <td>{{ item.location || '-' }}</td>
+            <td class="time-cell">{{ formatScheduleTime(item.schedule_time) }}</td>
+            <td class="type-cell"><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
+            <td class="plate-cell schedule-plate">{{ item.plate_number }}</td>
+            <td class="schedule-platform-cell"><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
+            <td class="location-cell">{{ item.location || '-' }}</td>
           </tr>
         </tbody>
       </table>
@@ -1327,6 +1327,57 @@ function scrollGanttToToday() {
   border: 1px solid #dcdfe6;
 }
 
+.schedule-table th.platform-col {
+  max-width: 50px;
+  overflow: hidden;
+}
+
+.schedule-table th.time-col,
+.schedule-table td.time-cell {
+  width: 65px;
+  min-width: 65px;
+}
+
+.schedule-table th.type-col,
+.schedule-table td.type-cell {
+  width: 30px;
+  min-width: 30px;
+}
+
+.schedule-table th.plate-col,
+.schedule-table td.plate-cell {
+  width: 90px;
+  min-width: 90px;
+}
+
+.schedule-table td.location-cell {
+  max-width: 80px;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.schedule-table td.location-cell::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-table td.location-cell {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (min-width: 768px) {
+  .schedule-table td.location-cell {
+    max-width: none;
+  overflow: visible;
+  }
+}
+
+@media (min-width: 768px) {
+  .schedule-table th.platform-col {
+    max-width: 70px;
+  }
+}
+
 @media (min-width: 768px) {
   .schedule-table th {
     padding: 10px 12px;
@@ -1340,6 +1391,7 @@ function scrollGanttToToday() {
   border-bottom: 1px solid #dcdfe6;
   border-left: 1px solid #dcdfe6;
   border-right: 1px solid #dcdfe6;
+  white-space: nowrap;
 }
 
 @media (min-width: 768px) {
@@ -1378,6 +1430,27 @@ function scrollGanttToToday() {
   font-weight: 500;
 }
 
+.schedule-platform-cell {
+  max-width: 50px;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.schedule-platform-cell::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-platform-cell {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (min-width: 768px) {
+  .schedule-platform-cell {
+    max-width: 70px;
+  }
+}
+
 .schedule-platform {
   font-weight: 500;
 }
@@ -1392,11 +1465,72 @@ function scrollGanttToToday() {
 /* 完整视图表格样式 */
 .full-view-table {
   font-size: 14px;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .full-view-table th,
 .full-view-table td {
   padding: 12px;
+  white-space: nowrap;
+}
+
+.full-view-table th.time-col,
+.full-view-table td.time-cell {
+  width: 65px;
+}
+
+.full-view-table th.type-col,
+.full-view-table td.type-cell {
+  width: 30px;
+}
+
+.full-view-table th.plate-col,
+.full-view-table td.plate-cell {
+  width: 90px;
+}
+
+.full-view-table th.platform-col {
+  width: 70px;
+}
+
+.full-view-table td.schedule-platform-cell {
+  width: 70px;
+  overflow-x: auto;
+}
+
+.full-view-table td.schedule-platform-cell::-webkit-scrollbar {
+  display: none;
+}
+
+.full-view-table th.location-col {
+  width: 80px;
+}
+
+.full-view-table td.location-cell {
+  width: 80px;
+  overflow-x: auto;
+}
+
+.full-view-table td.location-cell::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .full-view-table th.platform-col,
+  .full-view-table td.schedule-platform-cell {
+    max-width: 100px;
+  }
+
+  .full-view-table td.schedule-platform-cell {
+    overflow-x: auto;
+  }
+
+  .full-view-table th.location-col,
+  .full-view-table td.location-cell {
+    max-width: 150px;
+    overflow-x: auto;
+  }
 }
 
 /* 移动端卡片样式 */
@@ -1914,5 +2048,197 @@ function scrollGanttToToday() {
 
 .native-datetime-input::-webkit-calendar-picker-indicator:hover {
   opacity: 0.8;
+}
+
+/* 暗色模式 */
+html.dark .stat-value {
+  color: var(--text-color);
+}
+
+html.dark .stat-label,
+html.dark .stat-footer,
+html.dark .placeholder-content,
+html.dark .placeholder-hint {
+  color: var(--text-color-secondary);
+}
+
+html.dark .stat-footer {
+  border-top-color: var(--border-color);
+}
+
+html.dark .schedule-table {
+  border-color: var(--border-color);
+}
+
+html.dark .schedule-table th {
+  background-color: var(--hover-bg-color);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+html.dark .schedule-table td {
+  border-color: var(--border-color);
+}
+
+html.dark .native-datetime-input {
+  background: var(--bg-color-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+html.dark .calendar-day-cell {
+  border-color: var(--border-color);
+}
+
+html.dark .calendar-day-header {
+  border-color: var(--border-color);
+}
+
+html.dark .order-card {
+  background: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .order-info {
+  color: var(--text-color);
+}
+
+html.dark .order-label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .image-preview {
+  border-color: var(--border-color);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+/* 甘特图暗色模式 */
+html.dark .gantt-header-cell {
+  background-color: var(--hover-bg-color);
+  border-color: var(--border-color);
+}
+
+html.dark .gantt-header-plate {
+  background-color: var(--hover-bg-color);
+  border-color: var(--border-color);
+}
+
+html.dark .gantt-header-date.is-weekend {
+  background-color: #3a3a3a;
+}
+
+html.dark .gantt-header-date.is-today .week-text {
+  color: rgba(255,255,255,0.8);
+}
+
+html.dark .gantt-cell-plate {
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .gantt-cell {
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .gantt-cell.is-today {
+  background-color: #2a3a4a;
+}
+
+html.dark .gantt-cell.is-weekend {
+  background-color: #3a3a3a;
+}
+
+html.dark .plate-number {
+  color: var(--text-color);
+}
+
+html.dark .gantt-occupation {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+html.dark .gantt-occupation:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+/* 调度表格暗色模式 */
+html.dark .schedule-table tr:nth-child(even) {
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .schedule-table tr:hover {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .schedule-plate {
+  color: var(--primary-color);
+}
+
+/* 移动端卡片暗色模式 */
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+}
+
+html.dark .mobile-card:hover {
+  background: var(--hover-bg-color);
+}
+
+html.dark .mobile-card-header {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .mobile-card-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+/* 订单详情弹窗暗色模式 */
+html.dark .order-detail-header {
+  background: linear-gradient(135deg, var(--hover-bg-color) 0%, var(--bg-color-secondary) 100%);
+}
+
+html.dark .order-detail-section {
+  border-color: var(--border-color);
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .section-title-compact {
+  color: var(--text-color);
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .detail-row-compact:not(:last-child) {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .row-label-compact {
+  color: var(--text-color-secondary);
+}
+
+html.dark .row-value-compact {
+  color: var(--text-color);
+}
+
+html.dark .highlight-compact {
+  background: linear-gradient(135deg, #3a3a3a 0%, #404040 100%);
+}
+
+html.dark .row-value-compact.amount-compact {
+  color: #f56c6c;
+}
+
+html.dark .order-detail-dialog .el-dialog__header {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .order-detail-dialog .el-dialog__footer {
+  border-top-color: var(--border-color);
 }
 </style>

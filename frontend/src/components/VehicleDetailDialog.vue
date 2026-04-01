@@ -166,4 +166,14 @@ function goToDetail() {
   padding: 2px 8px;
   border-radius: 4px;
 }
+
+/* 暗色模式 */
+html.dark .view-image-item {
+  border-color: var(--border-color);
+}
+
+html.dark .view-image-label {
+  background: var(--hover-bg-color);
+  color: var(--text-color-secondary);
+}
 </style>

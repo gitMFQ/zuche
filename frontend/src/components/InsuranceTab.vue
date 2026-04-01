@@ -257,7 +257,15 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="生效日期" prop="start_date">
+              <input 
+                v-if="isMobile"
+                type="date" 
+                v-model="form.start_date" 
+                class="native-date-input"
+                style="width: 100%"
+              />
               <el-date-picker 
+                v-else
                 v-model="form.start_date" 
                 type="date" 
                 placeholder="生效日期" 
@@ -268,7 +276,15 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="到期日期" prop="end_date">
+              <input 
+                v-if="isMobile"
+                type="date" 
+                v-model="form.end_date" 
+                class="native-date-input"
+                style="width: 100%"
+              />
               <el-date-picker 
+                v-else
                 v-model="form.end_date" 
                 type="date" 
                 placeholder="到期日期" 
@@ -352,6 +368,7 @@ interface DocumentItem {
 
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const vehicles = ref<any[]>([])
 const selectedVehicle = ref<any>(null)
 const insuranceRecords = ref<any[]>([])
@@ -607,7 +624,12 @@ async function handleDelete(id: string) {
   }
 }
 
-onMounted(() => loadVehicles())
+onMounted(() => {
+  loadVehicles()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
 </script>
 
 <style scoped>
@@ -972,5 +994,62 @@ onMounted(() => loadVehicles())
 
 .pdf-preview .el-icon {
   color: #F56C6C;
+}
+
+/* 暗色模式 */
+html.dark .stat-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .stat-value,
+html.dark .vehicle-info .plate,
+html.dark .mobile-card-header .plate,
+html.dark .mobile-card-header .type,
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .stat-label,
+html.dark .vehicle-info .brand,
+html.dark .mobile-card-row .label,
+html.dark .empty-tip,
+html.dark .docs-mini .more,
+html.dark .upload-tip,
+html.dark .pdf-preview {
+  color: var(--text-color-secondary);
+}
+
+html.dark .vehicle-header {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .insurance-count,
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .file-item {
+  border-color: var(--border-color);
+}
+
+html.dark .pdf-thumb {
+  background: var(--hover-bg-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .docs-mini .pdf-icon {
+  background: var(--hover-bg-color);
 }
 </style>

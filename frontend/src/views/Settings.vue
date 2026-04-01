@@ -34,7 +34,31 @@
           <template #header>
             <span class="card-title">主题设置</span>
           </template>
-          <el-form label-width="80px" size="default">
+          <el-form label-width="100px" size="default">
+            <el-form-item label="深色模式">
+              <div class="dark-mode-settings">
+                <el-switch
+                  v-model="isDarkMode"
+                  active-icon="Moon"
+                  inactive-icon="Sunny"
+                  inline-prompt
+                  @change="handleDarkModeChange"
+                />
+                <span class="dark-mode-label">{{ isDarkMode ? '深色模式已开启' : '浅色模式已开启' }}</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="自动切换">
+              <div class="dark-mode-settings">
+                <el-switch
+                  v-model="autoDarkMode"
+                  inline-prompt
+                  active-text="自动"
+                  inactive-text="手动"
+                  @change="handleAutoDarkModeChange"
+                />
+                <span class="dark-mode-label">{{ autoDarkMode ? '跟随系统' : '手动控制' }}</span>
+              </div>
+            </el-form-item>
             <el-form-item label="主题色">
               <div class="color-picker-group">
                 <div 
@@ -153,6 +177,16 @@ const customSidebarColorEnd = computed({
   set: (val) => userStore.setCustomSidebarColors(customSidebarColorStart.value, val)
 })
 
+const isDarkMode = computed({
+  get: () => userStore.themeSettings.darkMode,
+  set: (val) => userStore.setDarkMode(val)
+})
+
+const autoDarkMode = computed({
+  get: () => userStore.themeSettings.autoDarkMode,
+  set: (val) => userStore.setAutoDarkMode(val)
+})
+
 // 主题色选项
 const themeColors = [
   { value: '#667eea', label: '靛蓝', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
@@ -254,8 +288,31 @@ function handleCustomColorChange(color: string | null) {
   if (color) {
     themeColor.value = color
   } else {
-    // 如果清除了颜色，恢复默认
     themeColor.value = '#667eea'
+  }
+}
+
+function handleDarkModeChange(enabled: boolean) {
+  if (enabled) {
+    document.documentElement.classList.add('dark')
+    ElMessage.success('已切换到深色模式')
+  } else {
+    document.documentElement.classList.remove('dark')
+    ElMessage.success('已切换到浅色模式')
+  }
+}
+
+function handleAutoDarkModeChange(enabled: boolean) {
+  if (enabled) {
+    const systemPrefersDark = userStore.getSystemPrefersDark()
+    if (systemPrefersDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+    ElMessage.success('已开启自动切换深色模式')
+  } else {
+    ElMessage.info('已关闭自动切换，可手动控制深色模式')
   }
 }
 
@@ -454,6 +511,18 @@ async function saveSettings() {
   color: #606266;
 }
 
+.dark-mode-settings {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dark-mode-label {
+  font-size: 13px;
+  color: #606266;
+  min-width: 120px;
+}
+
 .card-title {
   font-size: 15px;
   font-weight: 500;
@@ -575,5 +644,25 @@ async function saveSettings() {
   border-radius: 6px;
   width: 100%;
   height: 100%;
+}
+
+/* 暗色模式 */
+html.dark .settings-section {
+  background: var(--bg-color-secondary);
+}
+
+html.dark .section-title {
+  color: var(--text-color);
+}
+
+html.dark .setting-label,
+html.dark .gradient-label,
+html.dark .gradient-arrow {
+  color: var(--text-color-secondary);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
 }
 </style>

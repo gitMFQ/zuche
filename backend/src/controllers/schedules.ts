@@ -7,7 +7,7 @@ export function getRecentSchedules(req: AuthRequest, res: Response): void {
   try {
     const schedules: any[] = [];
 
-    // 查询待取车订单（送车）
+    // 查询待取车订单（送车）- 不论是否已取车，只要开始时间在未来就显示
     const pickupOrders = query(`
       SELECT
         o.id,
@@ -21,12 +21,12 @@ export function getRecentSchedules(req: AuthRequest, res: Response): void {
       FROM orders o
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
       LEFT JOIN order_sources s ON o.source_id = s.id
-      WHERE o.status = 'pending'
+      WHERE o.status NOT IN ('completed', 'cancelled')
       AND o.start_date >= datetime('now')
       ORDER BY o.start_date ASC
     `);
 
-    // 查询还车订单（收车）
+    // 查询还车订单（收车）- 不论是否已取车，只要结束时间在未来就显示
     const returnOrders = query(`
       SELECT
         o.id,
@@ -40,7 +40,7 @@ export function getRecentSchedules(req: AuthRequest, res: Response): void {
       FROM orders o
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
       LEFT JOIN order_sources s ON o.source_id = s.id
-      WHERE o.status = 'active'
+      WHERE o.status NOT IN ('completed', 'cancelled')
       AND o.end_date >= datetime('now')
       ORDER BY o.end_date ASC
     `);

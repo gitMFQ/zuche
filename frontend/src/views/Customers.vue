@@ -165,7 +165,21 @@
           </div>
         </el-form-item>
         <el-form-item label="驾照到期">
-          <el-date-picker v-model="form.license_expiry" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="form.license_expiry" 
+            class="native-date-input"
+            style="width: 100%"
+          />
+          <el-date-picker 
+            v-else
+            v-model="form.license_expiry" 
+            type="date" 
+            placeholder="选择日期" 
+            value-format="YYYY-MM-DD" 
+            style="width: 100%" 
+          />
         </el-form-item>
         <el-form-item label="地址">
           <el-input v-model="form.address" placeholder="请输入地址" />
@@ -270,6 +284,7 @@ import { getImageUrl } from '../utils/helpers'
 const router = useRouter()
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const editingId = ref('')
@@ -526,7 +541,12 @@ function viewOrders(customer: any) {
   router.push({ path: '/orders', query: { customer_id: customer.id, customer_name: customer.name } })
 }
 
-onMounted(() => loadData())
+onMounted(() => {
+  loadData()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
 </script>
 
 <style scoped>
@@ -772,5 +792,41 @@ onMounted(() => loadData())
   border-radius: 4px;
   font-size: 11px;
   color: #fff;
+}
+
+/* 暗色模式 */
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card-header {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .mobile-card-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .image-preview,
+html.dark .view-image-list img {
+  border-color: var(--border-color);
+}
+
+html.dark .text-muted {
+  color: var(--text-color-secondary);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
 }
 </style>

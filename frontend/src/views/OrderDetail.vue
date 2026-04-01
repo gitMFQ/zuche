@@ -457,7 +457,15 @@
           <el-input-number v-model="editForm.deposit" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item label="免押到期" v-if="editForm.deposit_waived">
+          <input 
+            v-if="isMobile"
+            type="date" 
+            v-model="editForm.deposit_waived_expiry" 
+            class="native-date-input"
+            style="width: 100%"
+          />
           <el-date-picker 
+            v-else
             v-model="editForm.deposit_waived_expiry" 
             type="date" 
             placeholder="免押到期日期" 
@@ -563,6 +571,7 @@ const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
 const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
 const order = ref<any>({})
 const paymentDialogVisible = ref(false)
 const completeDialogVisible = ref(false)
@@ -1137,6 +1146,10 @@ onMounted(async () => {
   if (route.query.edit === '1') {
     await openEditDialog()
   }
+  // 监听窗口大小变化
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
 })
 </script>
 
@@ -1581,5 +1594,145 @@ onMounted(async () => {
   border-radius: 4px;
   font-size: 12px;
   color: #fff;
+}
+
+/* 暗色模式 */
+html.dark .detail-card {
+  background: var(--bg-color-secondary);
+}
+
+html.dark .detail-label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .detail-value {
+  color: var(--text-color);
+}
+
+html.dark .section-title {
+  color: var(--text-color);
+}
+
+html.dark .timeline-date,
+html.dark .timeline-desc {
+  color: var(--text-color-secondary);
+}
+
+html.dark .image-preview,
+html.dark .image-item {
+  border-color: var(--border-color);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .file-item {
+  border-color: var(--border-color);
+}
+
+html.dark .text-muted {
+  color: var(--text-color-secondary);
+}
+
+html.dark .order-detail-header {
+  background: linear-gradient(135deg, var(--hover-bg-color) 0%, var(--bg-color-secondary) 100%);
+}
+
+html.dark .order-no {
+  color: var(--text-color);
+}
+
+html.dark .info-row .label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .info-row .row-value {
+  color: var(--text-color);
+}
+
+html.dark .info-row .row-value.amount {
+  color: #f56c6c;
+}
+
+html.dark .info-row .value {
+  color: var(--text-color);
+}
+
+html.dark .info-row:not(:last-child) {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .info-row.highlight-row {
+  background: linear-gradient(135deg, #3a3a3a 0%, #404040 100%);
+}
+
+html.dark .remarks-content {
+  background-color: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+}
+
+html.dark .payment-item {
+  background: var(--bg-color-secondary);
+}
+
+html.dark .payment-type {
+  color: var(--text-color);
+}
+
+html.dark .payment-amount {
+  color: var(--primary-color);
+}
+
+html.dark .payment-method,
+html.dark .payment-time {
+  color: var(--text-color-secondary);
+}
+
+html.dark .image-label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .order-image {
+  border-color: var(--border-color);
+}
+
+html.dark .text-primary {
+  color: var(--primary-color);
+}
+
+html.dark .text-success {
+  color: #67C23A;
+}
+
+html.dark .text-warning {
+  color: #E6A23C;
+}
+
+html.dark .text-danger {
+  color: #F56C6C;
+}
+
+html.dark .estimate {
+  color: var(--primary-color);
+}
+
+html.dark :deep(.el-divider__text) {
+  color: var(--text-color-secondary);
+}
+
+html.dark .mini-upload .image-item {
+  border-color: var(--border-color);
+}
+
+html.dark .single-upload .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .single-upload .upload-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 </style>
