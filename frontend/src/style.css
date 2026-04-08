@@ -1425,3 +1425,343 @@ html.dark ::-webkit-scrollbar-thumb {
     gap: 10px;
   }
 }
+
+/* ========================================
+   Dashboard - Apple Style Overrides
+   ======================================== */
+
+/* Dashboard 统计卡片 */
+.dashboard .stat-card.el-card {
+  border: none;
+  border-radius: 12px;
+  background-color: var(--bg-color-secondary);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard .stat-card.el-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sk-card-shadow);
+}
+
+.dashboard .stat-value {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .stat-value {
+  color: var(--sk-text-white);
+}
+
+.dashboard .stat-label {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--sk-text-secondary);
+}
+
+.dashboard .stat-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+  color: var(--sk-text-tertiary);
+}
+
+html.dark .dashboard .stat-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Dashboard Section 卡片 */
+.dashboard .section-card.el-card {
+  border: none;
+  border-radius: 12px;
+  background-color: var(--bg-color-secondary);
+}
+
+.dashboard .section-card.el-card :deep(.el-card__header) {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .section-card.el-card :deep(.el-card__header) {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .card-header > span {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .card-header > span {
+  color: var(--sk-text-white);
+}
+
+/* 调度表格 */
+.dashboard .schedule-table {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.dashboard .schedule-table th {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+  color: var(--sk-text-secondary);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .schedule-table th {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .schedule-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+html.dark .dashboard .schedule-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard .schedule-type.send {
+  background-color: rgba(0, 113, 227, 0.1);
+  color: var(--sk-focus-color);
+}
+
+.dashboard .schedule-type.receive {
+  background-color: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+.dashboard .schedule-plate {
+  color: var(--sk-focus-color);
+  font-weight: 600;
+}
+
+/* 甘特图 */
+.dashboard .gantt-container {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.dashboard .gantt-header-cell {
+  background-color: var(--sk-bg-light-gray);
+  border-color: rgba(0, 0, 0, 0.06);
+  font-weight: 600;
+}
+
+html.dark .dashboard .gantt-header-cell {
+  background-color: var(--sk-surface-dark-1);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .gantt-header-plate {
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .dashboard .gantt-header-plate {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .gantt-header-date.is-today {
+  background-color: var(--sk-focus-color);
+  color: #fff;
+}
+
+.dashboard .gantt-cell {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+html.dark .dashboard .gantt-cell {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard .gantt-cell.is-today {
+  background-color: rgba(0, 113, 227, 0.05);
+}
+
+.dashboard .gantt-cell-plate {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .gantt-cell-plate {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .gantt-occupation {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard .gantt-occupation:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* 移动端卡片 */
+.dashboard .mobile-card {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 12px;
+}
+
+html.dark .dashboard .mobile-card {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .mobile-card-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .mobile-card-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .mobile-card-row .label {
+  color: var(--sk-text-tertiary);
+}
+
+.dashboard .mobile-card-row .value {
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .mobile-card-row .value {
+  color: var(--sk-text-white);
+}
+
+/* 空状态 */
+.dashboard .empty-text {
+  color: var(--sk-text-tertiary);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* 订单详情对话框 */
+.dashboard .order-detail-dialog .el-dialog__header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .order-detail-dialog .el-dialog__header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .order-detail-dialog .el-dialog__footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .order-detail-dialog .el-dialog__footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .order-detail-header {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 8px;
+}
+
+html.dark .dashboard .order-detail-header {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .order-detail-section {
+  border-color: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .dashboard .order-detail-section {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .section-title-compact {
+  color: var(--sk-text-near-black);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 600;
+}
+
+html.dark .dashboard .section-title-compact {
+  color: var(--sk-text-white);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .section-title-compact .el-icon {
+  color: var(--sk-focus-color);
+}
+
+.dashboard .row-label-compact {
+  color: var(--sk-text-tertiary);
+}
+
+.dashboard .row-value-compact {
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .row-value-compact {
+  color: var(--sk-text-white);
+}
+
+.dashboard .highlight-compact {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0.02) 100%);
+}
+
+html.dark .dashboard .highlight-compact {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 113, 227, 0.05) 100%);
+}
+
+/* 上传组件 */
+.dashboard .upload-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .dashboard .upload-btn {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .upload-btn:hover {
+  border-color: var(--sk-focus-color);
+}
+
+/* 原生日期时间输入框 */
+.dashboard .native-datetime-input {
+  border-color: rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background-color: var(--bg-color-secondary);
+  color: var(--sk-text-near-black);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+html.dark .dashboard .native-datetime-input {
+  background-color: var(--sk-surface-dark-1);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--sk-text-white);
+}
+
+.dashboard .native-datetime-input:focus {
+  border-color: var(--sk-focus-color);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+}
+
+/* 来源标签 */
+.dashboard .source-tag {
+  border-radius: 980px;
+  font-weight: 600;
+}
+
+/* Placeholder 卡片 */
+.dashboard .placeholder-content {
+  color: var(--sk-text-tertiary);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Tooltip */
+.dashboard .custom-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 8px;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
