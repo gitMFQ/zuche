@@ -1809,18 +1809,23 @@ function scrollGanttToToday() {
 }
 
 /* 订单详情弹窗样式 - 紧凑版 */
+.order-detail-dialog .el-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .order-detail-dialog .el-dialog__body {
-  padding: 12px;
+  padding: 16px 20px;
 }
 
 .order-detail-dialog .el-dialog__header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .order-detail-dialog .el-dialog__footer {
-  padding: 10px 16px;
-  border-top: 1px solid #f0f0f0;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .order-detail-content {
@@ -1831,10 +1836,10 @@ function scrollGanttToToday() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ebef 100%);
-  border-radius: 6px;
-  margin-bottom: 12px;
+  padding: 12px 16px;
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 8px;
+  margin-bottom: 16px;
 }
 
 .header-left {
@@ -1845,65 +1850,89 @@ function scrollGanttToToday() {
 }
 
 .order-detail-section {
-  margin-bottom: 12px;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  padding: 10px 12px;
-  background-color: #fafafa;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 12px 16px;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .order-detail-section {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
 }
 
 .section-title-compact {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-weight: 600;
-  font-size: 13px;
-  color: #303133;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #ebeef5;
+  font-size: 14px;
+  color: var(--sk-text-near-black);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+html.dark .section-title-compact {
+  color: var(--sk-text-white);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .section-title-compact .el-icon {
-  color: #409EFF;
-  font-size: 14px;
+  color: var(--sk-focus-color);
+  font-size: 16px;
 }
 
 .detail-row-compact {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
-  font-size: 13px;
+  padding: 8px 0;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
 }
 
 .detail-row-compact:not(:last-child) {
-  border-bottom: 1px dashed #ebeef5;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+html.dark .detail-row-compact:not(:last-child) {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 .highlight-compact {
-  background: linear-gradient(135deg, #fef0f0 0%, #fef7f7 100%);
-  padding: 8px 10px;
-  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0.02) 100%);
+  padding: 10px 12px;
+  border-radius: 6px;
   margin: 0 -4px;
 }
 
-.row-label-compact {
-  color: #909399;
-  font-size: 12px;
+html.dark .highlight-compact {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 113, 227, 0.05) 100%);
 }
 
-.row-value-compact {
-  color: #303133;
-  font-weight: 500;
-  text-align: right;
+.row-label-compact {
+  color: var(--sk-text-tertiary);
   font-size: 13px;
 }
 
+.row-value-compact {
+  color: var(--sk-text-near-black);
+  font-weight: 500;
+  text-align: right;
+  font-size: 14px;
+}
+
+html.dark .row-value-compact {
+  color: var(--sk-text-white);
+}
+
 .row-value-compact.amount-compact {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: #f56c6c;
+  color: var(--sk-focus-color);
 }
 
 .dialog-footer-compact {
@@ -1965,36 +1994,42 @@ function scrollGanttToToday() {
 .upload-btn {
   width: 100px;
   height: 100px;
-  border: 1px dashed #dcdfe6;
-  border-radius: 6px;
+  border: 2px dashed rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: border-color 0.2s;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .upload-btn {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
 }
 
 .upload-btn:hover {
-  border-color: #409EFF;
+  border-color: var(--sk-focus-color);
 }
 
 .upload-btn .el-icon {
   font-size: 24px;
-  color: #8c939d;
+  color: var(--sk-text-tertiary);
   margin-bottom: 4px;
 }
 
 .upload-btn span {
   font-size: 12px;
-  color: #8c939d;
+  color: var(--sk-text-tertiary);
 }
 
 .image-preview {
   position: relative;
   width: 100px;
   height: 100px;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -2018,6 +2053,7 @@ function scrollGanttToToday() {
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
+  border-radius: 0 8px 0 0;
 }
 
 .upload-preview {
@@ -2030,16 +2066,26 @@ function scrollGanttToToday() {
 /* 原生时间选择器样式 */
 .native-datetime-input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
   font-size: 14px;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   outline: none;
   transition: border-color 0.2s;
+  background-color: var(--bg-color-secondary);
+  color: var(--sk-text-near-black);
+}
+
+html.dark .native-datetime-input {
+  background-color: var(--sk-surface-dark-1);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--sk-text-white);
 }
 
 .native-datetime-input:focus {
-  border-color: #409EFF;
+  border-color: var(--sk-focus-color);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
 }
 
 .native-datetime-input::-webkit-calendar-picker-indicator {
@@ -2201,44 +2247,14 @@ html.dark .mobile-card-row .value {
 
 /* 订单详情弹窗暗色模式 */
 html.dark .order-detail-header {
-  background: linear-gradient(135deg, var(--hover-bg-color) 0%, var(--bg-color-secondary) 100%);
-}
-
-html.dark .order-detail-section {
-  border-color: var(--border-color);
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .section-title-compact {
-  color: var(--text-color);
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .detail-row-compact:not(:last-child) {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .row-label-compact {
-  color: var(--text-color-secondary);
-}
-
-html.dark .row-value-compact {
-  color: var(--text-color);
-}
-
-html.dark .highlight-compact {
-  background: linear-gradient(135deg, #3a3a3a 0%, #404040 100%);
-}
-
-html.dark .row-value-compact.amount-compact {
-  color: #f56c6c;
+  background-color: var(--sk-surface-dark-1);
 }
 
 html.dark .order-detail-dialog .el-dialog__header {
-  border-bottom-color: var(--border-color);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 html.dark .order-detail-dialog .el-dialog__footer {
-  border-top-color: var(--border-color);
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 </style>
