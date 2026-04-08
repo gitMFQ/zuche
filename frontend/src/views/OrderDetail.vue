@@ -1735,4 +1735,5 @@ html.dark .single-upload .upload-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
+
 </style>

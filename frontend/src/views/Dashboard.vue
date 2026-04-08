@@ -1808,24 +1808,9 @@ function scrollGanttToToday() {
   word-break: break-all;
 }
 
-/* 订单详情弹窗样式 - 紧凑版 */
-.order-detail-dialog .el-dialog {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.order-detail-dialog .el-dialog__body {
-  padding: 16px 20px;
-}
-
-.order-detail-dialog .el-dialog__header {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.order-detail-dialog .el-dialog__footer {
-  padding: 12px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+/* 订单详情弹窗暗色模式 */
+html.dark .order-detail-header {
+  background-color: var(--sk-surface-dark-1);
 }
 
 .order-detail-content {
@@ -2243,11 +2228,6 @@ html.dark .mobile-card-row .label {
 
 html.dark .mobile-card-row .value {
   color: var(--text-color);
-}
-
-/* 订单详情弹窗暗色模式 */
-html.dark .order-detail-header {
-  background-color: var(--sk-surface-dark-1);
 }
 
 html.dark .order-detail-dialog .el-dialog__header {

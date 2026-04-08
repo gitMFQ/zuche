@@ -1637,6 +1637,19 @@ html.dark .dashboard .mobile-card-row .value {
 }
 
 /* 订单详情对话框 */
+.dashboard .order-detail-dialog :deep(.el-dialog) {
+  overflow: hidden;
+}
+
+/* 全局统一弹窗圆角 - 所有页面弹窗使用 12px */
+.el-dialog {
+  border-radius: 12px !important;
+}
+
+.dashboard .order-detail-dialog .el-dialog__body {
+  padding: 16px 20px;
+}
+
 .dashboard .order-detail-dialog .el-dialog__header {
   border-bottom-color: rgba(0, 0, 0, 0.06);
 }
