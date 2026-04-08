@@ -228,10 +228,14 @@ onMounted(() => loadData())
 .name {
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: var(--sk-text-near-black);
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+html.dark .name {
+  color: var(--sk-text-white);
 }
 
 .color-dot {
