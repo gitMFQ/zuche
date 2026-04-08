@@ -1765,3 +1765,216 @@ html.dark .dashboard .native-datetime-input {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
+
+/* ========================================
+   Business Pages - Apple Style Overrides
+   ======================================== */
+
+/* 页面容器 */
+.page-container {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* 页面中的 el-card */
+.page-container .el-card {
+  border: none;
+  border-radius: 12px;
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .page-container .el-card {
+  background-color: var(--bg-color-secondary);
+}
+
+.page-container .el-card :deep(.el-card__header) {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-card :deep(.el-card__header) {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-container .el-card :deep(.el-card__body) {
+  padding: 20px;
+}
+
+/* 页面标题 */
+.page-container .page-header {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.page-container .page-header h2,
+.page-container .page-title {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .page-container .page-header h2,
+html.dark .page-container .page-title {
+  color: var(--sk-text-white);
+}
+
+/* 搜索/筛选区域 */
+.page-container .search-bar,
+.page-container .filter-bar {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+html.dark .page-container .search-bar,
+html.dark .page-container .filter-bar {
+  background-color: var(--sk-surface-dark-1);
+}
+
+/* 表格样式 */
+.page-container .el-table {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.page-container .el-table th.el-table__cell {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.12px;
+  color: var(--sk-text-secondary);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-table th.el-table__cell {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-container .el-table td.el-table__cell {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+html.dark .page-container .el-table td.el-table__cell {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.page-container .el-table .el-table__row:hover > td.el-table__cell {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+html.dark .page-container .el-table .el-table__row:hover > td.el-table__cell {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Tabs 样式 */
+.page-container .el-tabs__item {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.page-container .el-tabs__item.is-active {
+  font-weight: 600;
+}
+
+/* 对话框样式 */
+.page-container .el-dialog {
+  border-radius: 12px;
+}
+
+.page-container .el-dialog__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-dialog__header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-container .el-dialog__body {
+  padding: 20px;
+}
+
+.page-container .el-dialog__footer {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-dialog__footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 分页组件 */
+.page-container .el-pagination {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* 表单输入框 */
+.page-container .el-input__wrapper {
+  border-radius: 8px;
+}
+
+.page-container .el-textarea__inner {
+  border-radius: 8px;
+}
+
+/* 按钮组 */
+.page-container .el-button-group .el-button {
+  border-radius: 8px;
+}
+
+/* 移动端卡片 */
+.page-container .mobile-card {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+html.dark .page-container .mobile-card {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.page-container .mobile-card:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+html.dark .page-container .mobile-card:hover {
+  background-color: var(--sk-surface-dark-2);
+}
+
+/* 空状态 */
+.page-container .el-empty__description {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--sk-text-tertiary);
+}
+
+/* Tag 样式 */
+.page-container .el-tag {
+  border-radius: 980px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.12px;
+}
+
+/* 描述列表 */
+.page-container .el-descriptions {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.page-container .el-descriptions__label {
+  color: var(--sk-text-tertiary);
+  font-weight: 400;
+}
+
+.page-container .el-descriptions__content {
+  color: var(--sk-text-near-black);
+  font-weight: 500;
+}
+
+html.dark .page-container .el-descriptions__content {
+  color: var(--sk-text-white);
+}
+
