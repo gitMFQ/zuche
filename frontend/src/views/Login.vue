@@ -1,41 +1,46 @@
 <template>
   <div class="login-container">
-    <div class="login-box">
-      <div class="login-header">
-        <el-icon :size="40" color="#409EFF"><Car /></el-icon>
-        <h1>租车管理系统</h1>
-      </div>
-      <el-form ref="formRef" :model="form" :rules="rules" size="large">
-        <el-form-item prop="username">
-          <el-input 
-            v-model="form.username" 
-            placeholder="用户名/姓名/手机/邮箱"
-            :prefix-icon="User"
-          />
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input 
-            v-model="form.password" 
-            type="password" 
-            placeholder="密码"
-            :prefix-icon="Lock"
-            show-password
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button 
-            type="primary" 
-            class="login-btn" 
-            :loading="loading"
-            @click="handleLogin"
-          >
-            登 录
-          </el-button>
-        </el-form-item>
-      </el-form>
-      <div class="login-tip">
-        默认账号: admin / admin123
+    <div class="login-section">
+      <div class="login-content">
+        <div class="login-header">
+          <el-icon :size="48" color="#0071e3"><Car /></el-icon>
+          <h1 class="sk-display-hero">租车管理系统</h1>
+          <p class="sk-display-subheading">安全、高效的车辆管理平台</p>
+        </div>
+        
+        <el-form ref="formRef" :model="form" :rules="rules" class="login-form" size="large">
+          <el-form-item prop="username">
+            <el-input
+              v-model="form.username"
+              placeholder="用户名"
+              :prefix-icon="User"
+            />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="密码"
+              :prefix-icon="Lock"
+              show-password
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
+          <el-form-item>
+            <button
+              class="sk-button-primary login-btn"
+              :disabled="loading"
+              @click="handleLogin"
+            >
+              <span v-if="loading">登录中...</span>
+              <span v-else>登录</span>
+            </button>
+          </el-form-item>
+        </el-form>
+        
+        <div class="login-tip">
+          <p class="sk-micro">默认账号: admin / admin123</p>
+        </div>
       </div>
     </div>
   </div>
@@ -92,66 +97,90 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--sk-bg-light-gray);
   padding: 20px;
 }
 
-.login-box {
-  width: 100%;
-  max-width: 360px;
-  padding: 32px 24px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+html.dark .login-container {
+  background-color: var(--sk-bg-pure-black);
 }
 
-@media (min-width: 480px) {
-  .login-box {
-    padding: 40px;
-  }
+.login-section {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.login-content {
+  text-align: center;
 }
 
 .login-header {
-  text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 48px;
+}
+
+.login-header .el-icon {
+  margin-bottom: 16px;
 }
 
 .login-header h1 {
-  margin: 12px 0 0;
-  font-size: 22px;
-  color: #303133;
+  margin: 16px 0 8px;
+  color: var(--sk-text-near-black);
 }
 
-@media (min-width: 480px) {
-  .login-header h1 {
-    font-size: 24px;
-    margin: 16px 0 0;
-  }
+html.dark .login-header h1 {
+  color: var(--sk-text-white);
+}
+
+.login-header .sk-display-subheading {
+  color: var(--sk-text-secondary);
+  margin: 0;
+}
+
+.login-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.login-form .el-form-item {
+  margin-bottom: 20px;
+}
+
+.login-form .el-input__wrapper {
+  border-radius: 11px;
+  padding: 12px 16px;
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+html.dark .login-form .el-input__wrapper {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
+}
+
+.login-form .el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2) !important;
+  border-color: var(--sk-focus-color);
 }
 
 .login-btn {
   width: 100%;
   height: 44px;
-  font-size: 16px;
+  margin-top: 8px;
 }
 
 .login-tip {
-  text-align: center;
-  color: #909399;
-  font-size: 12px;
-  margin-top: 16px;
+  margin-top: 32px;
+  color: var(--sk-text-tertiary);
 }
 
-/* 暗色模式 */
-html.dark .login-box {
-  background: var(--bg-color-secondary);
-}
+@media (max-width: 767px) {
+  .login-header {
+    margin-bottom: 32px;
+  }
 
-html.dark .login-header h1 {
-  color: var(--text-color);
-}
-
-html.dark .login-tip {
-  color: var(--text-color-secondary);
+  .login-header h1 {
+    font-size: 2.5rem;
+  }
 }
 </style>

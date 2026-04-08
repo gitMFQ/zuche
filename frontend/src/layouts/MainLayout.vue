@@ -504,6 +504,11 @@ async function handleChangePassword() {
 <style scoped>
 .layout-container {
   height: 100vh;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .layout-container {
+  background-color: var(--sk-bg-pure-black);
 }
 
 .aside {
@@ -516,18 +521,12 @@ async function handleChangePassword() {
   z-index: 1001;
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
+  background-color: var(--sk-bg-pure-black);
 }
 
 .aside::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  pointer-events: none;
+  content: none;
 }
 
 .aside-mobile-hidden {
@@ -541,32 +540,35 @@ async function handleChangePassword() {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 1000;
 }
 
 .logo {
-  height: 64px;
+  height: 48px;
   display: flex;
   align-items: center;
   padding: 0 16px;
   gap: 12px;
   position: relative;
   z-index: 1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
   flex-shrink: 0;
   overflow: hidden;
+  background: var(--sk-focus-color);
 }
 
 .logo-img {
@@ -578,17 +580,19 @@ async function handleChangePassword() {
 .logo-text {
   white-space: nowrap;
   color: #fff;
-  font-size: 16px;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: -0.224px;
 }
 
 .nav-menu {
   flex: 1;
-  padding: 16px 12px;
+  padding: 8px;
   overflow-y: auto;
   position: relative;
   z-index: 1;
+  background-color: var(--sk-bg-pure-black);
 }
 
 .nav-menu::-webkit-scrollbar {
@@ -600,48 +604,36 @@ async function handleChangePassword() {
 }
 
 .nav-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 12px 14px;
-  margin-bottom: 4px;
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.7);
+  padding: 10px 12px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .nav-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: v-bind('navItemHoverBg');
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  border-radius: 10px;
+  content: none;
 }
 
 .nav-item:hover {
   color: #fff;
-}
-
-.nav-item:hover::before {
-  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-item.active {
   color: #fff;
-  background: v-bind('navItemActiveBg');
-  box-shadow: v-bind('navItemActiveShadow');
+  background-color: var(--sk-focus-color);
 }
 
 .nav-item.active::before {
@@ -649,13 +641,13 @@ async function handleChangePassword() {
 }
 
 .nav-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: transparent;
+  border-radius: 6px;
   margin-right: 12px;
   flex-shrink: 0;
   position: relative;
@@ -664,7 +656,7 @@ async function handleChangePassword() {
 }
 
 .nav-item:hover .nav-icon {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-item.active .nav-icon {
@@ -673,31 +665,33 @@ async function handleChangePassword() {
 
 .nav-text {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   position: relative;
   z-index: 1;
   white-space: nowrap;
+  letter-spacing: -0.224px;
 }
 
 .sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   z-index: 1;
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .user-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .user-card:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .user-info {
@@ -708,27 +702,35 @@ async function handleChangePassword() {
 
 .user-info .user-name {
   color: #fff;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
+  letter-spacing: -0.224px;
 }
 
 .user-role {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 12px;
+  letter-spacing: -0.12px;
 }
 
 .main-container {
   flex-direction: column;
-  background-color: #f5f7fa;
+  background-color: var(--sk-bg-light-gray);
   margin-left: 0;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.dark .main-container {
+  background-color: var(--sk-bg-pure-black);
 }
 
 @media (min-width: 768px) {
   .main-container {
     margin-left: v-bind('isCollapse ? "72px" : "240px"');
   }
-  
+
   .aside {
     position: fixed;
     transform: none !important;
@@ -736,15 +738,24 @@ async function handleChangePassword() {
 }
 
 .header {
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 999;
+  height: 48px;
+}
+
+html.dark .header {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 @media (min-width: 768px) {
@@ -760,26 +771,35 @@ async function handleChangePassword() {
 }
 
 .collapse-btn {
-  font-size: 20px;
+  font-size: 16px;
   border: none;
-  background: #f5f7fa;
+  background: transparent;
   transition: all 0.2s ease;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .collapse-btn {
+  color: var(--sk-text-white);
 }
 
 .collapse-btn:hover {
-  background: #e8ecf1;
-  transform: scale(1.05);
+  background: rgba(0, 0, 0, 0.05);
+  transform: none;
+}
+
+html.dark .collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .collapse-btn :deep(.el-icon) {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 @media (max-width: 767px) {
   .collapse-btn {
-    font-size: 18px;
+    font-size: 16px;
   }
-  
+
   .collapse-btn :deep(.el-icon) {
     font-size: 18px;
   }
@@ -793,7 +813,12 @@ async function handleChangePassword() {
   .breadcrumb {
     display: block;
   }
-  
+
+  .breadcrumb :deep(.el-breadcrumb__item) {
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+
   .header-left {
     gap: 16px;
   }
@@ -806,15 +831,24 @@ async function handleChangePassword() {
 }
 
 .theme-toggle-btn {
-  font-size: 20px;
+  font-size: 16px;
   border: none;
-  background: #f5f7fa;
+  background: transparent;
   transition: all 0.2s ease;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .theme-toggle-btn {
+  color: var(--sk-text-white);
 }
 
 .theme-toggle-btn:hover {
-  background: #e8ecf1;
-  transform: scale(1.05);
+  background: rgba(0, 0, 0, 0.05);
+  transform: none;
+}
+
+html.dark .theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .theme-toggle-btn:active {
@@ -823,7 +857,7 @@ async function handleChangePassword() {
 
 @media (max-width: 767px) {
   .theme-toggle-btn {
-    font-size: 18px;
+    font-size: 16px;
   }
 }
 
@@ -832,18 +866,29 @@ async function handleChangePassword() {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  color: #606266;
+  color: var(--sk-text-near-black);
   padding: 6px 12px;
   border-radius: 8px;
   transition: all 0.2s ease;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+}
+
+html.dark .user-dropdown {
+  color: var(--sk-text-white);
 }
 
 .user-dropdown:hover {
-  background: #f5f7fa;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .user-dropdown:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .user-name {
   font-size: 14px;
+  letter-spacing: -0.224px;
 }
 
 .hide-mobile {
@@ -859,7 +904,12 @@ async function handleChangePassword() {
 .main {
   padding: 16px;
   overflow-y: auto;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 48px);
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .main {
+  background-color: var(--sk-bg-pure-black);
 }
 
 @media (min-width: 768px) {

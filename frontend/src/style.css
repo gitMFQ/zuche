@@ -1,3 +1,8 @@
+/* ========================================
+   Apple Design System - Car Rental App
+   Based on Apple.com Visual Language
+   ======================================== */
+
 * {
   margin: 0;
   padding: 0;
@@ -5,67 +10,93 @@
 }
 
 :root {
-  /* 主题色变量 - 默认值，会被 JS 动态更新 */
-  --primary-color: #667eea;
-  --primary-color-light: #8b9cf0;
-  --primary-color-dark: #4c5fc9;
-  --primary-color-rgb: 102, 126, 234;
+  /* Apple Color Palette */
+  --sk-bg-pure-black: #000000;
+  --sk-bg-light-gray: #f5f5f7;
+  --sk-text-near-black: #1d1d1f;
+  --sk-text-white: #ffffff;
+  --sk-text-secondary: rgba(0, 0, 0, 0.8);
+  --sk-text-tertiary: rgba(0, 0, 0, 0.48);
+  --sk-focus-color: #0071e3;
+  --sk-link-color: #0066cc;
+  --sk-link-color-dark: #2997ff;
   
-  --bg-color: #f0f2f5;
-  --bg-color-secondary: #fff;
-  --text-color: #303133;
-  --text-color-secondary: #606266;
-  --text-color-placeholder: #c0c4cc;
-  --border-color: #e4e7ed;
-  --shadow-color: rgba(0, 0, 0, 0.12);
-  --shadow-light: rgba(0, 0, 0, 0.06);
+  /* Surface Colors (Dark Mode) */
+  --sk-surface-dark-1: #272729;
+  --sk-surface-dark-2: #262628;
+  --sk-surface-dark-3: #28282a;
+  --sk-surface-dark-4: #2a2a2d;
+  --sk-surface-dark-5: #242426;
+  
+  /* Button States */
+  --sk-button-active: #ededf2;
+  --sk-button-default-light: #fafafc;
+  --sk-overlay: rgba(210, 210, 215, 0.64);
+  --sk-white-32: rgba(255, 255, 255, 0.32);
+  
+  /* Shadows */
+  --sk-card-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+  
+  /* Legacy compatibility - map old variables */
+  --primary-color: var(--sk-focus-color);
+  --primary-color-light: #2997ff;
+  --primary-color-dark: #005bb5;
+  --primary-color-rgb: 0, 113, 227;
+  --bg-color: var(--sk-bg-light-gray);
+  --bg-color-secondary: var(--sk-text-white);
+  --text-color: var(--sk-text-near-black);
+  --text-color-secondary: var(--sk-text-secondary);
+  --text-color-placeholder: var(--sk-text-tertiary);
+  --border-color: rgba(0, 0, 0, 0.04);
+  --shadow-color: var(--sk-card-shadow);
+  --shadow-light: rgba(0, 0, 0, 0.1);
   --mask-color: rgba(0, 0, 0, 0.5);
-  --hover-bg-color: #f5f7fa;
-  --active-bg-color: #ecf5ff;
+  --hover-bg-color: var(--sk-button-default-light);
+  --active-bg-color: var(--sk-button-active);
 }
 
 html.dark {
-  --bg-color: #1a1a1a;
-  --bg-color-secondary: #2d2d2d;
-  --text-color: #e5e5e5;
-  --text-color-secondary: #a8a8a8;
-  --text-color-placeholder: #606060;
-  --border-color: #404040;
+  --bg-color: var(--sk-bg-pure-black);
+  --bg-color-secondary: var(--sk-surface-dark-1);
+  --text-color: var(--sk-text-white);
+  --text-color-secondary: rgba(255, 255, 255, 0.8);
+  --text-color-placeholder: rgba(255, 255, 255, 0.48);
+  --border-color: rgba(255, 255, 255, 0.08);
   --shadow-color: rgba(0, 0, 0, 0.6);
   --shadow-light: rgba(0, 0, 0, 0.3);
   --mask-color: rgba(255, 255, 255, 0.3);
-  --hover-bg-color: #363636;
-  --active-bg-color: #2a3a4a;
+  --hover-bg-color: var(--sk-surface-dark-2);
+  --active-bg-color: var(--sk-surface-dark-3);
 
-  /* Element Plus 根级变量覆盖 — 输入框、下拉框、按钮等 */
-  --el-bg-color: #1a1a1a;
-  --el-bg-color-overlay: #2d2d2d;
-  --el-bg-color-page: #1a1a1a;
-  --el-fill-color-blank: #2d2d2d;
-  --el-fill-color: #363636;
+  /* Element Plus dark mode root variables */
+  --el-bg-color: var(--sk-bg-pure-black);
+  --el-bg-color-overlay: var(--sk-surface-dark-1);
+  --el-bg-color-page: var(--sk-bg-pure-black);
+  --el-fill-color-blank: var(--sk-surface-dark-1);
+  --el-fill-color: var(--sk-surface-dark-2);
   --el-fill-color-light: #3a3a3a;
   --el-fill-color-lighter: #404040;
-  --el-fill-color-extra-light: #2d2d2d;
+  --el-fill-color-extra-light: var(--sk-surface-dark-1);
   --el-fill-color-dark: #4a4a4a;
-  --el-text-color-primary: #e5e5e5;
+  --el-text-color-primary: var(--sk-text-white);
   --el-text-color-regular: #d0d0d0;
-  --el-text-color-secondary: #a8a8a8;
-  --el-text-color-placeholder: #606060;
+  --el-text-color-secondary: rgba(255, 255, 255, 0.8);
+  --el-text-color-placeholder: rgba(255, 255, 255, 0.48);
   --el-text-color-disabled: #505050;
-  --el-border-color: #404040;
-  --el-border-color-light: #363636;
+  --el-border-color: rgba(255, 255, 255, 0.08);
+  --el-border-color-light: var(--sk-surface-dark-2);
   --el-border-color-lighter: #303030;
   --el-border-color-extra-light: #2a2a2a;
   --el-border-color-dark: #4a4a4a;
   --el-border-color-hover: #505050;
-  --el-color-white: #2d2d2d;
+  --el-color-white: var(--sk-surface-dark-1);
   --el-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.6);
   --el-box-shadow-light: 0 2px 8px 0 rgba(0, 0, 0, 0.4);
   --el-box-shadow-lighter: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
   --el-box-shadow-dark: 0 2px 16px 0 rgba(0, 0, 0, 0.8);
-  --el-disabled-bg-color: #363636;
+  --el-disabled-bg-color: var(--sk-surface-dark-2);
   --el-disabled-text-color: #505050;
-  --el-disabled-border-color: #363636;
+  --el-disabled-border-color: var(--sk-surface-dark-2);
   --el-overlay-color: rgba(0, 0, 0, 0.7);
   --el-overlay-color-light: rgba(0, 0, 0, 0.5);
   --el-overlay-color-lighter: rgba(0, 0, 0, 0.3);
@@ -74,34 +105,387 @@ html.dark {
   color-scheme: dark;
 }
 
+/* ========================================
+   Typography System - SF Pro
+   ======================================== */
+
 html, body, #app {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background-color: var(--bg-color);
-  font-size: 14px;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
   color: var(--text-color);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Element Plus 主题色覆盖 */
+/* Display Headlines - SF Pro Display */
+.sk-display-hero {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 3.50rem; /* 56px */
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.28px;
+}
+
+.sk-display-section {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 2.50rem; /* 40px */
+  font-weight: 600;
+  line-height: 1.10;
+  letter-spacing: normal;
+}
+
+.sk-display-tile {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.75rem; /* 28px */
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+}
+
+.sk-display-card {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.31rem; /* 21px */
+  font-weight: 700;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+.sk-display-subheading {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.31rem; /* 21px */
+  font-weight: 400;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+/* Body Text - SF Pro Text */
+.sk-body {
+  font-size: 1.06rem; /* 17px */
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+
+.sk-body-emphasis {
+  font-size: 1.06rem; /* 17px */
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+}
+
+.sk-caption {
+  font-size: 0.88rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
+.sk-caption-bold {
+  font-size: 0.88rem; /* 14px */
+  font-weight: 600;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
+.sk-micro {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 400;
+  line-height: 1.33;
+  letter-spacing: -0.12px;
+}
+
+/* ========================================
+   Apple Button System
+   ======================================== */
+
+/* Primary CTA Button */
+.sk-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sk-focus-color);
+  color: var(--sk-text-white);
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 2.41;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sk-button-primary:hover {
+  background-color: #0077ed;
+}
+
+.sk-button-primary:active {
+  background-color: var(--sk-button-active);
+}
+
+.sk-button-primary:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+.sk-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark CTA Button */
+.sk-button-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sk-text-near-black);
+  color: var(--sk-text-white);
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 2.41;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sk-button-dark:hover {
+  background-color: #000000;
+}
+
+.sk-button-dark:active {
+  background-color: var(--sk-button-active);
+}
+
+.sk-button-dark:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+/* Pill Link Button (Learn More / Shop) */
+.sk-button-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: transparent;
+  color: var(--sk-link-color);
+  padding: 8px 15px;
+  border-radius: 980px;
+  border: 1px solid var(--sk-link-color);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sk-button-pill:hover {
+  text-decoration: underline;
+}
+
+.sk-button-pill:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+html.dark .sk-button-pill {
+  color: var(--sk-link-color-dark);
+  border-color: var(--sk-link-color-dark);
+}
+
+/* Filter / Search Button */
+.sk-button-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sk-button-default-light);
+  color: rgba(0, 0, 0, 0.8);
+  padding: 0px 14px;
+  border-radius: 11px;
+  border: 3px solid rgba(0, 0, 0, 0.04);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sk-button-filter:hover {
+  background-color: #f0f0f5;
+}
+
+.sk-button-filter:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+html.dark .sk-button-filter {
+  background-color: var(--sk-surface-dark-2);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .sk-button-filter:hover {
+  background-color: var(--sk-surface-dark-3);
+}
+
+/* ========================================
+   Apple Card System
+   ======================================== */
+
+.sk-card {
+  background-color: var(--bg-color-secondary);
+  border-radius: 8px;
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sk-card:hover {
+  transform: translateY(-2px);
+}
+
+.sk-card-light {
+  background-color: var(--sk-bg-light-gray);
+}
+
+.sk-card-dark {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.sk-card-elevated {
+  box-shadow: var(--sk-card-shadow);
+}
+
+/* ========================================
+   Apple Navigation Glass
+   ======================================== */
+
+.sk-nav-glass {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 48px;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.sk-nav-glass .sk-nav-link {
+  color: var(--sk-text-white);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  text-decoration: none;
+  padding: 0 12px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+.sk-nav-glass .sk-nav-link:hover {
+  opacity: 0.7;
+}
+
+html.dark .sk-nav-glass {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* ========================================
+   Apple Section Layout
+   ======================================== */
+
+.sk-section {
+  width: 100%;
+  padding: 60px 16px;
+}
+
+.sk-section-dark {
+  background-color: var(--sk-bg-pure-black);
+  color: var(--sk-text-white);
+}
+
+.sk-section-light {
+  background-color: var(--sk-bg-light-gray);
+  color: var(--sk-text-near-black);
+}
+
+.sk-section-content {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* ========================================
+   Apple Links
+   ======================================== */
+
+.sk-link {
+  color: var(--sk-link-color);
+  text-decoration: none;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  transition: opacity 0.2s ease;
+}
+
+.sk-link:hover {
+  text-decoration: underline;
+}
+
+html.dark .sk-link {
+  color: var(--sk-link-color-dark);
+}
+
+a {
+  color: var(--sk-link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   Element Plus Override - Apple Style
+   ======================================== */
+
+/* Primary Button */
 .el-button--primary {
-  --el-button-bg-color: var(--primary-color);
-  --el-button-border-color: var(--primary-color);
-  --el-button-hover-bg-color: var(--primary-color-light);
-  --el-button-hover-border-color: var(--primary-color-light);
-  --el-button-active-bg-color: var(--primary-color-dark);
-  --el-button-active-border-color: var(--primary-color-dark);
-  --el-button-disabled-bg-color: var(--primary-color-light);
-  --el-button-disabled-border-color: var(--primary-color-light);
+  --el-button-bg-color: var(--sk-focus-color);
+  --el-button-border-color: var(--sk-focus-color);
+  --el-button-hover-bg-color: #0077ed;
+  --el-button-hover-border-color: #0077ed;
+  --el-button-active-bg-color: var(--sk-button-active);
+  --el-button-active-border-color: var(--sk-button-active);
+  --el-button-disabled-bg-color: rgba(0, 113, 227, 0.5);
+  --el-button-disabled-border-color: rgba(0, 113, 227, 0.5);
 }
 
 .el-button--primary.is-link,
 .el-button--primary.is-text {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 .el-button--primary.is-link:hover,
@@ -109,404 +493,224 @@ body {
   color: var(--primary-color-light);
 }
 
-/* 主要链接颜色 */
-a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-a:active {
-  opacity: 0.7;
-}
-
-/* Tab 激活颜色 */
+/* Tabs Active Color */
 .el-tabs__item.is-active {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 .el-tabs__active-bar {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
-/* Tab 激活颜色 - border-card 类型 */
 .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
   background-color: #fff;
-  border-right-color: var(--primary-color);
-  border-left-color: var(--primary-color);
+  border-right-color: var(--sk-focus-color);
+  border-left-color: var(--sk-focus-color);
 }
 
 .el-tabs--border-card > .el-tabs__header .el-tabs__item:not(.is-disabled):hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* Tab 激活颜色 - card 类型 */
 .el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+  color: var(--sk-focus-color);
+  border-bottom-color: var(--sk-focus-color);
 }
 
 .el-tabs--card > .el-tabs__header .el-tabs__item:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 开关组件激活颜色 */
+/* Switch Active Color */
 .el-switch.is-checked .el-switch__core {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
-/* 复选框激活颜色 */
+/* Checkbox Active Color */
 .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
-/* 单选框激活颜色 */
+/* Radio Active Color */
 .el-radio__input.is-checked .el-radio__inner {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
-/* 输入框聚焦颜色 */
+/* Input Focus Color */
 .el-input__wrapper:focus-within {
-  box-shadow: 0 0 0 1px var(--primary-color) inset;
+  box-shadow: 0 0 0 1px var(--sk-focus-color) inset;
 }
 
 .el-textarea__inner:focus {
-  border-color: var(--primary-color);
+  border-color: var(--sk-focus-color);
 }
 
 .el-select .el-input.is-focus .el-input__wrapper {
-  box-shadow: 0 0 0 1px var(--primary-color) inset;
+  box-shadow: 0 0 0 1px var(--sk-focus-color) inset;
 }
 
-/* 分页组件激活颜色 */
+/* Pagination Active Color */
 .el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
 .el-pagination button:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 标签页选中样式 */
-.el-segmented__item-selected {
-  background-color: var(--primary-color);
-}
-
-/* 标签页项悬停 */
-.el-tabs__item:hover {
-  color: var(--primary-color);
-}
-
-/* 滑块组件 */
+/* Slider */
 .el-slider__bar {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
 .el-slider__button {
-  border-color: var(--primary-color);
+  border-color: var(--sk-focus-color);
 }
 
-/* 日期选择器 */
-.el-date-editor .el-range-input:focus {
-  color: var(--primary-color);
-}
-
-.el-date-table td.today .el-date-table-cell__text {
-  color: var(--primary-color);
-}
-
+/* Date Picker */
 .el-date-table td.current:not(.disabled) .el-date-table-cell__text {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
 .el-date-table td.available:hover .el-date-table-cell__text {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 .el-picker-panel__shortcut:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 时间选择器 */
+/* Time Picker */
 .el-time-panel__btn.confirm {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 选择器下拉菜单 */
+/* Select Dropdown */
 .el-select-dropdown__item.is-selected {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 .el-select-dropdown__item:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 树形组件 */
+/* Tree */
 .el-tree-node__content:hover {
-  background-color: rgba(var(--primary-color-rgb), 0.1);
+  background-color: rgba(0, 113, 227, 0.1);
 }
 
 .el-tree-node.is-current > .el-tree-node__content {
-  background-color: rgba(var(--primary-color-rgb), 0.15);
-  color: var(--primary-color);
+  background-color: rgba(0, 113, 227, 0.15);
+  color: var(--sk-focus-color);
 }
 
-/* 加载动画 */
+/* Loading Spinner */
 .el-loading-spinner .circular {
-  stroke: var(--primary-color);
+  stroke: var(--sk-focus-color);
 }
 
 .el-loading-spinner .el-loading-text {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 进度条 */
+/* Progress Bar */
 .el-progress-bar__inner {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
-/* 步骤条 */
+/* Steps */
 .el-step__head.is-finish {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+  color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
 .el-step__title.is-finish {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 .el-step__head.is-process {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 标签组件 */
+/* Tags */
 .el-tag--primary {
-  --el-tag-bg-color: rgba(var(--primary-color-rgb), 0.1);
-  --el-tag-border-color: rgba(var(--primary-color-rgb), 0.2);
-  --el-tag-text-color: var(--primary-color);
+  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
+  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-text-color: var(--sk-focus-color);
 }
 
 .el-tag.el-tag--primary {
-  --el-tag-bg-color: rgba(var(--primary-color-rgb), 0.1);
-  --el-tag-border-color: rgba(var(--primary-color-rgb), 0.2);
-  --el-tag-text-color: var(--primary-color);
+  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
+  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-text-color: var(--sk-focus-color);
 }
 
-/* 默认标签主题色 */
 .el-tag:not(.el-tag--success):not(.el-tag--warning):not(.el-tag--danger):not(.el-tag--info) {
-  --el-tag-bg-color: rgba(var(--primary-color-rgb), 0.1);
-  --el-tag-border-color: rgba(var(--primary-color-rgb), 0.2);
-  --el-tag-text-color: var(--primary-color);
+  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
+  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-text-color: var(--sk-focus-color);
 }
 
-/* 徽章组件 */
+/* Badge */
 .el-badge__content {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
-/* 表格选中行 */
+/* Table Selection */
 .el-table__body tr.current-row > td {
-  background-color: rgba(var(--primary-color-rgb), 0.1);
+  background-color: rgba(0, 113, 227, 0.1);
 }
 
 .el-table__body tr.hover-row > td {
-  background-color: rgba(var(--primary-color-rgb), 0.05);
+  background-color: rgba(0, 113, 227, 0.05);
 }
 
-/* 链接按钮 */
+/* Link Button */
 .el-button.is-link:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-/* 空状态图标 */
-.el-empty__description {
-  color: var(--primary-color);
-}
-
-/* 统计卡片主题色 */
+/* Stat Card */
 .stat-card.primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%) !important;
+  background: var(--sk-surface-dark-1) !important;
 }
 
-/* 文本主题色 */
+/* Text Primary */
 .text-primary {
-  color: var(--primary-color) !important;
+  color: var(--sk-focus-color) !important;
 }
 
-/* 移动端优化 */
-@media (max-width: 767px) {
-  body {
-    font-size: 13px;
-  }
-  
-  /* 更大的点击区域 */
-  .el-button {
-    min-height: 32px;
-  }
-  
-  /* 表单项间距 */
-  .el-form-item {
-    margin-bottom: 8px;
-  }
-  
-  /* 卡片间距 */
-  .el-card {
-    border-radius: 8px;
-  }
-  
-  /* 对话框全屏 */
-  .el-dialog {
-    margin: 10px auto !important;
-  }
+/* ========================================
+   Plate Number Styles
+   ======================================== */
 
-  /* 原生日期输入框 */
-  .native-date-input {
-    height: 40px;
-    padding: 0 12px;
-    border: 1px solid #dcdfe6;
-    border-radius: 6px;
-    font-size: 14px;
-    background: #fff;
-    color: #303133;
-    width: 100%;
-    box-sizing: border-box;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-
-  .native-date-input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
-  }
-
-  /* 日期范围选择器 */
-  .mobile-date-range {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .mobile-date-range .native-date-input {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .mobile-date-range .date-separator {
-    color: #909399;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-
-  /* 暗色模式 */
-  html.dark .native-date-input {
-    background: #2d2d2d;
-    border-color: #404040;
-    color: #e5e5e5;
-  }
-
-  html.dark .native-date-input:focus {
-    border-color: var(--primary-color);
-  }
-}
-
-/* PC端 */
-@media (min-width: 768px) {
-  body {
-    font-size: 14px;
-  }
-}
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #c0c4cc;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-track {
-  background-color: #f5f7fa;
-}
-
-/* Element Plus 覆盖 */
-.el-message {
-  --el-message-min-width: 200px;
-}
-
-@media (max-width: 767px) {
-  .el-message {
-    --el-message-min-width: 180px;
-    --el-message-padding: 10px 12px;
-  }
-}
-
-/* 分页组件移动端简化 */
-@media (max-width: 767px) {
-  .el-pagination {
-    --el-pagination-button-width: 28px;
-    --el-pagination-button-height: 28px;
-  }
-  
-  .el-pagination .el-pagination__sizes,
-  .el-pagination .el-pagination__jump {
-    display: none;
-  }
-}
-
-/* 对话框底部按钮 */
-.el-dialog__footer {
-  padding: 10px 16px 16px;
-}
-
-@media (max-width: 767px) {
-  .el-dialog__footer {
-    padding: 8px 12px 12px;
-  }
-  
-  .el-dialog__footer .el-button {
-    flex: 1;
-  }
-  
-  .el-dialog__footer {
-    display: flex;
-    gap: 10px;
-  }
-}
-
-/* 车牌号样式 */
 .plate-number {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 600;
   font-size: 14px;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   letter-spacing: 1px;
 }
 
-/* 新能源车牌 - 绿底白字 */
 .plate-number.new-energy {
   background: linear-gradient(135deg, #00a870 0%, #00c853 100%);
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 168, 112, 0.3);
 }
 
-/* 非新能源车牌 - 蓝底白字 */
 .plate-number.fuel {
   background: linear-gradient(135deg, #0066cc 0%, #0080ff 100%);
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
 }
 
-/* 来源标签样式 */
+/* Source Tag */
 .source-tag {
   display: inline-block;
   padding: 2px 6px;
@@ -517,24 +721,16 @@ a:active {
   vertical-align: middle;
 }
 
-/* 位置文字样式 */
+/* Location Text */
 .location-text {
   font-size: 12px;
   margin-left: 2px;
 }
 
-/* 隐藏数字输入框的加减按钮 */
-.el-input-number__decrease,
-.el-input-number__increase {
-  display: none;
-}
+/* ========================================
+   Dark Mode - Element Plus Override
+   ======================================== */
 
-.el-input-number .el-input__wrapper {
-  padding-left: 11px;
-  padding-right: 11px;
-}
-
-/* Dark mode styles for Element Plus components */
 html.dark .el-card {
   --el-card-bg-color: var(--bg-color-secondary);
   background-color: var(--bg-color-secondary);
@@ -647,7 +843,7 @@ html.dark .el-select-dropdown__item:hover {
 }
 
 html.dark .el-select-dropdown__item.selected {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-popper {
@@ -739,16 +935,9 @@ html.dark .el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
 
 html.dark .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
   background-color: var(--bg-color-secondary);
-  color: var(--primary-color);
-  border-right-color: var(--primary-color);
-  border-left-color: var(--primary-color);
-}
-
-html.dark .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
-  background-color: var(--bg-color-secondary);
-  color: var(--primary-color);
-  border-right-color: var(--primary-color);
-  border-left-color: var(--primary-color);
+  color: var(--sk-focus-color);
+  border-right-color: var(--sk-focus-color);
+  border-left-color: var(--sk-focus-color);
 }
 
 html.dark .el-form-item__label {
@@ -796,11 +985,11 @@ html.dark .el-tag {
 }
 
 html.dark .el-badge__content {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
 html.dark .el-switch__core {
-  --el-switch-on-color: var(--primary-color);
+  --el-switch-on-color: var(--sk-focus-color);
   background-color: var(--border-color);
 }
 
@@ -816,26 +1005,26 @@ html.dark .el-radio__inner {
 
 html.dark .el-radio__input.is-checked .el-radio__inner,
 html.dark .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
 html.dark .el-radio__input.is-checked + .el-radio__label {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-checkbox__input.is-checked + .el-checkbox__label {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-slider {
-  --el-slider-main-bg-color: var(--primary-color);
+  --el-slider-main-bg-color: var(--sk-focus-color);
   --el-slider-runway-bg-color: var(--hover-bg-color);
   --el-slider-button-size: 16px;
 }
 
 html.dark .el-slider__button {
-  border-color: var(--primary-color);
+  border-color: var(--sk-focus-color);
 }
 
 html.dark .el-date-picker {
@@ -858,15 +1047,15 @@ html.dark .el-date-table td {
 }
 
 html.dark .el-date-table td.current .el-date-table-cell__text {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
 html.dark .el-date-table td.today .el-date-table-cell__text {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-date-table td.available:hover .el-date-table-cell__text {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-picker-panel {
@@ -883,11 +1072,11 @@ html.dark .el-picker-panel__icon-btn {
 }
 
 html.dark .el-picker-panel__icon-btn:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-picker-panel__shortcut:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-time-panel {
@@ -913,7 +1102,7 @@ html.dark .el-time-spinner__item {
 }
 
 html.dark .el-time-spinner__item.active {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-time-spinner__item:hover:not(.disabled):not(.active) {
@@ -925,7 +1114,7 @@ html.dark .el-loading-mask {
 }
 
 html.dark .el-loading-spinner .el-loading-text {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
 html.dark .el-progress__text {
@@ -946,8 +1135,8 @@ html.dark .el-step__head {
 }
 
 html.dark .el-step__head.is-process {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+  color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
 html.dark .el-step__head.is-wait {
@@ -956,8 +1145,8 @@ html.dark .el-step__head.is-wait {
 }
 
 html.dark .el-step__head.is-finish {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+  color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
 }
 
 html.dark .el-step__line {
@@ -965,7 +1154,7 @@ html.dark .el-step__line {
 }
 
 html.dark .el-step__line-inner {
-  background-color: var(--primary-color);
+  background-color: var(--sk-focus-color);
 }
 
 html.dark .el-avatar {
@@ -996,5002 +1185,243 @@ html.dark .el-link {
 }
 
 html.dark .el-link:hover {
-  color: var(--primary-color);
+  color: var(--sk-focus-color);
 }
 
-html.dark .el-breadcrumb__item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-breadcrumb__inner {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-breadcrumb__inner:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-breadcrumb__separator {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-cascader-menu {
-  --el-cascader-menu-bg-color: var(--bg-color-secondary);
-  --el-cascader-menu-border-color: var(--border-color);
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-cascader-menu__item {
-  color: var(--text-color);
-}
-
-html.dark .el-cascader-menu__item:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-cascader-menu__item.is-active {
-  color: var(--primary-color);
-}
-
-html.dark .el-cascader-menu__item__children {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-tree {
-  --el-tree-bg-color: var(--bg-color-secondary);
-  --el-tree-border-color: var(--border-color);
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-tree-node__content {
-  color: var(--text-color);
-}
-
-html.dark .el-tree-node__content:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-tree-node.is-current > .el-tree-node__content {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .el-tree-node__content .el-checkbox__inner {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-tree-node__content .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-html.dark .el-tree-node__content .el-checkbox__label {
-  color: var(--text-color);
-}
-
-html.dark .el-tree-node__content .el-checkbox__input.is-checked + .el-checkbox__label {
-  color: var(--primary-color);
-}
-
-html.dark .el-upload {
-  --el-upload-border-color: var(--border-color);
-}
-
-html.dark .el-upload-dragger {
-  border-color: var(--border-color);
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-upload-dragger:hover {
-  border-color: var(--primary-color);
-}
-
-html.dark .el-upload__text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-upload__tip {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-progress-bar__outer {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-progress-bar__inner {
-  background-color: var(--primary-color);
-}
-
-html.dark .el-progress--success .el-progress-bar__inner {
-  background-color: #67c23a;
-}
-
-html.dark .el-progress--warning .el-progress-bar__inner {
-  background-color: #e6a23c;
-}
-
-html.dark .el-progress--exception .el-progress-bar__inner {
-  background-color: #f56c6c;
-}
-
-html.dark .el-segmented {
-  --el-segmented-bg-color: var(--hover-bg-color);
-  --el-segmented-color: var(--text-color-secondary);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-segmented__item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-segmented__item:hover {
-  color: var(--text-color);
-}
-
-html.dark .el-segmented__item-selected {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-html.dark .el-statistic {
-  --el-statistic-text-color: var(--text-color);
-  color: var(--text-color);
-}
-
-html.dark .el-statistic__title {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-statistic__content {
-  color: var(--text-color);
-}
-
-html.dark .el-result {
-  --el-result-bg-color: var(--bg-color-secondary);
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-result__title {
-  color: var(--text-color);
-}
-
-html.dark .el-result__subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-collapse {
-  --el-collapse-border-color: var(--border-color);
-  border-color: var(--border-color);
-}
-
-html.dark .el-collapse-item__header {
-  --el-collapse-header-bg-color: var(--bg-color-secondary);
-  --el-collapse-header-text-color: var(--text-color);
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-  border-color: var(--border-color);
-}
-
-html.dark .el-collapse-item__header:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-collapse-item__wrap {
-  --el-collapse-content-bg-color: var(--bg-color);
-  background-color: var(--bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .el-collapse-item__content {
-  color: var(--text-color);
-}
-
-html.dark .el-anchor {
-  --el-anchor-border-color: var(--border-color);
-  border-color: var(--border-color);
-}
-
-html.dark .el-anchor__link {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-anchor__link:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-anchor__link.is-active {
-  color: var(--primary-color);
-}
-
-html.dark .el-image-viewer__wrapper {
-  background-color: var(--mask-color);
-}
-
-html.dark .el-image-viewer__actions {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-image-viewer__actions__item {
-  color: var(--text-color);
-}
-
-html.dark .el-image-viewer__actions__item:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-image-viewer__close {
-  color: var(--text-color);
-}
-
-html.dark .el-image-viewer__close:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-backtop {
-  --el-backtop-bg-color: var(--bg-color-secondary);
-  --el-backtop-text-color: var(--primary-color);
-  background-color: var(--bg-color-secondary);
-  color: var(--primary-color);
-}
-
-html.dark .el-backtop:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-html.dark .el-skeleton__item {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-skeleton__item--circle {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-skeleton__item--rect {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-skeleton__item--text {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-skeleton__item--caption {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-skeleton__item--image {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-skeleton__item--avatar {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-notification {
-  --el-notification-bg-color: var(--bg-color-secondary);
-  --el-notification-border-color: var(--border-color);
-  --el-notification-text-color: var(--text-color);
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-notification__title {
-  color: var(--text-color);
-}
-
-html.dark .el-notification__content {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-alert {
-  --el-alert-bg-color: var(--hover-bg-color);
-  --el-alert-border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .el-alert__title {
-  color: var(--text-color);
-}
-
-html.dark .el-alert__description {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-alert--success {
-  background-color: rgba(103, 194, 58, 0.1);
-  border-color: rgba(103, 194, 58, 0.2);
-}
-
-html.dark .el-alert--success .el-alert__title {
-  color: #67c23a;
-}
-
-html.dark .el-alert--warning {
-  background-color: rgba(230, 162, 60, 0.1);
-  border-color: rgba(230, 162, 60, 0.2);
-}
-
-html.dark .el-alert--warning .el-alert__title {
-  color: #e6a23c;
-}
-
-html.dark .el-alert--error {
-  background-color: rgba(245, 108, 108, 0.1);
-  border-color: rgba(245, 108, 108, 0.2);
-}
-
-html.dark .el-alert--error .el-alert__title {
-  color: #f56c6c;
-}
-
-html.dark .el-alert--info {
-  background-color: rgba(144, 147, 153, 0.1);
-  border-color: rgba(144, 147, 153, 0.2);
-}
-
-html.dark .el-alert--info .el-alert__title {
-  color: #909399;
-}
-
-html.dark .el-transfer {
-  --el-transfer-border-color: var(--border-color);
-}
-
-html.dark .el-transfer-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-transfer-panel__header {
-  background-color: var(--hover-bg-color);
-  border-bottom-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .el-transfer-panel__body {
-  color: var(--text-color);
-}
-
-html.dark .el-transfer-panel__item {
-  color: var(--text-color);
-}
-
-html.dark .el-transfer-panel__item:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-transfer-panel__item--checked {
-  color: var(--primary-color);
-}
-
-html.dark .el-transfer__buttons {
-  background-color: var(--bg-color);
-}
-
-html.dark .el-transfer__button {
-  --el-transfer-button-bg-color: var(--primary-color);
-  --el-transfer-button-disabled-bg-color: var(--hover-bg-color);
-  color: #fff;
-}
-
-html.dark .el-transfer__button:disabled {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-timeline-item__node {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-timeline-item__timestamp {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-timeline-item__content {
-  color: var(--text-color);
-}
-
-html.dark .el-timeline-item__node--primary {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-html.dark .el-timeline-item__node--success {
-  background-color: #67c23a;
-  border-color: #67c23a;
-}
-
-html.dark .el-timeline-item__node--warning {
-  background-color: #e6a23c;
-  border-color: #e6a23c;
-}
-
-html.dark .el-timeline-item__node--danger {
-  background-color: #f56c6c;
-  border-color: #f56c6c;
-}
-
-html.dark .el-timeline-item__node--info {
-  background-color: #909399;
-  border-color: #909399;
-}
-
-html.dark .el-popover {
-  --el-popover-bg-color: var(--bg-color-secondary);
-  --el-popover-border-color: var(--border-color);
-  --el-popover-text-color: var(--text-color);
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .el-popover__title {
-  color: var(--text-color);
-}
-
-html.dark .el-popover__description {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-tooltip {
-  --el-tooltip-bg-color: var(--bg-color-secondary);
-  --el-tooltip-text-color: var(--text-color);
-  --el-tooltip-border-color: var(--border-color);
-}
-
-html.dark .el-tooltip__popper {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .el-tooltip__trigger {
-  color: var(--text-color);
-}
-
-html.dark .el-tab-pane {
-  color: var(--text-color);
-}
-
-html.dark .el-header {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-html.dark .el-footer {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-html.dark .el-aside {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-html.dark .el-main {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
-
-html.dark .el-container {
-  background-color: var(--bg-color);
-}
-
-html.dark .el-affix {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-space {
-  color: var(--text-color);
-}
-
-html.dark .el-space-item {
-  color: var(--text-color);
-}
-
-html.dark .el-config-provider {
-  color: var(--text-color);
-}
-
-html.dark .el-watermark {
-  --el-watermark-text-color: var(--text-color-secondary);
-}
-
-html.dark .el-segmented__item-label {
-  color: var(--text-color);
-}
-
-html.dark .el-segmented__item-label > * {
-  color: inherit;
-}
-
-html.dark .el-segmented__item--disabled {
-  opacity: 0.5;
-}
-
-html.dark .el-segmented__item--disabled .el-segmented__item-label {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-radio-button__inner {
-  --el-radio-button-bg-color: var(--bg-color-secondary);
-  --el-radio-button-text-color: var(--text-color-secondary);
-  --el-radio-button-border-color: var(--border-color);
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-radio-button__inner:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-radio-button__original-radio:checked + .el-radio-button__inner {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-}
-
-html.dark .el-radio-button__original-radio:focus + .el-radio-button__inner {
-  border-color: var(--primary-color);
-}
-
-html.dark .el-radio-button__inner--disabled {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-radio-button__inner--disabled:hover {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-input-number {
-  --el-input-number-bg-color: var(--bg-color-secondary);
-  --el-input-number-border-color: var(--border-color);
-  --el-input-number-text-color: var(--text-color);
-}
-
-html.dark .el-input-number__decrease,
-html.dark .el-input-number__increase {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .el-input-number__decrease:hover,
-html.dark .el-input-number__increase:hover {
-  background-color: var(--active-bg-color);
-}
-
-html.dark .el-input-number__decrease:disabled,
-html.dark .el-input-number__increase:disabled {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-input-number.is-disabled .el-input-number__decrease,
-html.dark .el-input-number.is-disabled .el-input-number__increase {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-input-number.is-disabled .el-input__wrapper {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-rate {
-  --el-rate-text-color: var(--text-color-secondary);
-}
-
-html.dark .el-rate__icon {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-rate__item--focused {
-  transform: scale(1.1);
-}
-
-html.dark .el-rate__item--focused .el-rate__icon {
-  color: #f7ba2a;
-}
-
-html.dark .el-rate__value {
-  color: var(--text-color);
-}
-
-html.dark .el-color-picker__mask {
-  background-color: var(--mask-color);
-}
-
-html.dark .el-color-picker__trigger {
-  border-color: var(--border-color);
-}
-
-html.dark .el-color-picker__trigger:hover {
-  border-color: var(--primary-color);
-}
-
-html.dark .el-color-picker__color {
-  border-color: var(--border-color);
-}
-
-html.dark .el-color-picker__icon {
-  color: var(--text-color);
-}
-
-html.dark .el-color-dropdown {
-  --el-color-dropdown-bg-color: var(--bg-color-secondary);
-  --el-color-dropdown-border-color: var(--border-color);
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-color-dropdown__value {
-  color: var(--text-color);
-}
-
-html.dark .el-color-dropdown__btn {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-color-dropdown__btn:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-color-dropdown__btns {
-  border-top-color: var(--border-color);
-}
-
-html.dark .el-color-dropdown__link-btn {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-color-dropdown__link-btn:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-scrollbar__bar {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-scrollbar__thumb {
-  background-color: var(--text-color-placeholder);
-}
+/* ========================================
+   Scrollbar Styles
+   ======================================== */
 
-html.dark .el-scrollbar__thumb:hover {
-  background-color: var(--text-color-secondary);
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-html.dark .el-scrollbar__wrap {
-  overflow-x: auto;
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background-color: var(--text-color-placeholder);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
-html.dark ::-webkit-scrollbar-track {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-message {
-  --el-message-bg-color: var(--bg-color-secondary);
-  --el-message-border-color: var(--border-color);
-  --el-message-text-color: var(--text-color);
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-message--success {
-  background-color: rgba(103, 194, 58, 0.1);
-  border-color: rgba(103, 194, 58, 0.2);
-}
-
-html.dark .el-message--success .el-message__content {
-  color: #67c23a;
-}
-
-html.dark .el-message--warning {
-  background-color: rgba(230, 162, 60, 0.1);
-  border-color: rgba(230, 162, 60, 0.2);
-}
-
-html.dark .el-message--warning .el-message__content {
-  color: #e6a23c;
-}
-
-html.dark .el-message--error {
-  background-color: rgba(245, 108, 108, 0.1);
-  border-color: rgba(245, 108, 108, 0.2);
-}
-
-html.dark .el-message--error .el-message__content {
-  color: #f56c6c;
-}
-
-html.dark .el-message--info {
-  background-color: rgba(144, 147, 153, 0.1);
-  border-color: rgba(144, 147, 153, 0.2);
-}
-
-html.dark .el-message--info .el-message__content {
-  color: #909399;
-}
-
-html.dark .el-message__content {
-  color: var(--text-color);
-}
-
-html.dark .el-message__icon {
-  color: var(--primary-color);
-}
-
-html.dark .el-message__closeBtn {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-message__closeBtn:hover {
-  color: var(--text-color);
-}
-
-html.dark .el-loading-spinner .path {
-  stroke: var(--primary-color);
-}
-
-html.dark .el-loading-spinner .path2 {
-  stroke: var(--primary-color);
-}
-
-html.dark .el-loading-spinner .circular {
-  stroke: var(--primary-color);
-}
-
-html.dark .el-loading-spinner .el-loading-text {
-  color: var(--primary-color);
-}
-
-html.dark .el-loading-mask {
-  background-color: rgba(0, 0, 0, 0.8);
-}
-
-html.dark .el-overlay {
-  background-color: var(--mask-color);
-}
-
-html.dark .el-overlay-dialog {
+::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-html.dark .el-dialog__headerbtn .el-dialog__close {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-dialog__headerbtn .el-dialog__close:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-dialog__footer {
-  border-top-color: var(--border-color);
-}
-
-html.dark .el-dialog--center .el-dialog__header {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .el-dialog--fullscreen {
-  background-color: var(--bg-color);
-}
-
-html.dark .el-drawer__header > :first-child {
-  color: var(--text-color);
-}
-
-html.dark .el-drawer__close-btn {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-drawer__close-btn:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-drawer__rtl .el-drawer__close-btn {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-drawer__rtl .el-drawer__close-btn:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-drawer__footer {
-  border-top-color: var(--border-color);
-}
-
-html.dark .el-popconfirm__main {
-  color: var(--text-color);
-}
-
-html.dark .el-popconfirm__action {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-descriptions {
-  --el-descriptions-border-color: var(--border-color);
-}
-
-html.dark .el-descriptions__header {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .el-descriptions__title {
-  color: var(--text-color);
-}
-
-html.dark .el-descriptions__label {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .el-descriptions__content {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-  border-color: var(--border-color);
-}
-
-html.dark .el-descriptions--bordered .el-descriptions__cell {
-  border-color: var(--border-color);
-}
-
-html.dark .el-descriptions--bordered .el-descriptions__label {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-descriptions--bordered .el-descriptions__content {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-divider--horizontal {
-  border-top-color: var(--border-color);
-}
-
-html.dark .el-divider--vertical {
-  border-left-color: var(--border-color);
-}
-
-html.dark .el-divider__text {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-page-header__header {
-  color: var(--text-color);
-}
-
-html.dark .el-page-header__content {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-page-header__breadcrumb {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-page-header__title {
-  color: var(--text-color);
-}
-
-html.dark .el-page-header__icon {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-page-header__icon:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-check-tag {
-  --el-check-tag-bg-color: var(--hover-bg-color);
-  --el-check-tag-color: var(--text-color-secondary);
-  background-color: var(--hover-bg-color);
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-check-tag.is-checked {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-html.dark .el-check-tag--disabled {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-text {
-  --el-text-color: var(--text-color);
-  color: var(--text-color);
-}
-
-html.dark .el-text--primary {
-  color: var(--primary-color);
-}
-
-html.dark .el-text--success {
-  color: #67c23a;
-}
-
-html.dark .el-text--warning {
-  color: #e6a23c;
-}
-
-html.dark .el-text--danger {
-  color: #f56c6c;
-}
-
-html.dark .el-text--info {
-  color: #909399;
-}
-
-html.dark .el-text--default {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-text--placeholder {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-text--disabled {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-icon {
-  color: var(--text-color);
-}
-
-html.dark .el-icon--primary {
-  color: var(--primary-color);
-}
-
-html.dark .el-icon--success {
-  color: #67c23a;
-}
-
-html.dark .el-icon--warning {
-  color: #e6a23c;
-}
-
-html.dark .el-icon--danger {
-  color: #f56c6c;
-}
-
-html.dark .el-icon--info {
-  color: #909399;
-}
-
-html.dark .el-button--text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .el-button--text:hover {
-  color: var(--primary-color);
-}
-
-html.dark .el-button--link {
-  color: var(--primary-color);
-}
-
-html.dark .el-button--link:hover {
-  color: var(--primary-color-light);
-}
-
-html.dark .el-button-group .el-button--primary {
-  --el-button-bg-color: var(--primary-color);
-  --el-button-border-color: var(--primary-color);
-}
-
-html.dark .el-button-group .el-button--primary:hover {
-  --el-button-hover-bg-color: var(--primary-color-light);
-  --el-button-hover-border-color: var(--primary-color-light);
-}
-
-html.dark .el-button-group .el-button--success {
-  --el-button-bg-color: #67c23a;
-  --el-button-border-color: #67c23a;
-}
-
-html.dark .el-button-group .el-button--warning {
-  --el-button-bg-color: #e6a23c;
-  --el-button-border-color: #e6a23c;
-}
-
-html.dark .el-button-group .el-button--danger {
-  --el-button-bg-color: #f56c6c;
-  --el-button-border-color: #f56c6c;
-}
-
-html.dark .el-button-group .el-button--info {
-  --el-button-bg-color: #909399;
-  --el-button-border-color: #909399;
-}
-
-html.dark .el-button-group .el-button {
-  border-color: var(--border-color);
-}
-
-html.dark .el-button-group .el-button:hover {
-  border-color: var(--primary-color);
-}
-
-html.dark .el-button-group .el-button:active {
-  border-color: var(--primary-color-dark);
-}
-
-html.dark .el-button-group .el-button.is-active {
-  border-color: var(--primary-color-dark);
-}
-
-html.dark .stat-card {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-html.dark .stat-card__title {
-  color: var(--text-color-secondary);
-}
-
-html.dark .stat-card__value {
-  color: var(--text-color);
-}
-
-html.dark .stat-card.primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%) !important;
-  color: #fff;
-}
-
-html.dark .stat-card.primary .stat-card__title,
-html.dark .stat-card.primary .stat-card__value {
-  color: #fff;
-}
-
-html.dark .page-container {
-  background-color: transparent;
-}
-
-html.dark .el-card {
-  box-shadow: 0 2px 12px 0 var(--shadow-color);
-}
-
-html.dark .el-table--enable-row-hover .el-table__body tr:hover > td {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .el-table .el-table__empty-block {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .el-table .el-table__empty-text {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .el-empty__image {
-  filter: invert(0.8);
-}
-
-html.dark .plate-number.new-energy {
-  box-shadow: 0 2px 4px rgba(0, 168, 112, 0.5);
-}
-
-html.dark .plate-number.fuel {
-  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.5);
-}
-
-html.dark .nav-item {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-html.dark .nav-item:hover {
-  color: #fff;
-}
-
-html.dark .nav-item.active {
-  color: #fff;
-}
-
-html.dark .user-info .user-name {
-  color: #fff;
-}
-
-html.dark .user-role {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-html.dark .logo-text {
-  color: #fff;
-}
-
-html.dark .header {
-  background-color: var(--bg-color-secondary);
-  box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-html.dark .theme-toggle-btn {
-  background: var(--hover-bg-color);
-}
-
-html.dark .theme-toggle-btn:hover {
-  background: var(--active-bg-color);
-}
-
-html.dark .theme-toggle-btn {
-  background: var(--hover-bg-color);
-}
-
-html.dark .theme-toggle-btn:hover {
-  background: var(--active-bg-color);
-}
-
-html.dark .main-container {
-  background-color: var(--bg-color);
-}
-
-html.dark .collapse-btn {
-  background: var(--hover-bg-color);
-}
-
-html.dark .collapse-btn:hover {
-  background: var(--active-bg-color);
-}
-
-html.dark .user-dropdown {
-  color: var(--text-color);
-}
-
-html.dark .user-dropdown:hover {
-  background: var(--hover-bg-color);
-}
-
-html.dark .breadcrumb {
-  color: var(--text-color-secondary);
-}
-
-html.dark .breadcrumb .el-breadcrumb__inner {
-  color: var(--text-color-secondary);
-}
-
-html.dark .breadcrumb .el-breadcrumb__inner:hover {
-  color: var(--primary-color);
-}
-
-html.dark .breadcrumb .el-breadcrumb__separator {
-  color: var(--text-color-placeholder);
-}
-html.dark .settings-tabs {
-  background: var(--bg-color-secondary);
-}
-
-html.dark .logo-preview {
-  border-color: var(--border-color);
-  background: var(--hover-bg-color);
-}
-
-html.dark .logo-preview:hover {
-  border-color: var(--primary-color);
-  background: var(--active-bg-color);
-}
-
-html.dark .logo-placeholder {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .logo-tip {
-  color: var(--text-color-secondary);
-}
-
-html.dark .color-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .dark-mode-label {
-  color: var(--text-color);
-}
-
-html.dark .gradient-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .gradient-arrow {
-  color: var(--text-color-secondary);
-}
-
-html.dark .card-title {
-  color: var(--text-color);
-}
-
-html.dark .color-item.active {
-  border-color: var(--bg-color-secondary);
-}
-
-html.dark .gradient-preview {
-  box-shadow: 0 2px 8px var(--shadow-color);
-}
-
-html.dark .color-item {
-  box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-html.dark .gradient-color-item :deep(.el-color-picker__trigger) {
-  box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-/* ========================================
-   Dashboard.vue dark mode
-   ======================================== */
-html.dark .stat-value {
-  color: var(--text-color);
-}
-
-html.dark .stat-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .schedule-table th {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .gantt-header-cell {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .gantt-cell-plate {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .empty-text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .chart-card {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .schedule-table {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .schedule-table td {
-  border-color: var(--border-color);
-}
-
-html.dark .gantt-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Orders.vue dark mode
-   ======================================== */
-html.dark .orders-page {
-  background-color: transparent;
-}
-
-html.dark .order-card {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .order-header {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .order-info {
-  color: var(--text-color);
-}
-
-html.dark .order-status {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Vehicles.vue dark mode
-   ======================================== */
-html.dark .vehicles-page {
-  background-color: transparent;
-}
-
-html.dark .vehicle-card {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .vehicle-info {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Customers.vue dark mode
-   ======================================== */
-html.dark .customers-page {
-  background-color: transparent;
-}
-
-html.dark .mobile-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .mobile-card-header {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-body {
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-row {
-  color: var(--text-color-secondary);
-}
-
-html.dark .customer-name {
-  color: var(--text-color);
-}
-
-html.dark .customer-phone {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Blacklist.vue dark mode
-   ======================================== */
-html.dark .blacklist-page {
-  background-color: transparent;
-}
-
-html.dark .blacklist-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .blacklist-info {
-  color: var(--text-color);
-}
-
-html.dark .blacklist-reason {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Violations.vue dark mode
-   ======================================== */
-html.dark .violations-page {
-  background-color: transparent;
-}
-
-html.dark .violation-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .violation-info {
-  color: var(--text-color);
-}
-
-html.dark .violation-amount {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Users.vue dark mode
-   ======================================== */
-html.dark .users-page {
-  background-color: transparent;
-}
-
-html.dark .user-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .user-card-header {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .user-card-body {
-  color: var(--text-color);
-}
-
-html.dark .user-role-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   OrderSources.vue dark mode
-   ======================================== */
-html.dark .order-sources-page {
-  background-color: transparent;
-}
-
-html.dark .source-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .source-name {
-  color: var(--text-color);
-}
-
-html.dark .source-commission {
-  color: var(--text-color-secondary);
-}
-
-html.dark .color-dot {
-  box-shadow: 0 0 0 2px var(--border-color);
-}
-
-/* ========================================
-   OrderDetail.vue dark mode
-   ======================================== */
-html.dark .order-detail-page {
-  background-color: transparent;
-}
-
-html.dark .order-detail-header {
-  background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
-}
-
-html.dark .order-detail-content {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .section-title {
-  color: var(--text-color);
-}
-
-html.dark .order-no {
-  color: var(--text-color-secondary);
-}
-
-html.dark .info-list {
-  color: var(--text-color);
-}
-
-html.dark .info-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .info-value {
-  color: var(--text-color);
-}
-
-html.dark .detail-section {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .payment-record {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .timeline-item {
-  color: var(--text-color);
-}
-
-html.dark .timeline-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Logs.vue dark mode
-   ======================================== */
-html.dark .logs-page {
-  background-color: transparent;
-}
-
-html.dark .log-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .log-info {
-  color: var(--text-color);
-}
-
-html.dark .log-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Login.vue dark mode
-   ======================================== */
-html.dark .login-container {
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
-}
-
-html.dark .login-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .login-title {
-  color: var(--text-color);
-}
-
-html.dark .login-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .login-form {
-  color: var(--text-color);
-}
-
-/* ========================================
-   VehiclesTab.vue dark mode
-   ======================================== */
-html.dark .vehicle-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .vehicle-detail-info {
-  color: var(--text-color);
-}
-
-html.dark .detail-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .detail-value {
-  color: var(--text-color);
-}
-
-html.dark .upload-area {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .upload-area:hover {
-  border-color: var(--primary-color);
-}
-
-html.dark .upload-text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .upload-hint {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .image-preview {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .image-preview .el-image {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   ViolationsTab.vue dark mode
-   ======================================== */
-html.dark .violations-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .violation-detail {
-  color: var(--text-color);
-}
-
-html.dark .violation-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .violation-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   InsuranceTab.vue dark mode
-   ======================================== */
-html.dark .insurance-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .insurance-detail {
-  color: var(--text-color);
-}
-
-html.dark .insurance-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .insurance-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   MaintenanceTab.vue dark mode
-   ======================================== */
-html.dark .maintenance-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .maintenance-detail {
-  color: var(--text-color);
-}
-
-html.dark .maintenance-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .maintenance-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   InspectionTab.vue dark mode
-   ======================================== */
-html.dark .inspection-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .inspection-detail {
-  color: var(--text-color);
-}
-
-html.dark .inspection-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .inspection-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   OrderSourcesTab.vue dark mode
-   ======================================== */
-html.dark .order-sources-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .source-tab-name {
-  color: var(--text-color);
-}
-
-html.dark .source-tab-commission {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   UsersTab.vue dark mode
-   ======================================== */
-html.dark .users-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .user-tab-name {
-  color: var(--text-color);
-}
-
-html.dark .user-tab-role {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   VehicleDetailDialog.vue dark mode
-   ======================================== */
-html.dark .vehicle-detail-dialog {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .vehicle-detail-title {
-  color: var(--text-color);
-}
-
-html.dark .vehicle-detail-info {
-  color: var(--text-color);
-}
-
-html.dark .vehicle-detail-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .vehicle-detail-value {
-  color: var(--text-color);
-}
-
-html.dark .vehicle-detail-images {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Stat Cards dark mode (all components)
-   ======================================== */
-html.dark .stat-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .stat-card .stat-card-title {
-  color: var(--text-color-secondary);
-}
-
-html.dark .stat-card .stat-card-value {
-  color: var(--text-color);
-}
-
-html.dark .stat-card.success {
-  border-left-color: #67C23A;
-}
-
-html.dark .stat-card.warning {
-  border-left-color: #E6A23C;
-}
-
-html.dark .stat-card.danger {
-  border-left-color: #F56C6C;
-}
-
-html.dark .stat-card.info {
-  border-left-color: #909399;
-}
-
-html.dark .stat-card.primary {
-  border-left-color: var(--primary-color);
-}
-
-/* ========================================
-   Form sections dark mode
-   ======================================== */
-html.dark .form-section {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .form-section-title {
-  color: var(--text-color);
-}
-
-html.dark .form-item-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .form-item-value {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Search/filter bar dark mode
-   ======================================== */
-html.dark .search-bar {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .filter-bar {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Mobile cards dark mode
-   ======================================== */
-html.dark .mobile-item-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .mobile-item-title {
-  color: var(--text-color);
-}
-
-html.dark .mobile-item-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-item-desc {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Page containers dark mode
-   ======================================== */
-html.dark .page-header {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .page-title {
-  color: var(--text-color);
-}
-
-html.dark .page-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .content-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .content-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .content-body {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Description lists dark mode
-   ======================================== */
-html.dark .description-list {
-  color: var(--text-color);
-}
-
-html.dark .description-list dt {
-  color: var(--text-color-secondary);
-}
-
-html.dark .description-list dd {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Tags and badges dark mode
-   ======================================== */
-html.dark .status-tag {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .badge-count {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Image upload areas dark mode
-   ======================================== */
-html.dark .image-upload-area {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .image-upload-area:hover {
-  border-color: var(--primary-color);
-  background-color: var(--active-bg-color);
-}
-
-html.dark .image-upload-text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .image-upload-hint {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Timeline dark mode
-   ======================================== */
-html.dark .timeline {
-  color: var(--text-color);
-}
-
-html.dark .timeline-item-content {
-  color: var(--text-color);
-}
-
-html.dark .timeline-item-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Empty state dark mode
-   ======================================== */
-html.dark .empty-state {
-  color: var(--text-color-secondary);
-}
-
-html.dark .empty-state-icon {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .empty-state-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Button groups dark mode
-   ======================================== */
-html.dark .button-group {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .action-buttons {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Data display dark mode
-   ======================================== */
-html.dark .data-row {
-  border-color: var(--border-color);
-}
-
-html.dark .data-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .data-value {
-  color: var(--text-color);
-}
-
-html.dark .data-section {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Notification/alert overrides
-   ======================================== */
-html.dark .alert-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .alert-title {
-  color: var(--text-color);
-}
-
-html.dark .alert-message {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Dialog content dark mode
-   ======================================== */
-html.dark .dialog-content {
-  color: var(--text-color);
-}
-
-html.dark .dialog-title {
-  color: var(--text-color);
-}
-
-html.dark .dialog-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Popover/dropdown content dark mode
-   ======================================== */
-html.dark .popover-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .dropdown-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Chart containers dark mode
-   ======================================== */
-html.dark .chart-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .chart-title {
-  color: var(--text-color);
-}
-
-html.dark .chart-legend {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Gantt chart dark mode
-   ======================================== */
-html.dark .gantt-chart {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .gantt-bar {
-  box-shadow: 0 2px 4px var(--shadow-light);
-}
-
-html.dark .gantt-label {
-  color: var(--text-color);
-}
-
-html.dark .gantt-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Table overrides dark mode
-   ======================================== */
-html.dark .data-table {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .data-table th {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .data-table td {
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .data-table tr:hover td {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   Pagination dark mode
-   ======================================== */
-html.dark .pagination-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Search input dark mode
-   ======================================== */
-html.dark .search-input {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .search-input::placeholder {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Tab content dark mode
-   ======================================== */
-html.dark .tab-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .tab-pane {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Card header dark mode
-   ======================================== */
-html.dark .card-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .card-header-title {
-  color: var(--text-color);
-}
-
-html.dark .card-body {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Section dividers dark mode
-   ======================================== */
-html.dark .section-divider {
-  border-color: var(--border-color);
-}
-
-html.dark .section-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .section-title-text {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Info panel dark mode
-   ======================================== */
-html.dark .info-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .info-panel-title {
-  color: var(--text-color);
-}
-
-html.dark .info-panel-content {
-  color: var(--text-color);
-}
-
-html.dark .info-panel-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   List items dark mode
-   ======================================== */
-html.dark .list-item {
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .list-item:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .list-item-title {
-  color: var(--text-color);
-}
-
-html.dark .list-item-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .list-item-desc {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Grid items dark mode
-   ======================================== */
-html.dark .grid-item {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .grid-item-title {
-  color: var(--text-color);
-}
-
-html.dark .grid-item-subtitle {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Progress indicators dark mode
-   ======================================== */
-html.dark .progress-bar {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .progress-fill {
-  background-color: var(--primary-color);
-}
-
-html.dark .progress-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Tooltip dark mode
-   ======================================== */
-html.dark .tooltip-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Modal overlay dark mode
-   ======================================== */
-html.dark .modal-overlay {
-  background-color: var(--mask-color);
-}
-
-html.dark .modal-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .modal-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .modal-title {
-  color: var(--text-color);
-}
-
-html.dark .modal-body {
-  color: var(--text-color);
-}
-
-html.dark .modal-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Sidebar dark mode
-   ======================================== */
-html.dark .sidebar-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .sidebar-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .sidebar-item:hover {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .sidebar-item.active {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Breadcrumb dark mode
-   ======================================== */
-html.dark .breadcrumb-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .breadcrumb-item a {
-  color: var(--text-color-secondary);
-}
-
-html.dark .breadcrumb-item a:hover {
-  color: var(--primary-color);
-}
-
-html.dark .breadcrumb-separator {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Avatar dark mode
-   ======================================== */
-html.dark .avatar-placeholder {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Badge dark mode
-   ======================================== */
-html.dark .badge-container {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .badge-text {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Divider dark mode
-   ======================================== */
-html.dark .divider {
-  border-color: var(--border-color);
-}
-
-html.dark .divider-text {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Loading spinner dark mode
-   ======================================== */
-html.dark .loading-container {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .loading-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Skeleton loading dark mode
-   ======================================== */
-html.dark .skeleton-block {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   Watermark dark mode
-   ======================================== */
-html.dark .watermark {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Result page dark mode
-   ======================================== */
-html.dark .result-page {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .result-title {
-  color: var(--text-color);
-}
-
-html.dark .result-content {
-  color: var(--text-color);
-}
-
-html.dark .result-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Steps dark mode
-   ======================================== */
-html.dark .step-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .step-item.active {
-  color: var(--primary-color);
-}
-
-html.dark .step-item.completed {
-  color: #67C23A;
-}
-
-html.dark .step-line {
-  background-color: var(--border-color);
-}
-
-/* ========================================
-   Transfer panel dark mode
-   ======================================== */
-html.dark .transfer-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .transfer-panel-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .transfer-panel-body {
-  color: var(--text-color);
-}
-
-html.dark .transfer-panel-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Tree dark mode
-   ======================================== */
-html.dark .tree-node {
-  color: var(--text-color);
-}
-
-html.dark .tree-node:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .tree-node.selected {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .tree-node-label {
-  color: var(--text-color);
-}
-
-html.dark .tree-node-content {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Upload list dark mode
-   ======================================== */
-html.dark .upload-list {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .upload-list-item {
-  color: var(--text-color);
-  border-color: var(--border-color);
-}
-
-html.dark .upload-list-item-name {
-  color: var(--text-color);
-}
-
-html.dark .upload-list-item-status {
-  color: var(--text-color-secondary);
-}
-
-html.dark .upload-list-item-action {
-  color: var(--text-color-secondary);
-}
-
-html.dark .upload-list-item-action:hover {
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Calendar dark mode
-   ======================================== */
-html.dark .calendar-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .calendar-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .calendar-body {
-  color: var(--text-color);
-}
-
-html.dark .calendar-cell {
-  border-color: var(--border-color);
-}
-
-html.dark .calendar-cell:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .calendar-cell.today {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .calendar-cell.selected {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Carousel dark mode
-   ======================================== */
-html.dark .carousel-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .carousel-arrow {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .carousel-arrow:hover {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .carousel-indicator {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .carousel-indicator.active {
-  background-color: var(--primary-color);
-}
-
-/* ========================================
-   Collapse panel dark mode
-   ======================================== */
-html.dark .collapse-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .collapse-panel-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .collapse-panel-body {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Descriptions dark mode
-   ======================================== */
-html.dark .descriptions-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .descriptions-title {
-  color: var(--text-color);
-}
-
-html.dark .descriptions-item-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .descriptions-item-content {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Image viewer dark mode
-   ======================================== */
-html.dark .image-viewer {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .image-viewer-toolbar {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .image-viewer-toolbar button {
-  color: var(--text-color);
-}
-
-html.dark .image-viewer-toolbar button:hover {
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Page header dark mode
-   ======================================== */
-html.dark .page-header-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .page-header-back {
-  color: var(--text-color-secondary);
-}
-
-html.dark .page-header-back:hover {
-  color: var(--primary-color);
-}
-
-html.dark .page-header-title {
-  color: var(--text-color);
-}
-
-html.dark .page-header-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .page-header-content {
-  color: var(--text-color);
-}
-
-html.dark .page-header-extra {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Rate dark mode
-   ======================================== */
-html.dark .rate-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .rate-item {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .rate-item.active {
-  color: #E6A23C;
-}
-
-html.dark .rate-item:hover {
-  color: #E6A23C;
-}
-
-html.dark .rate-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Space dark mode
-   ======================================== */
-html.dark .space-container {
-  color: var(--text-color);
-}
-
-html.dark .space-item {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Statistic dark mode
-   ======================================== */
-html.dark .statistic-container {
-  color: var(--text-color);
-}
-
-html.dark .statistic-title {
-  color: var(--text-color-secondary);
-}
-
-html.dark .statistic-content {
-  color: var(--text-color);
-}
-
-html.dark .statistic-suffix {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Anchor dark mode
-   ======================================== */
-html.dark .anchor-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .anchor-link {
-  color: var(--text-color-secondary);
-}
-
-html.dark .anchor-link:hover {
-  color: var(--primary-color);
-}
-
-html.dark .anchor-link.active {
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Back top dark mode
-   ======================================== */
-html.dark .back-top-button {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .back-top-button:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Check tag dark mode
-   ======================================== */
-html.dark .check-tag {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-html.dark .check-tag:hover {
-  color: var(--primary-color);
-}
-
-html.dark .check-tag.active {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Text dark mode
-   ======================================== */
-html.dark .text-container {
-  color: var(--text-color);
-}
-
-html.dark .text-secondary {
-  color: var(--text-color-secondary);
-}
-
-html.dark .text-placeholder {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .text-success {
-  color: #67C23A;
-}
-
-html.dark .text-warning {
-  color: #E6A23C;
-}
-
-html.dark .text-danger {
-  color: #F56C6C;
-}
-
-html.dark .text-info {
-  color: #909399;
-}
-
-/* ========================================
-   Config provider dark mode
-   ======================================== */
-html.dark .config-provider {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Affix dark mode
-   ======================================== */
-html.dark .affix-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Grid dark mode
-   ======================================== */
-html.dark .grid-container {
-  color: var(--text-color);
-}
-
-html.dark .grid-item-container {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Icon dark mode
-   ======================================== */
-html.dark .icon-container {
-  color: var(--text-color);
-}
-
-html.dark .icon-primary {
-  color: var(--primary-color);
-}
-
-html.dark .icon-success {
-  color: #67C23A;
-}
-
-html.dark .icon-warning {
-  color: #E6A23C;
-}
-
-html.dark .icon-danger {
-  color: #F56C6C;
-}
-
-html.dark .icon-info {
-  color: #909399;
-}
-
-/* ========================================
-   Link dark mode
-   ======================================== */
-html.dark .link-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .link-container:hover {
-  color: var(--primary-color);
-}
-
-html.dark .link-primary {
-  color: var(--primary-color);
-}
-
-html.dark .link-success {
-  color: #67C23A;
-}
-
-html.dark .link-warning {
-  color: #E6A23C;
-}
-
-html.dark .link-danger {
-  color: #F56C6C;
-}
-
-html.dark .link-info {
-  color: #909399;
-}
-
-/* ========================================
-   Radio button dark mode
-   ======================================== */
-html.dark .radio-button-container {
-  color: var(--text-color);
-}
-
-html.dark .radio-button {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-html.dark .radio-button:hover {
-  color: var(--primary-color);
-}
-
-html.dark .radio-button.active {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Segment dark mode
-   ======================================== */
-html.dark .segment-container {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .segment-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .segment-item:hover {
-  color: var(--text-color);
-}
-
-html.dark .segment-item.active {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Result dark mode
-   ======================================== */
-html.dark .result-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .result-icon {
-  color: var(--text-color);
-}
-
-html.dark .result-title {
-  color: var(--text-color);
-}
-
-html.dark .result-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .result-extra {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Empty dark mode
-   ======================================== */
-html.dark .empty-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .empty-image {
-  filter: invert(0.8);
-}
-
-html.dark .empty-description {
-  color: var(--text-color-secondary);
-}
-
-html.dark .empty-bottom {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Skeleton dark mode
-   ======================================== */
-html.dark .skeleton-container {
-  color: var(--text-color);
-}
-
-html.dark .skeleton-paragraph {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-title {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-avatar {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-image {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-button {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-input {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-circle {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .skeleton-rect {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   Watermark dark mode
-   ======================================== */
-html.dark .watermark-container {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Tour dark mode
-   ======================================== */
-html.dark .tour-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .tour-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .tour-body {
-  color: var(--text-color);
-}
-
-html.dark .tour-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .tour-title {
-  color: var(--text-color);
-}
-
-html.dark .tour-description {
-  color: var(--text-color-secondary);
-}
-
-html.dark .tour-indicator {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .tour-indicator.active {
-  background-color: var(--primary-color);
-}
-
-html.dark .tour-arrow {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Flex dark mode
-   ======================================== */
-html.dark .flex-container {
-  color: var(--text-color);
-}
-
-html.dark .flex-item {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Highlight dark mode
-   ======================================== */
-html.dark .highlight-container {
-  color: var(--text-color);
-}
-
-html.dark .highlight-text {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Mention dark mode
-   ======================================== */
-html.dark .mention-dropdown {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .mention-dropdown-item {
-  color: var(--text-color);
-}
-
-html.dark .mention-dropdown-item:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .mention-dropdown-item.active {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-/* ========================================
-   QR code dark mode
-   ======================================== */
-html.dark .qrcode-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .qrcode-status {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Countdown dark mode
-   ======================================== */
-html.dark .countdown-container {
-  color: var(--text-color);
-}
-
-html.dark .countdown-value {
-  color: var(--text-color);
-}
-
-html.dark .countdown-finish {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Dashboard.vue dark mode
-   ======================================== */
-html.dark .stat-value {
-  color: var(--text-color);
-}
-
-html.dark .stat-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .schedule-table th {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .gantt-header-cell {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .gantt-cell-plate {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .empty-text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .chart-card {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .schedule-table {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .schedule-table td {
-  border-color: var(--border-color);
-}
-
-html.dark .gantt-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Orders.vue dark mode
-   ======================================== */
-html.dark .orders-page {
-  background-color: transparent;
-}
-
-html.dark .order-card {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .order-header {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .order-info {
-  color: var(--text-color);
-}
-
-html.dark .order-status {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Vehicles.vue dark mode
-   ======================================== */
-html.dark .vehicles-page {
-  background-color: transparent;
-}
-
-html.dark .vehicle-card {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .vehicle-info {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Customers.vue dark mode
-   ======================================== */
-html.dark .customers-page {
-  background-color: transparent;
-}
-
-html.dark .mobile-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .mobile-card-header {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-body {
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-row {
-  color: var(--text-color-secondary);
-}
-
-html.dark .customer-name {
-  color: var(--text-color);
-}
-
-html.dark .customer-phone {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Blacklist.vue dark mode
-   ======================================== */
-html.dark .blacklist-page {
-  background-color: transparent;
-}
-
-html.dark .blacklist-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .blacklist-info {
-  color: var(--text-color);
-}
-
-html.dark .blacklist-reason {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Violations.vue dark mode
-   ======================================== */
-html.dark .violations-page {
-  background-color: transparent;
-}
-
-html.dark .violation-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .violation-info {
-  color: var(--text-color);
-}
-
-html.dark .violation-amount {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Users.vue dark mode
-   ======================================== */
-html.dark .users-page {
-  background-color: transparent;
-}
-
-html.dark .user-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .user-card-header {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .user-card-body {
-  color: var(--text-color);
-}
-
-html.dark .user-role-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   OrderSources.vue dark mode
-   ======================================== */
-html.dark .order-sources-page {
-  background-color: transparent;
-}
-
-html.dark .source-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .source-name {
-  color: var(--text-color);
-}
-
-html.dark .source-commission {
-  color: var(--text-color-secondary);
-}
-
-html.dark .color-dot {
-  box-shadow: 0 0 0 2px var(--border-color);
-}
-
-/* ========================================
-   OrderDetail.vue dark mode
-   ======================================== */
-html.dark .order-detail-page {
-  background-color: transparent;
-}
-
-html.dark .order-detail-header {
-  background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
-}
-
-html.dark .order-detail-content {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .section-title {
-  color: var(--text-color);
-}
-
-html.dark .order-no {
-  color: var(--text-color-secondary);
-}
-
-html.dark .info-list {
-  color: var(--text-color);
-}
-
-html.dark .info-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .info-value {
-  color: var(--text-color);
-}
-
-html.dark .detail-section {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .payment-record {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .timeline-item {
-  color: var(--text-color);
-}
-
-html.dark .timeline-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Logs.vue dark mode
-   ======================================== */
-html.dark .logs-page {
-  background-color: transparent;
-}
-
-html.dark .log-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .log-info {
-  color: var(--text-color);
-}
-
-html.dark .log-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Login.vue dark mode
-   ======================================== */
-html.dark .login-container {
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%);
-}
-
-html.dark .login-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .login-title {
-  color: var(--text-color);
-}
-
-html.dark .login-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .login-form {
-  color: var(--text-color);
-}
-
-/* ========================================
-   VehiclesTab.vue dark mode
-   ======================================== */
-html.dark .vehicle-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .vehicle-detail-info {
-  color: var(--text-color);
-}
-
-html.dark .detail-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .detail-value {
-  color: var(--text-color);
-}
-
-html.dark .upload-area {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .upload-area:hover {
-  border-color: var(--primary-color);
-}
-
-html.dark .upload-text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .upload-hint {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .image-preview {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .image-preview .el-image {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   ViolationsTab.vue dark mode
-   ======================================== */
-html.dark .violations-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .violation-detail {
-  color: var(--text-color);
-}
-
-html.dark .violation-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .violation-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   InsuranceTab.vue dark mode
-   ======================================== */
-html.dark .insurance-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .insurance-detail {
-  color: var(--text-color);
-}
-
-html.dark .insurance-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .insurance-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   MaintenanceTab.vue dark mode
-   ======================================== */
-html.dark .maintenance-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .maintenance-detail {
-  color: var(--text-color);
-}
-
-html.dark .maintenance-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .maintenance-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   InspectionTab.vue dark mode
-   ======================================== */
-html.dark .inspection-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .inspection-detail {
-  color: var(--text-color);
-}
-
-html.dark .inspection-tab-upload {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .inspection-tab-upload:hover {
-  border-color: var(--primary-color);
-}
-
-/* ========================================
-   OrderSourcesTab.vue dark mode
-   ======================================== */
-html.dark .order-sources-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .source-tab-name {
-  color: var(--text-color);
-}
-
-html.dark .source-tab-commission {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   UsersTab.vue dark mode
-   ======================================== */
-html.dark .users-tab-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .user-tab-name {
-  color: var(--text-color);
-}
-
-html.dark .user-tab-role {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   VehicleDetailDialog.vue dark mode
-   ======================================== */
-html.dark .vehicle-detail-dialog {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .vehicle-detail-title {
-  color: var(--text-color);
-}
-
-html.dark .vehicle-detail-info {
-  color: var(--text-color);
-}
-
-html.dark .vehicle-detail-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .vehicle-detail-value {
-  color: var(--text-color);
-}
-
-html.dark .vehicle-detail-images {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Stat Cards dark mode (all components)
-   ======================================== */
-html.dark .stat-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .stat-card .stat-card-title {
-  color: var(--text-color-secondary);
-}
-
-html.dark .stat-card .stat-card-value {
-  color: var(--text-color);
-}
-
-html.dark .stat-card.success {
-  border-left-color: #67C23A;
-}
-
-html.dark .stat-card.warning {
-  border-left-color: #E6A23C;
-}
-
-html.dark .stat-card.danger {
-  border-left-color: #F56C6C;
-}
-
-html.dark .stat-card.info {
-  border-left-color: #909399;
-}
-
-html.dark .stat-card.primary {
-  border-left-color: var(--primary-color);
-}
-
-/* ========================================
-   Form sections dark mode
-   ======================================== */
-html.dark .form-section {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .form-section-title {
-  color: var(--text-color);
-}
-
-html.dark .form-item-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .form-item-value {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Search/filter bar dark mode
-   ======================================== */
-html.dark .search-bar {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .filter-bar {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Mobile cards dark mode
-   ======================================== */
-html.dark .mobile-item-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .mobile-item-title {
-  color: var(--text-color);
-}
-
-html.dark .mobile-item-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-item-desc {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Page containers dark mode
-   ======================================== */
-html.dark .page-header {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .page-title {
-  color: var(--text-color);
-}
-
-html.dark .page-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .content-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .content-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .content-body {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Description lists dark mode
-   ======================================== */
-html.dark .description-list {
-  color: var(--text-color);
-}
-
-html.dark .description-list dt {
-  color: var(--text-color-secondary);
-}
-
-html.dark .description-list dd {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Tags and badges dark mode
-   ======================================== */
-html.dark .status-tag {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .badge-count {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Image upload areas dark mode
-   ======================================== */
-html.dark .image-upload-area {
-  border-color: var(--border-color);
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .image-upload-area:hover {
-  border-color: var(--primary-color);
-  background-color: var(--active-bg-color);
-}
-
-html.dark .image-upload-text {
-  color: var(--text-color-secondary);
-}
-
-html.dark .image-upload-hint {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Timeline dark mode
-   ======================================== */
-html.dark .timeline {
-  color: var(--text-color);
-}
-
-html.dark .timeline-item-content {
-  color: var(--text-color);
-}
-
-html.dark .timeline-item-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Empty state dark mode
-   ======================================== */
-html.dark .empty-state {
-  color: var(--text-color-secondary);
-}
-
-html.dark .empty-state-icon {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .empty-state-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Button groups dark mode
-   ======================================== */
-html.dark .button-group {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .action-buttons {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Data display dark mode
-   ======================================== */
-html.dark .data-row {
-  border-color: var(--border-color);
-}
-
-html.dark .data-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .data-value {
-  color: var(--text-color);
-}
-
-html.dark .data-section {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Notification/alert overrides
-   ======================================== */
-html.dark .alert-card {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .alert-title {
-  color: var(--text-color);
-}
-
-html.dark .alert-message {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Dialog content dark mode
-   ======================================== */
-html.dark .dialog-content {
-  color: var(--text-color);
-}
-
-html.dark .dialog-title {
-  color: var(--text-color);
-}
-
-html.dark .dialog-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Popover/dropdown content dark mode
-   ======================================== */
-html.dark .popover-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .dropdown-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Chart containers dark mode
-   ======================================== */
-html.dark .chart-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .chart-title {
-  color: var(--text-color);
-}
-
-html.dark .chart-legend {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Gantt chart dark mode
-   ======================================== */
-html.dark .gantt-chart {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .gantt-bar {
-  box-shadow: 0 2px 4px var(--shadow-light);
-}
-
-html.dark .gantt-label {
-  color: var(--text-color);
-}
-
-html.dark .gantt-time {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Table overrides dark mode
-   ======================================== */
-html.dark .data-table {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .data-table th {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .data-table td {
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .data-table tr:hover td {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   Pagination dark mode
-   ======================================== */
-html.dark .pagination-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Search input dark mode
-   ======================================== */
-html.dark .search-input {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .search-input::placeholder {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Tab content dark mode
-   ======================================== */
-html.dark .tab-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .tab-pane {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Card header dark mode
-   ======================================== */
-html.dark .card-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .card-header-title {
-  color: var(--text-color);
-}
-
-html.dark .card-body {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Section dividers dark mode
-   ======================================== */
-html.dark .section-divider {
-  border-color: var(--border-color);
-}
-
-html.dark .section-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .section-title-text {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Info panel dark mode
-   ======================================== */
-html.dark .info-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .info-panel-title {
-  color: var(--text-color);
-}
-
-html.dark .info-panel-content {
-  color: var(--text-color);
-}
-
-html.dark .info-panel-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   List items dark mode
-   ======================================== */
-html.dark .list-item {
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .list-item:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .list-item-title {
-  color: var(--text-color);
-}
-
-html.dark .list-item-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .list-item-desc {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Grid items dark mode
-   ======================================== */
-html.dark .grid-item {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .grid-item-title {
-  color: var(--text-color);
-}
-
-html.dark .grid-item-subtitle {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Progress indicators dark mode
-   ======================================== */
-html.dark .progress-bar {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .progress-fill {
-  background-color: var(--primary-color);
-}
-
-html.dark .progress-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Tooltip dark mode
-   ======================================== */
-html.dark .tooltip-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Modal overlay dark mode
-   ======================================== */
-html.dark .modal-overlay {
-  background-color: var(--mask-color);
-}
-
-html.dark .modal-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .modal-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .modal-title {
-  color: var(--text-color);
-}
-
-html.dark .modal-body {
-  color: var(--text-color);
-}
-
-html.dark .modal-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Sidebar dark mode
-   ======================================== */
-html.dark .sidebar-content {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .sidebar-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .sidebar-item:hover {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .sidebar-item.active {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Breadcrumb dark mode
-   ======================================== */
-html.dark .breadcrumb-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .breadcrumb-item a {
-  color: var(--text-color-secondary);
-}
-
-html.dark .breadcrumb-item a:hover {
-  color: var(--primary-color);
-}
-
-html.dark .breadcrumb-separator {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Avatar dark mode
-   ======================================== */
-html.dark .avatar-placeholder {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Badge dark mode
-   ======================================== */
-html.dark .badge-container {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .badge-text {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Divider dark mode
-   ======================================== */
-html.dark .divider {
-  border-color: var(--border-color);
-}
-
-html.dark .divider-text {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Loading spinner dark mode
-   ======================================== */
-html.dark .loading-container {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .loading-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Skeleton loading dark mode
-   ======================================== */
-html.dark .skeleton-block {
-  background-color: var(--hover-bg-color);
-}
-
-/* ========================================
-   Watermark dark mode
-   ======================================== */
-html.dark .watermark {
-  color: var(--text-color-placeholder);
-}
-
-/* ========================================
-   Result page dark mode
-   ======================================== */
-html.dark .result-page {
-  background-color: var(--bg-color-secondary);
-}
-
-html.dark .result-title {
-  color: var(--text-color);
-}
-
-html.dark .result-content {
-  color: var(--text-color);
-}
-
-html.dark .result-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Steps dark mode
-   ======================================== */
-html.dark .step-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .step-item.active {
-  color: var(--primary-color);
-}
-
-html.dark .step-item.completed {
-  color: #67C23A;
-}
-
-html.dark .step-line {
-  background-color: var(--border-color);
-}
-
-/* ========================================
-   Transfer panel dark mode
-   ======================================== */
-html.dark .transfer-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .transfer-panel-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .transfer-panel-body {
-  color: var(--text-color);
-}
-
-html.dark .transfer-panel-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Tree dark mode
-   ======================================== */
-html.dark .tree-node {
-  color: var(--text-color);
-}
-
-html.dark .tree-node:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .tree-node.selected {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .tree-node-label {
-  color: var(--text-color);
-}
-
-html.dark .tree-node-content {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Upload list dark mode
-   ======================================== */
-html.dark .upload-list {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .upload-list-item {
-  color: var(--text-color);
-  border-color: var(--border-color);
-}
-
-html.dark .upload-list-item-name {
-  color: var(--text-color);
-}
-
-html.dark .upload-list-item-status {
-  color: var(--text-color-secondary);
-}
-
-html.dark .upload-list-item-action {
-  color: var(--text-color-secondary);
-}
-
-html.dark .upload-list-item-action:hover {
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Calendar dark mode
-   ======================================== */
-html.dark .calendar-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .calendar-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .calendar-body {
-  color: var(--text-color);
-}
-
-html.dark .calendar-cell {
-  border-color: var(--border-color);
-}
-
-html.dark .calendar-cell:hover {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .calendar-cell.today {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .calendar-cell.selected {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Carousel dark mode
-   ======================================== */
-html.dark .carousel-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .carousel-arrow {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color);
-}
-
-html.dark .carousel-arrow:hover {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-html.dark .carousel-indicator {
-  background-color: var(--hover-bg-color);
-}
-
-html.dark .carousel-indicator.active {
-  background-color: var(--primary-color);
-}
-
-/* ========================================
-   Collapse panel dark mode
-   ======================================== */
-html.dark .collapse-panel {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .collapse-panel-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .collapse-panel-body {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-}
-
-/* ========================================
-   Descriptions dark mode
-   ======================================== */
-html.dark .descriptions-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .descriptions-title {
-  color: var(--text-color);
-}
-
-html.dark .descriptions-item-label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .descriptions-item-content {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Image viewer dark mode
-   ======================================== */
-html.dark .image-viewer {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .image-viewer-toolbar {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .image-viewer-toolbar button {
-  color: var(--text-color);
-}
-
-html.dark .image-viewer-toolbar button:hover {
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Page header dark mode
-   ======================================== */
-html.dark .page-header-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .page-header-back {
-  color: var(--text-color-secondary);
-}
-
-html.dark .page-header-back:hover {
-  color: var(--primary-color);
-}
-
-html.dark .page-header-title {
-  color: var(--text-color);
-}
-
-html.dark .page-header-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .page-header-content {
-  color: var(--text-color);
-}
-
-html.dark .page-header-extra {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Rate dark mode
-   ======================================== */
-html.dark .rate-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .rate-item {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .rate-item.active {
-  color: #E6A23C;
-}
-
-html.dark .rate-item:hover {
-  color: #E6A23C;
-}
-
-html.dark .rate-text {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Space dark mode
-   ======================================== */
-html.dark .space-container {
-  color: var(--text-color);
-}
-
-html.dark .space-item {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Statistic dark mode
-   ======================================== */
-html.dark .statistic-container {
-  color: var(--text-color);
-}
-
-html.dark .statistic-title {
-  color: var(--text-color-secondary);
-}
-
-html.dark .statistic-content {
-  color: var(--text-color);
-}
-
-html.dark .statistic-suffix {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Anchor dark mode
-   ======================================== */
-html.dark .anchor-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .anchor-link {
-  color: var(--text-color-secondary);
-}
-
-html.dark .anchor-link:hover {
-  color: var(--primary-color);
-}
-
-html.dark .anchor-link.active {
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Back top dark mode
-   ======================================== */
-html.dark .back-top-button {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-html.dark .back-top-button:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Check tag dark mode
-   ======================================== */
-html.dark .check-tag {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-html.dark .check-tag:hover {
-  color: var(--primary-color);
-}
-
-html.dark .check-tag.active {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Text dark mode
-   ======================================== */
-html.dark .text-container {
-  color: var(--text-color);
-}
-
-html.dark .text-secondary {
-  color: var(--text-color-secondary);
-}
-
-html.dark .text-placeholder {
-  color: var(--text-color-placeholder);
-}
-
-html.dark .text-success {
-  color: #67C23A;
-}
-
-html.dark .text-warning {
-  color: #E6A23C;
-}
-
-html.dark .text-danger {
-  color: #F56C6C;
-}
-
-html.dark .text-info {
-  color: #909399;
-}
-
-/* ========================================
-   Config provider dark mode
-   ======================================== */
-html.dark .config-provider {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Affix dark mode
-   ======================================== */
-html.dark .affix-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-/* ========================================
-   Grid dark mode
-   ======================================== */
-html.dark .grid-container {
-  color: var(--text-color);
-}
-
-html.dark .grid-item-container {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Icon dark mode
-   ======================================== */
-html.dark .icon-container {
-  color: var(--text-color);
-}
-
-html.dark .icon-primary {
-  color: var(--primary-color);
-}
-
-html.dark .icon-success {
-  color: #67C23A;
-}
-
-html.dark .icon-warning {
-  color: #E6A23C;
-}
-
-html.dark .icon-danger {
-  color: #F56C6C;
-}
-
-html.dark .icon-info {
-  color: #909399;
-}
-
-/* ========================================
-   Link dark mode
-   ======================================== */
-html.dark .link-container {
-  color: var(--text-color-secondary);
-}
-
-html.dark .link-container:hover {
-  color: var(--primary-color);
-}
-
-html.dark .link-primary {
-  color: var(--primary-color);
-}
-
-html.dark .link-success {
-  color: #67C23A;
-}
-
-html.dark .link-warning {
-  color: #E6A23C;
-}
-
-html.dark .link-danger {
-  color: #F56C6C;
-}
-
-html.dark .link-info {
-  color: #909399;
-}
-
-/* ========================================
-   Radio button dark mode
-   ======================================== */
-html.dark .radio-button-container {
-  color: var(--text-color);
-}
-
-html.dark .radio-button {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
-}
-
-html.dark .radio-button:hover {
-  color: var(--primary-color);
-}
-
-html.dark .radio-button.active {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-}
-
-/* ========================================
-   Segment dark mode
-   ======================================== */
-html.dark .segment-container {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-}
-
-html.dark .segment-item {
-  color: var(--text-color-secondary);
-}
-
-html.dark .segment-item:hover {
-  color: var(--text-color);
-}
-
-html.dark .segment-item.active {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
 /* ========================================
-   Result dark mode
-   ======================================== */
-html.dark .result-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .result-icon {
-  color: var(--text-color);
-}
-
-html.dark .result-title {
-  color: var(--text-color);
-}
-
-html.dark .result-subtitle {
-  color: var(--text-color-secondary);
-}
-
-html.dark .result-extra {
-  color: var(--text-color-secondary);
-}
+   Mobile Responsive
+   ======================================== */
+
+@media (max-width: 767px) {
+  body {
+    font-size: 17px;
+  }
+
+  .sk-display-hero {
+    font-size: 2.50rem; /* 40px on mobile */
+  }
 
-/* ========================================
-   Empty dark mode
-   ======================================== */
-html.dark .empty-container {
-  color: var(--text-color-secondary);
-}
+  .sk-display-section {
+    font-size: 1.75rem; /* 28px on mobile */
+  }
 
-html.dark .empty-image {
-  filter: invert(0.8);
-}
+  /* Larger touch targets */
+  .el-button {
+    min-height: 44px;
+  }
 
-html.dark .empty-description {
-  color: var(--text-color-secondary);
-}
+  /* Form item spacing */
+  .el-form-item {
+    margin-bottom: 8px;
+  }
 
-html.dark .empty-bottom {
-  color: var(--text-color-secondary);
-}
+  /* Card spacing */
+  .el-card {
+    border-radius: 8px;
+  }
 
-/* ========================================
-   Skeleton dark mode
-   ======================================== */
-html.dark .skeleton-container {
-  color: var(--text-color);
-}
+  /* Dialog mobile */
+  .el-dialog {
+    margin: 10px auto !important;
+  }
 
-html.dark .skeleton-paragraph {
-  background-color: var(--hover-bg-color);
-}
+  /* Native date input */
+  .native-date-input {
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    font-size: 17px;
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--sk-bg-light-gray);
+    color: var(--sk-text-near-black);
+    width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
 
-html.dark .skeleton-title {
-  background-color: var(--hover-bg-color);
-}
+  .native-date-input:focus {
+    border-color: var(--sk-focus-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+  }
 
-html.dark .skeleton-avatar {
-  background-color: var(--hover-bg-color);
-}
+  /* Date range */
+  .mobile-date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
 
-html.dark .skeleton-image {
-  background-color: var(--hover-bg-color);
-}
+  .mobile-date-range .native-date-input {
+    flex: 1;
+    min-width: 0;
+  }
 
-html.dark .skeleton-button {
-  background-color: var(--hover-bg-color);
-}
+  .mobile-date-range .date-separator {
+    color: var(--sk-text-tertiary);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
 
-html.dark .skeleton-input {
-  background-color: var(--hover-bg-color);
-}
+  /* Dark mode date input */
+  html.dark .native-date-input {
+    background: var(--sk-surface-dark-1);
+    border-color: var(--border-color);
+    color: var(--sk-text-white);
+  }
 
-html.dark .skeleton-circle {
-  background-color: var(--hover-bg-color);
+  html.dark .native-date-input:focus {
+    border-color: var(--sk-focus-color);
+  }
 }
 
-html.dark .skeleton-rect {
-  background-color: var(--hover-bg-color);
-}
+@media (min-width: 768px) {
+  body {
+    font-size: 17px;
+  }
 
-/* ========================================
-   Watermark dark mode
-   ======================================== */
-html.dark .watermark-container {
-  color: var(--text-color);
+  .sk-section {
+    padding: 80px 24px;
+  }
 }
 
 /* ========================================
-   Tour dark mode
+   Utility Classes
    ======================================== */
-html.dark .tour-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
 
-html.dark .tour-header {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
-  color: var(--text-color);
+.sk-text-center {
+  text-align: center;
 }
 
-html.dark .tour-body {
-  color: var(--text-color);
+.sk-text-left {
+  text-align: left;
 }
 
-html.dark .tour-footer {
-  background-color: var(--hover-bg-color);
-  border-color: var(--border-color);
+.sk-text-right {
+  text-align: right;
 }
 
-html.dark .tour-title {
-  color: var(--text-color);
+.sk-hidden {
+  display: none;
 }
 
-html.dark .tour-description {
-  color: var(--text-color-secondary);
+.sk-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-html.dark .tour-indicator {
-  background-color: var(--hover-bg-color);
+.sk-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-html.dark .tour-indicator.active {
-  background-color: var(--primary-color);
+.sk-gap-8 {
+  gap: 8px;
 }
 
-html.dark .tour-arrow {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
+.sk-gap-16 {
+  gap: 16px;
 }
 
-/* ========================================
-   Flex dark mode
-   ======================================== */
-html.dark .flex-container {
-  color: var(--text-color);
-}
-
-html.dark .flex-item {
-  color: var(--text-color);
-}
-
-/* ========================================
-   Highlight dark mode
-   ======================================== */
-html.dark .highlight-container {
-  color: var(--text-color);
-}
-
-html.dark .highlight-text {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
-}
-
-/* ========================================
-   Mention dark mode
-   ======================================== */
-html.dark .mention-dropdown {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .mention-dropdown-item {
-  color: var(--text-color);
+.sk-gap-24 {
+  gap: 24px;
 }
 
-html.dark .mention-dropdown-item:hover {
-  background-color: var(--hover-bg-color);
+.sk-mt-8 {
+  margin-top: 8px;
 }
 
-html.dark .mention-dropdown-item.active {
-  background-color: var(--active-bg-color);
-  color: var(--primary-color);
+.sk-mt-16 {
+  margin-top: 16px;
 }
 
-/* ========================================
-   QR code dark mode
-   ======================================== */
-html.dark .qrcode-container {
-  background-color: var(--bg-color-secondary);
-  border-color: var(--border-color);
-}
-
-html.dark .qrcode-status {
-  color: var(--text-color-secondary);
-}
-
-/* ========================================
-   Countdown dark mode
-   ======================================== */
-html.dark .countdown-container {
-  color: var(--text-color);
+.sk-mt-24 {
+  margin-top: 24px;
 }
 
-html.dark .countdown-value {
-  color: var(--text-color);
+.sk-mb-8 {
+  margin-bottom: 8px;
 }
 
-html.dark .countdown-finish {
-  color: var(--text-color-secondary);
+.sk-mb-16 {
+  margin-bottom: 16px;
 }
 
-/* ========================================
-   Native date/time input dark mode
-   ======================================== */
-html.dark input[type="date"],
-html.dark input[type="time"],
-html.dark input[type="datetime-local"],
-html.dark input[type="month"],
-html.dark input[type="week"] {
-  background-color: var(--bg-color-secondary);
-  color: var(--text-color);
-  border-color: var(--border-color);
-}
-
-html.dark input[type="date"]:focus,
-html.dark input[type="time"]:focus,
-html.dark input[type="datetime-local"]:focus,
-html.dark input[type="month"]:focus,
-html.dark input[type="week"]:focus {
-  border-color: var(--primary-color);
+.sk-mb-24 {
+  margin-bottom: 24px;
 }
 
-html.dark input[type="date"]::-webkit-calendar-picker-indicator,
-html.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
-html.dark input[type="month"]::-webkit-calendar-picker-indicator,
-html.dark input[type="week"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-  cursor: pointer;
+/* Hide number input arrows */
+.el-input-number__decrease,
+.el-input-number__increase {
+  display: none;
 }
 
-html.dark ::-webkit-datetime-edit {
-  color: var(--text-color);
+.el-input-number .el-input__wrapper {
+  padding-left: 11px;
+  padding-right: 11px;
 }
 
-html.dark ::-webkit-datetime-edit-fields-wrapper {
-  color: var(--text-color);
+/* Message minimum width */
+.el-message {
+  --el-message-min-width: 200px;
 }
 
-html.dark ::-webkit-datetime-edit-text {
-  color: var(--text-color-secondary);
-}
+@media (max-width: 767px) {
+  .el-message {
+    --el-message-min-width: 180px;
+    --el-message-padding: 10px 12px;
+  }
 
-html.dark ::-webkit-datetime-edit-hour-field,
-html.dark ::-webkit-datetime-edit-minute-field,
-html.dark ::-webkit-datetime-edit-second-field,
-html.dark ::-webkit-datetime-edit-ampm-field {
-  color: var(--text-color);
-}
+  /* Pagination mobile */
+  .el-pagination {
+    --el-pagination-button-width: 28px;
+    --el-pagination-button-height: 28px;
+  }
 
-html.dark ::-webkit-datetime-edit-year-field,
-html.dark ::-webkit-datetime-edit-month-field,
-html.dark ::-webkit-datetime-edit-day-field {
-  color: var(--text-color);
-}
+  .el-pagination .el-pagination__sizes,
+  .el-pagination .el-pagination__jump {
+    display: none;
+  }
 
-html.dark ::-webkit-datetime-edit-fields-wrapper:active {
-  background-color: var(--hover-bg-color);
-}
+  /* Dialog footer */
+  .el-dialog__footer {
+    padding: 8px 12px 12px;
+  }
 
-html.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
-html.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
-html.dark input[type="month"]::-webkit-calendar-picker-indicator:hover,
-html.dark input[type="week"]::-webkit-calendar-picker-indicator:hover {
-  filter: invert(1);
-}
+  .el-dialog__footer .el-button {
+    flex: 1;
+  }
 
-html.dark input[type="date"]:disabled,
-html.dark input[type="time"]:disabled,
-html.dark input[type="datetime-local"]:disabled,
-html.dark input[type="month"]:disabled,
-html.dark input[type="week"]:disabled {
-  background-color: var(--hover-bg-color);
-  color: var(--text-color-disabled);
-  border-color: var(--border-color);
+  .el-dialog__footer {
+    display: flex;
+    gap: 10px;
+  }
 }
