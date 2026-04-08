@@ -1669,7 +1669,7 @@ html.dark .el-scrollbar__thumb:hover {
 }
 
 html.dark .el-scrollbar__wrap {
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
