@@ -119,17 +119,26 @@ function goToDetail() {
 }
 
 .view-image-item {
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
   overflow: hidden;
 }
 
+html.dark .view-image-item {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .view-image-label {
-  background: #f5f7fa;
+  background: var(--sk-bg-light-gray);
   padding: 6px 10px;
   font-size: 12px;
-  color: #606266;
-  font-weight: 500;
+  color: var(--sk-text-secondary);
+  font-weight: 600;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+html.dark .view-image-label {
+  background: var(--sk-surface-dark-1);
 }
 
 .view-image-item img {
@@ -146,6 +155,7 @@ function goToDetail() {
 
 .view-value {
   font-weight: 600;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .plate-number {
@@ -165,15 +175,5 @@ function goToDetail() {
   color: #fff;
   padding: 2px 8px;
   border-radius: 4px;
-}
-
-/* 暗色模式 */
-html.dark .view-image-item {
-  border-color: var(--border-color);
-}
-
-html.dark .view-image-label {
-  background: var(--hover-bg-color);
-  color: var(--text-color-secondary);
 }
 </style>
