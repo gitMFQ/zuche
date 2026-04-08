@@ -402,10 +402,14 @@ async function saveSettings() {
 }
 
 .settings-tabs {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--bg-color-secondary);
+  border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+html.dark .settings-tabs {
+  background: var(--bg-color-secondary);
 }
 
 :deep(.el-tabs__header) {
@@ -414,6 +418,20 @@ async function saveSettings() {
 
 :deep(.el-tabs__item) {
   font-size: 15px;
+  color: var(--sk-text-secondary);
+}
+
+html.dark :deep(.el-tabs__item) {
+  color: var(--sk-text-secondary);
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: var(--sk-focus-color);
+  font-weight: 600;
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--sk-focus-color);
 }
 
 .logo-upload {
@@ -426,19 +444,28 @@ async function saveSettings() {
   width: 80px;
   height: 80px;
   border-radius: 12px;
-  border: 2px dashed #dcdfe6;
+  border: 2px dashed rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
   transition: all 0.2s ease;
-  background: #fafafa;
+  background: var(--sk-bg-light-gray);
+}
+
+html.dark .logo-preview {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--sk-surface-dark-1);
 }
 
 .logo-preview:hover {
-  border-color: #409eff;
-  background: #f0f7ff;
+  border-color: var(--sk-focus-color);
+  background: rgba(0, 113, 227, 0.05);
+}
+
+html.dark .logo-preview:hover {
+  background: rgba(0, 113, 227, 0.1);
 }
 
 .logo-preview img {
@@ -452,7 +479,7 @@ async function saveSettings() {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  color: #909399;
+  color: var(--sk-text-tertiary);
 }
 
 .logo-placeholder span {
@@ -467,7 +494,7 @@ async function saveSettings() {
 
 .logo-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-text-tertiary);
   margin-top: 8px;
 }
 
@@ -495,8 +522,12 @@ async function saveSettings() {
 }
 
 .color-item.active {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px #409eff, 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: var(--sk-text-white);
+  box-shadow: 0 0 0 2px var(--sk-focus-color), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .color-item.active {
+  border-color: var(--sk-text-near-black);
 }
 
 .check-icon {
@@ -508,7 +539,7 @@ async function saveSettings() {
 .color-label {
   margin-top: 8px;
   font-size: 13px;
-  color: #606266;
+  color: var(--sk-text-secondary);
 }
 
 .dark-mode-settings {
@@ -519,13 +550,19 @@ async function saveSettings() {
 
 .dark-mode-label {
   font-size: 13px;
-  color: #606266;
+  color: var(--sk-text-secondary);
   min-width: 120px;
 }
 
 .card-title {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--sk-text-near-black);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+html.dark .card-title {
+  color: var(--sk-text-white);
 }
 
 /* 调色盘样式 */
@@ -647,22 +684,60 @@ async function saveSettings() {
 }
 
 /* 暗色模式 */
-html.dark .settings-section {
+html.dark .settings-tabs {
   background: var(--bg-color-secondary);
 }
 
+html.dark :deep(.el-tabs__item) {
+  color: var(--sk-text-secondary);
+}
+
+html.dark :deep(.el-tabs__item.is-active) {
+  color: var(--sk-focus-color);
+}
+
 html.dark .section-title {
-  color: var(--text-color);
+  color: var(--sk-text-white);
 }
 
 html.dark .setting-label,
 html.dark .gradient-label,
 html.dark .gradient-arrow {
-  color: var(--text-color-secondary);
+  color: var(--sk-text-secondary);
 }
 
 html.dark .upload-btn {
-  border-color: var(--border-color);
-  color: var(--text-color-secondary);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--sk-text-secondary);
+}
+
+html.dark .logo-placeholder {
+  color: var(--sk-text-tertiary);
+}
+
+html.dark .logo-tip {
+  color: var(--sk-text-tertiary);
+}
+
+html.dark .color-label {
+  color: var(--sk-text-secondary);
+}
+
+html.dark .dark-mode-label {
+  color: var(--sk-text-secondary);
+}
+
+html.dark .card-title {
+  color: var(--sk-text-white);
+}
+
+/* 侧边栏风格选项暗色模式 */
+html.dark .sidebar-item {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 渐变预览暗色模式 */
+html.dark .gradient-preview {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 </style>
