@@ -629,11 +629,11 @@ html.dark .card-title {
 
 .gradient-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-text-tertiary);
 }
 
 .gradient-arrow {
-  color: #909399;
+  color: var(--sk-text-tertiary);
   font-size: 16px;
   padding-top: 20px;
 }
