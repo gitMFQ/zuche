@@ -52,12 +52,14 @@ car/
     ├── src/
     │   ├── api/                  # API 接口封装
     │   ├── components/            # 公共组件
-    │   │   ├── VehiclesTab.vue       # 车辆管理 Tab
-    │   │   ├── MaintenanceTab.vue    # 保养管理 Tab
-    │   │   ├── InsuranceTab.vue      # 保险管理 Tab
-    │   │   ├── InspectionTab.vue     # 年检证 Tab
-    │   │   ├── ViolationsTab.vue     # 违章管理 Tab
-    │   │   └── VehicleDetailDialog.vue  # 车辆详情弹窗
+    │   │   ├── ImageUpload.vue       # 图片上传组件
+    │   │   ├── OrderList.vue         # 订单列表组件
+    │   │   ├── PaymentDialog.vue     # 支付对话框
+    │   │   ├── PaymentList.vue       # 支付记录列表
+    │   │   ├── PaymentRecords.vue    # 支付记录组件
+    │   │   ├── MaintenanceRecords.vue # 保养记录组件
+    │   │   ├── ViolationList.vue     # 违章列表组件
+    │   │   └── VehicleDetail.vue     # 车辆详情组件
     │   ├── layouts/              # 布局组件
     │   ├── router/               # 路由配置
     │   ├── stores/               # Pinia 状态管理
@@ -66,21 +68,38 @@ car/
     │   │   └── helpers.ts        # 辅助函数
     │   └── views/                # 页面视图
     │       ├── Login.vue         # 登录页
-    │       ├── Dashboard.vue      # 仪表盘
-    │       ├── Users.vue          # 用户管理
-    │       ├── Customers.vue      # 客户管理
-    │       ├── Vehicles.vue       # 车辆管理入口
-    │       ├── Orders.vue         # 订单管理
-    │       ├── OrderDetail.vue    # 订单详情
-    │       ├── Blacklist.vue      # 黑名单
-    │       ├── OrderSources.vue   # 订单来源
-    │       ├── Violations.vue     # 违章管理
-    │       ├── Settings.vue       # 系统设置
-    │       └── Logs.vue           # 操作日志
+    │       ├── Dashboard.vue     # 仪表盘
+    │       ├── Users.vue         # 用户管理
+    │       ├── Customers.vue     # 客户管理
+    │       ├── Vehicles.vue      # 车辆管理入口
+    │       ├── Orders.vue        # 订单管理
+    │       ├── OrderDetail.vue   # 订单详情
+    │       ├── Blacklist.vue     # 黑名单
+    │       ├── OrderSources.vue  # 订单来源
+    │       ├── Violations.vue    # 违章管理
+    │       ├── Settings.vue      # 系统设置
+    │       └── Logs.vue          # 操作日志
     └── public/                   # 静态资源
 ```
 
 ## 功能模块
+
+### 业务规则
+
+**订单状态流转：**
+```
+pending (待取车) → active (已取车) → completed (已还车)
+                 ↘ cancelled (已取消)
+```
+
+**支付方式：** platform（平台支付）、wechat（微信）、alipay（支付宝）、cash（现金）、bank（银行转账）、other（其他）
+
+**支付类型：** rent（租金）、deposit（押金）、rent_deposit（租金+押金）、violation_deposit（违章押金）、damage（车损）、other（其他）
+
+**调度生成规则：**
+- 送车任务：从待取车 (pending) 订单提取取车时间和位置
+- 收车任务：从已取车 (active) 订单提取还车时间和位置
+- 仅显示当前时间及以后的调度，按时间升序排列
 
 ### 1. 仪表盘
 - 统计卡片：今日取车、今日还车、待处理订单、可用车辆
@@ -189,6 +208,16 @@ cd frontend && npm run dev
 
 访问 http://localhost:5173
 
+### 类型检查
+
+```bash
+# 后端类型检查
+cd backend && npx tsc --noEmit
+
+# 前端类型检查
+cd frontend && npx vue-tsc --noEmit
+```
+
 ### 默认账号
 - 用户名：`admin`
 - 密码：`admin123`
@@ -210,6 +239,45 @@ cd frontend && npm run dev
 | inspections | 年检证表 |
 | system_settings | 系统设置表 |
 | operation_logs | 操作日志表 |
+
+## 开发约定
+
+### 数据库操作
+- **必须使用辅助函数**：`query()`、`queryOne()`、`execute()`，禁止直接调用 `db.prepare/run/exec`
+- **分页查询**：使用 `queryWithPagination()` → `{ data, total, page, pageSize, totalPages }`
+- **数据库迁移**：在 `backend/src/db/index.ts` 的 `runMigrations()` 中添加 `ALTER TABLE`
+
+### API 响应格式
+统一返回 `{ success: boolean, data?: any, message?: string }`
+
+### 代码规范
+- **后端导入**：本地模块必须使用 `.js` 扩展名（如 `import { query } from '../utils/helpers.js'`）
+- **命名约定**：文件 kebab-case，函数 camelCase，数据库 snake_case
+- **错误处理**：所有控制器逻辑必须用 try-catch 包裹
+- **操作日志**：使用 `logAction()` 辅助函数记录关键操作
+
+### 开发禁忌
+- ❌ 类型抑制（`as any`、`@ts-ignore`）
+- ❌ 空 catch 块
+- ❌ SQL 字符串拼接（必须使用参数化查询）
+- ❌ 跳过类型检查提交
+- ❌ 日志中记录敏感信息（密码、token）
+
+## 注意事项
+
+- **数据库持久化**：better-sqlite3 自动持久化，数据写入即时保存，启用 WAL 模式
+- **跨域配置**：后端已配置 CORS，支持局域网访问
+- **文件大小限制**：上传文件限制 10MB
+- **无测试框架**：项目当前没有测试，类型检查是唯一的验证方式
+- **better-sqlite3 编译**：需要编译原生模块，推荐在 Docker/标准 Linux 环境运行
+
+## 设计系统
+
+本项目采用 **Apple 设计系统**，强调极简、产品聚焦和电影化节奏。核心原则：
+- **唯一强调色**：Apple Blue (`#0071e3`)
+- **无可见边框**：卡片/容器不使用边框，通过背景色和阴影区分层级
+- **毛玻璃导航栏**：`backdrop-filter: saturate(180%) blur(20px)`
+- **完整规范**：详见 [QWEN.md](QWEN.md)
 
 ## API 接口概览
 
