@@ -1,0 +1,24 @@
+name = "rental-admin-backend"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "rental-db"
+database_id = ""  # Will be filled after creating the database
+
+# KV Namespace for file uploads (optional, for production)
+# [[kv_namespaces]]
+# binding = "UPLOADS"
+# id = ""
+
+# R2 Bucket for file storage (recommended for production)
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "rental-uploads"
+
+[vars]
+JWT_SECRET = "your-secret-key-change-in-production"
+PORT = 3001
