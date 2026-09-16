@@ -2,6 +2,29 @@
 
 一个功能完整的租车公司管理解决方案，支持车辆调度、订单管理、客户管理、财务统计等核心业务功能。
 
+## 部署方式
+
+### ☁️ Cloudflare 全栈部署（推荐）
+
+本项目主要采用 **Cloudflare 全栈部署**方案，零服务器成本，适合中小型租车公司：
+
+- **前端**: Cloudflare Pages (Vue 3 + Vite)
+- **后端**: Cloudflare Workers (Hono 框架)
+- **数据库**: Cloudflare D1 (SQLite 兼容)
+- **文件存储**: Cloudflare R2
+
+详细部署步骤请查看 [README_CLOUDFLARE.md](README_CLOUDFLARE.md)
+
+### 🖥️ 传统本地/服务器部署
+
+也可使用 Node.js + Express + SQLite 在传统环境部署：
+
+- **Runtime**: Node.js 18+
+- **Framework**: Express 5
+- **Database**: SQLite (better-sqlite3)
+
+详见下方「快速开始」章节。
+
 ## 技术栈
 
 ### 后端
@@ -9,7 +32,7 @@
 - **Framework**: Express 5
 - **Language**: TypeScript
 - **Database**: SQLite (better-sqlite3)
-- **Auth**: JWT (1年有效期)
+- **Auth**: JWT (1 年有效期)
 
 ### 前端
 - **Framework**: Vue 3 + Vite

@@ -1,16 +1,1 @@
-```
-# Dependencies
-node_modules/
-
-# Environment variables
-.env
-
-# Build artifacts
-backend/dist/
-
-# Cloudflare Workers development
-backend/.wrangler/
-
-# Logs
-*.log
-```
+(empty)
