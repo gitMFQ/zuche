@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 /**
  * Apple-style Section Component
  * Supports dark and light background variants

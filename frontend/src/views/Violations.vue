@@ -149,7 +149,6 @@
             v-model="form.violation_date" 
             class="native-date-input"
             style="width: 100%"
-            @change="onViolationDateChange"
           />
           <el-date-picker 
             v-else

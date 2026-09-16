@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 /**
  * Apple-style Card Component
  * Supports light, dark, and elevated variants

@@ -669,7 +669,6 @@ const completeForm = ref({
 
 const pickupImageInput = ref<HTMLInputElement | null>(null)
 const returnImageInput = ref<HTMLInputElement | null>(null)
-const ganttContainer = ref<HTMLElement | null>(null)
 
 // 日期范围配置
 const VIEW_MODES = {
