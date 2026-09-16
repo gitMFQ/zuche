@@ -1,43 +1,16 @@
 ```
-# Build artifacts
-dist/
-build/
-*.d.ts
-*.js.map
-
-# Wrangler/Clerk development files
-.wrangler/
-
 # Dependencies
 node_modules/
 
 # Environment variables
 .env
-.env.local
-*.env.*
 
-# Logs and temporary files
+# Build artifacts
+backend/dist/
+
+# Cloudflare Workers development
+backend/.wrangler/
+
+# Logs
 *.log
-*.tmp
-
-# Editor/IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Python specific
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Coverage reports
-coverage/
-htmlcov/
-*.coverage
-
-# OS generated files
-.DS_Store
-Thumbs.db
 ```

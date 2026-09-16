@@ -461,5 +461,170 @@ app.put('/api/settings', authMiddleware, async (c) => {
         return c.json({ success: false, message: '保存系统设置失败' }, 500);
     }
 });
+// ==================== 认证相关接口 ====================
+// 获取当前登录用户信息
+app.get('/api/auth/me', authMiddleware, async (c) => {
+    try {
+        const jwtPayload = c.get('jwtPayload');
+        const user = jwtPayload;
+        if (!user || !user.id) {
+            return c.json({ success: false, message: '未授权' }, 401);
+        }
+        const userInfo = await queryOne(c.env.DB, 'SELECT id, username, name, role, phone, email, status, created_at FROM users WHERE id = ?', [String(user.id)]);
+        if (!userInfo) {
+            return c.json({ success: false, message: '用户不存在' }, 404);
+        }
+        return c.json({ success: true, data: userInfo });
+    }
+    catch (error) {
+        console.error('Get current user error:', error);
+        return c.json({ success: false, message: '获取用户信息失败' }, 500);
+    }
+});
+// ==================== 调度管理接口 ====================
+// 获取最近调度数据
+app.get('/api/schedules/recent', authMiddleware, async (c) => {
+    try {
+        // 查询待取车订单（送车）
+        const pickupOrders = await query(c.env.DB, `SELECT
+        o.id,
+        o.start_date as schedule_time,
+        '送' as type,
+        v.license_plate as plate_number,
+        s.name as platform,
+        s.color as platform_color,
+        COALESCE(o.pickup_location, '') as location,
+        o.order_no
+      FROM orders o
+      LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
+      WHERE o.status NOT IN ('completed', 'cancelled')
+      AND o.start_date >= datetime('now')
+      ORDER BY o.start_date ASC`);
+        // 查询还车订单（收车）
+        const returnOrders = await query(c.env.DB, `SELECT
+        o.id,
+        o.end_date as schedule_time,
+        '收' as type,
+        v.license_plate as plate_number,
+        s.name as platform,
+        s.color as platform_color,
+        COALESCE(o.return_location, '') as location,
+        o.order_no
+      FROM orders o
+      LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
+      WHERE o.status NOT IN ('completed', 'cancelled')
+      AND o.end_date >= datetime('now')
+      ORDER BY o.end_date ASC`);
+        const schedules = [...pickupOrders, ...returnOrders];
+        schedules.sort((a, b) => new Date(a.schedule_time).getTime() - new Date(b.schedule_time).getTime());
+        return c.json({ success: true, data: schedules });
+    }
+    catch (error) {
+        console.error('Get recent schedules error:', error);
+        return c.json({ success: false, message: '获取调度数据失败' }, 500);
+    }
+});
+// 获取甘特图数据
+app.get('/api/schedules/gantt', authMiddleware, async (c) => {
+    try {
+        const now = new Date();
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 30);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(now);
+        endDate.setDate(endDate.getDate() + 30);
+        endDate.setHours(23, 59, 59, 999);
+        const startDateStr = startDate.toISOString().replace('T', ' ').slice(0, 19);
+        const endDateStr = endDate.toISOString().replace('T', ' ').slice(0, 19);
+        const orders = await query(c.env.DB, `SELECT
+        o.id,
+        o.order_no,
+        o.start_date,
+        o.end_date,
+        o.status,
+        o.total_amount,
+        o.pickup_location,
+        o.return_location,
+        o.vehicle_id,
+        v.license_plate as plate_number,
+        v.brand,
+        v.model,
+        v.color,
+        v.year,
+        v.seats,
+        v.mileage,
+        v.daily_rate,
+        v.deposit,
+        v.vin,
+        v.engine_number,
+        v.is_new_energy,
+        v.status as vehicle_status,
+        v.license_image,
+        v.registration_image,
+        v.remarks,
+        c.name as customer_name,
+        c.phone as customer_phone,
+        s.name as platform,
+        s.color as platform_color
+      FROM orders o
+      LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN customers c ON o.customer_id = c.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
+      WHERE o.status IN ('pending', 'active', 'completed')
+      AND (
+        (o.start_date >= ? AND o.start_date <= ?)
+        OR (o.end_date >= ? AND o.end_date <= ?)
+        OR (o.start_date < ? AND o.end_date > ?)
+      )
+      ORDER BY v.license_plate ASC, o.start_date ASC`, [startDateStr, endDateStr, startDateStr, endDateStr, startDateStr, endDateStr]);
+        const ganttData = {};
+        orders.forEach((order) => {
+            const plateNumber = order.plate_number || '未知车辆';
+            if (!ganttData[plateNumber]) {
+                ganttData[plateNumber] = [];
+            }
+            ganttData[plateNumber].push({
+                id: order.id,
+                order_no: order.order_no,
+                startDateTime: order.start_date,
+                endDateTime: order.end_date,
+                status: order.status,
+                vehicle_id: order.vehicle_id,
+                plate_number: order.plate_number,
+                brand: order.brand,
+                model: order.model,
+                color: order.color,
+                year: order.year,
+                seats: order.seats,
+                mileage: order.mileage,
+                daily_rate: order.daily_rate,
+                deposit: order.deposit,
+                vin: order.vin,
+                engine_number: order.engine_number,
+                is_new_energy: order.is_new_energy,
+                vehicle_status: order.vehicle_status,
+                license_image: order.license_image,
+                registration_image: order.registration_image,
+                remarks: order.remarks,
+                platform: order.platform || '线下',
+                platform_color: order.platform_color,
+                source_name: order.platform,
+                source_color: order.platform_color,
+                name: order.customer_name,
+                phone: order.customer_phone,
+                pickLocation: order.pickup_location,
+                returnLocation: order.return_location,
+                rmb: order.total_amount
+            });
+        });
+        return c.json({ success: true, data: ganttData });
+    }
+    catch (error) {
+        console.error('Get gantt data error:', error);
+        return c.json({ success: false, message: '获取甘特图数据失败' }, 500);
+    }
+});
 // 导出 Worker
 export default app;

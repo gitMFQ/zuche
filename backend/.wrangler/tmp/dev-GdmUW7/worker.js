@@ -2726,6 +2726,177 @@ app.put("/api/settings", authMiddleware, async (c) => {
     return c.json({ success: false, message: "\u4FDD\u5B58\u7CFB\u7EDF\u8BBE\u7F6E\u5931\u8D25" }, 500);
   }
 });
+app.get("/api/auth/me", authMiddleware, async (c) => {
+  try {
+    const jwtPayload = c.get("jwtPayload");
+    const user = jwtPayload;
+    if (!user || !user.id) {
+      return c.json({ success: false, message: "\u672A\u6388\u6743" }, 401);
+    }
+    const userInfo = await queryOne(
+      c.env.DB,
+      "SELECT id, username, name, role, phone, email, status, created_at FROM users WHERE id = ?",
+      [String(user.id)]
+    );
+    if (!userInfo) {
+      return c.json({ success: false, message: "\u7528\u6237\u4E0D\u5B58\u5728" }, 404);
+    }
+    return c.json({ success: true, data: userInfo });
+  } catch (error) {
+    console.error("Get current user error:", error);
+    return c.json({ success: false, message: "\u83B7\u53D6\u7528\u6237\u4FE1\u606F\u5931\u8D25" }, 500);
+  }
+});
+app.get("/api/schedules/recent", authMiddleware, async (c) => {
+  try {
+    const pickupOrders = await query(
+      c.env.DB,
+      `SELECT
+        o.id,
+        o.start_date as schedule_time,
+        '\u9001' as type,
+        v.license_plate as plate_number,
+        s.name as platform,
+        s.color as platform_color,
+        COALESCE(o.pickup_location, '') as location,
+        o.order_no
+      FROM orders o
+      LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
+      WHERE o.status NOT IN ('completed', 'cancelled')
+      AND o.start_date >= datetime('now')
+      ORDER BY o.start_date ASC`
+    );
+    const returnOrders = await query(
+      c.env.DB,
+      `SELECT
+        o.id,
+        o.end_date as schedule_time,
+        '\u6536' as type,
+        v.license_plate as plate_number,
+        s.name as platform,
+        s.color as platform_color,
+        COALESCE(o.return_location, '') as location,
+        o.order_no
+      FROM orders o
+      LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
+      WHERE o.status NOT IN ('completed', 'cancelled')
+      AND o.end_date >= datetime('now')
+      ORDER BY o.end_date ASC`
+    );
+    const schedules = [...pickupOrders, ...returnOrders];
+    schedules.sort(
+      (a, b) => new Date(a.schedule_time).getTime() - new Date(b.schedule_time).getTime()
+    );
+    return c.json({ success: true, data: schedules });
+  } catch (error) {
+    console.error("Get recent schedules error:", error);
+    return c.json({ success: false, message: "\u83B7\u53D6\u8C03\u5EA6\u6570\u636E\u5931\u8D25" }, 500);
+  }
+});
+app.get("/api/schedules/gantt", authMiddleware, async (c) => {
+  try {
+    const now = /* @__PURE__ */ new Date();
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 30);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 30);
+    endDate.setHours(23, 59, 59, 999);
+    const startDateStr = startDate.toISOString().replace("T", " ").slice(0, 19);
+    const endDateStr = endDate.toISOString().replace("T", " ").slice(0, 19);
+    const orders = await query(
+      c.env.DB,
+      `SELECT
+        o.id,
+        o.order_no,
+        o.start_date,
+        o.end_date,
+        o.status,
+        o.total_amount,
+        o.pickup_location,
+        o.return_location,
+        o.vehicle_id,
+        v.license_plate as plate_number,
+        v.brand,
+        v.model,
+        v.color,
+        v.year,
+        v.seats,
+        v.mileage,
+        v.daily_rate,
+        v.deposit,
+        v.vin,
+        v.engine_number,
+        v.is_new_energy,
+        v.status as vehicle_status,
+        v.license_image,
+        v.registration_image,
+        v.remarks,
+        c.name as customer_name,
+        c.phone as customer_phone,
+        s.name as platform,
+        s.color as platform_color
+      FROM orders o
+      LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN customers c ON o.customer_id = c.id
+      LEFT JOIN order_sources s ON o.source_id = s.id
+      WHERE o.status IN ('pending', 'active', 'completed')
+      AND (
+        (o.start_date >= ? AND o.start_date <= ?)
+        OR (o.end_date >= ? AND o.end_date <= ?)
+        OR (o.start_date < ? AND o.end_date > ?)
+      )
+      ORDER BY v.license_plate ASC, o.start_date ASC`,
+      [startDateStr, endDateStr, startDateStr, endDateStr, startDateStr, endDateStr]
+    );
+    const ganttData = {};
+    orders.forEach((order2) => {
+      const plateNumber = order2.plate_number || "\u672A\u77E5\u8F66\u8F86";
+      if (!ganttData[plateNumber]) {
+        ganttData[plateNumber] = [];
+      }
+      ganttData[plateNumber].push({
+        id: order2.id,
+        order_no: order2.order_no,
+        startDateTime: order2.start_date,
+        endDateTime: order2.end_date,
+        status: order2.status,
+        vehicle_id: order2.vehicle_id,
+        plate_number: order2.plate_number,
+        brand: order2.brand,
+        model: order2.model,
+        color: order2.color,
+        year: order2.year,
+        seats: order2.seats,
+        mileage: order2.mileage,
+        daily_rate: order2.daily_rate,
+        deposit: order2.deposit,
+        vin: order2.vin,
+        engine_number: order2.engine_number,
+        is_new_energy: order2.is_new_energy,
+        vehicle_status: order2.vehicle_status,
+        license_image: order2.license_image,
+        registration_image: order2.registration_image,
+        remarks: order2.remarks,
+        platform: order2.platform || "\u7EBF\u4E0B",
+        platform_color: order2.platform_color,
+        source_name: order2.platform,
+        source_color: order2.platform_color,
+        name: order2.customer_name,
+        phone: order2.customer_phone,
+        pickLocation: order2.pickup_location,
+        returnLocation: order2.return_location,
+        rmb: order2.total_amount
+      });
+    });
+    return c.json({ success: true, data: ganttData });
+  } catch (error) {
+    console.error("Get gantt data error:", error);
+    return c.json({ success: false, message: "\u83B7\u53D6\u7518\u7279\u56FE\u6570\u636E\u5931\u8D25" }, 500);
+  }
+});
 var worker_default = app;
 
 // node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
