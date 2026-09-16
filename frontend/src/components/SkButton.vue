@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 /**
  * Apple-style Button Component
  * Supports primary, dark, pill, and filter variants

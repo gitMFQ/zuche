@@ -149,7 +149,7 @@
             v-model="form.violation_date" 
             class="native-date-input"
             style="width: 100%"
-            @change="onViolationDateChange"
+            @change="(e: Event) => onViolationDateChange((e.target as HTMLInputElement).value)"
           />
           <el-date-picker 
             v-else
@@ -158,7 +158,7 @@
             placeholder="违章日期" 
             value-format="YYYY-MM-DD" 
             style="width: 100%" 
-            @change="onViolationDateChange"
+            @change="(e: Event) => onViolationDateChange((e.target as HTMLInputElement).value)"
           />
         </el-form-item>
         <el-form-item label="关联订单" v-if="form.violation_date">

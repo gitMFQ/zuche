@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 /**
  * Apple-style Typography Component
  * Uses SF Pro Display/Text with optical sizing

@@ -1,27 +1,32 @@
+```
 # Dependencies
 node_modules/
 
-# Build output
+# Build artifacts
 dist/
 build/
+target/
 
-# Environment files
+# Environment
 .env
 .env.local
-.env.*.local
+.env.*
 
-# Database
-*.db
-*.db-journal
-backend/data/
+# Logs
+*.log
 
-# Uploads (keep folder structure)
-backend/uploads/*
-!backend/uploads/.gitkeep
-
-# IDE
+# Editors
 .vscode/
 .idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary files
+*.tmp
 *.swp
 *.swo
 
@@ -29,10 +34,38 @@ backend/uploads/*
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-npm-debug.log*
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
-# Lock files (optional, some teams prefer to commit these)
-# package-lock.json
-# yarn.lock
+# MyPy
+.mypy_cache/
+
+# PyTest
+.pytest_cache/
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```
