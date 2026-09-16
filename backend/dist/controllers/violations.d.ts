@@ -1,0 +1,10 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth.js';
+export declare function getViolations(req: AuthRequest, res: Response): void;
+export declare function getViolation(req: AuthRequest, res: Response): void;
+export declare function createViolation(req: AuthRequest, res: Response): void;
+export declare function updateViolation(req: AuthRequest, res: Response): void;
+export declare function handleViolation(req: AuthRequest, res: Response): void;
+export declare function collectFee(req: AuthRequest, res: Response): void;
+export declare function deleteViolation(req: AuthRequest, res: Response): void;
+export declare function getViolationStats(req: AuthRequest, res: Response): void;

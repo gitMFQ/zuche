@@ -113,7 +113,7 @@ async function queryWithPagination(
   const offset = (page - 1) * pageSize;
   const countSql = `SELECT COUNT(*) as total FROM (${sql})`;
   const countResult = await queryOne(db, countSql, params);
-  const total = countResult?.total || 0;
+  const total = Number(countResult?.total || 0);
   
   const dataSql = `${sql} LIMIT ${pageSize} OFFSET ${offset}`;
   const data = await query(db, dataSql, params);
@@ -149,7 +149,7 @@ app.post('/api/auth/login', async (c) => {
     }
 
     // 验证密码（需要使用 Web Crypto API）
-    const isValid = await verifyPassword(password, user.password_hash);
+    const isValid = await verifyPassword(password, String(user.password_hash));
     if (!isValid) {
       return c.json({ success: false, message: '用户名或密码错误' }, 401);
     }
@@ -521,12 +521,12 @@ app.get('/uploads/:type/:filename', async (c) => {
       return c.text('File not found', 404);
     }
     
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set('Cache-Control', 'public, max-age=31536000');
+    const headers: Record<string, string> = {};
+    object.writeHttpMetadata(headers as any);
+    (headers as any)['Cache-Control'] = 'public, max-age=31536000';
     
-    return new Response(object.body, {
-      headers
+    return new Response(object.body as any, {
+      headers: headers as any
     });
   } catch (error) {
     console.error('Serve file error:', error);
@@ -578,6 +578,65 @@ app.get('/api/dashboard/stats', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Dashboard stats error:', error);
     return c.json({ success: false, message: '获取统计数据失败' }, 500);
+  }
+});
+
+// ==================== 系统设置接口 ====================
+
+app.get('/api/settings', authMiddleware, async (c) => {
+  try {
+    const rows = await query(
+      c.env.DB,
+      'SELECT key, value FROM system_settings'
+    );
+    
+    const settings: Record<string, string> = {};
+    rows.forEach((row: any) => {
+      settings[row.key] = row.value || '';
+    });
+    
+    return c.json({ success: true, data: settings });
+  } catch (error) {
+    console.error('Get settings error:', error);
+    return c.json({ success: false, message: '获取系统设置失败' }, 500);
+  }
+});
+
+app.get('/api/settings/:key', authMiddleware, async (c) => {
+  try {
+    const key = c.req.param('key');
+    const row = await queryOne(
+      c.env.DB,
+      'SELECT value FROM system_settings WHERE key = ?',
+      [key]
+    );
+    
+    return c.json({ success: true, data: row?.value ?? null });
+  } catch (error) {
+    console.error('Get setting error:', error);
+    return c.json({ success: false, message: '获取设置失败' }, 500);
+  }
+});
+
+app.put('/api/settings', authMiddleware, async (c) => {
+  try {
+    const body = await c.req.json();
+    const { key, value } = body;
+    
+    if (!key) {
+      return c.json({ success: false, message: '缺少设置项名称' }, 400);
+    }
+    
+    await execute(
+      c.env.DB,
+      `INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))`,
+      [key, value || '']
+    );
+    
+    return c.json({ success: true, message: '设置保存成功' });
+  } catch (error) {
+    console.error('Update settings error:', error);
+    return c.json({ success: false, message: '保存系统设置失败' }, 500);
   }
 });
 

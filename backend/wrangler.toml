@@ -5,13 +5,13 @@ main = "src/worker.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# D1 数据库绑定
+# D1 数据库绑定（临时配置，用于创建数据库）
 [[d1_databases]]
 binding = "DB"
 database_name = "car-rental-db"
-# database_id = ""  # 运行 wrangler d1 create car-rental-db 后填写
+database_id = "temp-database-id"  # 运行 wrangler d1 create car-rental-db 后替换为实际 ID
 
-# R2 存储桶绑定（用于文件上传）
+# R2 存储桶绑定（临时配置，用于创建存储桶）
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "car-rental-uploads"

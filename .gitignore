@@ -1,72 +1,43 @@
 ```
-# Dependencies
-node_modules/
-
 # Build artifacts
 dist/
 build/
-target/
+*.d.ts
+*.js.map
 
-# Environment
+# Wrangler/Clerk development files
+.wrangler/
+
+# Dependencies
+node_modules/
+
+# Environment variables
 .env
 .env.local
-.env.*
+*.env.*
 
-# Logs
+# Logs and temporary files
 *.log
+*.tmp
 
-# Editors
+# Editor/IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Python
+# Python specific
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Temporary files
-*.tmp
-*.swp
-*.swo
-*.tmp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Coverage
+# Coverage reports
 coverage/
 htmlcov/
-.coverage
+*.coverage
 
-# MyPy
-.mypy_cache/
-
-# PyTest
-.pytest_cache/
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+# OS generated files
+.DS_Store
+Thumbs.db
 ```

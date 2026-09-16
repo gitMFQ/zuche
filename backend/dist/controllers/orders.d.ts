@@ -1,0 +1,10 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth.js';
+export declare function getOrders(req: AuthRequest, res: Response): void;
+export declare function getOrder(req: AuthRequest, res: Response): void;
+export declare function createOrder(req: AuthRequest, res: Response): void;
+export declare function updateOrderStatus(req: AuthRequest, res: Response): void;
+export declare function updateOrder(req: AuthRequest, res: Response): void;
+export declare function extendOrder(req: AuthRequest, res: Response): void;
+export declare function addPayment(req: AuthRequest, res: Response): void;
+export declare function cancelOrder(req: AuthRequest, res: Response): void;
