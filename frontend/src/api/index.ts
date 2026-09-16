@@ -1,9 +1,14 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
+// API 基础 URL，支持环境变量配置
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const USE_EXTERNAL_API = !!import.meta.env.VITE_API_URL
+
 const api = axios.create({
-  baseURL: '/api',
-  timeout: 10000
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  withCredentials: !USE_EXTERNAL_API // 仅在使用代理时发送 cookies
 })
 
 // 请求拦截器

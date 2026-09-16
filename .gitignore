@@ -1,38 +1,34 @@
+```
 # Dependencies
 node_modules/
 
-# Build output
-dist/
-build/
-
-# Environment files
+# Environment
 .env
 .env.local
-.env.*.local
+.env.*
 
-# Database
-*.db
-*.db-journal
-backend/data/
+# Build artifacts
+dist/
+build/
+target/
 
-# Uploads (keep folder structure)
-backend/uploads/*
-!backend/uploads/.gitkeep
+# Logs
+*.log
 
-# IDE
+# Editor/IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.tmp
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
-# Lock files (optional, some teams prefer to commit these)
-# package-lock.json
-# yarn.lock
+# Python (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+.env
+```
