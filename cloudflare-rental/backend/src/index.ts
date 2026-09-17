@@ -12,9 +12,6 @@ import vehicleRoutes from './routes/vehicles.js'
 import orderRoutes from './routes/orders.js'
 import violationRoutes from './routes/violations.js'
 import blacklistRoutes from './routes/blacklist.js'
-import maintenanceRoutes from './routes/maintenance.js'
-import insuranceRoutes from './routes/insurance.js'
-import inspectionRoutes from './routes/inspections.js'
 import scheduleRoutes from './routes/schedules.js'
 import settingsRoutes from './routes/settings.js'
 import logRoutes from './routes/logs.js'
@@ -62,9 +59,6 @@ app.route('/api/vehicles', vehicleRoutes)
 app.route('/api/orders', orderRoutes)
 app.route('/api/violations', violationRoutes)
 app.route('/api/blacklist', blacklistRoutes)
-app.route('/api/maintenance', maintenanceRoutes)
-app.route('/api/insurance', insuranceRoutes)
-app.route('/api/inspections', inspectionRoutes)
 app.route('/api/schedules', scheduleRoutes)
 app.route('/api/settings', settingsRoutes)
 app.route('/api/logs', logRoutes)

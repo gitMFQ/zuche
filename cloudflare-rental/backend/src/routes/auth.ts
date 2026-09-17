@@ -26,14 +26,14 @@ app.post('/login', async (c) => {
     }
 
     // 验证密码
-    const valid = await bcrypt.compare(password, user.password)
+    const valid = await bcrypt.compare(password, user.password as string)
     if (!valid) {
       return c.json({ success: false, message: '用户名或密码错误' }, 401)
     }
 
     // 生成 token
     const token = await createToken(
-      { userId: user.id, username: user.username, role: user.role },
+      { userId: user.id as string, username: user.username as string, role: user.role as string },
       c.env.JWT_SECRET
     )
 
@@ -98,7 +98,7 @@ app.put('/password', authMiddleware, async (c) => {
     }
 
     // 验证旧密码
-    const valid = await bcrypt.compare(oldPassword, user.password)
+    const valid = await bcrypt.compare(oldPassword, user.password as string)
     if (!valid) {
       return c.json({ success: false, message: '旧密码错误' }, 401)
     }

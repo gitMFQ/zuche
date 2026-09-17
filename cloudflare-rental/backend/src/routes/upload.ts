@@ -5,7 +5,7 @@ import type { Bindings, Variables } from '../index.js'
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 // 通用上传处理函数
-async function handleUpload(c: any, subdir: string, allowPdf = false) => {
+async function handleUpload(c: any, subdir: string, allowPdf = false) {
   try {
     const formData = await c.req.parseBody()
     const file = formData.get('image') as File | null
