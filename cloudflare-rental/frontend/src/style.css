@@ -1,0 +1,1993 @@
+/* ========================================
+   Apple Design System - Car Rental App
+   Based on Apple.com Visual Language
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Apple Color Palette */
+  --sk-bg-pure-black: #000000;
+  --sk-bg-light-gray: #f5f5f7;
+  --sk-text-near-black: #1d1d1f;
+  --sk-text-white: #ffffff;
+  --sk-text-secondary: rgba(0, 0, 0, 0.8);
+  --sk-text-tertiary: rgba(0, 0, 0, 0.48);
+  --sk-focus-color: #0071e3;
+  --sk-link-color: #0066cc;
+  --sk-link-color-dark: #2997ff;
+  
+  /* Surface Colors (Dark Mode) */
+  --sk-surface-dark-1: #272729;
+  --sk-surface-dark-2: #262628;
+  --sk-surface-dark-3: #28282a;
+  --sk-surface-dark-4: #2a2a2d;
+  --sk-surface-dark-5: #242426;
+  
+  /* Button States */
+  --sk-button-active: #ededf2;
+  --sk-button-default-light: #fafafc;
+  --sk-overlay: rgba(210, 210, 215, 0.64);
+  --sk-white-32: rgba(255, 255, 255, 0.32);
+  
+  /* Shadows */
+  --sk-card-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+  
+  /* Legacy compatibility - map old variables */
+  --primary-color: var(--sk-focus-color);
+  --primary-color-light: #2997ff;
+  --primary-color-dark: #005bb5;
+  --primary-color-rgb: 0, 113, 227;
+  --bg-color: var(--sk-bg-light-gray);
+  --bg-color-secondary: var(--sk-text-white);
+  --text-color: var(--sk-text-near-black);
+  --text-color-secondary: var(--sk-text-secondary);
+  --text-color-placeholder: var(--sk-text-tertiary);
+  --border-color: rgba(0, 0, 0, 0.04);
+  --shadow-color: var(--sk-card-shadow);
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --mask-color: rgba(0, 0, 0, 0.5);
+  --hover-bg-color: var(--sk-button-default-light);
+  --active-bg-color: var(--sk-button-active);
+}
+
+html.dark {
+  --bg-color: var(--sk-bg-pure-black);
+  --bg-color-secondary: var(--sk-surface-dark-1);
+  --text-color: var(--sk-text-white);
+  --text-color-secondary: rgba(255, 255, 255, 0.8);
+  --text-color-placeholder: rgba(255, 255, 255, 0.48);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --mask-color: rgba(255, 255, 255, 0.3);
+  --hover-bg-color: var(--sk-surface-dark-2);
+  --active-bg-color: var(--sk-surface-dark-3);
+
+  /* Element Plus dark mode root variables */
+  --el-bg-color: var(--sk-bg-pure-black);
+  --el-bg-color-overlay: var(--sk-surface-dark-1);
+  --el-bg-color-page: var(--sk-bg-pure-black);
+  --el-fill-color-blank: var(--sk-surface-dark-1);
+  --el-fill-color: var(--sk-surface-dark-2);
+  --el-fill-color-light: #3a3a3a;
+  --el-fill-color-lighter: #404040;
+  --el-fill-color-extra-light: var(--sk-surface-dark-1);
+  --el-fill-color-dark: #4a4a4a;
+  --el-text-color-primary: var(--sk-text-white);
+  --el-text-color-regular: #d0d0d0;
+  --el-text-color-secondary: rgba(255, 255, 255, 0.8);
+  --el-text-color-placeholder: rgba(255, 255, 255, 0.48);
+  --el-text-color-disabled: #505050;
+  --el-border-color: rgba(255, 255, 255, 0.08);
+  --el-border-color-light: var(--sk-surface-dark-2);
+  --el-border-color-lighter: #303030;
+  --el-border-color-extra-light: #2a2a2a;
+  --el-border-color-dark: #4a4a4a;
+  --el-border-color-hover: #505050;
+  --el-color-white: var(--sk-surface-dark-1);
+  --el-box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.6);
+  --el-box-shadow-light: 0 2px 8px 0 rgba(0, 0, 0, 0.4);
+  --el-box-shadow-lighter: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+  --el-box-shadow-dark: 0 2px 16px 0 rgba(0, 0, 0, 0.8);
+  --el-disabled-bg-color: var(--sk-surface-dark-2);
+  --el-disabled-text-color: #505050;
+  --el-disabled-border-color: var(--sk-surface-dark-2);
+  --el-overlay-color: rgba(0, 0, 0, 0.7);
+  --el-overlay-color-light: rgba(0, 0, 0, 0.5);
+  --el-overlay-color-lighter: rgba(0, 0, 0, 0.3);
+  --el-mask-color: rgba(0, 0, 0, 0.7);
+  --el-mask-color-extra-light: rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+
+/* ========================================
+   Typography System - SF Pro
+   ======================================== */
+
+html, body, #app {
+  height: 100%;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-color);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Display Headlines - SF Pro Display */
+.sk-display-hero {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 3.50rem; /* 56px */
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.28px;
+}
+
+.sk-display-section {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 2.50rem; /* 40px */
+  font-weight: 600;
+  line-height: 1.10;
+  letter-spacing: normal;
+}
+
+.sk-display-tile {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.75rem; /* 28px */
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+}
+
+.sk-display-card {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.31rem; /* 21px */
+  font-weight: 700;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+.sk-display-subheading {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.31rem; /* 21px */
+  font-weight: 400;
+  line-height: 1.19;
+  letter-spacing: 0.231px;
+}
+
+/* Body Text - SF Pro Text */
+.sk-body {
+  font-size: 1.06rem; /* 17px */
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+
+.sk-body-emphasis {
+  font-size: 1.06rem; /* 17px */
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.374px;
+}
+
+.sk-caption {
+  font-size: 0.88rem; /* 14px */
+  font-weight: 400;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
+.sk-caption-bold {
+  font-size: 0.88rem; /* 14px */
+  font-weight: 600;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
+.sk-micro {
+  font-size: 0.75rem; /* 12px */
+  font-weight: 400;
+  line-height: 1.33;
+  letter-spacing: -0.12px;
+}
+
+/* ========================================
+   Apple Button System
+   ======================================== */
+
+/* Primary CTA Button */
+.sk-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sk-focus-color);
+  color: var(--sk-text-white);
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 2.41;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sk-button-primary:hover {
+  background-color: #0077ed;
+}
+
+.sk-button-primary:active {
+  background-color: var(--sk-button-active);
+}
+
+.sk-button-primary:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+.sk-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark CTA Button */
+.sk-button-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sk-text-near-black);
+  color: var(--sk-text-white);
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 2.41;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sk-button-dark:hover {
+  background-color: #000000;
+}
+
+.sk-button-dark:active {
+  background-color: var(--sk-button-active);
+}
+
+.sk-button-dark:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+/* Pill Link Button (Learn More / Shop) */
+.sk-button-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: transparent;
+  color: var(--sk-link-color);
+  padding: 8px 15px;
+  border-radius: 980px;
+  border: 1px solid var(--sk-link-color);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sk-button-pill:hover {
+  text-decoration: underline;
+}
+
+.sk-button-pill:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+html.dark .sk-button-pill {
+  color: var(--sk-link-color-dark);
+  border-color: var(--sk-link-color-dark);
+}
+
+/* Filter / Search Button */
+.sk-button-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--sk-button-default-light);
+  color: rgba(0, 0, 0, 0.8);
+  padding: 0px 14px;
+  border-radius: 11px;
+  border: 3px solid rgba(0, 0, 0, 0.04);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sk-button-filter:hover {
+  background-color: #f0f0f5;
+}
+
+.sk-button-filter:focus-visible {
+  outline: 2px solid var(--sk-focus-color);
+  outline-offset: 2px;
+}
+
+html.dark .sk-button-filter {
+  background-color: var(--sk-surface-dark-2);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .sk-button-filter:hover {
+  background-color: var(--sk-surface-dark-3);
+}
+
+/* ========================================
+   Apple Card System
+   ======================================== */
+
+.sk-card {
+  background-color: var(--bg-color-secondary);
+  border-radius: 8px;
+  padding: 24px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sk-card:hover {
+  transform: translateY(-2px);
+}
+
+.sk-card-light {
+  background-color: var(--sk-bg-light-gray);
+}
+
+.sk-card-dark {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.sk-card-elevated {
+  box-shadow: var(--sk-card-shadow);
+}
+
+/* ========================================
+   Apple Navigation Glass
+   ======================================== */
+
+.sk-nav-glass {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 48px;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.sk-nav-glass .sk-nav-link {
+  color: var(--sk-text-white);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  text-decoration: none;
+  padding: 0 12px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+.sk-nav-glass .sk-nav-link:hover {
+  opacity: 0.7;
+}
+
+html.dark .sk-nav-glass {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* ========================================
+   Apple Section Layout
+   ======================================== */
+
+.sk-section {
+  width: 100%;
+  padding: 60px 16px;
+}
+
+.sk-section-dark {
+  background-color: var(--sk-bg-pure-black);
+  color: var(--sk-text-white);
+}
+
+.sk-section-light {
+  background-color: var(--sk-bg-light-gray);
+  color: var(--sk-text-near-black);
+}
+
+.sk-section-content {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* ========================================
+   Apple Links
+   ======================================== */
+
+.sk-link {
+  color: var(--sk-link-color);
+  text-decoration: none;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+  transition: opacity 0.2s ease;
+}
+
+.sk-link:hover {
+  text-decoration: underline;
+}
+
+html.dark .sk-link {
+  color: var(--sk-link-color-dark);
+}
+
+a {
+  color: var(--sk-link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ========================================
+   Element Plus Override - Apple Style
+   ======================================== */
+
+/* Primary Button */
+.el-button--primary {
+  --el-button-bg-color: var(--sk-focus-color);
+  --el-button-border-color: var(--sk-focus-color);
+  --el-button-hover-bg-color: #0077ed;
+  --el-button-hover-border-color: #0077ed;
+  --el-button-active-bg-color: var(--sk-button-active);
+  --el-button-active-border-color: var(--sk-button-active);
+  --el-button-disabled-bg-color: rgba(0, 113, 227, 0.5);
+  --el-button-disabled-border-color: rgba(0, 113, 227, 0.5);
+}
+
+.el-button--primary.is-link,
+.el-button--primary.is-text {
+  color: var(--sk-focus-color);
+}
+
+.el-button--primary.is-link:hover,
+.el-button--primary.is-text:hover {
+  color: var(--primary-color-light);
+}
+
+/* Tabs Active Color */
+.el-tabs__item.is-active {
+  color: var(--sk-focus-color);
+}
+
+.el-tabs__active-bar {
+  background-color: var(--sk-focus-color);
+}
+
+.el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+  color: var(--sk-focus-color);
+  background-color: #fff;
+  border-right-color: var(--sk-focus-color);
+  border-left-color: var(--sk-focus-color);
+}
+
+.el-tabs--border-card > .el-tabs__header .el-tabs__item:not(.is-disabled):hover {
+  color: var(--sk-focus-color);
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
+  color: var(--sk-focus-color);
+  border-bottom-color: var(--sk-focus-color);
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__item:hover {
+  color: var(--sk-focus-color);
+}
+
+/* Switch Active Color */
+.el-switch.is-checked .el-switch__core {
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+/* Checkbox Active Color */
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+/* Radio Active Color */
+.el-radio__input.is-checked .el-radio__inner {
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+/* Input Focus Color */
+.el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 1px var(--sk-focus-color) inset;
+}
+
+.el-textarea__inner:focus {
+  border-color: var(--sk-focus-color);
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--sk-focus-color) inset;
+}
+
+/* Pagination Active Color */
+.el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: var(--sk-focus-color);
+}
+
+.el-pagination button:hover {
+  color: var(--sk-focus-color);
+}
+
+/* Slider */
+.el-slider__bar {
+  background-color: var(--sk-focus-color);
+}
+
+.el-slider__button {
+  border-color: var(--sk-focus-color);
+}
+
+/* Date Picker */
+.el-date-table td.current:not(.disabled) .el-date-table-cell__text {
+  background-color: var(--sk-focus-color);
+}
+
+.el-date-table td.available:hover .el-date-table-cell__text {
+  color: var(--sk-focus-color);
+}
+
+.el-picker-panel__shortcut:hover {
+  color: var(--sk-focus-color);
+}
+
+/* Time Picker */
+.el-time-panel__btn.confirm {
+  color: var(--sk-focus-color);
+}
+
+/* Select Dropdown */
+.el-select-dropdown__item.is-selected {
+  color: var(--sk-focus-color);
+}
+
+.el-select-dropdown__item:hover {
+  color: var(--sk-focus-color);
+}
+
+/* Tree */
+.el-tree-node__content:hover {
+  background-color: rgba(0, 113, 227, 0.1);
+}
+
+.el-tree-node.is-current > .el-tree-node__content {
+  background-color: rgba(0, 113, 227, 0.15);
+  color: var(--sk-focus-color);
+}
+
+/* Loading Spinner */
+.el-loading-spinner .circular {
+  stroke: var(--sk-focus-color);
+}
+
+.el-loading-spinner .el-loading-text {
+  color: var(--sk-focus-color);
+}
+
+/* Progress Bar */
+.el-progress-bar__inner {
+  background-color: var(--sk-focus-color);
+}
+
+/* Steps */
+.el-step__head.is-finish {
+  color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+.el-step__title.is-finish {
+  color: var(--sk-focus-color);
+}
+
+.el-step__head.is-process {
+  color: var(--sk-focus-color);
+}
+
+/* Tags */
+.el-tag--primary {
+  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
+  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-text-color: var(--sk-focus-color);
+}
+
+.el-tag.el-tag--primary {
+  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
+  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-text-color: var(--sk-focus-color);
+}
+
+.el-tag:not(.el-tag--success):not(.el-tag--warning):not(.el-tag--danger):not(.el-tag--info) {
+  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
+  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-text-color: var(--sk-focus-color);
+}
+
+/* Badge */
+.el-badge__content {
+  background-color: var(--sk-focus-color);
+}
+
+/* Table Selection */
+.el-table__body tr.current-row > td {
+  background-color: rgba(0, 113, 227, 0.1);
+}
+
+.el-table__body tr.hover-row > td {
+  background-color: rgba(0, 113, 227, 0.05);
+}
+
+/* Link Button */
+.el-button.is-link:hover {
+  color: var(--sk-focus-color);
+}
+
+/* Stat Card */
+.stat-card.primary {
+  background: var(--sk-surface-dark-1) !important;
+}
+
+/* Text Primary */
+.text-primary {
+  color: var(--sk-focus-color) !important;
+}
+
+/* ========================================
+   Plate Number Styles
+   ======================================== */
+
+.plate-number {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+  font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 1px;
+}
+
+.plate-number.new-energy {
+  background: linear-gradient(135deg, #00a870 0%, #00c853 100%);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 168, 112, 0.3);
+}
+
+.plate-number.fuel {
+  background: linear-gradient(135deg, #0066cc 0%, #0080ff 100%);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+}
+
+/* Source Tag */
+.source-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #fff;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Location Text */
+.location-text {
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+/* ========================================
+   Dark Mode - Element Plus Override
+   ======================================== */
+
+html.dark .el-card {
+  --el-card-bg-color: var(--bg-color-secondary);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-table {
+  --el-table-bg-color: var(--bg-color-secondary);
+  --el-table-tr-bg-color: var(--bg-color-secondary);
+  --el-table-header-bg-color: var(--hover-bg-color);
+  --el-table-text-color: var(--text-color);
+  --el-table-header-text-color: var(--text-color-secondary);
+  --el-table-border-color: var(--border-color);
+  --el-table-fixed-box-shadow: 0 0 10px var(--shadow-color);
+}
+
+html.dark .el-table .el-table__cell {
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+html.dark .el-table--border {
+  border-color: var(--border-color);
+}
+
+html.dark .el-table--striped .el-table__body tr.el-table__row--striped td {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-dialog {
+  --el-dialog-bg-color: var(--bg-color-secondary);
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .el-dialog__title {
+  color: var(--text-color);
+}
+
+html.dark .el-dialog__body {
+  color: var(--text-color);
+}
+
+html.dark .el-drawer {
+  --el-drawer-bg-color: var(--bg-color-secondary);
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .el-drawer__header {
+  color: var(--text-color);
+}
+
+html.dark .el-drawer__body {
+  color: var(--text-color);
+}
+
+html.dark .el-message-box {
+  --el-messagebox-bg-color: var(--bg-color-secondary);
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .el-message-box__title {
+  color: var(--text-color);
+}
+
+html.dark .el-message-box__content {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-input__wrapper {
+  --el-input-bg-color: var(--bg-color-secondary);
+  --el-input-border-color: var(--border-color);
+  --el-input-text-color: var(--text-color);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+html.dark .el-input__inner {
+  color: var(--text-color);
+}
+
+html.dark .el-textarea__inner {
+  --el-textarea-bg-color: var(--bg-color-secondary);
+  --el-textarea-border-color: var(--border-color);
+  --el-textarea-text-color: var(--text-color);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+html.dark .el-select .el-input__wrapper {
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .el-select-dropdown {
+  --el-select-dropdown-bg-color: var(--bg-color-secondary);
+  --el-select-dropdown-color: var(--text-color);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-select-dropdown__item {
+  color: var(--text-color);
+}
+
+html.dark .el-select-dropdown__item.hover,
+html.dark .el-select-dropdown__item:hover {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-select-dropdown__item.selected {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-popper {
+  --el-popper-bg-color: var(--bg-color-secondary);
+  --el-popper-text-color: var(--text-color);
+  background-color: var(--bg-color-secondary);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+html.dark .el-dropdown-menu {
+  --el-dropdown-menu-bg-color: var(--bg-color-secondary);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-dropdown-menu__item {
+  color: var(--text-color);
+}
+
+html.dark .el-dropdown-menu__item:hover {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-dropdown-menu__item--divided {
+  border-top-color: var(--border-color);
+}
+
+html.dark .el-menu {
+  --el-menu-bg-color: var(--bg-color-secondary);
+  --el-menu-text-color: var(--text-color-secondary);
+  --el-menu-hover-bg-color: var(--hover-bg-color);
+  --el-menu-border-color: var(--border-color);
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .el-menu-item {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-menu-item:hover {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-menu--inline {
+  background-color: var(--bg-color);
+}
+
+html.dark .el-tabs {
+  --el-tabs-header-bg-color: var(--hover-bg-color);
+}
+
+html.dark .el-tabs__content {
+  color: var(--text-color);
+}
+
+html.dark .el-tabs__item {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-tabs__item:hover {
+  color: var(--text-color);
+}
+
+html.dark .el-tabs--border-card {
+  --el-tabs-header-bg-color: var(--hover-bg-color);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-tabs--border-card > .el-tabs__header {
+  background-color: var(--hover-bg-color);
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .el-tabs--card > .el-tabs__header {
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .el-tabs--card > .el-tabs__header .el-tabs__item {
+  border-color: var(--border-color);
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
+  background-color: var(--bg-color-secondary);
+  border-bottom-color: var(--bg-color-secondary);
+}
+
+html.dark .el-tabs--border-card > .el-tabs__header .el-tabs__item.is-active {
+  background-color: var(--bg-color-secondary);
+  color: var(--sk-focus-color);
+  border-right-color: var(--sk-focus-color);
+  border-left-color: var(--sk-focus-color);
+}
+
+html.dark .el-form-item__label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-form-item__content {
+  color: var(--text-color);
+}
+
+html.dark .el-button {
+  --el-button-disabled-bg-color: var(--hover-bg-color);
+  --el-button-disabled-border-color: var(--border-color);
+}
+
+html.dark .el-pagination {
+  --el-pagination-bg-color: var(--bg-color-secondary);
+  --el-pagination-text-color: var(--text-color-secondary);
+}
+
+html.dark .el-pagination .el-pager li {
+  background-color: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-pagination .el-pager li:hover {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-pagination .btn-prev,
+html.dark .el-pagination .btn-next {
+  background-color: var(--bg-color-secondary);
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-pagination .btn-prev:hover,
+html.dark .el-pagination .btn-next:hover {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-tag {
+  --el-tag-bg-color: var(--hover-bg-color);
+  --el-tag-border-color: var(--border-color);
+  --el-tag-text-color: var(--text-color-secondary);
+}
+
+html.dark .el-badge__content {
+  background-color: var(--sk-focus-color);
+}
+
+html.dark .el-switch__core {
+  --el-switch-on-color: var(--sk-focus-color);
+  background-color: var(--border-color);
+}
+
+html.dark .el-checkbox__inner {
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-radio__inner {
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-radio__input.is-checked .el-radio__inner,
+html.dark .el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+html.dark .el-radio__input.is-checked + .el-radio__label {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-checkbox__input.is-checked + .el-checkbox__label {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-slider {
+  --el-slider-main-bg-color: var(--sk-focus-color);
+  --el-slider-runway-bg-color: var(--hover-bg-color);
+  --el-slider-button-size: 16px;
+}
+
+html.dark .el-slider__button {
+  border-color: var(--sk-focus-color);
+}
+
+html.dark .el-date-picker {
+  --el-datepicker-bg-color: var(--bg-color-secondary);
+  --el-datepicker-border-color: var(--border-color);
+  --el-datepicker-text-color: var(--text-color);
+}
+
+html.dark .el-date-picker__header-label {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-date-table th {
+  border-bottom-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-date-table td {
+  color: var(--text-color);
+}
+
+html.dark .el-date-table td.current .el-date-table-cell__text {
+  background-color: var(--sk-focus-color);
+}
+
+html.dark .el-date-table td.today .el-date-table-cell__text {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-date-table td.available:hover .el-date-table-cell__text {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-picker-panel {
+  --el-picker-panel-bg-color: var(--bg-color-secondary);
+  --el-picker-panel-border-color: var(--border-color);
+  --el-picker-panel-text-color: var(--text-color);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+html.dark .el-picker-panel__icon-btn {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-picker-panel__icon-btn:hover {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-picker-panel__shortcut:hover {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-time-panel {
+  --el-time-panel-bg-color: var(--bg-color-secondary);
+  --el-time-panel-border-color: var(--border-color);
+  background-color: var(--bg-color-secondary);
+  border-color: var(--border-color);
+}
+
+html.dark .el-time-panel__content {
+  background-color: var(--bg-color);
+  border-color: var(--border-color);
+}
+
+html.dark .el-time-panel__content::before,
+html.dark .el-time-panel__content::after {
+  border-top-color: var(--border-color);
+  border-bottom-color: var(--border-color);
+}
+
+html.dark .el-time-spinner__item {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-time-spinner__item.active {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-time-spinner__item:hover:not(.disabled):not(.active) {
+  background-color: var(--hover-bg-color);
+}
+
+html.dark .el-loading-mask {
+  background-color: var(--bg-color);
+}
+
+html.dark .el-loading-spinner .el-loading-text {
+  color: var(--sk-focus-color);
+}
+
+html.dark .el-progress__text {
+  color: var(--text-color);
+}
+
+html.dark .el-step__title {
+  color: var(--text-color);
+}
+
+html.dark .el-step__description {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-step__head {
+  border-color: var(--border-color);
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .el-step__head.is-process {
+  color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+html.dark .el-step__head.is-wait {
+  color: var(--text-color-placeholder);
+  border-color: var(--border-color);
+}
+
+html.dark .el-step__head.is-finish {
+  color: var(--sk-focus-color);
+  border-color: var(--sk-focus-color);
+}
+
+html.dark .el-step__line {
+  background-color: var(--border-color);
+}
+
+html.dark .el-step__line-inner {
+  background-color: var(--sk-focus-color);
+}
+
+html.dark .el-avatar {
+  --el-avatar-bg-color: var(--hover-bg-color);
+  background-color: var(--hover-bg-color);
+  color: var(--text-color);
+}
+
+html.dark .el-empty {
+  --el-empty-text-color: var(--text-color-secondary);
+}
+
+html.dark .el-empty__description {
+  color: var(--text-color-secondary);
+}
+
+html.dark .el-divider {
+  --el-divider-border-color: var(--border-color);
+  border-color: var(--border-color);
+}
+
+html.dark .el-divider__text {
+  color: var(--text-color);
+}
+
+html.dark .el-link {
+  --el-link-text-color: var(--text-color-secondary);
+}
+
+html.dark .el-link:hover {
+  color: var(--sk-focus-color);
+}
+
+/* ========================================
+   Scrollbar Styles
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* ========================================
+   Mobile Responsive
+   ======================================== */
+
+@media (max-width: 767px) {
+  body {
+    font-size: 17px;
+  }
+
+  .sk-display-hero {
+    font-size: 2.50rem; /* 40px on mobile */
+  }
+
+  .sk-display-section {
+    font-size: 1.75rem; /* 28px on mobile */
+  }
+
+  /* Larger touch targets */
+  .el-button {
+    min-height: 44px;
+  }
+
+  /* Form item spacing */
+  .el-form-item {
+    margin-bottom: 8px;
+  }
+
+  /* Card spacing */
+  .el-card {
+    border-radius: 8px;
+  }
+
+  /* Dialog mobile */
+  .el-dialog {
+    margin: 10px auto !important;
+  }
+
+  /* Native date input */
+  .native-date-input {
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    font-size: 17px;
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--sk-bg-light-gray);
+    color: var(--sk-text-near-black);
+    width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .native-date-input:focus {
+    border-color: var(--sk-focus-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+  }
+
+  /* Date range */
+  .mobile-date-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mobile-date-range .native-date-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-date-range .date-separator {
+    color: var(--sk-text-tertiary);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Dark mode date input */
+  html.dark .native-date-input {
+    background: var(--sk-surface-dark-1);
+    border-color: var(--border-color);
+    color: var(--sk-text-white);
+  }
+
+  html.dark .native-date-input:focus {
+    border-color: var(--sk-focus-color);
+  }
+}
+
+@media (min-width: 768px) {
+  body {
+    font-size: 17px;
+  }
+
+  .sk-section {
+    padding: 80px 24px;
+  }
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+.sk-text-center {
+  text-align: center;
+}
+
+.sk-text-left {
+  text-align: left;
+}
+
+.sk-text-right {
+  text-align: right;
+}
+
+.sk-hidden {
+  display: none;
+}
+
+.sk-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sk-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sk-gap-8 {
+  gap: 8px;
+}
+
+.sk-gap-16 {
+  gap: 16px;
+}
+
+.sk-gap-24 {
+  gap: 24px;
+}
+
+.sk-mt-8 {
+  margin-top: 8px;
+}
+
+.sk-mt-16 {
+  margin-top: 16px;
+}
+
+.sk-mt-24 {
+  margin-top: 24px;
+}
+
+.sk-mb-8 {
+  margin-bottom: 8px;
+}
+
+.sk-mb-16 {
+  margin-bottom: 16px;
+}
+
+.sk-mb-24 {
+  margin-bottom: 24px;
+}
+
+/* Hide number input arrows */
+.el-input-number__decrease,
+.el-input-number__increase {
+  display: none;
+}
+
+.el-input-number .el-input__wrapper {
+  padding-left: 11px;
+  padding-right: 11px;
+}
+
+/* Message minimum width */
+.el-message {
+  --el-message-min-width: 200px;
+}
+
+@media (max-width: 767px) {
+  .el-message {
+    --el-message-min-width: 180px;
+    --el-message-padding: 10px 12px;
+  }
+
+  /* Pagination mobile */
+  .el-pagination {
+    --el-pagination-button-width: 28px;
+    --el-pagination-button-height: 28px;
+  }
+
+  .el-pagination .el-pagination__sizes,
+  .el-pagination .el-pagination__jump {
+    display: none;
+  }
+
+  /* Dialog footer */
+  .el-dialog__footer {
+    padding: 8px 12px 12px;
+  }
+
+  .el-dialog__footer .el-button {
+    flex: 1;
+  }
+
+  .el-dialog__footer {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+/* ========================================
+   Dashboard - Apple Style Overrides
+   ======================================== */
+
+/* Dashboard 统计卡片 */
+.dashboard .stat-card.el-card {
+  border: none;
+  border-radius: 12px;
+  background-color: var(--bg-color-secondary);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard .stat-card.el-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sk-card-shadow);
+}
+
+.dashboard .stat-value {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .stat-value {
+  color: var(--sk-text-white);
+}
+
+.dashboard .stat-label {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--sk-text-secondary);
+}
+
+.dashboard .stat-footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+  color: var(--sk-text-tertiary);
+}
+
+html.dark .dashboard .stat-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Dashboard Section 卡片 */
+.dashboard .section-card.el-card {
+  border: none;
+  border-radius: 12px;
+  background-color: var(--bg-color-secondary);
+}
+
+.dashboard .section-card.el-card :deep(.el-card__header) {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .section-card.el-card :deep(.el-card__header) {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .card-header > span {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .card-header > span {
+  color: var(--sk-text-white);
+}
+
+/* 调度表格 */
+.dashboard .schedule-table {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.dashboard .schedule-table th {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+  color: var(--sk-text-secondary);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .schedule-table th {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .schedule-table td {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+html.dark .dashboard .schedule-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard .schedule-type.send {
+  background-color: rgba(0, 113, 227, 0.1);
+  color: var(--sk-focus-color);
+}
+
+.dashboard .schedule-type.receive {
+  background-color: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+.dashboard .schedule-plate {
+  color: var(--sk-focus-color);
+  font-weight: 600;
+}
+
+/* 甘特图 */
+.dashboard .gantt-container {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.dashboard .gantt-header-cell {
+  background-color: var(--sk-bg-light-gray);
+  border-color: rgba(0, 0, 0, 0.06);
+  font-weight: 600;
+}
+
+html.dark .dashboard .gantt-header-cell {
+  background-color: var(--sk-surface-dark-1);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .gantt-header-plate {
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .dashboard .gantt-header-plate {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .gantt-header-date.is-today {
+  background-color: var(--sk-focus-color);
+  color: #fff;
+}
+
+.dashboard .gantt-cell {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(0, 0, 0, 0.04);
+}
+
+html.dark .dashboard .gantt-cell {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard .gantt-cell.is-today {
+  background-color: rgba(0, 113, 227, 0.05);
+}
+
+.dashboard .gantt-cell-plate {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .gantt-cell-plate {
+  background-color: var(--bg-color-secondary);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .gantt-occupation {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard .gantt-occupation:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* 移动端卡片 */
+.dashboard .mobile-card {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 12px;
+}
+
+html.dark .dashboard .mobile-card {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .mobile-card-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .mobile-card-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .mobile-card-row .label {
+  color: var(--sk-text-tertiary);
+}
+
+.dashboard .mobile-card-row .value {
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .mobile-card-row .value {
+  color: var(--sk-text-white);
+}
+
+/* 空状态 */
+.dashboard .empty-text {
+  color: var(--sk-text-tertiary);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* 订单详情对话框 */
+.dashboard .order-detail-dialog :deep(.el-dialog) {
+  overflow: hidden;
+}
+
+/* 全局统一弹窗圆角 - 所有页面弹窗使用 12px */
+.el-dialog {
+  border-radius: 12px !important;
+}
+
+.dashboard .order-detail-dialog .el-dialog__body {
+  padding: 16px 20px;
+}
+
+.dashboard .order-detail-dialog .el-dialog__header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .order-detail-dialog .el-dialog__header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .order-detail-dialog .el-dialog__footer {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .dashboard .order-detail-dialog .el-dialog__footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .order-detail-header {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 8px;
+}
+
+html.dark .dashboard .order-detail-header {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .order-detail-section {
+  border-color: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .dashboard .order-detail-section {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .section-title-compact {
+  color: var(--sk-text-near-black);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 600;
+}
+
+html.dark .dashboard .section-title-compact {
+  color: var(--sk-text-white);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.dashboard .section-title-compact .el-icon {
+  color: var(--sk-focus-color);
+}
+
+.dashboard .row-label-compact {
+  color: var(--sk-text-tertiary);
+}
+
+.dashboard .row-value-compact {
+  color: var(--sk-text-near-black);
+}
+
+html.dark .dashboard .row-value-compact {
+  color: var(--sk-text-white);
+}
+
+.dashboard .highlight-compact {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0.02) 100%);
+}
+
+html.dark .dashboard .highlight-compact {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 113, 227, 0.05) 100%);
+}
+
+/* 上传组件 */
+.dashboard .upload-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background-color: var(--sk-bg-light-gray);
+}
+
+html.dark .dashboard .upload-btn {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--sk-surface-dark-1);
+}
+
+.dashboard .upload-btn:hover {
+  border-color: var(--sk-focus-color);
+}
+
+/* 原生日期时间输入框 */
+.dashboard .native-datetime-input {
+  border-color: rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background-color: var(--bg-color-secondary);
+  color: var(--sk-text-near-black);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+html.dark .dashboard .native-datetime-input {
+  background-color: var(--sk-surface-dark-1);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--sk-text-white);
+}
+
+.dashboard .native-datetime-input:focus {
+  border-color: var(--sk-focus-color);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+}
+
+/* 来源标签 */
+.dashboard .source-tag {
+  border-radius: 980px;
+  font-weight: 600;
+}
+
+/* Placeholder 卡片 */
+.dashboard .placeholder-content {
+  color: var(--sk-text-tertiary);
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Tooltip */
+.dashboard .custom-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 8px;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ========================================
+   Business Pages - Apple Style Overrides
+   ======================================== */
+
+/* 页面容器 */
+.page-container {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* 页面中的 el-card */
+.page-container .el-card {
+  border: none;
+  border-radius: 12px;
+  background-color: var(--bg-color-secondary);
+}
+
+html.dark .page-container .el-card {
+  background-color: var(--bg-color-secondary);
+}
+
+.page-container .el-card :deep(.el-card__header) {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-card :deep(.el-card__header) {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-container .el-card :deep(.el-card__body) {
+  padding: 20px;
+}
+
+/* 页面标题 */
+.page-container .page-header {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.page-container .page-header h2,
+.page-container .page-title {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: 0.196px;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .page-container .page-header h2,
+html.dark .page-container .page-title {
+  color: var(--sk-text-white);
+}
+
+/* 搜索/筛选区域 */
+.page-container .search-bar,
+.page-container .filter-bar {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+html.dark .page-container .search-bar,
+html.dark .page-container .filter-bar {
+  background-color: var(--sk-surface-dark-1);
+}
+
+/* 表格样式 */
+.page-container .el-table {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.page-container .el-table th.el-table__cell {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.12px;
+  color: var(--sk-text-secondary);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-table th.el-table__cell {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-container .el-table td.el-table__cell {
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+html.dark .page-container .el-table td.el-table__cell {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+.page-container .el-table .el-table__row:hover > td.el-table__cell {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+html.dark .page-container .el-table .el-table__row:hover > td.el-table__cell {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Tabs 样式 */
+.page-container .el-tabs__item {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.page-container .el-tabs__item.is-active {
+  font-weight: 600;
+}
+
+/* 对话框样式 */
+.page-container .el-dialog {
+  border-radius: 12px;
+}
+
+.page-container .el-dialog__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-dialog__header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-container .el-dialog__body {
+  padding: 20px;
+}
+
+.page-container .el-dialog__footer {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.dark .page-container .el-dialog__footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* 分页组件 */
+.page-container .el-pagination {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* 表单输入框 */
+.page-container .el-input__wrapper {
+  border-radius: 8px;
+}
+
+.page-container .el-textarea__inner {
+  border-radius: 8px;
+}
+
+/* 按钮组 */
+.page-container .el-button-group .el-button {
+  border-radius: 8px;
+}
+
+/* 移动端卡片 */
+.page-container .mobile-card {
+  background-color: var(--sk-bg-light-gray);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+html.dark .page-container .mobile-card {
+  background-color: var(--sk-surface-dark-1);
+}
+
+.page-container .mobile-card:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+html.dark .page-container .mobile-card:hover {
+  background-color: var(--sk-surface-dark-2);
+}
+
+/* 空状态 */
+.page-container .el-empty__description {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--sk-text-tertiary);
+}
+
+/* Tag 样式 */
+.page-container .el-tag {
+  border-radius: 980px;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.12px;
+}
+
+/* 描述列表 */
+.page-container .el-descriptions {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.page-container .el-descriptions__label {
+  color: var(--sk-text-tertiary);
+  font-weight: 400;
+}
+
+.page-container .el-descriptions__content {
+  color: var(--sk-text-near-black);
+  font-weight: 500;
+}
+
+html.dark .page-container .el-descriptions__content {
+  color: var(--sk-text-white);
+}
+

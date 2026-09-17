@@ -1,0 +1,1055 @@
+<template>
+  <div class="insurance-tab">
+    <!-- 车辆列表视图 -->
+    <template v-if="!selectedVehicle">
+      <!-- 搜索栏 -->
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="vehicleSearchForm" size="default">
+          <el-form-item>
+            <el-input v-model="vehicleSearchForm.keyword" placeholder="车牌/品牌/型号" clearable @keyup.enter="loadVehicles" style="width: 150px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadVehicles">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+      <!-- 统计卡片 -->
+      <div class="stats-cards">
+        <div class="stat-card primary">
+          <div class="stat-value">{{ stats.activeCount }}</div>
+          <div class="stat-label">生效中</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-value">{{ stats.expiringSoon.length }}</div>
+          <div class="stat-label">即将到期</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-value">{{ stats.expiredCount }}</div>
+          <div class="stat-label">已过期</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-value">¥{{ stats.thisYearPremium }}</div>
+          <div class="stat-label">本年保费</div>
+        </div>
+      </div>
+
+      <!-- 移动端车辆卡片 -->
+      <div class="mobile-cards">
+        <div v-for="vehicle in vehicles" :key="vehicle.id" class="mobile-card" @click="selectVehicle(vehicle)">
+          <div class="mobile-card-header">
+            <span class="plate-number" :class="vehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ vehicle.plate_number }}</span>
+            <el-icon><ArrowRight /></el-icon>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">车辆</span>
+            <span class="value">{{ vehicle.brand }} {{ vehicle.model }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保险状态</span>
+            <span class="value">
+              <el-tag :type="getVehicleInsuranceStatusType(vehicle)" size="small">
+                {{ getVehicleInsuranceStatus(vehicle) }}
+              </el-tag>
+            </span>
+          </div>
+          <div class="mobile-card-row" v-if="vehicle.latestInsurance">
+            <span class="label">到期日期</span>
+            <span class="value" :class="{ 'text-danger': isExpired(vehicle.latestInsurance.end_date), 'text-warning': isExpiringSoon(vehicle.latestInsurance.end_date) }">
+              {{ vehicle.latestInsurance.end_date }}
+            </span>
+          </div>
+          <div class="insurance-count">
+            <el-tag size="small" type="info">{{ vehicle.insuranceCount || 0 }} 条记录</el-tag>
+          </div>
+        </div>
+      </div>
+
+      <!-- PC端车辆表格 -->
+      <el-card shadow="never" class="table-card">
+        <el-table :data="vehicles" v-loading="loading" stripe class="hide-mobile" @row-click="selectVehicle" style="cursor: pointer">
+          <el-table-column prop="plate_number" label="车牌" width="120">
+            <template #default="{ row }">
+              <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="brand" label="品牌型号" min-width="120">
+            <template #default="{ row }">{{ row.brand }} {{ row.model }}</template>
+          </el-table-column>
+          <el-table-column label="保险状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getVehicleInsuranceStatusType(row)" size="small">
+                {{ getVehicleInsuranceStatus(row) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="最新保险到期" width="120">
+            <template #default="{ row }">
+              <span v-if="row.latestInsurance" :class="{ 'text-danger': isExpired(row.latestInsurance.end_date), 'text-warning': isExpiringSoon(row.latestInsurance.end_date) }">
+                {{ row.latestInsurance.end_date }}
+              </span>
+              <span v-else class="text-muted">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="记录数" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" type="info">{{ row.insuranceCount || 0 }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" align="center">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click.stop="selectVehicle(row)">查看</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          v-model:current-page="vehiclePagination.page"
+          v-model:page-size="vehiclePagination.pageSize"
+          :total="vehiclePagination.total"
+          :page-sizes="[10, 20, 50]"
+          layout="total, prev, pager, next"
+          background
+          class="pagination"
+          @size-change="loadVehicles"
+          @current-change="loadVehicles"
+        />
+      </el-card>
+    </template>
+
+    <!-- 车辆保险记录视图 -->
+    <template v-else>
+      <!-- 返回按钮和车辆信息 -->
+      <div class="vehicle-header">
+        <el-button @click="selectedVehicle = null" class="back-btn">
+          <el-icon><ArrowLeft /></el-icon> 返回
+        </el-button>
+        <div class="vehicle-info">
+          <span class="plate-number" :class="selectedVehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ selectedVehicle.plate_number }}</span>
+          <span class="brand">{{ selectedVehicle.brand }} {{ selectedVehicle.model }}</span>
+        </div>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="action-bar">
+        <el-button type="primary" @click="openDialog()">
+          <el-icon><Plus /></el-icon> 添加保险
+        </el-button>
+      </div>
+
+      <!-- 移动端保险卡片 -->
+      <div class="mobile-cards">
+        <div v-for="item in insuranceRecords" :key="item.id" class="mobile-card" :class="{ 'expired': item.status === 'expired' }">
+          <div class="mobile-card-header">
+            <span class="type">{{ item.type_text }}</span>
+            <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保险公司</span>
+            <span class="value">{{ item.insurance_company }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.policy_number">
+            <span class="label">保单号</span>
+            <span class="value">{{ item.policy_number }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">有效期</span>
+            <span class="value">{{ item.start_date }} ~ {{ item.end_date }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">保费</span>
+            <span class="value text-danger">¥{{ item.premium }}</span>
+          </div>
+          <div class="mobile-card-row" v-if="item.documents && item.documents.length">
+            <span class="label">附件</span>
+            <div class="docs-mini">
+              <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents || [], Number(idx))" />
+                <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                  <el-icon><Document /></el-icon>
+                </div>
+              </template>
+              <span v-if="item.documents.length > 3" class="more">+{{ item.documents.length - 3 }}</span>
+            </div>
+          </div>
+          <div class="mobile-card-actions">
+            <el-button type="primary" size="small" @click="openDialog(item)">编辑</el-button>
+            <el-popconfirm title="确定删除?" @confirm="handleDelete(item.id)">
+              <template #reference>
+                <el-button type="danger" size="small">删除</el-button>
+              </template>
+            </el-popconfirm>
+          </div>
+        </div>
+        <div v-if="insuranceRecords.length === 0 && !loading" class="empty-tip">
+          暂无保险记录，点击上方"添加保险"按钮添加
+        </div>
+      </div>
+
+      <!-- PC端保险表格 -->
+      <el-card shadow="never" class="table-card">
+        <el-table :data="insuranceRecords" v-loading="loading" stripe class="hide-mobile">
+          <el-table-column prop="type_text" label="类型" width="100" />
+          <el-table-column prop="insurance_company" label="保险公司" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="policy_number" label="保单号" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="start_date" label="生效日期" width="100" />
+          <el-table-column prop="end_date" label="到期日期" width="100">
+            <template #default="{ row }">
+              <span :class="{ 'text-danger': isExpired(row.end_date), 'text-warning': isExpiringSoon(row.end_date) }">
+                {{ row.end_date }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="premium" label="保费" width="80">
+            <template #default="{ row }">¥{{ row.premium }}</template>
+          </el-table-column>
+          <el-table-column label="附件" width="80">
+            <template #default="{ row }">
+              <div class="docs-mini" v-if="row.documents && row.documents.length">
+                <template v-for="(doc, idx) in row.documents.slice(0, 2)" :key="idx">
+                  <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)" />
+                  <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                    <el-icon><Document /></el-icon>
+                  </div>
+                </template>
+                <span v-if="row.documents.length > 2" class="badge">{{ row.documents.length }}</span>
+              </div>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status_text" label="状态" width="80">
+            <template #default="{ row }">
+              <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" fixed="right" width="130">
+            <template #default="{ row }">
+              <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
+              <el-popconfirm title="确定删除?" @confirm="handleDelete(row.id)">
+                <template #reference>
+                  <el-button type="danger" link size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+    </template>
+
+    <!-- 添加/编辑对话框 -->
+    <el-dialog v-model="dialogVisible" :title="editingId ? '编辑保险' : '添加保险'" width="90%" :style="{ maxWidth: '500px' }">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
+        <el-form-item label="车辆">
+          <el-input :value="`${selectedVehicle?.plate_number} - ${selectedVehicle?.brand} ${selectedVehicle?.model}`" disabled />
+        </el-form-item>
+        <el-form-item label="保险类型" prop="insurance_types">
+          <el-checkbox-group v-model="form.insurance_types" class="type-checkbox-group">
+            <el-checkbox value="compulsory">交强险</el-checkbox>
+            <el-checkbox value="commercial">商业险</el-checkbox>
+            <el-checkbox value="seat">座位险</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="保险公司" prop="insurance_company">
+          <el-input v-model="form.insurance_company" placeholder="保险公司名称" />
+        </el-form-item>
+        <el-form-item label="保单号">
+          <el-input v-model="form.policy_number" placeholder="保单号" />
+        </el-form-item>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="生效日期" prop="start_date">
+              <input 
+                v-if="isMobile"
+                type="date" 
+                v-model="form.start_date" 
+                class="native-date-input"
+                style="width: 100%"
+              />
+              <el-date-picker 
+                v-else
+                v-model="form.start_date" 
+                type="date" 
+                placeholder="生效日期" 
+                value-format="YYYY-MM-DD" 
+                style="width: 100%" 
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="到期日期" prop="end_date">
+              <input 
+                v-if="isMobile"
+                type="date" 
+                v-model="form.end_date" 
+                class="native-date-input"
+                style="width: 100%"
+              />
+              <el-date-picker 
+                v-else
+                v-model="form.end_date" 
+                type="date" 
+                placeholder="到期日期" 
+                value-format="YYYY-MM-DD" 
+                style="width: 100%" 
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="保费" prop="premium">
+              <el-input-number v-model="form.premium" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="保额">
+              <el-input-number v-model="form.coverage_amount" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="受益人">
+          <el-input v-model="form.beneficiary" placeholder="受益人" />
+        </el-form-item>
+        <el-form-item label="附件">
+          <div class="multi-upload">
+            <div class="file-list">
+              <div v-for="(doc, idx) in form.documents" :key="idx" class="file-item">
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" />
+                <div v-else class="pdf-thumb">
+                  <el-icon><Document /></el-icon>
+                  <span>PDF</span>
+                </div>
+                <div class="file-remove" @click="removeDocument(idx)">×</div>
+              </div>
+              <div v-if="form.documents.length < 5" class="upload-btn" @click="triggerUpload">
+                <el-icon><Plus /></el-icon>
+                <span>{{ form.documents.length }}/5</span>
+              </div>
+            </div>
+            <div class="upload-tip">支持图片和PDF文件，最多5个</div>
+            <input ref="fileInput" type="file" accept="image/*,.pdf" style="display: none" @change="handleFileSelect" />
+          </div>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 图片预览 -->
+    <el-dialog v-model="imagePreviewVisible" title="附件预览" width="90%" :style="{ maxWidth: '500px' }">
+      <el-carousel :initial-index="previewIndex" indicator-position="outside" v-if="previewDocs.length">
+        <el-carousel-item v-for="(doc, idx) in previewDocs" :key="idx">
+          <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" style="width: 100%; height: 100%; object-fit: contain" />
+          <div v-else class="pdf-preview">
+            <el-icon :size="60"><Document /></el-icon>
+            <p>PDF 文件</p>
+            <el-button type="primary" @click="openPdf(doc.url)">打开文件</el-button>
+          </div>
+        </el-carousel-item>
+      </el-carousel>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { insuranceApi, vehicleApi, uploadApi } from '../api'
+import { isExpired, isExpiringSoon } from '../utils/helpers'
+
+interface DocumentItem {
+  url: string
+  type?: 'image' | 'pdf' | string
+}
+
+const loading = ref(false)
+const submitting = ref(false)
+const isMobile = ref(window.innerWidth < 768)
+const vehicles = ref<any[]>([])
+const selectedVehicle = ref<any>(null)
+const insuranceRecords = ref<any[]>([])
+const dialogVisible = ref(false)
+const formRef = ref<FormInstance>()
+const fileInput = ref<HTMLInputElement>()
+const editingId = ref('')
+const imagePreviewVisible = ref(false)
+const previewDocs = ref<DocumentItem[]>([])
+const previewIndex = ref(0)
+
+const vehicleSearchForm = reactive({ keyword: '' })
+const vehiclePagination = reactive({ page: 1, pageSize: 10, total: 0 })
+const stats = reactive({ activeCount: 0, expiringSoon: [] as any[], expiredCount: 0, thisYearPremium: 0 })
+
+const form = reactive({
+  insurance_types: [] as string[],
+  insurance_company: '',
+  policy_number: '',
+  start_date: '',
+  end_date: '',
+  premium: 0,
+  coverage_amount: 0,
+  beneficiary: '',
+  documents: [] as DocumentItem[],
+  remarks: ''
+})
+
+const rules: FormRules = {
+  insurance_types: [{ 
+    required: true, 
+    validator: (_rule, value, callback) => {
+      if (!value || value.length === 0) {
+        callback(new Error('请选择至少一个保险类型'))
+      } else {
+        callback()
+      }
+    },
+    trigger: 'change' 
+  }],
+  insurance_company: [{ required: true, message: '请输入保险公司', trigger: 'blur' }],
+  start_date: [{ required: true, message: '请选择生效日期', trigger: 'change' }],
+  end_date: [{ required: true, message: '请选择到期日期', trigger: 'change' }]
+}
+
+const statusTypeMap: Record<string, string> = {
+  active: 'success',
+  expired: 'danger',
+  pending: 'warning'
+}
+
+function getStatusType(status: string) {
+  return statusTypeMap[status] || 'info'
+}
+
+function getVehicleInsuranceStatus(vehicle: any) {
+  if (!vehicle.latestInsurance) return '无保险'
+  if (isExpired(vehicle.latestInsurance.end_date)) return '已过期'
+  if (isExpiringSoon(vehicle.latestInsurance.end_date)) return '即将到期'
+  return '生效中'
+}
+
+function getVehicleInsuranceStatusType(vehicle: any) {
+  if (!vehicle.latestInsurance) return 'info'
+  if (isExpired(vehicle.latestInsurance.end_date)) return 'danger'
+  if (isExpiringSoon(vehicle.latestInsurance.end_date)) return 'warning'
+  return 'success'
+}
+
+function getFileUrl(url: string) {
+  if (!url) return ''
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
+  return baseUrl + url
+}
+
+function openPdf(url: string) {
+  window.open(getFileUrl(url), '_blank')
+}
+
+function previewDoc(docs: DocumentItem[], index: number) {
+  previewDocs.value = docs
+  previewIndex.value = Number(index)
+  imagePreviewVisible.value = true
+}
+
+// 加载车辆列表（带保险信息）
+async function loadVehicles() {
+  loading.value = true
+  try {
+    const [vehicleRes, statsRes]: any[] = await Promise.all([
+      vehicleApi.getList({ ...vehicleSearchForm, ...vehiclePagination }),
+      insuranceApi.getStats()
+    ])
+    
+    if (vehicleRes.success) {
+      // 为每个车辆获取保险统计
+      const vehicleList = vehicleRes.data.data
+      const vehiclesWithInsurance = await Promise.all(
+        vehicleList.map(async (v: any) => {
+          try {
+            const insuranceRes: any = await insuranceApi.getList({ vehicle_id: v.id, pageSize: 100 })
+            const records = insuranceRes.success ? insuranceRes.data.data : []
+            const activeRecords = records.filter((r: any) => r.status === 'active')
+            return {
+              ...v,
+              insuranceCount: records.length,
+              latestInsurance: activeRecords.length > 0 ? activeRecords[0] : (records.length > 0 ? records[0] : null)
+            }
+          } catch {
+            return { ...v, insuranceCount: 0, latestInsurance: null }
+          }
+        })
+      )
+      vehicles.value = vehiclesWithInsurance
+      vehiclePagination.total = vehicleRes.data.total
+    }
+    
+    if (statsRes.success) {
+      Object.assign(stats, statsRes.data)
+    }
+  } catch (error) {
+    console.error('加载数据失败', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 选择车辆，加载其保险记录
+async function selectVehicle(vehicle: any) {
+  selectedVehicle.value = vehicle
+  await loadInsuranceRecords()
+}
+
+// 加载选中车辆的保险记录
+async function loadInsuranceRecords() {
+  if (!selectedVehicle.value) return
+  loading.value = true
+  try {
+    const res: any = await insuranceApi.getList({ vehicle_id: selectedVehicle.value.id, pageSize: 100 })
+    if (res.success) {
+      insuranceRecords.value = res.data.data
+    }
+  } catch (error) {
+    console.error('加载保险记录失败', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+function openDialog(item?: any) {
+  editingId.value = item?.id || ''
+  Object.assign(form, {
+    insurance_types: item?.insurance_types || (item?.insurance_type ? [item.insurance_type] : []),
+    insurance_company: item?.insurance_company || '',
+    policy_number: item?.policy_number || '',
+    start_date: item?.start_date || '',
+    end_date: item?.end_date || '',
+    premium: item?.premium ?? 0,
+    coverage_amount: item?.coverage_amount ?? 0,
+    beneficiary: item?.beneficiary || '',
+    documents: item?.documents || [],
+    remarks: item?.remarks || ''
+  })
+  dialogVisible.value = true
+}
+
+function triggerUpload() {
+  fileInput.value?.click()
+}
+
+async function handleFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  const isImage = file.type.startsWith('image/')
+  const isPdf = file.type === 'application/pdf'
+  if (!isImage && !isPdf) {
+    ElMessage.error('请选择图片或PDF文件')
+    return
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error('文件大小不能超过10MB')
+    return
+  }
+
+  try {
+    const res = await uploadApi.uploadInsurance(file)
+    if (res.success && res.data) {
+      form.documents.push({
+        url: res.data.url,
+        type: (res.data.type || (isPdf ? 'pdf' : 'image')) as 'image' | 'pdf'
+      })
+      ElMessage.success('文件上传成功')
+    } else {
+      ElMessage.error(res.message || '上传失败')
+    }
+  } catch (error: any) {
+    console.error('上传失败', error)
+    ElMessage.error('上传失败')
+  }
+
+  target.value = ''
+}
+
+function removeDocument(index: number) {
+  form.documents.splice(index, 1)
+}
+
+async function handleSubmit() {
+  const valid = await formRef.value?.validate()
+  if (!valid) return
+
+  submitting.value = true
+  try {
+    const data = {
+      ...form,
+      vehicle_id: selectedVehicle.value.id,
+      plate_number: selectedVehicle.value.plate_number
+    }
+    
+    let res: any
+    if (editingId.value) {
+      res = await insuranceApi.update(editingId.value, data)
+    } else {
+      res = await insuranceApi.create(data)
+    }
+    if (res.success) {
+      ElMessage.success(editingId.value ? '修改成功' : '添加成功')
+      dialogVisible.value = false
+      loadInsuranceRecords()
+      loadVehicles()
+    }
+  } catch (error) {
+    console.error('提交失败', error)
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function handleDelete(id: string) {
+  try {
+    const res: any = await insuranceApi.delete(id)
+    if (res.success) {
+      ElMessage.success('删除成功')
+      loadInsuranceRecords()
+      loadVehicles()
+    }
+  } catch (error) {
+    console.error('删除失败', error)
+  }
+}
+
+onMounted(() => {
+  loadVehicles()
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 768
+  })
+})
+</script>
+
+<style scoped>
+.insurance-tab {
+  width: 100%;
+}
+
+.search-card {
+  margin-bottom: 12px;
+}
+
+.search-card :deep(.el-form-item) {
+  margin-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+  .search-card {
+    margin-bottom: 16px;
+  }
+  
+  .search-card :deep(.el-form-item) {
+    margin-bottom: 0;
+  }
+}
+
+.action-bar {
+  margin-bottom: 12px;
+}
+
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-card.primary { border-left: 3px solid var(--primary-color, #409EFF); }
+.stat-card.warning { border-left: 3px solid #E6A23C; }
+.stat-card.danger { border-left: 3px solid #F56C6C; }
+.stat-card.success { border-left: 3px solid #67C23A; }
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+@media (max-width: 767px) {
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+}
+
+/* 车辆头部 */
+.vehicle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.back-btn {
+  padding: 8px 12px;
+}
+
+.vehicle-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-info .plate {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.vehicle-info .brand {
+  font-size: 13px;
+  color: #909399;
+}
+
+.mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mobile-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.mobile-card.expired {
+  opacity: 0.7;
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.plate, .type {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 13px;
+}
+
+.mobile-card-row .label {
+  color: #909399;
+}
+
+.mobile-card-row .value {
+  color: #303133;
+}
+
+.mobile-card-row .value.text-danger {
+  color: #F56C6C;
+  font-weight: 500;
+}
+
+.insurance-count {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+
+.mobile-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 30px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.hide-mobile {
+  display: none;
+}
+
+.table-card {
+  display: none;
+}
+
+.text-danger {
+  color: #F56C6C;
+}
+
+.text-warning {
+  color: #E6A23C;
+}
+
+.text-muted {
+  color: #909399;
+}
+
+@media (min-width: 768px) {
+  .mobile-cards {
+    display: none;
+  }
+  
+  .table-card {
+    display: block;
+  }
+  
+  .hide-mobile {
+    display: table;
+  }
+}
+
+.pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* 文件上传 */
+.multi-upload {
+  width: 100%;
+}
+
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-item {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+}
+
+.file-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pdf-thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  color: #909399;
+}
+
+.pdf-thumb .el-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.pdf-thumb span {
+  font-size: 10px;
+}
+
+.file-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-btn {
+  width: 70px;
+  height: 70px;
+  border: 2px dashed #dcdfe6;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #909399;
+  font-size: 12px;
+}
+
+.upload-btn:hover {
+  border-color: var(--primary-color, #409EFF);
+  color: var(--primary-color, #409EFF);
+}
+
+.upload-btn .el-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
+}
+
+/* 表格/卡片中的小文件 */
+.docs-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.docs-mini img {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.docs-mini .pdf-icon {
+  width: 30px;
+  height: 30px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F56C6C;
+  cursor: pointer;
+}
+
+.docs-mini .more {
+  font-size: 12px;
+  color: #909399;
+}
+
+.docs-mini .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #F56C6C;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 8px;
+}
+
+/* PDF 预览 */
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #909399;
+}
+
+.pdf-preview .el-icon {
+  color: #F56C6C;
+}
+
+/* 暗色模式 */
+html.dark .stat-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .stat-value,
+html.dark .vehicle-info .plate,
+html.dark .mobile-card-header .plate,
+html.dark .mobile-card-header .type,
+html.dark .mobile-card-row .value {
+  color: var(--text-color);
+}
+
+html.dark .stat-label,
+html.dark .vehicle-info .brand,
+html.dark .mobile-card-row .label,
+html.dark .empty-tip,
+html.dark .docs-mini .more,
+html.dark .upload-tip,
+html.dark .pdf-preview {
+  color: var(--text-color-secondary);
+}
+
+html.dark .vehicle-header {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .mobile-card {
+  background: var(--bg-color-secondary);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+html.dark .insurance-count,
+html.dark .mobile-card-actions {
+  border-top-color: var(--border-color);
+}
+
+html.dark .file-item {
+  border-color: var(--border-color);
+}
+
+html.dark .pdf-thumb {
+  background: var(--hover-bg-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .upload-btn {
+  border-color: var(--border-color);
+  color: var(--text-color-secondary);
+}
+
+html.dark .docs-mini .pdf-icon {
+  background: var(--hover-bg-color);
+}
+</style>
