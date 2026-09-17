@@ -17,6 +17,92 @@ git push -u origin main
 
 ---
 
+## 🚀 使用 Wrangler CLI 部署（推荐）
+
+### 步骤 1：安装 Wrangler CLI
+```bash
+npm install -g wrangler
+```
+
+### 步骤 2：登录 Cloudflare
+```bash
+wrangler login
+```
+这会打开浏览器，授权 Wrangler 访问你的 Cloudflare 账号。
+
+### 步骤 3：创建 D1 数据库
+```bash
+# 创建数据库
+wrangler d1 create rental-db
+
+# 记录返回的 database_id，更新到 wrangler.toml 中
+```
+
+### 步骤 4：创建 KV Namespace
+```bash
+# 创建 KV
+wrangler kv:namespace create rental-settings
+
+# 记录返回的 namespace_id，更新到 wrangler.toml 中
+```
+
+### 步骤 5：创建 R2 Bucket
+```bash
+# 创建 R2 bucket
+wrangler r2 bucket create rental-uploads
+```
+
+### 步骤 6：配置环境变量
+```bash
+# 设置 JWT_SECRET
+wrangler secret put JWT_SECRET
+# 输入你的强随机密钥
+
+# 设置 ADMIN_PASSWORD
+wrangler secret put ADMIN_PASSWORD
+# 输入管理员密码
+```
+
+### 步骤 7：初始化数据库
+```bash
+cd backend
+wrangler d1 execute rental-db --remote --file=src/db/migrations/001_initial.sql
+```
+
+### 步骤 8：部署后端
+```bash
+cd backend
+npm install
+npm run deploy
+# 或者直接使用：
+# npx wrangler deploy
+```
+
+### 步骤 9：获取 Workers URL
+部署成功后，Wrangler 会输出类似以下信息：
+```
+Published cloudflare-rental-backend (https://cloudflare-rental-backend.your-subdomain.workers.dev)
+```
+记录这个 URL，用于前端配置。
+
+### 步骤 10：部署前端
+```bash
+cd frontend
+npm install
+npm run build
+npx wrangler pages deploy dist --project-name=cloudflare-rental-frontend
+```
+
+### 步骤 11：配置前端 API 地址
+```bash
+cd frontend
+wrangler pages project update cloudflare-rental-frontend --production-branch=main
+wrangler secret put VITE_API_URL
+# 输入后端 Workers 的 URL，例如：https://cloudflare-rental-backend.your-subdomain.workers.dev
+```
+
+---
+
 ## 🚀 后端部署配置（Cloudflare Workers）
 
 ### 步骤 1：登录 Cloudflare Dashboard
