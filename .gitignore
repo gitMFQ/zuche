@@ -1,23 +1,31 @@
+```
 # Dependencies
 node_modules/
 
-# Build output
+# Build outputs
 dist/
 build/
+target/
 
-# Environment files
+# TypeScript/JavaScript
+*.tsbuildinfo
+*.js.map
+*.jsx.map
+*.ts.map
+
+# Environment variables
 .env
 .env.local
-.env.*.local
+*.env.*
 
-# Database
-*.db
-*.db-journal
-backend/data/
+# Logs
+*.log
 
-# Uploads (keep folder structure)
-backend/uploads/*
-!backend/uploads/.gitkeep
+# Coverage
+coverage/
+.nyc_output/
+istanbul/
+.jest/
 
 # IDE
 .vscode/
@@ -29,10 +37,7 @@ backend/uploads/*
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-npm-debug.log*
-
-# Lock files (optional, some teams prefer to commit these)
-# package-lock.json
-# yarn.lock
+# Temporary files
+*.tmp
+*.temp
+```
