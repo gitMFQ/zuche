@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Workers 部署配置（非 Pages）
+pages_deploy = false
+
 # D1 数据库绑定
 [[d1_databases]]
 binding = "DB"

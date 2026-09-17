@@ -1,4 +1,4 @@
-# Cloudflare Pages + GitHub 自动部署指南
+# Cloudflare Workers + GitHub 自动部署指南
 
 ## 📋 前置准备
 
@@ -17,32 +17,35 @@ git push -u origin main
 
 ---
 
-## 🚀 后端部署配置（Cloudflare Pages）
+## 🚀 后端部署配置（Cloudflare Workers）
 
 ### 步骤 1：登录 Cloudflare Dashboard
 1. 访问 [https://dash.cloudflare.com](https://dash.cloudflare.com)
 2. 登录你的 Cloudflare 账号
 
-### 步骤 2：创建 Pages 项目
+### 步骤 2：创建 Workers 项目
 1. 点击左侧菜单 **Workers & Pages** → **Create application**
-2. 选择 **Pages** 标签
-3. 点击 **Connect to Git**
+2. 选择 **Workers** 标签
+3. 点击 **Deploy with GitHub**
 
 ### 步骤 3：连接 GitHub 仓库
 1. 授权 Cloudflare 访问你的 GitHub 账号
 2. 选择 `cloudflare-rental` 仓库
-3. 点击 **Begin setup**
+3. 选择 `backend` 目录作为项目根目录
+4. 点击 **Begin setup**
 
-### 步骤 4：配置后端项目
+### 步骤 4：配置 Workers 项目
 - **Project name**: `cloudflare-rental-backend`
 - **Production branch**: `main`
-- **Framework preset**: `None`
+- **Root Directory**: `backend`
 - **Build command**: 
   ```bash
-  cd backend && npm install && npm run build
+  npm install && npm run build
   ```
-- **Build output directory**: `backend/dist`
-- **Root Directory**: 留空（使用 monorepo 结构）
+- **Deploy command**: 
+  ```bash
+  npx wrangler deploy
+  ```
 
 ### 步骤 5：配置环境变量
 在 **Settings** → **Environment variables** 中添加：
@@ -51,7 +54,6 @@ git push -u origin main
 |--------------|-------|------------|---------|
 | `JWT_SECRET` | 你的强随机密钥 | ✅ | ✅ |
 | `ADMIN_PASSWORD` | 管理员密码 | ✅ | ❌ |
-| `NODE_VERSION` | `20` | ✅ | ✅ |
 
 ### 步骤 6：绑定 D1 数据库
 1. 先创建 D1 数据库：
@@ -60,8 +62,8 @@ git push -u origin main
    - 名称：`rental-db`
    - 记录 database ID
 
-2. 在 Pages 项目中绑定：
-   - 进入项目 → **Settings** → **Functions** → **D1 database bindings**
+2. 在 Workers 项目中绑定：
+   - 进入项目 → **Settings** → **Bindings** → **Add** → **D1 Database**
    - 添加绑定：
      - Variable name: `DB`
      - Database: `rental-db`
@@ -78,8 +80,8 @@ git push -u origin main
    - 名称：`rental-settings`
    - 记录 namespace ID
 
-2. 在 Pages 项目中绑定：
-   - 进入项目 → **Settings** → **Functions** → **KV namespace bindings**
+2. 在 Workers 项目中绑定：
+   - 进入项目 → **Settings** → **Bindings** → **Add** → **KV Namespace**
    - 添加绑定：
      - Variable name: `SETTINGS_KV`
      - KV namespace: `rental-settings`
@@ -90,8 +92,8 @@ git push -u origin main
    - 名称：`rental-uploads`
    - 设置公开访问（可选）
 
-2. 在 Pages 项目中绑定：
-   - 进入项目 → **Settings** → **Functions** → **R2 bucket bindings**
+2. 在 Workers 项目中绑定：
+   - 进入项目 → **Settings** → **Bindings** → **Add** → **R2 Bucket**
    - 添加绑定：
      - Variable name: `UPLOADS`
      - R2 bucket: `rental-uploads`
@@ -123,7 +125,7 @@ git push -u origin main
 
 | Variable name | Value | Production | Preview |
 |--------------|-------|------------|---------|
-| `VITE_API_URL` | `https://cloudflare-rental-backend.pages.dev` | ✅ | ✅ |
+| `VITE_API_URL` | `https://cloudflare-rental-backend.workers.dev` | ✅ | ✅ |
 | `NODE_VERSION` | `20` | ✅ | ✅ |
 
 > ⚠️ **重要**：将 `VITE_API_URL` 替换为你后端项目的实际域名
@@ -185,11 +187,11 @@ npm run dev
 
 ### 使用 Wrangler 模拟生产环境
 ```bash
-# 后端
+# 后端 (Workers)
 cd backend
-npx wrangler pages dev dist --d1 DB --kv SETTINGS_KV --r2 UPLOADS
+npx wrangler dev
 
-# 前端
+# 前端 (Pages)
 cd frontend
 npx wrangler pages dev dist
 ```
@@ -256,7 +258,7 @@ npx wrangler d1 execute rental-db --remote
 ## 📝 检查清单
 
 - [ ] 代码推送到 GitHub
-- [ ] 后端 Pages 项目创建完成
+- [ ] 后端 Workers 项目创建完成
 - [ ] 前端 Pages 项目创建完成
 - [ ] D1 数据库创建并绑定
 - [ ] KV Namespace 创建并绑定
