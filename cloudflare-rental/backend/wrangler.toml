@@ -23,5 +23,5 @@ binding = "UPLOADS"
 bucket_name = "rental-uploads"
 
 [vars]
-JWT_SECRET = "your-jwt-secret-change-in-production"
+JWT_SECRET = "640111199512100318"
 ADMIN_PASSWORD = "admin123"
