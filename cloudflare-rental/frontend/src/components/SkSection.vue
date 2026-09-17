@@ -4,6 +4,8 @@
  * Supports dark and light background variants
  */
 
+import { computed } from 'vue'
+
 const props = defineProps<{
   variant?: 'dark' | 'light' | 'default'
 }>()

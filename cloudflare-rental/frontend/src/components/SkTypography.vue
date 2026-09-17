@@ -4,6 +4,8 @@
  * Uses SF Pro Display/Text with optical sizing
  */
 
+import { computed } from 'vue'
+
 const props = defineProps<{
   variant?: 'display-hero' | 'display-section' | 'display-tile' | 'display-card' | 'display-subheading' | 'body' | 'body-emphasis' | 'caption' | 'caption-bold' | 'micro'
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span' | 'div'

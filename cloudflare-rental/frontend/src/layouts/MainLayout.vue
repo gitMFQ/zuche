@@ -260,19 +260,22 @@ function colorWithAlpha(color: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-// 菜单项悬停背景样式
+// 菜单项悬停背景样式（用于模板）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const navItemHoverBg = computed(() => {
   const color1 = colorWithAlpha(themeColor.value, 0.25)
   const color2 = colorWithAlpha(adjustColor(themeColor.value, -20), 0.25)
   return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`
 })
 
-// 菜单项激活背景样式
+// 菜单项激活背景样式（用于模板）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const navItemActiveBg = computed(() => {
   return `linear-gradient(135deg, ${themeColor.value} 0%, ${adjustColor(themeColor.value, -20)} 100%)`
 })
 
-// 菜单项激活阴影样式
+// 菜单项激活阴影样式（用于模板）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const navItemActiveShadow = computed(() => {
   const shadowColor = colorWithAlpha(themeColor.value, 0.4)
   return `0 4px 15px ${shadowColor}`
