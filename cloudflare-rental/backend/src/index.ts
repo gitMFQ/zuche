@@ -69,6 +69,7 @@ app.route('/api/schedules', scheduleRoutes)
 app.route('/api/settings', settingsRoutes)
 app.route('/api/logs', logRoutes)
 app.route('/api/upload', uploadRoutes)
+app.route('/api/uploads', uploadRoutes)
 
 // 404 处理
 app.notFound((c) => {
