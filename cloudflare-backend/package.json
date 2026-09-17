@@ -8,7 +8,12 @@
     "deploy": "wrangler deploy",
     "tail": "wrangler tail"
   },
-  "keywords": ["rental", "admin", "car", "cloudflare"],
+  "keywords": [
+    "rental",
+    "admin",
+    "car",
+    "cloudflare"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",

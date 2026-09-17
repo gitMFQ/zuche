@@ -1,4 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
+import schema from './schema.sql';
 
 export interface Env {
   DB: D1Database;
@@ -8,10 +9,6 @@ export interface Env {
 
 // Initialize database with schema and seed data
 export async function initDatabase(db: D1Database): Promise<void> {
-  // Read and execute schema
-  const schemaResponse = await fetch(new URL('./schema.sql', import.meta.url));
-  const schema = await schemaResponse.text();
-  
   // Split by semicolons and execute each statement
   const statements = schema.split(';').filter(s => s.trim().length > 0);
   

@@ -1,57 +1,32 @@
-```gitignore
+```
 # Dependencies
 node_modules/
 
 # Build artifacts
+.wrangler/
+
+# TypeScript
+*.tsbuildinfo
 dist/
 build/
-*.js.map
-
-# Logs and temp files
-*.log
-*.tmp
 
 # Environment
 .env
 .env.local
 *.env.*
 
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+
 # Editors
 .vscode/
 .idea/
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Compression
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+# OS
+.DS_Store
+Thumbs.db
 ```
