@@ -1,0 +1,11 @@
+import { Hono } from 'hono';
+import authRoutes from './auth.js';
+import userRoutes from './users.js';
+import customerRoutes from './customers.js';
+import vehicleRoutes from './vehicles.js';
+const app = new Hono();
+app.route('/auth', authRoutes);
+app.route('/users', userRoutes);
+app.route('/customers', customerRoutes);
+app.route('/vehicles', vehicleRoutes);
+export default app;
