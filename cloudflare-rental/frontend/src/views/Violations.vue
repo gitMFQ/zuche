@@ -149,7 +149,7 @@
             v-model="form.violation_date" 
             class="native-date-input"
             style="width: 100%"
-            @change="onViolationDateChange"
+            @change="(e: Event) => onViolationDateChange((e.target as HTMLInputElement).value)"
           />
           <el-date-picker 
             v-else

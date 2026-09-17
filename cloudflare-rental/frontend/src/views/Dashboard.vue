@@ -669,6 +669,7 @@ const completeForm = ref({
 
 const pickupImageInput = ref<HTMLInputElement | null>(null)
 const returnImageInput = ref<HTMLInputElement | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ganttContainer = ref<HTMLElement | null>(null)
 
 // 日期范围配置
