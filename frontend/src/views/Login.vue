@@ -77,14 +77,18 @@ async function handleLogin() {
   loading.value = true
   try {
     const res: any = await authApi.login(form)
-    if (res.success) {
+    if (res && res.success && res.data?.token) {
       userStore.setToken(res.data.token)
       userStore.setUser(res.data.user)
       ElMessage.success('登录成功')
       router.push('/dashboard')
+    } else {
+      ElMessage.error(res?.message || '登录失败')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('登录失败', error)
+    const message = error.response?.data?.message || '登录失败，请检查网络连接'
+    ElMessage.error(message)
   } finally {
     loading.value = false
   }
