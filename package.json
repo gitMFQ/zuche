@@ -1,0 +1,20 @@
+{
+  "name": "rental-admin-cloudflare",
+  "version": "1.0.0",
+  "description": "租车公司管理系统 - Cloudflare 部署版本",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "echo 'Backend is bundled by Wrangler'"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

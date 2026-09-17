@@ -1,0 +1,26 @@
+{
+  "name": "rental-admin-backend-cloudflare",
+  "version": "1.0.0",
+  "description": "租车公司管理系统 - Cloudflare Workers 后端",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "hono": "^4.5.0",
+    "@hono/node-server": "^1.13.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/uuid": "^9.0.8",
+    "wrangler": "^3.78.0",
+    "typescript": "^5.4.5"
+  }
+}
