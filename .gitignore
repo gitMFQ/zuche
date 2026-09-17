@@ -1,3 +1,3 @@
-The modified file 'cloudflare-rental/DEPLOYMENT_GUIDE.md' is a documentation file (Markdown), which should not be added to .gitignore as it's a source/config file. Since there are no build artifacts, dependencies, or temporary files in the changes, no additional ignore rules are needed.
-
-The current .gitignore is empty, so no modifications are required.
+```
+.env
+```
