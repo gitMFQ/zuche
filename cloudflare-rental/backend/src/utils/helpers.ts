@@ -46,11 +46,10 @@ export async function createToken(payload: { userId: string; username: string; r
     exp: now + 31536000 // 1 年有效期
   }
   
-  const base64UrlEncode = (data: ArrayBuffer) => {
-    const bytes = new Uint8Array(data)
+  const base64UrlEncode = (data: Uint8Array) => {
     let binary = ''
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i])
+    for (let i = 0; i < data.length; i++) {
+      binary += String.fromCharCode(data[i])
     }
     return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
   }
@@ -60,7 +59,7 @@ export async function createToken(payload: { userId: string; username: string; r
   
   const signatureInput = encoder.encode(`${headerEncoded}.${payloadEncoded}`)
   const signature = await crypto.subtle.sign('HMAC', key, signatureInput)
-  const signatureEncoded = base64UrlEncode(signature)
+  const signatureEncoded = base64UrlEncode(new Uint8Array(signature))
   
   return `${headerEncoded}.${payloadEncoded}.${signatureEncoded}`
 }

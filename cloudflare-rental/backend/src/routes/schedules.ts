@@ -33,7 +33,7 @@ app.get('/recent', authMiddleware, async (c) => {
     `
     const returns = await c.env.DB.prepare(returnSql).bind(now).all()
 
-    const schedules = [...pickups, ...returns].sort((a, b) => 
+    const schedules = [...(pickups.results || []), ...(returns.results || [])].sort((a: any, b: any) => 
       new Date(a.schedule_time).getTime() - new Date(b.schedule_time).getTime()
     )
 
