@@ -13,7 +13,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@cloudflare/workers-types": "^4.20250109.0",
+    "@cloudflare/workers-types": "^5.20260916.1",
     "bcryptjs": "^2.4.3",
     "hono": "^4.7.0",
     "jsonwebtoken": "^9.0.3",
