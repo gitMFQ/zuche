@@ -15,7 +15,7 @@ migrations_dir = "src/db/migrations"
 # KV 存储绑定（用于系统设置等）
 [[kv_namespaces]]
 binding = "SETTINGS_KV"
-id = "your-kv-namespace-id"  # 部署时替换为实际 ID
+id = "e7b03e13fa004127b48f51a4a392c549"  # 部署时替换为实际 ID
 
 # R2 存储桶绑定（用于文件上传）
 [[r2_buckets]]
