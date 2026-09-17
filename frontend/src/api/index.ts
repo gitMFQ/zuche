@@ -1,8 +1,23 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
+// 获取 API 基础地址，支持 Cloudflare Pages 环境变量
+const getBaseURL = () => {
+  // 优先使用环境变量（Cloudflare Pages 中配置）
+  const envUrl = import.meta.env.VITE_API_URL
+  if (envUrl) {
+    return envUrl
+  }
+  // 本地开发环境默认使用 localhost
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3001/api'
+  }
+  // 生产环境默认值（可选）
+  return '/api'
+}
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   timeout: 10000
 })
 
