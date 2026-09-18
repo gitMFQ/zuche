@@ -18,8 +18,16 @@
     {
       "binding": "DB",
       "database_name": "rental-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "108af864-1056-4b03-8207-e2c5ab5e87a2",
       "migrations_dir": "migrations"
+    }
+  ],
+
+  // 线上自定义域名（DNS 与证书由 Cloudflare 自动托管）
+  "routes": [
+    {
+      "pattern": "nxzj.wsad.eu.org",
+      "custom_domain": true
     }
   ],
 
@@ -30,7 +38,8 @@
     }
   ],
 
+  // 关闭 Workers Logs（观测/日志推送），如需排查问题再改回 true 并重新部署
   "observability": {
-    "enabled": true
+    "enabled": false
   }
 }
