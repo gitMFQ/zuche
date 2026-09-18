@@ -635,7 +635,9 @@ async function loadViolationRecords() {
 }
 
 // 根据违章日期查找匹配的订单
-async function onViolationDateChange(date: string) {
+// el-date-picker 的 change 传日期字符串，原生 input 的 change 传 Event，这里统一取成字符串
+async function onViolationDateChange(value: string | Event | null) {
+  const date = typeof value === 'string' ? value : ((value?.target as HTMLInputElement | null)?.value ?? '')
   if (!date) {
     recommendedOrders.value = []
     return

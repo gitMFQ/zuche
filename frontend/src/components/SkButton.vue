@@ -3,6 +3,7 @@
  * Apple-style Button Component
  * Supports primary, dark, pill, and filter variants
  */
+import { computed } from 'vue'
 
 const props = defineProps<{
   variant?: 'primary' | 'dark' | 'pill' | 'filter'

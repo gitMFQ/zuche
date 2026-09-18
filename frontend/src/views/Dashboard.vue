@@ -74,7 +74,7 @@
           </div>
         </div>
       </template>
-      <div class="gantt-container" ref="ganttContainer">
+      <div class="gantt-container">
         <div class="gantt-grid" v-if="Object.keys(ganttData).length">
           <!-- 表头行 -->
           <div class="gantt-header-row">
@@ -670,7 +670,6 @@ const completeForm = ref({
 
 const pickupImageInput = ref<HTMLInputElement | null>(null)
 const returnImageInput = ref<HTMLInputElement | null>(null)
-const ganttContainer = ref<HTMLElement | null>(null)
 
 // 日期范围配置
 const VIEW_MODES = {

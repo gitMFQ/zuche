@@ -3,6 +3,7 @@
  * Apple-style Card Component
  * Supports light, dark, and elevated variants
  */
+import { computed } from 'vue'
 
 const props = defineProps<{
   variant?: 'light' | 'dark' | 'elevated' | 'default'

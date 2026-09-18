@@ -239,45 +239,6 @@ const sidebarBgStyle = computed(() => {
   return { background: styles[sidebarStyle.value] || styles['default'] }
 })
 
-// 将颜色转换为带透明度的格式
-function colorWithAlpha(color: string, alpha: number): string {
-  // 处理 rgba 格式
-  const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
-  if (rgbaMatch) {
-    return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, ${alpha})`
-  }
-  
-  // 处理 hex 格式
-  let hex = color.replace('#', '')
-  if (hex.length === 8) {
-    hex = hex.slice(0, 6) // 移除原有的透明度
-  }
-  
-  const num = parseInt(hex, 16)
-  const r = (num >> 16) & 255
-  const g = (num >> 8) & 255
-  const b = num & 255
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-// 菜单项悬停背景样式
-const navItemHoverBg = computed(() => {
-  const color1 = colorWithAlpha(themeColor.value, 0.25)
-  const color2 = colorWithAlpha(adjustColor(themeColor.value, -20), 0.25)
-  return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`
-})
-
-// 菜单项激活背景样式
-const navItemActiveBg = computed(() => {
-  return `linear-gradient(135deg, ${themeColor.value} 0%, ${adjustColor(themeColor.value, -20)} 100%)`
-})
-
-// 菜单项激活阴影样式
-const navItemActiveShadow = computed(() => {
-  const shadowColor = colorWithAlpha(themeColor.value, 0.4)
-  return `0 4px 15px ${shadowColor}`
-})
-
 // Logo 图标样式
 const logoIconStyle = computed(() => {
   return {
