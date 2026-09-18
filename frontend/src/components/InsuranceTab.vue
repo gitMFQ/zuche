@@ -359,7 +359,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { insuranceApi, vehicleApi, uploadApi } from '../api'
-import { isExpired, isExpiringSoon } from '../utils/helpers'
+import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
 
 interface DocumentItem {
   url: string
@@ -439,10 +439,7 @@ function getVehicleInsuranceStatusType(vehicle: any) {
 }
 
 function getFileUrl(url: string) {
-  if (!url) return ''
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
+  return getImageUrl(url)
 }
 
 function openPdf(url: string) {

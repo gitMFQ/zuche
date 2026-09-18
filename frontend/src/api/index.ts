@@ -176,27 +176,17 @@ export const scheduleApi = {
 export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance' | 'vehicle' | 'customer' | 'other'
 
 export const uploadApi = {
-  // 按类型上传图片到指定子目录
+  // 按类型上传图片到指定子目录（前后端同源，直接走 axios 实例的 /api 前缀）
   uploadImage: async (file: File, type: UploadType = 'other'): Promise<{ success: boolean; data?: { filename: string; url: string; type?: string }; message?: string }> => {
     const formData = new FormData()
     formData.append('image', file)
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-    const endpoint = type === 'other' ? '/api/upload' : `/api/upload/${type}`
+    const endpoint = type === 'other' ? '/upload' : `/upload/${type}`
     try {
-      const response = await fetch(`${baseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
+      return await api.post(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
-      const result = await response.json()
-      if (!response.ok) {
-        return { success: false, message: result.message || `上传失败 (${response.status})` }
-      }
-      return result
-    } catch (error) {
-      return { success: false, message: '网络错误，请检查服务器连接' }
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || '网络错误，请检查服务器连接' }
     }
   },
   

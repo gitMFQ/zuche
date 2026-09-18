@@ -5,19 +5,16 @@ node_modules/
 dist/
 build/
 
+# Cloudflare
+.wrangler/
+.dev.vars
+!.dev.vars.example
+worker-configuration.d.ts
+
 # Environment files
 .env
 .env.local
 .env.*.local
-
-# Database
-*.db
-*.db-journal
-backend/data/
-
-# Uploads (keep folder structure)
-backend/uploads/*
-!backend/uploads/.gitkeep
 
 # IDE
 .vscode/

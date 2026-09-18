@@ -1,0 +1,45 @@
+{
+  "name": "rental-admin",
+  "version": "2.0.0",
+  "description": "租车公司管理系统 - Cloudflare Worker + D1 + R2，前后端一体部署",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n worker,web -c cyan,magenta \"npm:dev:worker\" \"npm:dev:web\"",
+    "dev:worker": "wrangler dev --port 8787",
+    "dev:web": "vite",
+    "build:web": "vite build",
+    "deploy": "npm run build:web && wrangler deploy",
+    "typecheck": "npm run typecheck:worker && npm run typecheck:web",
+    "typecheck:worker": "tsc -p tsconfig.worker.json --noEmit",
+    "typecheck:web": "vue-tsc -p tsconfig.frontend.json --noEmit",
+    "cf-typegen": "wrangler types",
+    "d1:create": "wrangler d1 create rental-db",
+    "d1:migrate": "wrangler d1 migrations apply rental-db --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply rental-db --remote",
+    "r2:create": "wrangler r2 bucket create rental-uploads"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "dayjs": "^1.11.20",
+    "element-plus": "^2.13.5",
+    "hono": "^4.13.8",
+    "html2canvas": "^1.4.1",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.30",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260917.1",
+    "@types/node": "^24.12.0",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "@vue/tsconfig": "^0.9.0",
+    "concurrently": "^9.1.2",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.1",
+    "vue-tsc": "^3.2.5",
+    "wrangler": "^4.134.0"
+  }
+}

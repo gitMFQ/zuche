@@ -508,6 +508,7 @@
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { dashboardApi, scheduleApi, orderApi, uploadApi } from '../api'
+import { getImageUrl } from '../utils/helpers'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
@@ -734,14 +735,7 @@ function formatScheduleTime(date: string) {
   return dayjs(date).format('MM-DD HH:mm')
 }
 
-// 获取图片完整 URL
-function getImageUrl(url: string): string {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  // 假设后端上传接口返回的是相对路径，需要拼接后端地址
-  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
-  return `${backendUrl}${url.startsWith('/') ? url : '/' + url}`
-}
+// 前后端同源，后端返回的 /uploads/xxx 可直接使用
 
 // 格式化为 datetime-local 输入格式
 function formatDateTimeLocal(dateStr: string): string {

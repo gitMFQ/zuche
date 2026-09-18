@@ -8,12 +8,12 @@ import {
 
 /**
  * 获取图片完整URL
+ * 前后端由同一个 Worker 提供，属同源，后端返回的 /uploads/xxx 可直接用
  */
 export function getImageUrl(url: string): string {
   if (!url) return ''
   if (url.startsWith('http') || url.startsWith('data:')) return url
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  return baseUrl + url
+  return url
 }
 
 /**

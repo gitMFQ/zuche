@@ -9,22 +9,20 @@
 - **前端**: Vue 3 + Vite 8 + TypeScript + Element Plus + Pinia
 - **特色功能**: 智能调度系统、主题系统、移动端优先、图片上传/导出
 
-**端口：** 后端默认 3001，前端默认 5173
+**端口：** Worker 默认 8787，前端（仅开发用）默认 5173；线上由同一个 Worker 提供
 
 ## 目录结构
 
 ```
-car/
-├── backend/                 # 后端服务
-│   ├── src/
-│   │   ├── controllers/     # 业务控制器（按模块划分）
-│   │   ├── db/index.ts      # 数据库初始化、表结构、迁移
-│   │   ├── middleware/      # 认证中间件
-│   │   ├── routes/index.ts  # API 路由
-│   │   ├── utils/helpers.ts # 工具函数
-│   │   └── index.ts         # 入口文件
-│   ├── uploads/             # 上传文件（按类型分子目录）
-│   └── data/                # SQLite 数据库
+zuche/
+├── src/                     # Cloudflare Worker（Hono）
+│   ├── controllers/         # 业务控制器（按模块划分）
+│   ├── db/helpers.ts        # D1 查询辅助函数
+│   ├── lib/                 # 认证、时间、日志、错误处理
+│   ├── middleware/          # 认证中间件
+│   ├── routes/index.ts      # API 路由
+│   └── index.ts             # 入口文件
+├── migrations/              # D1 迁移 SQL
 │
 ├── frontend/                # 前端应用
 │   ├── src/

@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rental-admin",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-18",
+
+  // 前端构建产物由 Worker 一并托管，无需单独部署
+  "assets": {
+    "directory": "./frontend/dist",
+    "binding": "ASSETS",
+    // vue-router 使用 createWebHistory，未知路径需回落到 index.html
+    "not_found_handling": "single-page-application",
+    // API 与上传文件必须先进 Worker，其余走静态资源
+    "run_worker_first": ["/api/*", "/uploads/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rental-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "rental-uploads"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}

@@ -4,12 +4,15 @@
 
 ## 技术栈
 
-### 后端
-- **Runtime**: Node.js 18+
-- **Framework**: Express 5
+### 后端（Cloudflare Worker）
+- **Runtime**: Cloudflare Workers
+- **Framework**: Hono 4
 - **Language**: TypeScript
-- **Database**: SQLite (better-sqlite3)
-- **Auth**: JWT (1年有效期)
+- **Database**: Cloudflare D1（SQLite 兼容）
+- **Object Storage**: Cloudflare R2（上传的图片/PDF）
+- **Auth**: JWT（1年有效期，Hono JWT / Web Crypto）
+
+前端构建产物由 Worker 的 Static Assets 托管，**前后端一体部署，前端无需单独部署**。
 
 ### 前端
 - **Framework**: Vue 3 + Vite
@@ -20,35 +23,42 @@
 ## 项目结构
 
 ```
-car/
-├── backend/                      # 后端服务
-│   ├── src/
-│   │   ├── controllers/          # 业务控制器
-│   │   │   ├── auth.ts           # 认证
-│   │   │   ├── users.ts          # 用户管理
-│   │   │   ├── customers.ts      # 客户管理
-│   │   │   ├── vehicles.ts       # 车辆管理
-│   │   │   ├── orders.ts         # 订单管理
-│   │   │   ├── orderSources.ts   # 订单来源
-│   │   │   ├── violations.ts     # 违章管理
-│   │   │   ├── maintenance.ts    # 保养管理
-│   │   │   ├── insurance.ts      # 保险管理
-│   │   │   ├── inspection.ts     # 年检证管理
-│   │   │   ├── dashboard.ts      # 仪表盘统计
-│   │   │   ├── schedules.ts       # 调度管理
-│   │   │   ├── settings.ts       # 系统设置
-│   │   │   ├── logs.ts           # 操作日志
-│   │   │   └── blacklist.ts      # 黑名单
-│   │   ├── db/                   # 数据库
-│   │   │   └── index.ts          # better-sqlite3 配置与迁移
-│   │   ├── middleware/           # 中间件
-│   │   ├── routes/               # 路由
-│   │   ├── utils/                # 工具函数
-│   │   └── index.ts              # 入口文件
-│   ├── uploads/                  # 上传文件目录
-│   └── data/                     # SQLite 数据库文件
+zuche/
+├── src/                          # Worker 源码
+│   ├── index.ts                  # Hono 出口：/health、/uploads/*、onError
+│   ├── routes/
+│   │   ├── index.ts              # /api 下全部业务路由
+│   │   └── upload.ts             # 上传端点 + R2 读取
+│   ├── controllers/              # 业务控制器
+│   │   ├── auth.ts               # 认证
+│   │   ├── users.ts              # 用户管理
+│   │   ├── customers.ts          # 客户管理
+│   │   ├── vehicles.ts           # 车辆管理
+│   │   ├── orders.ts             # 订单管理
+│   │   ├── orderSources.ts       # 订单来源
+│   │   ├── violations.ts         # 违章管理
+│   │   ├── maintenance.ts        # 保养管理
+│   │   ├── insurance.ts          # 保险管理
+│   │   ├── inspection.ts         # 年检证管理
+│   │   ├── dashboard.ts          # 仪表盘统计
+│   │   ├── schedules.ts          # 调度管理
+│   │   ├── settings.ts           # 系统设置
+│   │   ├── logs.ts               # 操作日志
+│   │   └── blacklist.ts          # 黑名单
+│   ├── db/
+│   │   ├── helpers.ts            # query/queryOne/execute/queryWithPagination/batchExecute
+│   │   └── rows.ts               # 各表行类型
+│   ├── lib/                      # auth/ids/time/request/errors/log/json
+│   ├── middleware/auth.ts        # authMiddleware、adminOnly
+│   └── types.ts                  # Bindings、AppContext
 │
-└── frontend/                     # 前端应用
+├── migrations/                   # D1 迁移 SQL
+│   ├── 0001_schema.sql
+│   ├── 0002_indexes.sql
+│   └── 0003_seed.sql
+├── scripts/seed-demo.sql         # 本地演示数据（可选）
+│
+└── frontend/                     # 前端应用（源码）
     ├── src/
     │   ├── api/                  # API 接口封装
     │   ├── components/            # 公共组件
@@ -183,39 +193,51 @@ pending (待取车) → active (已取车) → completed (已还车)
 ## 快速开始
 
 ### 环境要求
-- Node.js 18+
+- Node.js 20+
 - npm / pnpm
+- Cloudflare 账号（仅上线时需要）
 
 ### 安装依赖
 
 ```bash
-# 后端
-cd backend && npm install
-
-# 前端
-cd frontend && npm install
+npm install
 ```
 
-### 启动服务
+### 本地开发
 
 ```bash
-# 终端1：启动后端（开发模式，热重载）
-cd backend && npm run dev
-
-# 终端2：启动前端
-cd frontend && npm run dev
+npm run dev
 ```
 
-访问 http://localhost:5173
+一条命令同时起两个服务：
+- Worker（含 D1、R2 的本地模拟）：http://localhost:8787
+- 前端 Vite（带 HMR，`/api` 与 `/uploads` 已代理到 8787）：http://localhost:5173
+
+首次启动前需要初始化本地数据库：
+
+```bash
+npm run d1:migrate                                  # 应用 migrations/ 到本地 D1
+npx wrangler d1 execute rental-db --local \
+  --file=./scripts/seed-demo.sql                    # 可选：灌入演示数据
+```
 
 ### 类型检查
 
 ```bash
-# 后端类型检查
-cd backend && npx tsc --noEmit
+npm run typecheck          # 前后端一起检查
+npm run typecheck:worker   # 仅 Worker
+npm run typecheck:web      # 仅前端
+```
 
-# 前端类型检查
-cd frontend && npx vue-tsc --noEmit
+### 部署上线
+
+```bash
+npx wrangler login                    # 1. 登录 Cloudflare
+npm run d1:create                     # 2. 创建 D1，把返回的 database_id 填进 wrangler.jsonc
+npm run r2:create                     # 3. 创建 R2 桶
+npx wrangler secret put JWT_SECRET    # 4. 设置 JWT 密钥（可选，不设则用默认值）
+npm run d1:migrate:remote             # 5. 线上建表 + 种子数据
+npm run deploy                        # 6. 构建前端并发布（前后端一次发布）
 ```
 
 ### 默认账号
@@ -243,17 +265,20 @@ cd frontend && npx vue-tsc --noEmit
 ## 开发约定
 
 ### 数据库操作
-- **必须使用辅助函数**：`query()`、`queryOne()`、`execute()`，禁止直接调用 `db.prepare/run/exec`
+- **必须使用辅助函数**：`query()`、`queryOne()`、`execute()`，禁止直接调用 `c.env.DB.prepare()`
+- **D1 是异步的**：所有数据库调用都要 `await`；每个 handler 第一行 `const db = c.env.DB;`
 - **分页查询**：使用 `queryWithPagination()` → `{ data, total, page, pageSize, totalPages }`
-- **数据库迁移**：在 `backend/src/db/index.ts` 的 `runMigrations()` 中添加 `ALTER TABLE`
+- **复合写操作**：多条 INSERT/UPDATE 放进 `batchExecute()`，D1 的 batch 是隐式事务
+- **数据库迁移**：在 `migrations/` 下新增 `NNNN_xxx.sql`，然后执行 `npm run d1:migrate`
+- **外键**：D1 外键始终开启，改表结构时必须显式决定 `ON DELETE` 行为
 
 ### API 响应格式
 统一返回 `{ success: boolean, data?: any, message?: string }`
 
 ### 代码规范
-- **后端导入**：本地模块必须使用 `.js` 扩展名（如 `import { query } from '../utils/helpers.js'`）
+- **控制器签名**：统一为 `async (c: AppContext): Promise<Response>`
 - **命名约定**：文件 kebab-case，函数 camelCase，数据库 snake_case
-- **错误处理**：所有控制器逻辑必须用 try-catch 包裹
+- **错误处理**：控制器保留 try-catch，统一 `return handleError(c, '标签:', error)`
 - **操作日志**：使用 `logAction()` 辅助函数记录关键操作
 
 ### 开发禁忌
@@ -265,11 +290,12 @@ cd frontend && npx vue-tsc --noEmit
 
 ## 注意事项
 
-- **数据库持久化**：better-sqlite3 自动持久化，数据写入即时保存，启用 WAL 模式
-- **跨域配置**：后端已配置 CORS，支持局域网访问
-- **文件大小限制**：上传文件限制 10MB
+- **同源部署**：前后端由同一个 Worker 提供，不存在跨域问题，图片直接用相对路径
+- **文件大小限制**：上传文件限制 10MB，存 R2；`/uploads/*` 由 Worker 读回并带长缓存
+- **SPA 刷新**：`not_found_handling: single-page-application`，直接刷新子路由不会 404
+- **本地数据位置**：`wrangler dev` 的本地 D1/R2 数据在 `.wrangler/state`，删掉即重置
 - **无测试框架**：项目当前没有测试，类型检查是唯一的验证方式
-- **better-sqlite3 编译**：需要编译原生模块，推荐在 Docker/标准 Linux 环境运行
+- **免费额度**：D1 每次调用上限 50 条查询，R2 出流量免费（存储 10GB/月）
 
 ## 设计系统
 

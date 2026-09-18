@@ -322,8 +322,7 @@ function clearImage() {
 }
 
 function previewImage(url: string) {
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001'
-  previewImageUrl.value = url.startsWith('http') ? url : baseUrl + url
+  previewImageUrl.value = getImageUrl(url)
   imagePreviewVisible.value = true
 }
 
