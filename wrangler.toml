@@ -1,0 +1,40 @@
+#:schema node_modules/wrangler/config-schema.json
+# Cloudflare Workers 配置文件
+# 文档：https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "rental-admin"
+main = "backend/src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 前端静态资源目录
+assets = { directory = "frontend/dist", binding = "ASSETS" }
+
+# 环境变量
+[vars]
+ENVIRONMENT = "production"
+
+# D1 数据库配置 (用于替代 SQLite)
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "rental-admin-db"
+# database_id = "YOUR_DATABASE_ID"
+
+# KV 命名空间配置 (用于存储会话、设置等)
+# [[kv_namespaces]]
+# binding = "MY_KV_NAMESPACE"
+# id = "YOUR_KV_NAMESPACE_ID"
+
+# R2 存储桶配置 (用于文件上传)
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+# 开发环境配置
+[dev]
+port = 8787
+local_protocol = "http"
+
+# 生产环境配置
+[env.production]
+vars = { ENVIRONMENT = "production" }

@@ -1,38 +1,70 @@
+```
 # Dependencies
 node_modules/
 
-# Build output
+# Build outputs
 dist/
 build/
+target/
 
-# Environment files
+# Environment variables
 .env
 .env.local
-.env.*.local
+*.env.*
 
-# Database
-*.db
-*.db-journal
-backend/data/
-
-# Uploads (keep folder structure)
-backend/uploads/*
-!backend/uploads/.gitkeep
-
-# IDE
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# Logs
+*.log
+
+# Python cache (if any Python files exist in the project)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-npm-debug.log*
+# Coverage reports
+coverage/
+htmlcov/
+*.coverage
 
-# Lock files (optional, some teams prefer to commit these)
-# package-lock.json
-# yarn.lock
+# TypeScript/JavaScript build artifacts
+*.js.map
+*.tsbuildinfo
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```
