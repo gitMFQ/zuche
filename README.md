@@ -229,20 +229,464 @@ npm run typecheck:worker   # 仅 Worker
 npm run typecheck:web      # 仅前端
 ```
 
-### 部署上线
+### 部署上线（速查）
 
 ```bash
 npx wrangler login                    # 1. 登录 Cloudflare
 npm run d1:create                     # 2. 创建 D1，把返回的 database_id 填进 wrangler.jsonc
 npm run r2:create                     # 3. 创建 R2 桶
-npx wrangler secret put JWT_SECRET    # 4. 设置 JWT 密钥（可选，不设则用默认值）
+npx wrangler secret put JWT_SECRET    # 4. 设置 JWT 密钥
 npm run d1:migrate:remote             # 5. 线上建表 + 种子数据
 npm run deploy                        # 6. 构建前端并发布（前后端一次发布）
 ```
 
+> ⚠️ 速查版省略了几个必须注意的前置条件（占位符 `database_id`、默认 JWT 密钥、桶是否已存在）。第一次上线请照下面的 [部署到 Cloudflare（详细指南）](#部署到-cloudflare详细指南) 逐步执行。
+
 ### 默认账号
 - 用户名：`admin`
 - 密码：`admin123`
+
+> ⚠️ 上线后第一件事就是登录并修改密码。`admin123` 是明文写在 `migrations/0003_seed.sql` 里的公开密码，任何拿到这份代码的人都能直接登录你的线上系统。
+
+---
+
+## 部署到 Cloudflare（详细指南）
+
+本项目是**前后端一体部署**：Vue 前端构建产物（`frontend/dist`）由 Worker 以 Static Assets 托管，API、页面、上传文件共用同一个 Worker，**只需要发布一次，没有独立的前端部署**。
+
+配置文件的唯一来源是 **`wrangler.jsonc`**（项目里没有也不需要 `wrangler.toml`）。
+
+### 1. 资源清单
+
+部署后你的 Cloudflare 账号里会出现这些资源：
+
+| 资源 | 名称 / 绑定名 | 说明 | 是否需要手动创建 |
+|---|---|---|---|
+| Worker | `rental-admin` | 唯一的部署单元，含前端静态资源 | 否，`wrangler deploy` 自动创建 |
+| D1 数据库 | `rental-db`，绑定 `DB` | 13 张业务表 | **是**，`npm run d1:create` |
+| R2 存储桶 | `rental-uploads`，绑定 `UPLOADS` | 上传的图片 / PDF | **是**，`npm run r2:create` |
+| Static Assets | 绑定 `ASSETS`，目录 `./frontend/dist` | 前端产物，每次发布重新打包上传 | 否 |
+| Secret | `JWT_SECRET` | JWT 签名密钥 | **是**，`wrangler secret put` |
+| 访问域名 | 默认 `https://rental-admin.<你的子域>.workers.dev` | 也可绑自定义域名 | 否 |
+
+### 2. 前置准备
+
+**环境要求**：Node.js 20+、npm、Cloudflare 账号（免费账号即可），依赖已安装（`npm install`）。
+
+**登录 Cloudflare**（有浏览器的交互方式，推荐）：
+
+```bash
+npx wrangler login     # 浏览器授权
+npx wrangler whoami    # 确认身份，并拿到 Account ID
+```
+
+`whoami` 输出里的 `Account ID` 后面配 GitHub Actions 时要用到，也可以在 Dashboard 右侧栏复制。
+
+无浏览器环境（服务器 / CI）改用 API Token：
+
+```bash
+export CLOUDFLARE_API_TOKEN=你的令牌
+export CLOUDFLARE_ACCOUNT_ID=0123456789abcdef0123456789abcdef
+```
+
+**发布前必做类型检查**（本项目没有单元测试，类型检查是唯一的验证手段）：
+
+```bash
+npm run typecheck
+```
+
+### 3. 首次部署
+
+#### 步骤 1｜创建 D1 数据库，回填 `database_id`
+
+```bash
+npm run d1:create          # = wrangler d1 create rental-db
+```
+
+输出里会给出一段 `[[d1_databases]]` 配置，把其中的 `database_id` 填进 `wrangler.jsonc`：
+
+```jsonc
+{
+  "binding": "DB",
+  "database_name": "rental-db",
+  "database_id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",   // ← 必须替换成真实 UUID
+  "migrations_dir": "migrations"
+}
+```
+
+> ⚠️ **`wrangler.jsonc` 里默认是占位符 `00000000-0000-0000-0000-000000000000`。** 不替换的话 `wrangler deploy` 依然会显示成功，但线上所有接口都会报错（找不到该 D1）。这是最容易踩的一步。
+
+```bash
+npx wrangler d1 list            # 确认库已存在
+npx wrangler d1 info rental-db  # 查看详情
+```
+
+#### 步骤 2｜创建 R2 桶
+
+```bash
+npm run r2:create          # = wrangler r2 bucket create rental-uploads
+npx wrangler r2 bucket list    # 确认
+```
+
+> ⚠️ **部署不会自动创建桶。** 桶缺失时页面能打开，但图片上传会失败（典型报错 `The specified bucket does not exist`）。桶名必须与 `wrangler.jsonc` 里的 `bucket_name` 一致（默认 `rental-uploads`）。
+
+`/uploads/*` 是 Worker 从 R2 读回后返回的（`src/routes/upload.ts`），**不是公开桶**，因此不需要配置公开访问、CORS 或自定义域，只要绑定存在即可。
+
+#### 步骤 3｜设置 `JWT_SECRET`
+
+```bash
+npx wrangler secret put JWT_SECRET
+```
+
+先本地生成一个强随机值，再粘贴到交互提示里：
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+成功后输出 `✨ Success! Uploaded secret JWT_SECRET`，用 `npx wrangler secret list` 确认（只列名字，不显示值）。
+
+> ⚠️ 不设置也能跑：`src/lib/auth.ts` 里硬编码了默认值 `rental-admin-secret-key-2026`。这个字符串就在公开代码里，任何人都能用它伪造任意用户的 JWT，**上线必须设置**。
+> ⚠️ **更换 `JWT_SECRET` 会让所有已签发的 token 立即失效，全体用户被迫重新登录**（JWT 有效期 1 年，前端存 `localStorage.token`）。给已上线的系统换密钥请挑低峰期。
+
+#### 步骤 4｜执行线上数据库迁移
+
+```bash
+npm run d1:migrate:remote  # = wrangler d1 migrations apply rental-db --remote
+```
+
+预期输出：
+
+```
+Migrations to be applied:
+└ migrations/0001_schema.sql
+└ migrations/0002_indexes.sql
+└ migrations/0003_seed.sql
+
+🌀 executing 3 migrations
+✅ Successfully applied 3 migrations
+```
+
+说明：
+
+- 迁移是**增量**的，执行过的不会重复执行，重复跑这条命令是安全的。
+- `0003_seed.sql` 用 `INSERT OR IGNORE` 写入管理员账号，会把 `admin / admin123` 带到线上；再跑一次**不会**覆盖你已经改过的密码。
+- Wrangler 在 apply 完成后会自动为该数据库打一个备份快照。
+- 某个迁移报错时只有该迁移被回滚，之前成功的保持原样。
+
+#### 步骤 5｜构建并发布
+
+```bash
+npm run deploy             # = npm run build:web && wrangler deploy
+```
+
+等价的分步写法：
+
+```bash
+npm run build:web          # vite build → frontend/dist
+npx wrangler deploy
+```
+
+输出末尾会给出访问地址和 `Current Version ID`，**记下 Version ID，回滚时要用到**：
+
+```
+Your Worker has access to the following bindings:
+- D1: DB
+- R2: UPLOADS
+- Assets: ASSETS
+Uploaded rental-admin (x.xx sec)
+  https://rental-admin.<你的子域>.workers.dev
+Current Version ID: 9f8e7d6c-5b4a-3928-1000-abcdefabcdef
+```
+
+> ⚠️ 如果报 `The directory specified by the assets.directory field does not exist: frontend/dist`，说明没跑构建。`frontend/dist` 被 `.gitignore` 忽略，不会进 Git，每次部署都必须重新构建——用 `npm run deploy`，不要裸跑 `wrangler deploy`。
+
+#### 步骤 6｜验收
+
+```bash
+curl https://rental-admin.<你的子域>.workers.dev/health
+# {"status":"ok","timestamp":"2026-09-18T12:34:56.789Z"}
+
+curl https://rental-admin.<你的子域>.workers.dev/api/nope
+# {"success":false,"message":"接口不存在"}   ← 说明 /api/* 正确进了 Worker，而不是落到静态资源
+```
+
+浏览器打开根路径，用 `admin / admin123` 登录后**立刻修改密码**。
+
+### 4. 绑定自定义域名
+
+> **前提**：域名必须托管在同一个 Cloudflare 账号下。
+> **前提**：`vite.config.ts` 没有配置 `base`，前端资源用绝对路径 `/assets/...`，所以**只能部署在根路径**。可以绑 `rental.example.com` 或根域名 `example.com`，但**不能**绑 `example.com/rental/` 这种带子路径的形式，否则静态资源全部 404。
+
+**方式一：写进 `wrangler.jsonc`（推荐，可复现）**
+
+```jsonc
+{
+  // ... 其他配置
+  "routes": [
+    { "pattern": "rental.example.com", "custom_domain": true }
+  ]
+}
+```
+
+然后 `npm run deploy`。从配置里删掉这条再发布，域名会被解绑。
+
+**方式二：命令行一次性指定**
+
+```bash
+npx wrangler deploy --domain rental.example.com
+```
+
+**方式三：Dashboard**
+
+Workers & Pages → `rental-admin` → **Settings** → **Domains & Routes** → **Add** → **Custom domain**。
+
+Custom Domain 会自动写入 DNS 记录和 SSL 证书，不需要手动加 CNAME。需要 `www` 就再单独添加一条。
+
+前端无需改任何代码：`frontend/src/api/index.ts` 的 `baseURL` 是相对路径 `/api`，图片也直接用后端返回的 `/uploads/...` 相对路径，换域名自动生效。
+
+### 5. 后续更新、灰度与回滚
+
+**常规更新**（前端或后端有任何改动都要重新发布，因为静态资源是 Worker 版本的一部分）：
+
+```bash
+git pull
+npm ci                     # 依赖有变化时
+npm run typecheck          # 必做
+npm run deploy
+npm run d1:migrate:remote  # 仅当 migrations/ 新增了文件时才需要
+```
+
+**查看部署历史**：
+
+```bash
+npx wrangler deployments list      # 最近 10 次部署
+npx wrangler deployments status    # 当前线上状态
+npx wrangler versions list         # 最近 10 个版本
+```
+
+**回滚**：
+
+```bash
+npx wrangler rollback <version-id> -m "回滚原因：xx 版本发布后订单列表白屏"
+```
+
+也可以在 Dashboard → `rental-admin` → **Deployments** 里选历史版本点 **Rollback**。排查线上错误用 `npx wrangler tail` 看实时日志。
+
+> ⚠️ **回滚只回滚代码，不回滚数据库。** 如果新版带过删列 / 改列的迁移，回滚代码不会把数据库改回去。回滚前先做一次 `d1 export` 备份，必要时手写补偿迁移或用 D1 Time Travel 恢复。
+
+**灰度发布**（可选）：
+
+```bash
+npx wrangler versions upload --message "v2.1: 新增催缴记录导出"
+# 输出 Version ID: 01234567-89ab-cdef-0123-456789abcdef
+
+npx wrangler versions deploy 01234567-89ab-cdef-0123-456789abcdef@10%   # 也可 @50%
+```
+
+流量比例可在 Dashboard → Deployment → **Version(s)** 里随时调整。
+
+### 6. GitHub Actions 自动部署
+
+项目目前没有任何 CI 配置（无 `.github` 目录），按下面流程添加。
+
+#### 6.1 获取 `CLOUDFLARE_ACCOUNT_ID`
+
+见上文 `npx wrangler whoami` 的输出，或 Dashboard 右侧栏。
+
+#### 6.2 创建 API Token
+
+打开 <https://dash.cloudflare.com/profile/api-tokens> → **Create Custom Token**，按最小权限配置：
+
+| Scope | Item | Permission |
+|---|---|---|
+| Account | Workers Scripts | Edit |
+| Account | Workers R2 Storage | Edit |
+| Account | D1 | Edit |
+| Account | Workers Routes | Edit |
+| Account | Account Settings | Read |
+| User | User Details | Read |
+| Zone（仅当绑定了自定义域名） | Workers Routes | Edit |
+
+Account Resources → Include 选你的账号。建议设置 TTL，令牌过期后需重新生成并更新 GitHub Secret。令牌**只显示一次**，立即复制。
+
+> 嫌麻烦可直接用内置模板 **Edit Cloudflare Workers**，省事但权限偏大。
+
+#### 6.3 配置 GitHub Secrets
+
+仓库 **Settings → Secrets and variables → Actions → New repository secret**：
+
+| Name | Value |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | 上一步复制的令牌 |
+| `CLOUDFLARE_ACCOUNT_ID` | 32 位十六进制 Account ID |
+
+> ⚠️ **不要把 `JWT_SECRET` 放进 CI 里每次部署重设。** Secret 是一次性资源，每次被换成新值都会让全体已登录用户掉线。本地 `wrangler secret put` 之后就不再动它。
+
+#### 6.4 workflow 文件
+
+新建 `.github/workflows/deploy.yml`：
+
+```yaml
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # 允许在 Actions 页面手动触发
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false   # 部署不要被打断，排队执行
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build:web
+
+      - name: Apply D1 migrations
+        run: npx wrangler d1 migrations apply rental-db --remote
+
+      - name: Deploy Worker + Static Assets
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.134.0"   # 与本地 wrangler 保持一致，避免行为差异
+          command: deploy
+
+      - name: Smoke test
+        run: |
+          URL="https://rental-admin.<你的子域>.workers.dev/health"
+          curl -fsS "$URL" | tee health.json
+          grep -q '"status":"ok"' health.json
+```
+
+要点：
+
+- **`npm run build:web` 这步不能省**：`wrangler-action` 只负责 `wrangler deploy`，不会替你跑 `vite build`，而 `frontend/dist` 不在 Git 里。
+- **迁移排在部署之前**：旧代码跑新表结构通常没问题，新代码跑旧表一定报错。
+- **`wranglerVersion` 必须显式指定**，否则 Action 用它自带的默认版本，可能与本地不一致。
+- 迁移那一步靠 `env` 里的 API Token 认证，因为 `wrangler-action` 只给自己那一步注入凭据。
+- 不用 Action 的话，Deploy 步骤可换成 `run: npx wrangler deploy`（env 里的凭据同样生效）。
+
+> ⚠️ **首次部署仍需在本地手工做一遍**：创建 D1 / R2、回填 `database_id`、`secret put` 都是一次性资源准备，CI 只负责后续发布。
+
+### 7. D1 数据管理
+
+#### 备份（导出）
+
+```bash
+# 完整备份（结构 + 数据），定时任务建议用这条
+npx wrangler d1 export rental-db --remote --output=backup-$(date +%Y%m%d-%H%M).sql
+
+# 只要结构 / 只要数据
+npx wrangler d1 export rental-db --remote --no-data   --output=schema-only.sql
+npx wrangler d1 export rental-db --remote --no-schema --output=data-only.sql
+
+# 只导出指定表（--table 可重复）
+npx wrangler d1 export rental-db --remote --table=orders --table=vehicles --output=partial.sql
+
+# 无人值守时跳过确认
+npx wrangler d1 export rental-db --remote --output=nightly.sql -y
+```
+
+#### 恢复
+
+Wrangler 没有 `d1 import`，恢复就是把导出的 SQL 灌回去：
+
+```bash
+npx wrangler d1 execute rental-db --remote --file=backup-20260918-1200.sql
+```
+
+> ⚠️ 导入前先确认 `wrangler.jsonc` 的 `database_id` 指向的是目标库。导出的 SQL 里包含 `DROP TABLE` / `CREATE TABLE`，会覆盖同名表的数据，建议先跑一次上面的备份。
+
+#### Time Travel（时间点恢复）
+
+```bash
+npx wrangler d1 time-travel info rental-db            # 查看可恢复的时间点
+npx wrangler d1 time-travel restore rental-db --timestamp=2026-09-18T10:00:00Z
+```
+
+恢复前 Wrangler 会自动为当前状态打一个快照。
+
+#### 把本地数据搬到线上
+
+```bash
+npx wrangler d1 export rental-db --local  --output=local-dump.sql
+npx wrangler d1 execute rental-db --remote --file=local-dump.sql
+```
+
+只想灌演示数据（客户 / 车辆 / 订单样例）：
+
+```bash
+npx wrangler d1 execute rental-db --remote --file=./scripts/seed-demo.sql
+```
+
+> `scripts/seed-demo.sql` 默认只在本地使用，不会随迁移自动上云。生产环境导入前先确认里面没有你想保留的同名数据。
+
+#### 新增迁移
+
+1. 在 `migrations/` 下新建 `NNNN_xxx.sql`（序号递增）。
+2. 本地验证：`npm run d1:migrate`（`--local`）。
+3. 上线：`npm run d1:migrate:remote`。
+4. 提交时把迁移文件一起提交，CI 里已包含这一步。
+
+### 8. 常见问题排查
+
+| 现象 | 原因 | 解决 |
+|---|---|---|
+| 部署成功但所有接口报错，日志含 `Couldn't find D1 DB` | `wrangler.jsonc` 的 `database_id` 还是占位符 | 用 `npx wrangler d1 info rental-db` 取真实 UUID 填回配置，重新 `npm run deploy` |
+| 上传图片失败，报 `The specified bucket does not exist` | R2 桶没建或名字对不上 | `npm run r2:create`，确认桶名与 `wrangler.jsonc` 的 `bucket_name` 一致 |
+| `The directory specified by the assets.directory field does not exist: frontend/dist` | 没构建前端 | 用 `npm run deploy`（含 `build:web`），不要裸跑 `wrangler deploy` |
+| 部署后页面是旧的 | 浏览器缓存或漏了构建 | 强刷（Cmd/Ctrl+Shift+R）；确认 `npm run deploy` 的输出里有 `Uploaded` |
+| 刷新子路由（如 `/orders`）404 | `assets.not_found_handling` 被改掉 | 保持 `single-page-application`，见 `wrangler.jsonc` |
+| API 返回 HTML 而不是 JSON | `/api/*` 没走 Worker | 确认 `assets.run_worker_first` 包含 `/api/*` |
+| 换完 `JWT_SECRET` 后所有人被踢下线 | 正常现象：旧 token 签名失效 | 重新登录即可；换密钥请挑低峰期 |
+| 上传报超过 10MB / 类型不支持 | 后端硬限制：10MB，仅 `insurance` 允许 PDF | 压缩图片后再传；表单字段名必须固定为 `image` |
+| 图片打不开（404） | 文件不在 R2，或 key 与数据库记录不一致 | `npx wrangler r2 object list rental-uploads` 核对 |
+| 迁移执行失败 | 目标表 / 列已存在，或 SQL 语法问题 | 看报错行号修 SQL；已成功的迁移不会被回退 |
+| `wrangler: command not found` | 依赖没装或没走 npx | `npm install`；脚本里统一用 `npx wrangler ...` |
+| 接口偶发超时 / 计费异常 | D1 免费额度打满 | 看 Dashboard 用量；D1 免费版为 5GB 存储 + 每日读写额度 |
+
+### 9. 上线安全检查清单
+
+- [ ] `wrangler.jsonc` 的 `database_id` 已换成真实 UUID（不是 `00000000-...`）
+- [ ] R2 桶 `rental-uploads` 已创建，桶名与配置一致
+- [ ] 已 `wrangler secret put JWT_SECRET`（不使用代码里的默认密钥）
+- [ ] 已登录并改掉 `admin123`
+- [ ] 已 `npm run typecheck` 通过
+- [ ] 备份策略已就绪（定期 `d1 export`）
+
+### 10. 费用与额度提醒
+
+- **免费额度**：D1 5GB 存储 + 每日读写额度；Workers 每日 10 万请求；Static Assets 单文件上限 10MiB（当前产物最大约 874KB，安全）。
+- **R2 需绑定支付方式**（即便完全在免费额度内），免费额度为每月 10GB 存储，出流量免费。
+- `wrangler.jsonc` 里 `observability.enabled: true` 会在部署时提示开启 Workers Observability，免费计划日志采样有限，不需要可在配置里关掉。
+- `/uploads/*` 因为配了 `run_worker_first`，每次读取都会进 Worker（有 `caches.default` 缓存兜底）并产生一次 R2 读操作。
 
 ## 数据表结构
 
