@@ -60,13 +60,17 @@ export async function getDashboardStats(c: AppContext): Promise<Response> {
           SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
           SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
-         FROM orders`
+         FROM orders
+         WHERE status != 'cancelled'`
       ),
+      // 已取消订单的收款不再算收入，必须关联订单状态排除掉
       queryOne<{ total: number }>(
         db,
-        `SELECT COALESCE(SUM(amount), 0) as total
-         FROM payments
-         WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+        `SELECT COALESCE(SUM(p.amount), 0) as total
+         FROM payments p
+         JOIN orders o ON o.id = p.order_id
+         WHERE o.status != 'cancelled'
+           AND strftime('%Y-%m', p.created_at) = strftime('%Y-%m', 'now')`
       ),
       queryOne<{ total: number }>(db, 'SELECT COUNT(*) as total FROM customers WHERE status = 1'),
       query<RecentOrder>(
@@ -117,23 +121,24 @@ export async function getIncomeReport(c: AppContext): Promise<Response> {
 
     let sql = `
       SELECT
-        strftime('%Y-%m-%d', created_at) as date,
-        SUM(amount) as total
-      FROM payments
-      WHERE 1=1
+        strftime('%Y-%m-%d', p.created_at) as date,
+        SUM(p.amount) as total
+      FROM payments p
+      JOIN orders o ON o.id = p.order_id
+      WHERE o.status != 'cancelled'
     `;
     const params: Bind[] = [];
 
     if (start_date) {
-      sql += ' AND date(created_at) >= date(?)';
+      sql += ' AND date(p.created_at) >= date(?)';
       params.push(start_date);
     }
     if (end_date) {
-      sql += ' AND date(created_at) <= date(?)';
+      sql += ' AND date(p.created_at) <= date(?)';
       params.push(end_date);
     }
 
-    sql += " GROUP BY strftime('%Y-%m-%d', created_at) ORDER BY date DESC LIMIT 30";
+    sql += " GROUP BY strftime('%Y-%m-%d', p.created_at) ORDER BY date DESC LIMIT 30";
 
     const data = await query<{ date: string; total: number }>(db, sql, params);
 
