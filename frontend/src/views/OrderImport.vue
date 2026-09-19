@@ -47,14 +47,13 @@
           <div class="summary-actions">
             <el-select
               v-model="defaultSourceId"
-              placeholder="整批套用订单来源（可选）"
-              clearable
+              placeholder="选择订单来源"
               size="default"
               class="source-select"
             >
               <el-option v-for="s in sources" :key="s.id" :label="s.name" :value="s.id" />
             </el-select>
-            <el-button type="primary" :loading="committing" :disabled="importableCount === 0" @click="runCommit">
+            <el-button type="primary" :loading="committing" :disabled="!canCommit" @click="runCommit">
               确认导入 {{ importableCount }} 条
             </el-button>
             <el-button @click="reset">重新选择文件</el-button>
@@ -62,6 +61,7 @@
         </div>
         <p class="platform-tip">
           已识别为「{{ platformText }}」模板，共 {{ summary?.total ?? 0 }} 行
+          <span v-if="!defaultSourceId" class="need-source">请先选择订单来源，整批订单将归入该来源</span>
         </p>
       </el-card>
 
@@ -182,7 +182,7 @@ const prepared = ref<PreviewRow[]>([])
 const summary = ref<Record<string, number> | null>(null)
 const skipMap = ref<Record<number, boolean>>({})
 const sources = ref<{ id: string; name: string }[]>([])
-const defaultSourceId = ref<string | null>(null)
+const defaultSourceId = ref('')
 const loading = ref(false)
 const committing = ref(false)
 const result = ref<Record<string, number> | null>(null)
@@ -191,6 +191,8 @@ const platformText = computed(() => PLATFORM_TEXT_MAP[platform.value] ?? platfor
 const importableCount = computed(
   () => prepared.value.filter((item) => item.importable && !skipMap.value[item.rowIndex]).length
 )
+// 订单来源必选：整批订单统一挂到所选来源下
+const canCommit = computed(() => Boolean(defaultSourceId.value) && importableCount.value > 0)
 
 function statusText(status: string | null): string {
   return status ? ORDER_STATUS_TEXT_MAP[status] ?? status : '未知'
@@ -330,7 +332,7 @@ function reset(): void {
   summary.value = null
   result.value = null
   skipMap.value = {}
-  defaultSourceId.value = null
+  defaultSourceId.value = ''
 }
 
 function goOrders(): void {
@@ -463,6 +465,11 @@ onMounted(async () => {
   margin: 12px 0 0;
   font-size: 13px;
   color: rgba(0, 0, 0, 0.48);
+}
+
+.need-source {
+  margin-left: 8px;
+  color: #ff3b30;
 }
 
 .issue-ok {

@@ -27,12 +27,6 @@ export interface MatchedVehicle {
   plate_number: string;
 }
 
-export interface MatchedSource {
-  id: string;
-  name: string;
-  commission_rate: number;
-}
-
 export interface MatchedDriver {
   id: string;
   name: string;
@@ -46,8 +40,6 @@ export interface PreparedRow {
   customerAction: 'match' | 'create' | null;
   vehicle: MatchedVehicle | null;
   vehicleAction: 'match' | 'create' | null;
-  source: MatchedSource | null;
-  sourceAction: 'match' | 'create' | null;
   pickupDriver: MatchedDriver | null;
   returnDriver: MatchedDriver | null;
   /** 库内已存在同 order_no 的记录 */
@@ -64,7 +56,6 @@ export interface PrepareSummary {
   duplicates: number;
   newCustomers: number;
   newVehicles: number;
-  newSources: number;
 }
 
 export interface PrepareResult {
@@ -120,7 +111,7 @@ export async function prepareRows(
   platform: Platform,
   rows: NormalizedRow[]
 ): Promise<PrepareResult> {
-  const [customers, vehicles, sources, drivers, existingOrders] = await Promise.all([
+  const [customers, vehicles, drivers, existingOrders] = await Promise.all([
     buildLookup<MatchedCustomer>(db, 'customers', 'name', 'id, name', rows.map((r) => r.customer_name), (row) => row.name),
     buildLookup<MatchedVehicle>(
       db,
@@ -129,14 +120,6 @@ export async function prepareRows(
       'id, plate_number',
       rows.map((r) => r.plate_number),
       (row) => row.plate_number
-    ),
-    buildLookup<MatchedSource>(
-      db,
-      'order_sources',
-      'name',
-      'id, name, commission_rate',
-      rows.map((r) => r.channel ?? ''),
-      (row) => row.name
     ),
     buildLookup<MatchedDriver>(
       db,
@@ -209,11 +192,6 @@ export async function prepareRows(
       issues.push({ field: 'plate_number', message: `将新建车辆「${row.plate_number}」`, level: 'warning' });
     }
 
-    const source = row.channel ? (sources.get(row.channel) ?? null) : null;
-    if (row.channel && !source) {
-      issues.push({ field: 'channel', message: `将新建来源「${row.channel}」`, level: 'warning' });
-    }
-
     if (vehicle && row.start_date && row.end_date) {
       const overlap = occupancy.some(
         (item) =>
@@ -236,8 +214,6 @@ export async function prepareRows(
       customerAction: customer ? 'match' : row.customer_name ? 'create' : null,
       vehicle,
       vehicleAction: vehicle ? 'match' : row.plate_number ? 'create' : null,
-      source,
-      sourceAction: source ? 'match' : row.channel ? 'create' : null,
       pickupDriver: row.pickup_driver ? (drivers.get(row.pickup_driver) ?? null) : null,
       returnDriver: row.return_driver ? (drivers.get(row.return_driver) ?? null) : null,
       duplicate,
@@ -252,8 +228,7 @@ export async function prepareRows(
     warning: prepared.filter((item) => item.issues.some((i) => i.level === 'warning')).length,
     duplicates: prepared.filter((item) => item.duplicate).length,
     newCustomers: prepared.filter((item) => item.customerAction === 'create').length,
-    newVehicles: prepared.filter((item) => item.vehicleAction === 'create').length,
-    newSources: prepared.filter((item) => item.sourceAction === 'create').length
+    newVehicles: prepared.filter((item) => item.vehicleAction === 'create').length
   };
 
   return { platform, rows: prepared, summary };

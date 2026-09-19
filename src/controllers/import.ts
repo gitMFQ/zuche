@@ -24,8 +24,8 @@ interface ImportBody extends RawSheet {
   filename?: string;
   /** 预览后的改动，按行下标定位 */
   overrides?: { rowIndex: number; customer_phone?: string; skip?: boolean }[];
-  /** 指定后整批套用该来源，不再按渠道名自动新建 */
-  default_source_id?: string | null;
+  /** 整批套用的订单来源，必填：导入的订单统一挂到该来源下 */
+  default_source_id?: string;
 }
 
 /** 一次 batch 的语句上限，避免单批过大 */
@@ -113,6 +113,19 @@ export async function commitImport(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: normalized.error }, 400);
     }
 
+    if (!body.default_source_id) {
+      return c.json({ success: false, message: '请先选择订单来源' }, 400);
+    }
+
+    const defaultSource = await queryOne<{ id: string; name: string; commission_rate: number }>(
+      db,
+      'SELECT id, name, commission_rate FROM order_sources WHERE id = ? AND status = 1',
+      [body.default_source_id]
+    );
+    if (!defaultSource) {
+      return c.json({ success: false, message: '所选订单来源不存在或已删除' }, 400);
+    }
+
     const skipped = applyOverrides(normalized.rows, body);
     const prepared = await prepareRows(db, normalized.template.platform, normalized.rows);
     const targets = prepared.rows.filter((item) => item.importable && !skipped.has(item.rowIndex));
@@ -133,11 +146,10 @@ export async function commitImport(c: AppContext): Promise<Response> {
       [batchId, platform, body.filename ?? null, prepared.rows.length, operatorId || null, currentTime]
     );
 
-    // 先建好客户/车辆/来源，订单才能引用它们的 id。id 在内存里预生成，
+    // 先建好客户/车辆，订单才能引用它们的 id。id 在内存里预生成，
     // 因为 D1 的 batch 拿不回自增结果。
     const customerIds = new Map<string, string>();
     const vehicleIds = new Map<string, string>();
-    const sourceIds = new Map<string, { id: string; name: string; commission_rate: number }>();
     const bootstrap: Stmt[] = [];
 
     for (const item of targets) {
@@ -180,30 +192,10 @@ export async function commitImport(c: AppContext): Promise<Response> {
           ]
         });
       }
-
-      // 指定了默认来源时整批套用，不自动新建
-      if (!body.default_source_id && item.sourceAction === 'create' && row.channel && !sourceIds.has(row.channel)) {
-        const id = generateId();
-        sourceIds.set(row.channel, { id, name: row.channel, commission_rate: 0 });
-        bootstrap.push({
-          sql: `INSERT INTO order_sources (id, name, commission_rate, color, platform, status, created_at, updated_at)
-                VALUES (?, ?, 0, '#409EFF', ?, 1, ?, ?)`,
-          params: [id, row.channel, platform, currentTime, currentTime]
-        });
-      }
     }
 
     if (bootstrap.length > 0) {
       await batchExecute(db, bootstrap);
-    }
-
-    let defaultSource: { id: string; name: string; commission_rate: number } | null = null;
-    if (body.default_source_id) {
-      defaultSource = await queryOne<{ id: string; name: string; commission_rate: number }>(
-        db,
-        'SELECT id, name, commission_rate FROM order_sources WHERE id = ? AND status = 1',
-        [body.default_source_id]
-      );
     }
 
     const statements: Stmt[] = [];
@@ -221,12 +213,11 @@ export async function commitImport(c: AppContext): Promise<Response> {
 
       if (!customerId || !vehicleId) continue;
 
-      const source = defaultSource ?? item.source ?? (row.channel ? sourceIds.get(row.channel) ?? null : null);
       // 携程「实收」与「供应商应收」的差额就是实际佣金，比来源默认费率精确
       const commissionRate =
         row.total_amount > 0 && row.net_amount > 0 && row.net_amount < row.total_amount
           ? Math.round(((row.total_amount - row.net_amount) / row.total_amount) * 10000) / 100
-          : (source?.commission_rate ?? 0);
+          : defaultSource.commission_rate;
 
       // 续租过的单，合同还车时间以续租后的为准
       const finalEndDate = row.extend_end_date && row.extend_end_date > row.end_date ? row.extend_end_date : row.end_date;
@@ -258,8 +249,8 @@ export async function commitImport(c: AppContext): Promise<Response> {
         row.paid_amount,
         row.status,
         row.remarks,
-        source?.id ?? null,
-        source?.name ?? null,
+        defaultSource.id,
+        defaultSource.name,
         commissionRate,
         row.net_amount,
         resolveServiceType(row),

@@ -4,6 +4,14 @@
 
 ## 2026-09-19
 
+### 订单来源去掉所属平台
+
+- 移除订单来源的「所属平台」：新增/编辑表单、列表列、接口读写、`OrderSourceRow` 全部清理
+- 新增 `migrations/0005_drop_order_source_platform.sql` 删除 `order_sources.platform` 列
+- 批量导入订单改为**必选订单来源**：整批订单统一挂到所选来源下，不再按渠道名自动新建来源
+  （`commitImport` 校验 `default_source_id`，`prepareRows` 移除来源匹配逻辑）
+- 订单列表页「批量导入订单」入口从页面顶部移到「新建订单」按钮后面
+
 ### 移除主题自定义设置
 
 - 移除「系统设置」中的主题色、侧边栏风格、自定义渐变三项

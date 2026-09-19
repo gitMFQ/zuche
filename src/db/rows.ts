@@ -209,7 +209,6 @@ export interface OrderSourceRow {
   status: number;
   created_at: string;
   updated_at: string;
-  platform: string | null;
 }
 
 export interface MaintenanceRow {
