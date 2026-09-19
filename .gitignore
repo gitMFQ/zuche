@@ -33,3 +33,6 @@ npm-debug.log*
 # Lock files (optional, some teams prefer to commit these)
 # package-lock.json
 # yarn.lock
+
+# CodeBuddy（会话记录与上传的附件）
+.codebuddy/
