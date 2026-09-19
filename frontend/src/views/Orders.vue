@@ -309,7 +309,7 @@
           <el-input v-model="form.customer_name" placeholder="客户姓名" />
         </el-form-item>
         <el-form-item label="手机" prop="customer_phone">
-          <el-input v-model="form.customer_phone" placeholder="手机号" type="tel" @blur="checkBlacklist" />
+          <el-input v-model="form.customer_phone" placeholder="选填" type="tel" @blur="checkBlacklist" />
         </el-form-item>
         <el-alert 
           v-if="blacklistWarning" 
@@ -495,7 +495,7 @@
           <el-input v-model="editForm.customer_name" placeholder="客户姓名" />
         </el-form-item>
         <el-form-item label="手机" prop="customer_phone">
-          <el-input v-model="editForm.customer_phone" placeholder="手机号" type="tel" />
+          <el-input v-model="editForm.customer_phone" placeholder="选填" type="tel" />
         </el-form-item>
         <el-form-item label="身份证">
           <el-input v-model="editForm.customer_id_card" placeholder="身份证号（可选）" />
@@ -954,10 +954,8 @@ const form = reactive({
 
 const rules: FormRules = {
   customer_name: [{ required: true, message: '请输入客户姓名', trigger: 'blur' }],
-  customer_phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
-  ],
+  // 手机号选填：平台导入的客户可能没有手机号
+  customer_phone: [{ pattern: /^(1[3-9]\d{9})?$/, message: '手机号格式不正确', trigger: 'blur' }],
   vehicle_id: [{ required: true, message: '请选择车辆', trigger: 'change' }],
   source_id: [{ required: true, message: '请选择订单来源', trigger: 'change' }],
   start_date: [{ required: true, message: '请选择起租日期', trigger: 'change' }],
@@ -990,10 +988,8 @@ const editForm = reactive({
 
 const editRules: FormRules = {
   customer_name: [{ required: true, message: '请输入客户姓名', trigger: 'blur' }],
-  customer_phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
-  ],
+  // 手机号选填：平台导入的客户可能没有手机号
+  customer_phone: [{ pattern: /^(1[3-9]\d{9})?$/, message: '手机号格式不正确', trigger: 'blur' }],
   start_date: [{ required: true, message: '请选择起租日期', trigger: 'change' }],
   end_date: [{ required: true, message: '请选择还车日期', trigger: 'change' }]
 }

@@ -136,19 +136,25 @@ export async function createCustomer(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const body = await c.req.json<CustomerBody>();
-    const { name, phone, source_id } = body;
+    const { name, source_id } = body;
     // 身份证是 UNIQUE 列，而前端不填时传的是空串：空串在唯一索引里是实打实的值，
     // 第二次就会撞 UNIQUE。统一把空白串收敛成 NULL（NULL 之间互不冲突）
     const id_card = normalizeOptional(body.id_card);
+    // 手机号同样选填（平台导出的客户没有完整手机号）。customers.phone 是 NOT NULL，
+    // 所以空白收敛成空串而不是 NULL；留空时不参与重复性判断，
+    // 否则第二个无手机号客户会被上一个拦住
+    const phone = body.phone?.trim() ?? '';
 
-    if (!name || !phone) {
-      return c.json({ success: false, message: '姓名和手机号不能为空' }, 400);
+    if (!name) {
+      return c.json({ success: false, message: '客户姓名不能为空' }, 400);
     }
 
     // 检查手机号是否已存在
-    const existing = await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE phone = ?', [phone]);
-    if (existing) {
-      return c.json({ success: false, message: '该手机号已存在' }, 400);
+    if (phone) {
+      const existing = await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE phone = ?', [phone]);
+      if (existing) {
+        return c.json({ success: false, message: '该手机号已存在' }, 400);
+      }
     }
 
     // 检查身份证是否已存在
@@ -218,7 +224,9 @@ export async function updateCustomer(c: AppContext): Promise<Response> {
   try {
     const id = c.req.param('id');
     const body = await c.req.json<CustomerBody>();
-    const { phone, source_id } = body;
+    const { source_id } = body;
+    // 与 createCustomer 保持一致：手机号选填，空白收敛成空串（该列 NOT NULL）
+    const phone = body.phone?.trim() ?? '';
 
     const customer = await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE id = ?', [id]);
     if (!customer) {

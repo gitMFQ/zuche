@@ -126,7 +126,7 @@
           <el-input v-model="form.name" placeholder="请输入姓名" />
         </el-form-item>
         <el-form-item label="手机号" prop="phone">
-          <el-input v-model="form.phone" placeholder="请输入手机号" type="tel" />
+          <el-input v-model="form.phone" placeholder="选填，留空表示暂无手机号" type="tel" />
         </el-form-item>
         <el-form-item label="身份证">
           <el-input v-model="form.id_card" placeholder="请输入身份证号" />
@@ -317,10 +317,8 @@ const form = reactive({
 
 const rules: FormRules = {
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
-  phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
-  ]
+  // 手机号选填：平台导出的客户没有完整手机号，留空时只做格式校验
+  phone: [{ pattern: /^(1[3-9]\d{9})?$/, message: '手机号格式不正确', trigger: 'blur' }]
 }
 
 function previewImage(images: string[], index: number) {

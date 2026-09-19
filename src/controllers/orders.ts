@@ -266,26 +266,33 @@ export async function createOrder(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const body = await c.req.json<CreateOrderBody>();
-    const { customer_name, customer_phone, vehicle_id, start_date, end_date } = body;
+    const { customer_name, vehicle_id, start_date, end_date } = body;
     const { daily_rate, total_amount } = body;
+    // 手机号选填：平台导入的客户可能没有手机号，留空时不能参与格式校验与匹配
+    const customer_phone = body.customer_phone?.trim() ?? '';
 
-    if (!customer_name || !customer_phone || !vehicle_id || !start_date || !end_date) {
-      return c.json({ success: false, message: '客户姓名、手机号、车辆、起止日期不能为空' }, 400);
+    if (!customer_name || !vehicle_id || !start_date || !end_date) {
+      return c.json({ success: false, message: '客户姓名、车辆、起止日期不能为空' }, 400);
     }
 
     if (!daily_rate && !total_amount) {
       return c.json({ success: false, message: '日租金和总租金至少填写一项' }, 400);
     }
 
-    // 验证手机号格式
-    if (!PHONE_PATTERN.test(customer_phone)) {
+    // 验证手机号格式（留空时跳过）
+    if (customer_phone && !PHONE_PATTERN.test(customer_phone)) {
       return c.json({ success: false, message: '手机号格式不正确' }, 400);
     }
 
     // 先把需要判断的数据全部读出来
     const [vehicle, existingCustomer, source] = await Promise.all([
       queryOne<{ id: string; status: string; plate_number: string }>(db, 'SELECT id, status, plate_number FROM vehicles WHERE id = ?', [vehicle_id]),
-      queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE phone = ?', [customer_phone]),
+      // 没有手机号时退回按姓名匹配，否则空串会误命中上一个无手机号的客户
+      queryOne<{ id: string }>(
+        db,
+        customer_phone ? 'SELECT id FROM customers WHERE phone = ?' : 'SELECT id FROM customers WHERE name = ?',
+        [customer_phone || customer_name]
+      ),
       body.source_id
         ? queryOne<{ commission_rate: number }>(db, 'SELECT commission_rate FROM order_sources WHERE id = ? AND status = 1', [body.source_id])
         : Promise.resolve(null)
@@ -628,10 +635,13 @@ export async function updateOrder(c: AppContext): Promise<Response> {
       body.license_images !== undefined;
 
     if (hasCustomerUpdate) {
-      // 未传手机号时保持订单原有客户（customers.phone 非空，绑定 null 查不到任何记录）
-      const customer = await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE phone = ?', [
-        body.customer_phone ?? null
-      ]);
+      // 手机号选填：留空时按姓名匹配。若仍按 phone 查，空串会命中库里
+      // 第一个无手机号的客户，把订单错挂到别人名下
+      const customer = body.customer_phone
+        ? await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE phone = ?', [body.customer_phone])
+        : body.customer_name
+          ? await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE name = ?', [body.customer_name])
+          : null;
 
       if (customer && customer.id !== order.customer_id) {
         customerId = customer.id;
