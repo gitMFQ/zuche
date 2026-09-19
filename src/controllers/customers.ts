@@ -22,6 +22,15 @@ function parseImages(raw: string | null): string[] {
   }
 }
 
+/**
+ * 空白串收敛成 null。身份证是 UNIQUE 列，而前端不填时传的是空串，
+ * 空串在唯一索引里是实打实的值，第二个客户就会撞 UNIQUE；NULL 之间互不冲突。
+ */
+function normalizeOptional(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 interface CustomerBody {
   name?: string;
   phone?: string;
@@ -127,7 +136,10 @@ export async function createCustomer(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const body = await c.req.json<CustomerBody>();
-    const { name, phone, id_card, source_id } = body;
+    const { name, phone, source_id } = body;
+    // 身份证是 UNIQUE 列，而前端不填时传的是空串：空串在唯一索引里是实打实的值，
+    // 第二次就会撞 UNIQUE。统一把空白串收敛成 NULL（NULL 之间互不冲突）
+    const id_card = normalizeOptional(body.id_card);
 
     if (!name || !phone) {
       return c.json({ success: false, message: '姓名和手机号不能为空' }, 400);
@@ -242,7 +254,7 @@ export async function updateCustomer(c: AppContext): Promise<Response> {
       [
         body.name,
         phone,
-        body.id_card ?? null,
+        normalizeOptional(body.id_card),
         body.license_number ?? null,
         body.license_expiry ?? null,
         body.address ?? null,
