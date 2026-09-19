@@ -1,5 +1,9 @@
 <template>
   <div class="page-container">
+    <div class="import-bar">
+      <el-button type="primary" @click="goImport">批量导入订单</el-button>
+    </div>
+
     <!-- 标签页 -->
     <el-tabs v-model="activeTab" class="order-tabs" @tab-change="onTabChange">
       <el-tab-pane label="待取车" name="pending">
@@ -790,6 +794,10 @@ import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
+
+function goImport(): void {
+  void router.push('/orders/import')
+}
 const loading = ref(false)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
@@ -1979,6 +1987,12 @@ onMounted(() => {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.import-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 .order-tabs {

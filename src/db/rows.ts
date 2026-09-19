@@ -56,6 +56,10 @@ export interface VehicleRow {
   license_image: string | null;
   registration_image: string | null;
   is_new_energy: number;
+  transmission: string | null;
+  fuel_type: string | null;
+  body_type: string | null;
+  doors: number | null;
 }
 
 export interface OrderRow {
@@ -89,6 +93,58 @@ export interface OrderRow {
   contract_number: string | null;
   pickup_location: string | null;
   return_location: string | null;
+  platform: string | null;
+  external_no: string | null;
+  import_batch_id: string | null;
+  actual_start_date: string | null;
+  violation_deposit: number;
+  cancel_reason: string | null;
+  cancelled_at: string | null;
+  delivery_type: string | null;
+  pickup_driver_id: string | null;
+  pickup_driver_name: string | null;
+  return_driver_id: string | null;
+  return_driver_name: string | null;
+  booked_model: string | null;
+}
+
+export interface OrderFeeRow {
+  id: string;
+  order_id: string;
+  fee_category: string;
+  fee_name: string;
+  receivable: number;
+  received: number;
+  refunded: number;
+  platform: string | null;
+  created_at: string;
+}
+
+export interface OrderExtensionRow {
+  id: string;
+  order_id: string;
+  original_end_date: string;
+  new_end_date: string;
+  extend_days: number;
+  extend_amount: number;
+  payment_method: string | null;
+  operator_id: string | null;
+  remarks: string | null;
+  created_at: string;
+}
+
+export interface ImportBatchRow {
+  id: string;
+  platform: string;
+  filename: string | null;
+  total_rows: number;
+  success_rows: number;
+  skipped_rows: number;
+  failed_rows: number;
+  new_customers: number;
+  new_vehicles: number;
+  operator_id: string | null;
+  created_at: string;
 }
 
 export interface PaymentRow {
@@ -153,6 +209,7 @@ export interface OrderSourceRow {
   status: number;
   created_at: string;
   updated_at: string;
+  platform: string | null;
 }
 
 export interface MaintenanceRow {

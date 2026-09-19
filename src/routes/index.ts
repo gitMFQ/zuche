@@ -17,6 +17,7 @@ import * as inspectionController from '../controllers/inspection';
 import * as settingsController from '../controllers/settings';
 import * as logsController from '../controllers/logs';
 import * as schedulesController from '../controllers/schedules';
+import * as importController from '../controllers/import';
 
 import { uploadRoutes } from './upload';
 
@@ -62,6 +63,13 @@ apiRoutes.put('/orders/:id/extend', authMiddleware, ordersController.extendOrder
 apiRoutes.put('/orders/:id/status', authMiddleware, ordersController.updateOrderStatus);
 apiRoutes.post('/orders/:id/payments', authMiddleware, ordersController.addPayment);
 apiRoutes.put('/orders/:id/cancel', authMiddleware, ordersController.cancelOrder);
+apiRoutes.put('/orders/:id/drivers', authMiddleware, ordersController.assignDrivers);
+
+// ==================== 批量导入路由 ====================
+apiRoutes.post('/orders/import/preview', authMiddleware, importController.previewImport);
+apiRoutes.post('/orders/import', authMiddleware, importController.commitImport);
+apiRoutes.get('/orders/import/batches', authMiddleware, importController.getImportBatches);
+apiRoutes.delete('/orders/import/batches/:id', authMiddleware, importController.rollbackImport);
 
 // ==================== 违章管理路由 ====================
 apiRoutes.get('/violations/stats', authMiddleware, violationsController.getViolationStats);

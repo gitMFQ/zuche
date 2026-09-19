@@ -1,10 +1,11 @@
 import { type Bind, batchExecute, execute, query, queryOne, queryWithPagination, type Stmt } from '../db/helpers';
-import type { OrderRow } from '../db/rows';
+import type { OrderExtensionRow, OrderFeeRow, OrderRow } from '../db/rows';
 import { generateId, generateOrderNo } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
 import { now } from '../lib/time';
+import { PAYMENT_TYPE_FEE_CATEGORY, PAYMENT_TYPE_TEXT } from '../lib/constants';
 import type { AppContext } from '../types';
 
 // 订单状态映射
@@ -189,7 +190,7 @@ export async function getOrder(c: AppContext): Promise<Response> {
   try {
     const id = c.req.param('id');
 
-    const [order, payments] = await Promise.all([
+    const [order, payments, fees, extensions] = await Promise.all([
       queryOne<OrderDetailRow>(
         db,
         `SELECT o.*,
@@ -206,7 +207,9 @@ export async function getOrder(c: AppContext): Promise<Response> {
          WHERE o.id = ?`,
         [id]
       ),
-      query(db, 'SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC', [id])
+      query(db, 'SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC', [id]),
+      query<OrderFeeRow>(db, 'SELECT * FROM order_fees WHERE order_id = ? ORDER BY fee_category, fee_name', [id]),
+      query<OrderExtensionRow>(db, 'SELECT * FROM order_extensions WHERE order_id = ? ORDER BY created_at DESC', [id])
     ]);
 
     if (!order) {
@@ -220,7 +223,9 @@ export async function getOrder(c: AppContext): Promise<Response> {
         id_card_images: parseImages(order.id_card_images),
         license_images: parseImages(order.license_images),
         status_text: STATUS_MAP[order.status] || order.status,
-        payments
+        payments,
+        fees,
+        extensions
       }
     });
   } catch (error) {
@@ -466,6 +471,7 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
     const id = c.req.param('id');
     const body = await c.req.json<{
       status?: string;
+      actual_start_date?: string;
       actual_end_date?: string;
       remarks?: string;
       pickup_mileage?: number;
@@ -513,6 +519,10 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
 
     // 取车时记录取车里程和图片
     if (status === 'active') {
+      // 实际取车时间与还车时间对称，未传则取当前时间
+      updateSql += ', actual_start_date = ?';
+      updateParams.push(body.actual_start_date ?? currentTime);
+
       if (body.pickup_mileage !== undefined && body.pickup_mileage !== null) {
         updateSql += ', pickup_mileage = ?';
         updateParams.push(body.pickup_mileage);
@@ -851,10 +861,26 @@ export async function extendOrder(c: AppContext): Promise<Response> {
       newPaidAmount += payment_amount ?? 0;
     }
 
+    // 续租留痕：原来只改 end_date 累加金额，看不出一张单续过几次
     const stmts: Stmt[] = [
       {
         sql: 'UPDATE orders SET end_date = ?, total_amount = ?, net_amount = ?, paid_amount = ?, updated_at = ? WHERE id = ?',
         params: [new_end_date, newTotalAmount, newNetAmount, newPaidAmount, currentTime, id]
+      },
+      {
+        sql: `INSERT INTO order_extensions (id, order_id, original_end_date, new_end_date, extend_days, extend_amount, payment_method, operator_id, created_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [
+          generateId(),
+          id,
+          order.end_date,
+          new_end_date,
+          extendDays,
+          extend_amount,
+          hasPayment ? (payment_method ?? null) : null,
+          getAuthUser(c)?.id ?? null,
+          currentTime
+        ]
       }
     ];
 
@@ -919,7 +945,7 @@ export async function addPayment(c: AppContext): Promise<Response> {
     const currentTime = now();
     const newPaidAmount = (order.paid_amount || 0) + amount;
 
-    // 支付记录与订单已付金额必须同时生效
+    // 支付记录、订单已付金额、费用明细必须同时生效
     await batchExecute(db, [
       {
         sql: 'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -928,6 +954,18 @@ export async function addPayment(c: AppContext): Promise<Response> {
       {
         sql: 'UPDATE orders SET paid_amount = ?, updated_at = ? WHERE id = ?',
         params: [newPaidAmount, currentTime, id]
+      },
+      {
+        sql: `INSERT INTO order_fees (id, order_id, fee_category, fee_name, receivable, received, refunded, created_at)
+              VALUES (?, ?, ?, ?, 0, ?, 0, ?)`,
+        params: [
+          generateId(),
+          id,
+          PAYMENT_TYPE_FEE_CATEGORY[payment_type] ?? 'other',
+          PAYMENT_TYPE_TEXT[payment_type] ?? payment_type,
+          amount,
+          currentTime
+        ]
       }
     ]);
 
@@ -950,12 +988,70 @@ export async function addPayment(c: AppContext): Promise<Response> {
   }
 }
 
+/**
+ * 指派司机。平台导出给的是人名，可能不是本系统用户，
+ * 所以 id 与 name 分开存：匹配得上就关联，匹配不上只留名字。
+ */
+export async function assignDrivers(c: AppContext): Promise<Response> {
+  const db = c.env.DB;
+  try {
+    const id = c.req.param('id');
+    const body = await c.req.json<{ pickup_driver_id?: string | null; return_driver_id?: string | null }>();
+
+    const order = await queryOne<OrderWithPlate>(db, ORDER_WITH_PLATE_SQL, [id]);
+    if (!order) {
+      return c.json({ success: false, message: '订单不存在' }, 404);
+    }
+
+    const [pickupDriver, returnDriver] = await Promise.all([
+      body.pickup_driver_id
+        ? queryOne<{ id: string; name: string }>(db, 'SELECT id, name FROM users WHERE id = ?', [body.pickup_driver_id])
+        : Promise.resolve(null),
+      body.return_driver_id
+        ? queryOne<{ id: string; name: string }>(db, 'SELECT id, name FROM users WHERE id = ?', [body.return_driver_id])
+        : Promise.resolve(null)
+    ]);
+
+    if (body.pickup_driver_id && !pickupDriver) {
+      return c.json({ success: false, message: '取车司机不存在' }, 400);
+    }
+    if (body.return_driver_id && !returnDriver) {
+      return c.json({ success: false, message: '还车司机不存在' }, 400);
+    }
+
+    // 未传该字段时保持原值，显式传 null 表示清空
+    const pickupId = body.pickup_driver_id === undefined ? order.pickup_driver_id : body.pickup_driver_id;
+    const pickupName = body.pickup_driver_id === undefined ? order.pickup_driver_name : pickupDriver?.name ?? null;
+    const returnId = body.return_driver_id === undefined ? order.return_driver_id : body.return_driver_id;
+    const returnName = body.return_driver_id === undefined ? order.return_driver_name : returnDriver?.name ?? null;
+
+    await execute(
+      db,
+      `UPDATE orders SET pickup_driver_id = ?, pickup_driver_name = ?, return_driver_id = ?, return_driver_name = ?, updated_at = ? WHERE id = ?`,
+      [pickupId, pickupName, returnId, returnName, now(), id]
+    );
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '指派司机',
+      entityType: 'order',
+      entityId: id,
+      details: `订单 ${order.order_no} 指派司机：取车 ${pickupName ?? '未指派'}，还车 ${returnName ?? '未指派'}`,
+      ipAddress: getClientIp(c)
+    });
+
+    return c.json({ success: true, message: '司机指派成功' });
+  } catch (error) {
+    return handleError(c, '指派司机错误:', error);
+  }
+}
+
 // 取消订单
 export async function cancelOrder(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const id = c.req.param('id');
-    const { remarks } = await c.req.json<{ remarks?: string }>();
+    const { remarks, cancel_reason } = await c.req.json<{ remarks?: string; cancel_reason?: string }>();
 
     const order = await queryOne<OrderWithPlate>(db, ORDER_WITH_PLATE_SQL, [id]);
     if (!order) {
@@ -966,11 +1062,12 @@ export async function cancelOrder(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '只能取消待确认或进行中的订单' }, 400);
     }
 
-    await execute(db, "UPDATE orders SET status = 'cancelled', remarks = ?, updated_at = ? WHERE id = ?", [
-      remarks ?? order.remarks,
-      now(),
-      id
-    ]);
+    const currentTime = now();
+    await execute(
+      db,
+      `UPDATE orders SET status = 'cancelled', remarks = ?, cancel_reason = ?, cancelled_at = ?, updated_at = ? WHERE id = ?`,
+      [remarks ?? order.remarks, cancel_reason ?? null, currentTime, currentTime, id]
+    );
 
     await logAction(db, {
       userId: getAuthUser(c)?.id ?? '',

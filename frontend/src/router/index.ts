@@ -38,6 +38,12 @@ const routes = [
         meta: { title: '订单管理' }
       },
       {
+        path: 'orders/import',
+        name: 'OrderImport',
+        component: () => import('../views/OrderImport.vue'),
+        meta: { title: '批量导入订单' }
+      },
+      {
         path: 'orders/:id',
         name: 'OrderDetail',
         component: () => import('../views/OrderDetail.vue'),

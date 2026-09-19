@@ -48,6 +48,12 @@
           <span class="text-warning">{{ row.commission_rate }}%</span>
         </template>
       </el-table-column>
+      <el-table-column prop="platform" label="平台" width="100">
+        <template #default="{ row }">
+          <span v-if="row.platform">{{ platformText(row.platform) }}</span>
+          <span v-else class="text-muted">-</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="remarks" label="备注" min-width="150" show-overflow-tooltip />
       <el-table-column prop="created_at" label="创建时间" width="100">
         <template #default="{ row }">{{ row.created_at?.slice(0, 10) }}</template>
@@ -69,6 +75,12 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" size="default">
         <el-form-item label="来源名称" prop="name">
           <el-input v-model="form.name" placeholder="如：携程、神州租车、门店直客等" />
+        </el-form-item>
+        <el-form-item label="所属平台">
+          <el-select v-model="form.platform" clearable placeholder="可选，用于按平台聚合" style="width: 100%">
+            <el-option label="携程" value="ctrip" />
+            <el-option label="自有平台" value="self" />
+          </el-select>
         </el-form-item>
         <el-form-item label="颜色">
           <div class="color-picker-row">
@@ -98,6 +110,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { orderSourceApi } from '../api'
+import { PLATFORM_TEXT_MAP } from '../utils/constants'
+
+function platformText(platform: string): string {
+  return PLATFORM_TEXT_MAP[platform] ?? platform
+}
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -111,7 +128,8 @@ const form = reactive({
   name: '',
   commission_rate: 0,
   color: '#409EFF',
-  remarks: ''
+  remarks: '',
+  platform: ''
 })
 
 // 预定义颜色
@@ -154,7 +172,8 @@ function openDialog(data?: any) {
     name: data?.name || '',
     commission_rate: data?.commission_rate || 0,
     color: data?.color || '#409EFF',
-    remarks: data?.remarks || ''
+    remarks: data?.remarks || '',
+    platform: data?.platform || ''
   })
   dialogVisible.value = true
 }

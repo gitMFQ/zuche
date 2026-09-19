@@ -88,7 +88,25 @@ export const orderApi = {
   extend: (id: string, data: { new_end_date: string; extend_amount?: number; has_payment?: boolean; payment_amount?: number; payment_method?: string }) => api.put(`/orders/${id}/extend`, data),
   updateStatus: (id: string, data: any) => api.put(`/orders/${id}/status`, data),
   addPayment: (id: string, data: any) => api.post(`/orders/${id}/payments`, data),
-  cancel: (id: string, remarks?: string) => api.put(`/orders/${id}/cancel`, { remarks })
+  cancel: (id: string, remarks?: string) => api.put(`/orders/${id}/cancel`, { remarks }),
+  assignDrivers: (id: string, data: { pickup_driver_id?: string | null; return_driver_id?: string | null }) =>
+    api.put(`/orders/${id}/drivers`, data)
+}
+
+// ==================== 订单导入 API ====================
+export const importApi = {
+  preview: (data: { platform?: string; headers: string[]; rows: (string | null)[][] }) =>
+    api.post('/orders/import/preview', data),
+  commit: (data: {
+    platform?: string
+    headers: string[]
+    rows: (string | null)[][]
+    filename?: string
+    overrides?: { rowIndex: number; customer_phone?: string; skip?: boolean }[]
+    default_source_id?: string | null
+  }) => api.post('/orders/import', data),
+  batches: () => api.get('/orders/import/batches'),
+  rollback: (id: string) => api.delete(`/orders/import/batches/${id}`)
 }
 
 // ==================== 违章管理 API ====================

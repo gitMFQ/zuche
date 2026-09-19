@@ -181,6 +181,43 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="变速箱">
+              <el-select v-model="form.transmission" clearable placeholder="可选" style="width: 100%">
+                <el-option label="自动" value="自动" />
+                <el-option label="手动" value="手动" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="动力类型">
+              <el-select v-model="form.fuel_type" clearable placeholder="可选" style="width: 100%">
+                <el-option label="汽油" value="汽油" />
+                <el-option label="柴油" value="柴油" />
+                <el-option label="混动" value="混动" />
+                <el-option label="纯电" value="纯电" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="车身类型">
+              <el-select v-model="form.body_type" clearable placeholder="可选" style="width: 100%">
+                <el-option label="轿车" value="轿车" />
+                <el-option label="SUV" value="SUV" />
+                <el-option label="MPV" value="MPV" />
+                <el-option label="皮卡" value="皮卡" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="车门数">
+              <el-input-number v-model="form.doors" :min="2" :max="7" style="width: 100%" placeholder="可选" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="车架号">
           <el-input v-model="form.vin" placeholder="车辆识别代号 (VIN)" />
         </el-form-item>
@@ -281,7 +318,11 @@ const form = reactive({
   registration_image: '',
   is_new_energy: false,
   status: 'available',
-  remarks: ''
+  remarks: '',
+  transmission: '',
+  fuel_type: '',
+  body_type: '',
+  doors: null as number | null
 })
 
 const rules: FormRules = {
@@ -345,7 +386,11 @@ function openDialog(row?: any) {
       registration_image: row.registration_image || '',
       is_new_energy: row.is_new_energy === 1,
       status: row.status || 'available',
-      remarks: row.remarks || ''
+      remarks: row.remarks || '',
+      transmission: row.transmission || '',
+      fuel_type: row.fuel_type || '',
+      body_type: row.body_type || '',
+      doors: row.doors ?? null
     })
   } else {
     Object.assign(form, {
@@ -364,7 +409,11 @@ function openDialog(row?: any) {
       registration_image: '',
       is_new_energy: false,
       status: 'available',
-      remarks: ''
+      remarks: '',
+      transmission: '',
+      fuel_type: '',
+      body_type: '',
+      doors: null
     })
   }
   dialogVisible.value = true

@@ -12,6 +12,7 @@ interface SourceBody {
   commission_rate?: number;
   color?: string;
   remarks?: string;
+  platform?: string;
 }
 
 // 获取订单来源列表
@@ -63,7 +64,7 @@ export async function getOrderSource(c: AppContext): Promise<Response> {
 export async function createOrderSource(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const { name, commission_rate, color, remarks } = await c.req.json<SourceBody>();
+    const { name, commission_rate, color, remarks, platform } = await c.req.json<SourceBody>();
 
     if (!name) {
       return c.json({ success: false, message: '来源名称不能为空' }, 400);
@@ -84,8 +85,8 @@ export async function createOrderSource(c: AppContext): Promise<Response> {
 
     await execute(
       db,
-      'INSERT INTO order_sources (id, name, commission_rate, color, remarks, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)',
-      [id, name, commission_rate || 0, color || '#409EFF', remarks ?? null, currentTime, currentTime]
+      'INSERT INTO order_sources (id, name, commission_rate, color, remarks, platform, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)',
+      [id, name, commission_rate || 0, color || '#409EFF', remarks ?? null, platform ?? null, currentTime, currentTime]
     );
 
     await logAction(db, {
@@ -112,7 +113,7 @@ export async function updateOrderSource(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const id = c.req.param('id');
-    const { name, commission_rate, color, remarks } = await c.req.json<SourceBody>();
+    const { name, commission_rate, color, remarks, platform } = await c.req.json<SourceBody>();
 
     const source = await queryOne<OrderSourceRow>(db, 'SELECT * FROM order_sources WHERE id = ?', [id]);
     if (!source) {
@@ -133,12 +134,13 @@ export async function updateOrderSource(c: AppContext): Promise<Response> {
 
     await execute(
       db,
-      'UPDATE order_sources SET name = ?, commission_rate = ?, color = ?, remarks = ?, updated_at = ? WHERE id = ?',
+      'UPDATE order_sources SET name = ?, commission_rate = ?, color = ?, remarks = ?, platform = ?, updated_at = ? WHERE id = ?',
       [
         name || source.name,
         commission_rate ?? source.commission_rate,
         color || source.color,
         remarks ?? source.remarks,
+        platform !== undefined ? platform : source.platform,
         now(),
         id
       ]

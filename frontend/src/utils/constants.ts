@@ -1,3 +1,34 @@
+// 订单状态文本映射
+export const ORDER_STATUS_TEXT_MAP: Record<string, string> = {
+  pending: '待取车',
+  active: '已取车',
+  completed: '已还车',
+  cancelled: '已取消',
+  overdue: '已逾期'
+}
+
+// 订单来源平台映射（批量导入用）
+export const PLATFORM_TEXT_MAP: Record<string, string> = {
+  ctrip: '携程',
+  self: '自有平台'
+}
+
+// 取还车配送方式映射
+export const DELIVERY_TYPE_TEXT_MAP: Record<string, string> = {
+  delivery: '送车上门',
+  store: '门店自取'
+}
+
+// 费用明细分类映射
+export const FEE_CATEGORY_TEXT_MAP: Record<string, string> = {
+  rent: '租金',
+  service: '服务费',
+  deposit: '押金',
+  penalty: '违约金/扣款',
+  extra: '附加费用',
+  other: '其他'
+}
+
 // 支付方式选项
 export const PAYMENT_METHOD_OPTIONS = [
   { label: '平台支付', value: 'platform' },

@@ -201,6 +201,10 @@ interface VehicleBody {
   registration_image?: string;
   is_new_energy?: boolean | number;
   remarks?: string;
+  transmission?: string;
+  fuel_type?: string;
+  body_type?: string;
+  doors?: number;
 }
 
 // 创建车辆
@@ -227,8 +231,8 @@ export async function createVehicle(c: AppContext): Promise<Response> {
 
     await execute(
       db,
-      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_image, registration_image, is_new_energy, remarks, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`,
+      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_image, registration_image, is_new_energy, remarks, transmission, fuel_type, body_type, doors, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`,
       [
         id,
         plate_number,
@@ -246,6 +250,10 @@ export async function createVehicle(c: AppContext): Promise<Response> {
         body.registration_image ?? null,
         body.is_new_energy ? 1 : 0,
         body.remarks ?? null,
+        body.transmission ?? null,
+        body.fuel_type ?? null,
+        body.body_type ?? null,
+        body.doors ?? null,
         currentTime,
         currentTime
       ]
@@ -297,7 +305,7 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
 
     await execute(
       db,
-      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_image = ?, registration_image = ?, is_new_energy = ?, remarks = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_image = ?, registration_image = ?, is_new_energy = ?, remarks = ?, transmission = ?, fuel_type = ?, body_type = ?, doors = ?, updated_at = ? WHERE id = ?`,
       [
         plate_number,
         body.brand,
@@ -316,6 +324,10 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
         body.registration_image ?? null,
         body.is_new_energy ? 1 : 0,
         body.remarks ?? null,
+        body.transmission ?? null,
+        body.fuel_type ?? null,
+        body.body_type ?? null,
+        body.doors ?? null,
         now(),
         id
       ]

@@ -62,6 +62,14 @@
             <span class="label">还车时间</span>
             <span class="row-value">{{ formatDateTime(order.end_date) }}</span>
           </div>
+          <div class="info-row" v-if="order.actual_start_date">
+            <span class="label">实际取车</span>
+            <span class="row-value">{{ formatDateTime(order.actual_start_date) }}</span>
+          </div>
+          <div class="info-row" v-if="order.actual_end_date">
+            <span class="label">实际还车</span>
+            <span class="row-value">{{ formatDateTime(order.actual_end_date) }}</span>
+          </div>
         </div>
       </el-card>
 
@@ -88,10 +96,17 @@
       <!-- 取还地点 -->
       <el-card shadow="never" class="info-card">
         <template #header>
-          <span class="section-title"><el-icon><Location /></el-icon> 取还地点</span>
+          <div class="card-header-row">
+            <span class="section-title"><el-icon><Location /></el-icon> 取还地点</span>
+            <el-button type="primary" size="small" @click="openDriverDialog">指派司机</el-button>
+          </div>
         </template>
 
         <div class="info-list">
+          <div class="info-row" v-if="order.delivery_type">
+            <span class="label">配送方式</span>
+            <span class="row-value">{{ deliveryText(order.delivery_type) }}</span>
+          </div>
           <div class="info-row">
             <span class="label">取车地点</span>
             <span class="row-value">{{ order.pickup_location || '-' }}</span>
@@ -107,6 +122,14 @@
           <div class="info-row" v-if="order.return_mileage">
             <span class="label">还车里程</span>
             <span class="row-value">{{ order.return_mileage }} km</span>
+          </div>
+          <div class="info-row" v-if="order.pickup_driver_name">
+            <span class="label">取车司机</span>
+            <span class="row-value">{{ order.pickup_driver_name }}</span>
+          </div>
+          <div class="info-row" v-if="order.return_driver_name">
+            <span class="label">还车司机</span>
+            <span class="row-value">{{ order.return_driver_name }}</span>
           </div>
         </div>
       </el-card>
@@ -180,6 +203,14 @@
             <span class="label">待付金额</span>
             <span class="row-value text-danger">¥{{ unpaidAmount }}</span>
           </div>
+          <div class="info-row" v-if="order.violation_deposit">
+            <span class="label">违章押金</span>
+            <span class="row-value">¥{{ order.violation_deposit }}</span>
+          </div>
+          <div class="info-row" v-if="order.platform">
+            <span class="label">来源平台</span>
+            <span class="row-value">{{ platformText(order.platform) }}</span>
+          </div>
         </div>
       </el-card>
 
@@ -238,6 +269,49 @@
         <el-empty v-else description="暂无支付记录" :image-size="60" />
       </el-card>
 
+      <!-- 费用明细：平台账单拆到具体费用项，含应收/已收/退款 -->
+      <el-card shadow="never" class="info-card" v-if="order.fees?.length">
+        <template #header>
+          <span class="section-title">费用明细</span>
+        </template>
+
+        <div class="fee-list">
+          <div v-for="fee in order.fees" :key="fee.id" class="fee-item">
+            <div class="fee-row">
+              <span class="fee-name">{{ fee.fee_name }}</span>
+              <span class="fee-amount">¥{{ fee.receivable }}</span>
+            </div>
+            <div class="fee-row">
+              <span class="fee-category">{{ feeCategoryText(fee.fee_category) }}</span>
+              <span class="fee-meta">
+                已收 ¥{{ fee.received }}
+                <template v-if="fee.refunded"> · 退款 ¥{{ fee.refunded }}</template>
+              </span>
+            </div>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 续租历史 -->
+      <el-card shadow="never" class="info-card" v-if="order.extensions?.length">
+        <template #header>
+          <span class="section-title">续租历史</span>
+        </template>
+
+        <div class="fee-list">
+          <div v-for="ext in order.extensions" :key="ext.id" class="fee-item">
+            <div class="fee-row">
+              <span class="fee-name">续租 {{ ext.extend_days }} 天</span>
+              <span class="fee-amount">¥{{ ext.extend_amount }}</span>
+            </div>
+            <div class="fee-row">
+              <span class="fee-category">原还车 {{ formatDateTime(ext.original_end_date) }}</span>
+              <span class="fee-meta">延至 {{ formatDateTime(ext.new_end_date) }}</span>
+            </div>
+          </div>
+        </div>
+      </el-card>
+
       <!-- 操作按钮 -->
       <el-card shadow="never" class="info-card">
         <div class="action-buttons">
@@ -257,6 +331,26 @@
         </div>
       </el-card>
     </div>
+
+    <!-- 指派司机对话框 -->
+    <el-dialog v-model="driverDialogVisible" title="指派司机" width="90%" :style="{ maxWidth: '400px' }">
+      <el-form :model="driverForm" label-width="80px">
+        <el-form-item label="取车司机">
+          <el-select v-model="driverForm.pickup_driver_id" clearable placeholder="未指派" style="width: 100%">
+            <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="还车司机">
+          <el-select v-model="driverForm.return_driver_id" clearable placeholder="未指派" style="width: 100%">
+            <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="driverDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="driverSubmitting" @click="submitDrivers">保存</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 添加支付对话框 -->
     <el-dialog v-model="paymentDialogVisible" title="添加支付" width="90%" :style="{ maxWidth: '400px' }">
@@ -562,8 +656,14 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { orderApi, blacklistApi, vehicleApi, orderSourceApi, uploadApi } from '../api'
-import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS } from '../utils/constants'
+import { orderApi, blacklistApi, vehicleApi, orderSourceApi, uploadApi, userApi } from '../api'
+import {
+  PAYMENT_METHOD_OPTIONS,
+  PAYMENT_TYPE_OPTIONS,
+  DELIVERY_TYPE_TEXT_MAP,
+  PLATFORM_TEXT_MAP,
+  FEE_CATEGORY_TEXT_MAP
+} from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getPaymentMethodText, getPaymentTypeText, getServiceLabel, getServiceTagType } from '../utils/helpers'
 import dayjs from 'dayjs'
 
@@ -741,6 +841,56 @@ function onPickupDateTimeChange(e: Event) {
   if (target.value) {
     pickupForm.actual_pickup_date = target.value
   }
+}
+
+const driverDialogVisible = ref(false)
+const driverSubmitting = ref(false)
+const users = ref<any[]>([])
+const driverForm = reactive<{ pickup_driver_id: string | null; return_driver_id: string | null }>({
+  pickup_driver_id: null,
+  return_driver_id: null
+})
+
+async function openDriverDialog(): Promise<void> {
+  try {
+    const res: any = await userApi.getList()
+    const list = Array.isArray(res.data) ? res.data : res.data?.data ?? []
+    users.value = list.filter((user: any) => user.status !== 0)
+  } catch {
+    users.value = []
+  }
+  driverForm.pickup_driver_id = order.value.pickup_driver_id ?? null
+  driverForm.return_driver_id = order.value.return_driver_id ?? null
+  driverDialogVisible.value = true
+}
+
+async function submitDrivers(): Promise<void> {
+  driverSubmitting.value = true
+  try {
+    await orderApi.assignDrivers(String(route.params.id), {
+      pickup_driver_id: driverForm.pickup_driver_id,
+      return_driver_id: driverForm.return_driver_id
+    })
+    ElMessage.success('司机指派成功')
+    driverDialogVisible.value = false
+    await loadOrder()
+  } catch {
+    // 错误提示已由响应拦截器统一处理
+  } finally {
+    driverSubmitting.value = false
+  }
+}
+
+function deliveryText(type: string): string {
+  return DELIVERY_TYPE_TEXT_MAP[type] ?? type
+}
+
+function platformText(platform: string): string {
+  return PLATFORM_TEXT_MAP[platform] ?? platform
+}
+
+function feeCategoryText(category: string): string {
+  return FEE_CATEGORY_TEXT_MAP[category] ?? category
 }
 
 const unpaidAmount = computed(() => {
@@ -1345,6 +1495,49 @@ onMounted(async () => {
 .payment-amount {
   color: #409EFF;
   font-weight: 500;
+}
+
+.fee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fee-item {
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.fee-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.fee-row:last-child {
+  margin-bottom: 0;
+}
+
+.fee-name {
+  color: #303133;
+  font-size: 14px;
+}
+
+.fee-amount {
+  color: #409EFF;
+  font-weight: 500;
+}
+
+.fee-category {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.48);
+}
+
+.fee-meta {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.48);
 }
 
 .payment-method, .payment-time {
