@@ -63,6 +63,7 @@ apiRoutes.put('/orders/:id/extend', authMiddleware, ordersController.extendOrder
 apiRoutes.put('/orders/:id/status', authMiddleware, ordersController.updateOrderStatus);
 apiRoutes.post('/orders/:id/payments', authMiddleware, ordersController.addPayment);
 apiRoutes.put('/orders/:id/cancel', authMiddleware, ordersController.cancelOrder);
+apiRoutes.delete('/orders/:id', authMiddleware, ordersController.deleteOrder);
 apiRoutes.put('/orders/:id/drivers', authMiddleware, ordersController.assignDrivers);
 
 // ==================== 批量导入路由 ====================

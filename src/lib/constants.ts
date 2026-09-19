@@ -21,6 +21,9 @@ export const PAYMENT_TYPE_TEXT: Record<string, string> = {
   other: '其他'
 };
 
+/** 到店取车/还车都在门店完成，不记录具体地址，取还车位置统一记为门店 */
+export const STORE_LOCATION_TEXT = '门店';
+
 /** 支付类型落到费用明细的分类 */
 export const PAYMENT_TYPE_FEE_CATEGORY: Record<string, string> = {
   rent: 'rent',

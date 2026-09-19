@@ -15,6 +15,7 @@ import {
   type Platform,
   type TemplateDef
 } from './templates';
+import { STORE_LOCATION_TEXT } from '../constants';
 
 export type OrderStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 
@@ -249,19 +250,32 @@ export function normalizeSheet(
     const cancelTime = parseDateTime(pick(row, 'cancel_time'));
     const cancelReason = parseText(pick(row, 'cancel_reason'));
 
-    // 取还地址：携程的城市与地址是两列，拼起来才是完整位置
+    const fees = buildFees(row, headers, template);
+    const deliveryType = parseDeliveryType(parseText(pick(row, 'delivery_type'))) ?? inferDeliveryType(fees);
+
+    // 取还地址：携程的城市与地址是两列，拼起来才是完整位置。
+    // 到店取还都在门店完成，平台导出的地址没有意义，统一记为「门店」
     const pickupCity = parseText(pick(row, 'pickup_city'));
     const pickupAddress = parseText(pick(row, 'pickup_location'));
     const returnCity = parseText(pick(row, 'return_city'));
     const returnAddress = parseText(pick(row, 'return_location'));
-    const pickupLocation = pickupCity ? `${pickupCity} ${pickupAddress}`.trim() : pickupAddress || null;
-    const returnLocation = returnCity ? `${returnCity} ${returnAddress}`.trim() : returnAddress || null;
+    const pickupLocation =
+      deliveryType === 'store'
+        ? STORE_LOCATION_TEXT
+        : pickupCity
+          ? `${pickupCity} ${pickupAddress}`.trim()
+          : pickupAddress || null;
+    const returnLocation =
+      deliveryType === 'store'
+        ? STORE_LOCATION_TEXT
+        : returnCity
+          ? `${returnCity} ${returnAddress}`.trim()
+          : returnAddress || null;
 
     const totalAmount = parseAmount(pick(row, 'total_amount'));
     const netAmount = parseAmount(pick(row, 'net_amount'));
     const paidAmount = parseAmount(pick(row, 'paid_amount'));
 
-    const fees = buildFees(row, headers, template);
     const remarkParts: string[] = [];
     if (phoneMasked) remarkParts.push(`平台脱敏手机号：${rawPhone}`);
     const isVip = parseText(pick(row, 'is_vip')) === '是';
@@ -296,7 +310,7 @@ export function normalizeSheet(
       return_location: returnLocation,
       pickup_driver: parseText(pick(row, 'pickup_driver')) || null,
       return_driver: parseText(pick(row, 'return_driver')) || null,
-      delivery_type: parseDeliveryType(parseText(pick(row, 'delivery_type'))) ?? inferDeliveryType(fees),
+      delivery_type: deliveryType,
       channel: parseText(pick(row, 'channel')) || null,
       cancel_reason: cancelReason || null,
       cancel_time: cancelTime,

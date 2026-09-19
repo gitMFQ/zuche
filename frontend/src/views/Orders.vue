@@ -457,11 +457,18 @@
         <el-form-item label="合同号">
           <el-input v-model="form.contract_number" placeholder="合同号（选填）" />
         </el-form-item>
+        <el-form-item label="取还方式">
+          <el-radio-group v-model="form.delivery_type" class="service-radio-group" @change="onDeliveryTypeChange">
+            <el-radio-button v-for="item in DELIVERY_TYPE_OPTIONS" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="取车位置">
-          <el-input v-model="form.pickup_location" placeholder="取车位置（选填）" />
+          <el-input v-model="form.pickup_location" :placeholder="form.delivery_type === 'store' ? '到店取车默认为门店' : '取车位置（选填）'" />
         </el-form-item>
         <el-form-item label="还车位置">
-          <el-input v-model="form.return_location" placeholder="还车位置（选填）" />
+          <el-input v-model="form.return_location" :placeholder="form.delivery_type === 'store' ? '到店取车默认为门店' : '还车位置（选填）'" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
@@ -785,7 +792,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, ArrowUp, Refresh } from '@element-plus/icons-vue'
 import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
-import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS } from '../utils/constants'
+import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, DELIVERY_TYPE_OPTIONS, STORE_LOCATION_TEXT } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getServiceLabel, getServiceTagType } from '../utils/helpers'
 import dayjs from 'dayjs'
 
@@ -936,6 +943,7 @@ const form = reactive({
   contract_number: '',
   pickup_location: '',
   return_location: '',
+  delivery_type: 'delivery',
   remarks: '',
   // 预付相关
   has_prepay: false,
@@ -1448,6 +1456,7 @@ function openDialog() {
     contract_number: '',
     pickup_location: '',
     return_location: '',
+    delivery_type: 'delivery',
     remarks: '',
     has_prepay: false,
     prepay_amount: 0,
@@ -1521,6 +1530,17 @@ function onVehicleChange(id: string) {
 }
 
 // 免押状态变更
+// 到店取车/还车都在门店完成，地址默认填「门店」；切回送车上门时把门店清掉
+function onDeliveryTypeChange(type: string) {
+  if (type === 'store') {
+    form.pickup_location = STORE_LOCATION_TEXT
+    form.return_location = STORE_LOCATION_TEXT
+    return
+  }
+  if (form.pickup_location === STORE_LOCATION_TEXT) form.pickup_location = ''
+  if (form.return_location === STORE_LOCATION_TEXT) form.return_location = ''
+}
+
 function onDepositWaivedChange(waived: boolean) {
   if (waived) {
     // 勾选免押时，计算免押到期日期（还车后30天）

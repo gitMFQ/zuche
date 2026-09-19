@@ -89,6 +89,7 @@ export const orderApi = {
   updateStatus: (id: string, data: any) => api.put(`/orders/${id}/status`, data),
   addPayment: (id: string, data: any) => api.post(`/orders/${id}/payments`, data),
   cancel: (id: string, remarks?: string) => api.put(`/orders/${id}/cancel`, { remarks }),
+  delete: (id: string) => api.delete(`/orders/${id}`),
   assignDrivers: (id: string, data: { pickup_driver_id?: string | null; return_driver_id?: string | null }) =>
     api.put(`/orders/${id}/drivers`, data)
 }

@@ -330,6 +330,11 @@
           <el-button type="danger" plain block @click="handleAddToBlacklist">拉黑客户</el-button>
         </div>
       </el-card>
+
+      <!-- 危险操作 -->
+      <el-card shadow="never" class="info-card">
+        <el-button type="danger" plain block :loading="deleting" @click="handleDelete">删除订单</el-button>
+      </el-card>
     </div>
 
     <!-- 指派司机对话框 -->
@@ -671,6 +676,7 @@ const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
 const submitting = ref(false)
+const deleting = ref(false)
 const isMobile = ref(window.innerWidth < 768)
 const order = ref<any>({})
 const paymentDialogVisible = ref(false)
@@ -1029,6 +1035,31 @@ async function handleCancel() {
     }
   } catch (error) {
     // 用户取消操作
+  }
+}
+
+async function handleDelete() {
+  try {
+    await ElMessageBox.confirm(
+      `删除后订单 ${order.value.order_no} 及其支付、费用、续租记录将一并移除，无法恢复。`,
+      '删除订单',
+      { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'warning' }
+    )
+  } catch {
+    return
+  }
+
+  deleting.value = true
+  try {
+    const res: any = await orderApi.delete(order.value.id)
+    if (res.success) {
+      ElMessage.success('订单已删除')
+      void router.push('/orders')
+    }
+  } catch (error) {
+    console.error('删除订单失败', error)
+  } finally {
+    deleting.value = false
   }
 }
 

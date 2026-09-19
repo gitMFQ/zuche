@@ -16,8 +16,17 @@ export const PLATFORM_TEXT_MAP: Record<string, string> = {
 // 取还车配送方式映射
 export const DELIVERY_TYPE_TEXT_MAP: Record<string, string> = {
   delivery: '送车上门',
-  store: '门店自取'
+  store: '到店取车'
 }
+
+// 取还车方式选项
+export const DELIVERY_TYPE_OPTIONS = [
+  { label: '送车上门', value: 'delivery' },
+  { label: '到店取车', value: 'store' }
+]
+
+// 到店取车/还车都在门店完成，不需要具体地址，取还车位置统一记为门店
+export const STORE_LOCATION_TEXT = '门店'
 
 // 费用明细分类映射
 export const FEE_CATEGORY_TEXT_MAP: Record<string, string> = {

@@ -254,6 +254,7 @@ interface CreateOrderBody {
   contract_number?: string;
   pickup_location?: string;
   return_location?: string;
+  delivery_type?: string;
   has_prepay?: boolean;
   prepay_amount?: number;
   prepay_method?: string;
@@ -389,8 +390,8 @@ export async function createOrder(c: AppContext): Promise<Response> {
     }
 
     stmts.push({
-      sql: `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, pickup_location, return_location, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, pickup_location, return_location, delivery_type, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       params: [
         id,
         orderNo,
@@ -413,6 +414,7 @@ export async function createOrder(c: AppContext): Promise<Response> {
         body.contract_number ?? null,
         body.pickup_location ?? null,
         body.return_location ?? null,
+        body.delivery_type ?? null,
         currentTime,
         currentTime
       ]
@@ -1043,6 +1045,34 @@ export async function assignDrivers(c: AppContext): Promise<Response> {
     return c.json({ success: true, message: '司机指派成功' });
   } catch (error) {
     return handleError(c, '指派司机错误:', error);
+  }
+}
+
+// 删除订单（支付、费用、续租记录随外键级联删除）
+export async function deleteOrder(c: AppContext): Promise<Response> {
+  const db = c.env.DB;
+  try {
+    const id = c.req.param('id');
+    const order = await queryOne<OrderWithPlate>(db, ORDER_WITH_PLATE_SQL, [id]);
+
+    if (!order) {
+      return c.json({ success: false, message: '订单不存在' }, 404);
+    }
+
+    await execute(db, 'DELETE FROM orders WHERE id = ?', [id]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '删除订单',
+      entityType: 'order',
+      entityId: id,
+      details: `删除订单 ${order.order_no}，车辆：${order.plate_number || ''}`,
+      ipAddress: getClientIp(c)
+    });
+
+    return c.json({ success: true, message: '订单删除成功' });
+  } catch (error) {
+    return handleError(c, '删除订单错误:', error);
   }
 }
 
