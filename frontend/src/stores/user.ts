@@ -11,10 +11,6 @@ export interface User {
 }
 
 export interface UserThemeSettings {
-  themeColor: string
-  sidebarStyle: string
-  customSidebarColorStart: string
-  customSidebarColorEnd: string
   darkMode: boolean
   autoDarkMode: boolean
 }
@@ -22,24 +18,29 @@ export interface UserThemeSettings {
 const THEME_STORAGE_KEY = 'user_theme_settings'
 
 const defaultThemeSettings: UserThemeSettings = {
-  themeColor: '#667eea',
-  sidebarStyle: 'default',
-  customSidebarColorStart: '',
-  customSidebarColorEnd: '',
   darkMode: false,
   autoDarkMode: true
 }
 
 function loadThemeSettings(): UserThemeSettings {
+  const fallback = { ...defaultThemeSettings }
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY)
     if (saved) {
-      return { ...defaultThemeSettings, ...JSON.parse(saved) }
+      const parsed = JSON.parse(saved) as Partial<UserThemeSettings>
+      // 只取仍在使用的字段，旧的 themeColor 等废弃字段直接丢弃
+      const cleaned: UserThemeSettings = {
+        darkMode: typeof parsed.darkMode === 'boolean' ? parsed.darkMode : fallback.darkMode,
+        autoDarkMode: typeof parsed.autoDarkMode === 'boolean' ? parsed.autoDarkMode : fallback.autoDarkMode
+      }
+      // 立即覆盖写回，抹掉老用户 localStorage 里的废弃字段
+      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(cleaned))
+      return cleaned
     }
   } catch {
-    // ignore
+    // localStorage 不可用或数据损坏时回退到默认值
   }
-  return { ...defaultThemeSettings }
+  return fallback
 }
 
 function getSystemPrefersDark(): boolean {
@@ -60,10 +61,6 @@ export const useUserStore = defineStore('user', () => {
   watch(themeSettings, (newSettings) => {
     localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(newSettings))
     // 触发事件通知布局更新
-    window.dispatchEvent(new CustomEvent('themeColorChange', { detail: newSettings.themeColor }))
-    window.dispatchEvent(new CustomEvent('sidebarStyleChange', { detail: newSettings.sidebarStyle }))
-    window.dispatchEvent(new CustomEvent('customSidebarColorStartChange', { detail: newSettings.customSidebarColorStart }))
-    window.dispatchEvent(new CustomEvent('customSidebarColorEndChange', { detail: newSettings.customSidebarColorEnd }))
     window.dispatchEvent(new CustomEvent('darkModeChange', { detail: newSettings.darkMode }))
     window.dispatchEvent(new CustomEvent('autoDarkModeChange', { detail: newSettings.autoDarkMode }))
   }, { deep: true })
@@ -81,7 +78,7 @@ export const useUserStore = defineStore('user', () => {
     token.value = ''
     user.value = null
     localStorage.removeItem('token')
-    // 注意：不清除主题设置，保留用户的主题偏好
+    // 注意：不清除主题设置，保留用户的深色模式偏好
   }
 
   function isLoggedIn() {
@@ -93,32 +90,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 主题设置方法
-  function setThemeColor(color: string) {
-    themeSettings.value.themeColor = color
-  }
-
-  function setSidebarStyle(style: string) {
-    themeSettings.value.sidebarStyle = style
-  }
-
-  function setCustomSidebarColors(start: string, end: string) {
-    themeSettings.value.customSidebarColorStart = start
-    themeSettings.value.customSidebarColorEnd = end
-  }
-
   function updateThemeSettings(settings: Partial<UserThemeSettings>) {
-    if (settings.themeColor !== undefined) {
-      themeSettings.value.themeColor = settings.themeColor
-    }
-    if (settings.sidebarStyle !== undefined) {
-      themeSettings.value.sidebarStyle = settings.sidebarStyle
-    }
-    if (settings.customSidebarColorStart !== undefined) {
-      themeSettings.value.customSidebarColorStart = settings.customSidebarColorStart
-    }
-    if (settings.customSidebarColorEnd !== undefined) {
-      themeSettings.value.customSidebarColorEnd = settings.customSidebarColorEnd
-    }
     if (settings.darkMode !== undefined) {
       themeSettings.value.darkMode = settings.darkMode
     }
@@ -154,9 +126,6 @@ export const useUserStore = defineStore('user', () => {
     logout,
     isLoggedIn,
     isAdmin,
-    setThemeColor,
-    setSidebarStyle,
-    setCustomSidebarColors,
     updateThemeSettings,
     setDarkMode,
     setAutoDarkMode,

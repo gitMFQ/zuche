@@ -147,7 +147,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 ## 设计系统（Apple 风格）
 设计 token 全部定义在 `frontend/src/style.css`（`--sk-*` 变量），`frontend/src/components/Sk*.vue`
 是对应的基础组件（SkButton/SkCard/SkSection/SkTypography/SkNavGlass）。业务页面用的是 Element Plus
-组件 + 系统设置里的 `--primary-color` 主题色（默认 Element Plus 蓝 `#409EFF`，可在「系统设置」改）。
+组件，主题色已固定为全局 Apple Blue `#0071e3`（`--sk-focus-color`），不支持用户在系统设置里自定义。
 
 - **唯一强调色** Apple Blue `#0071e3`，只用在可交互元素上
 - **背景**：纯黑 `#000000` 与浅灰 `#f5f5f7` 交替分章节；深色卡片 `#272729`-`#2a2a2d`

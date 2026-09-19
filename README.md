@@ -92,7 +92,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 | 年检证 | 年检状态列表、证书图片、到期提醒 |
 | 订单来源 | 渠道管理（门店直租/美团/携程/滴滴等）、佣金比例、平台颜色 |
 | 用户管理 | 用户 CRUD、角色 admin/staff、改密与重置密码 |
-| 系统设置 | 主题色（6 预设 + 自定义）、侧边栏风格、Logo、系统标题 |
+| 系统设置 | Logo、系统标题 |
 | 操作日志 | 关键操作记录（操作类型、对象、详情、时间、IP） |
 
 ## 快速开始
@@ -467,8 +467,9 @@ npx wrangler d1 execute rental-db --remote --file=local-dump.sql
 ## 设计系统
 
 本项目采用 **Apple 设计系统**：唯一强调色 Apple Blue (`#0071e3`)、无可见边框、毛玻璃导航栏。
-设计 token 定义在 `frontend/src/style.css`（`--sk-*` 变量），业务页面用 Element Plus 组件 +
-系统设置里可配置的 `--primary-color` 主题色。完整规范见 [AGENTS.md](AGENTS.md#设计系统apple-风格)。
+设计 token 定义在 `frontend/src/style.css`（`--sk-*` 变量），业务页面用 Element Plus 组件，
+强调色固定为全局 Apple Blue `#0071e3`（`--sk-focus-color`），不再支持在系统设置里自定义。
+完整规范见 [AGENTS.md](AGENTS.md#设计系统apple-风格)。
 
 ## API 接口概览
 

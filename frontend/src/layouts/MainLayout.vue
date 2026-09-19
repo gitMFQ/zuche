@@ -10,11 +10,10 @@
     <!-- 侧边栏 -->
     <el-aside 
       :width="isMobile ? '240px' : (isCollapse ? '72px' : '240px')" 
-      :class="['aside', `sidebar-${sidebarStyle}`, { 'aside-mobile-hidden': isMobile && isCollapse }]"
-      :style="sidebarBgStyle"
+      :class="['aside', { 'aside-mobile-hidden': isMobile && isCollapse }]"
     >
       <div class="logo">
-        <div class="logo-icon" :style="logoIconStyle">
+        <div class="logo-icon">
           <img v-if="systemLogo" :src="systemLogo" alt="Logo" class="logo-img" />
           <el-icon v-else :size="26"><Car /></el-icon>
         </div>
@@ -159,10 +158,6 @@ const passwordForm = ref({
 })
 
 // 主题设置从 userStore 获取
-const themeColor = computed(() => userStore.themeSettings.themeColor)
-const sidebarStyle = computed(() => userStore.themeSettings.sidebarStyle)
-const customSidebarColorStart = computed(() => userStore.themeSettings.customSidebarColorStart)
-const customSidebarColorEnd = computed(() => userStore.themeSettings.customSidebarColorEnd)
 const isDarkMode = computed(() => userStore.themeSettings.darkMode)
 
 // Toggle deep/shallow theme
@@ -217,35 +212,6 @@ const activeMenu = computed(() => route.path)
 const currentTitle = computed(() => route.meta.title as string || '')
 const isAdmin = computed(() => userStore.isAdmin())
 
-// 侧边栏背景样式
-const sidebarBgStyle = computed(() => {
-  // 如果有自定义颜色，使用自定义渐变
-  if (customSidebarColorStart.value || customSidebarColorEnd.value) {
-    const startColor = customSidebarColorStart.value || customSidebarColorEnd.value || '#1a1f36'
-    const endColor = customSidebarColorEnd.value || customSidebarColorStart.value || '#1e2640'
-    return {
-      background: `linear-gradient(180deg, ${startColor} 0%, ${endColor} 100%)`
-    }
-  }
-  // 否则使用预设风格
-  const styles: Record<string, string> = {
-    'default': 'linear-gradient(180deg, #1a1f36 0%, #252d4a 50%, #1e2640 100%)',
-    'dark': 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%)',
-    'blue': 'linear-gradient(180deg, #0d1b2a 0%, #1b3a4b 50%, #0d1b2a 100%)',
-    'green': 'linear-gradient(180deg, #0d1912 0%, #1a2f1f 50%, #0d1912 100%)',
-    'purple': 'linear-gradient(180deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%)',
-    'brown': 'linear-gradient(180deg, #1a1209 0%, #2d2418 50%, #1a1209 100%)'
-  }
-  return { background: styles[sidebarStyle.value] || styles['default'] }
-})
-
-// Logo 图标样式
-const logoIconStyle = computed(() => {
-  return {
-    background: `linear-gradient(135deg, ${themeColor.value} 0%, ${adjustColor(themeColor.value, -20)} 100%)`
-  }
-})
-
 async function loadSystemTitle() {
   try {
     const res: any = await settingsApi.getAll()
@@ -260,11 +226,6 @@ async function loadSystemTitle() {
   } catch (error) {
     console.error('加载系统设置失败', error)
   }
-  
-  // 应用用户主题设置
-  if (themeColor.value) {
-    updateThemeVariables(themeColor.value)
-  }
 }
 
 function handleTitleChange(e: CustomEvent) {
@@ -273,28 +234,6 @@ function handleTitleChange(e: CustomEvent) {
 
 function handleLogoChange(e: CustomEvent) {
   systemLogo.value = e.detail
-}
-
-function handleThemeColorChange(e: CustomEvent) {
-  const color = e.detail
-  if (color && typeof color === 'string') {
-    userStore.setThemeColor(color)
-    updateThemeVariables(color)
-  }
-}
-
-function handleSidebarStyleChange(e: CustomEvent) {
-  userStore.setSidebarStyle(e.detail)
-}
-
-function handleCustomSidebarColorStartChange(e: CustomEvent) {
-  const color = e.detail
-  userStore.setCustomSidebarColors((color && typeof color === 'string') ? color : '', customSidebarColorEnd.value)
-}
-
-function handleCustomSidebarColorEndChange(e: CustomEvent) {
-  const color = e.detail
-  userStore.setCustomSidebarColors(customSidebarColorStart.value, (color && typeof color === 'string') ? color : '')
 }
 
 function handleAutoDarkModeChange(e: CustomEvent) {
@@ -312,80 +251,6 @@ function checkMobile() {
   }
 }
 
-// 颜色调整函数
-function adjustColor(color: string, amount: number): string {
-  // 处理 rgba 格式
-  const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
-  if (rgbaMatch) {
-    let r = parseInt(rgbaMatch[1]) + amount
-    let g = parseInt(rgbaMatch[2]) + amount
-    let b = parseInt(rgbaMatch[3]) + amount
-    const a = rgbaMatch[4] !== undefined ? parseFloat(rgbaMatch[4]) : 1
-    r = Math.max(0, Math.min(255, r))
-    g = Math.max(0, Math.min(255, g))
-    b = Math.max(0, Math.min(255, b))
-    return `rgba(${r}, ${g}, ${b}, ${a})`
-  }
-  
-  // 处理 hex 格式（包括带透明度的 8 位 hex）
-  let hex = color.replace('#', '')
-  let alpha = 1
-  
-  if (hex.length === 8) {
-    alpha = parseInt(hex.slice(6, 8), 16) / 255
-    hex = hex.slice(0, 6)
-  }
-  
-  if (hex.length === 6) {
-    const num = parseInt(hex, 16)
-    let r = (num >> 16) + amount
-    let g = ((num >> 8) & 0x00FF) + amount
-    let b = (num & 0x0000FF) + amount
-    r = Math.max(0, Math.min(255, r))
-    g = Math.max(0, Math.min(255, g))
-    b = Math.max(0, Math.min(255, b))
-    
-    if (alpha < 1) {
-      return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`
-    }
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
-  }
-  
-  return color
-}
-
-// 将颜色转换为RGB格式
-function hexToRgb(color: string): { r: number; g: number; b: number } {
-  // 处理 rgba 格式
-  const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
-  if (rgbaMatch) {
-    return {
-      r: parseInt(rgbaMatch[1]),
-      g: parseInt(rgbaMatch[2]),
-      b: parseInt(rgbaMatch[3])
-    }
-  }
-  
-  // 处理 hex 格式
-  const hex = color.replace('#', '').slice(0, 6)
-  const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : { r: 102, g: 126, b: 234 }
-}
-
-// 更新全局CSS变量
-function updateThemeVariables(color: string) {
-  const root = document.documentElement
-  const rgb = hexToRgb(color)
-  root.style.setProperty('--primary-color', color)
-  root.style.setProperty('--primary-color-light', adjustColor(color, 20))
-  root.style.setProperty('--primary-color-dark', adjustColor(color, -20))
-  root.style.setProperty('--primary-color-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
-}
-
 function handleMenuSelect() {
   if (isMobile.value) {
     isCollapse.value = true
@@ -398,10 +263,6 @@ onMounted(async () => {
   window.addEventListener('resize', checkMobile)
   window.addEventListener('systemTitleChange', handleTitleChange as EventListener)
   window.addEventListener('systemLogoChange', handleLogoChange as EventListener)
-  window.addEventListener('themeColorChange', handleThemeColorChange as EventListener)
-  window.addEventListener('sidebarStyleChange', handleSidebarStyleChange as EventListener)
-  window.addEventListener('customSidebarColorStartChange', handleCustomSidebarColorStartChange as EventListener)
-  window.addEventListener('customSidebarColorEndChange', handleCustomSidebarColorEndChange as EventListener)
   window.addEventListener('autoDarkModeChange', handleAutoDarkModeChange as EventListener)
   
   if (!userStore.user) {
@@ -420,10 +281,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile)
   window.removeEventListener('systemTitleChange', handleTitleChange as EventListener)
   window.removeEventListener('systemLogoChange', handleLogoChange as EventListener)
-  window.removeEventListener('themeColorChange', handleThemeColorChange as EventListener)
-  window.removeEventListener('sidebarStyleChange', handleSidebarStyleChange as EventListener)
-  window.removeEventListener('customSidebarColorStartChange', handleCustomSidebarColorStartChange as EventListener)
-  window.removeEventListener('customSidebarColorEndChange', handleCustomSidebarColorEndChange as EventListener)
   window.removeEventListener('autoDarkModeChange', handleAutoDarkModeChange as EventListener)
 })
 
@@ -483,11 +340,11 @@ html.dark .layout-container {
   display: flex;
   flex-direction: column;
   box-shadow: none;
-  background-color: var(--sk-bg-pure-black);
+  background-color: var(--sk-text-white);
 }
 
-.aside::before {
-  content: none;
+html.dark .aside {
+  background-color: var(--sk-bg-pure-black);
 }
 
 .aside-mobile-hidden {
@@ -514,7 +371,12 @@ html.dark .layout-container {
   gap: 12px;
   position: relative;
   z-index: 1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: transparent;
+}
+
+html.dark .logo {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
   background-color: rgba(0, 0, 0, 0.8);
 }
 
@@ -540,11 +402,15 @@ html.dark .layout-container {
 
 .logo-text {
   white-space: nowrap;
-  color: #fff;
+  color: var(--sk-text-near-black);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.224px;
+}
+
+html.dark .logo-text {
+  color: #fff;
 }
 
 .nav-menu {
@@ -553,6 +419,10 @@ html.dark .layout-container {
   overflow-y: auto;
   position: relative;
   z-index: 1;
+  background-color: transparent;
+}
+
+html.dark .nav-menu {
   background-color: var(--sk-bg-pure-black);
 }
 
@@ -565,8 +435,12 @@ html.dark .layout-container {
 }
 
 .nav-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 2px;
+}
+
+html.dark .nav-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .nav-item {
@@ -575,7 +449,7 @@ html.dark .layout-container {
   padding: 10px 12px;
   margin-bottom: 2px;
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--sk-text-secondary);
   text-decoration: none;
   transition: all 0.2s ease;
   position: relative;
@@ -583,11 +457,16 @@ html.dark .layout-container {
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-.nav-item::before {
-  content: none;
+html.dark .nav-item {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .nav-item:hover {
+  color: var(--sk-text-near-black);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .nav-item:hover {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.1);
 }
@@ -595,10 +474,6 @@ html.dark .layout-container {
 .nav-item.active {
   color: #fff;
   background-color: var(--sk-focus-color);
-}
-
-.nav-item.active::before {
-  opacity: 0;
 }
 
 .nav-icon {
@@ -617,6 +492,10 @@ html.dark .layout-container {
 }
 
 .nav-item:hover .nav-icon {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .nav-item:hover .nav-icon {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -635,9 +514,14 @@ html.dark .layout-container {
 
 .sidebar-footer {
   padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   position: relative;
   z-index: 1;
+  background-color: transparent;
+}
+
+html.dark .sidebar-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
   background-color: rgba(0, 0, 0, 0.8);
 }
 
@@ -646,12 +530,20 @@ html.dark .layout-container {
   align-items: center;
   gap: 12px;
   padding: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
+html.dark .user-card {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .user-card:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+html.dark .user-card:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
@@ -662,18 +554,26 @@ html.dark .layout-container {
 }
 
 .user-info .user-name {
-  color: #fff;
+  color: var(--sk-text-near-black);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 14px;
   font-weight: 400;
   letter-spacing: -0.224px;
 }
 
+html.dark .user-info .user-name {
+  color: #fff;
+}
+
 .user-role {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--sk-text-tertiary);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 12px;
   letter-spacing: -0.12px;
+}
+
+html.dark .user-role {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .main-container {
