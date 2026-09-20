@@ -414,8 +414,8 @@ npx wrangler d1 execute rental-db --remote --file=local-dump.sql
 | 刷新子路由（如 `/orders`）404 | `assets.not_found_handling` 被改掉 | 保持 `single-page-application` |
 | API 返回 HTML 而不是 JSON | `/api/*` 没走 Worker | 确认 `assets.run_worker_first` 包含 `/api/*` |
 | 换完 `JWT_SECRET` 后所有人被踢下线 | 正常现象：旧 token 签名失效 | 重新登录即可；换密钥挑低峰期 |
-| 上传报超过 10MB / 类型不支持 | 后端硬限制：10MB，仅 `insurance` 允许 PDF | 压缩图片；表单字段名必须固定为 `image` |
-| 图片打不开（404） | 文件不在 R2，或 key 与数据库记录不一致 | `npx wrangler r2 object list rental-uploads` 核对 |
+| 上传报超过 10MB / 类型不支持 | 后端硬限制：10MB，仅 `insurance` 允许 PDF | 前端上传前已自动压缩（≤500KB/WebP），仍报错说明压缩被跳过（PDF/GIF）或压缩失败；表单字段名必须固定为 `image` |
+| 图片打不开（404） | 文件不在 R2，或 key 与数据库记录不一致 | `npx wrangler r2 object get rental-uploads/<key> --file /dev/null` 核对 |
 | 迁移执行失败 | 目标表/列已存在，或 SQL 语法问题 | 按报错行号修 SQL；已成功的迁移不会被回退 |
 | `wrangler: command not found` | 依赖没装或没走 npx | `npm install`；脚本里统一用 `npx wrangler ...` |
 
@@ -457,7 +457,8 @@ npx wrangler d1 execute rental-db --remote --file=local-dump.sql
 
 - **同源部署**：前后端同一个 Worker，不存在跨域问题；图片直接用后端返回的相对路径
 - **数据库**：D1 异步，必须用 `src/db/helpers.ts` 的辅助函数，禁止直接 `c.env.DB.prepare()`
-- **上传**：限制 10MB，存 R2；`/uploads/*` 由 Worker 读回并带长缓存
+- **上传**：前端上传前压到 ≤500KB / 1600px / WebP（`frontend/src/utils/image.ts`，PDF 与 GIF 跳过），
+  后端再卡 10MB 与 MIME 白名单，存 R2；`/uploads/*` 由 Worker 读回并带长缓存
 - **SPA 刷新**：`not_found_handling: single-page-application`，直接刷新子路由不会 404
 - **本地数据**：`wrangler dev` 的本地 D1/R2 数据在 `.wrangler/state`，删掉即重置
 - **无测试框架**：类型检查是唯一的验证方式

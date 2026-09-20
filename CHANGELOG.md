@@ -4,6 +4,19 @@
 
 ## 2026-09-20
 
+### 上传前统一压缩图片（≤500KB / 1600px / WebP）
+
+- 新增 `frontend/src/utils/image.ts`：canvas 编码循环，先降质量（0.82→0.5）、再缩尺寸（×0.8），
+  最长边 1600px、目标 500KB；输出 WebP（浏览器能编码的最小格式，且支持透明），
+  `format=auto` 交付时再自动协商成 AVIF/WebP
+- 接入点在 `uploadApi.uploadImage`，14 个上传入口零改动；>3MB 的原图显示「正在压缩图片…」
+- 跳过与兜底：PDF/GIF/空文件原样上传；WebP 不可用的浏览器降级为 PNG（含透明）或 JPEG；
+  解码/编码失败、压不到目标（返回最小结果）、重编码后反而更大（保留原图）都不会阻断上传
+- 新增 `frontend/src/utils/upload.ts`：`validateUploadFile` 统一上传前校验，
+  原始体积上限由 10MB 放宽到 50MB（否则 12MB 的手机照会在压缩前就被拒），
+  替换 11 处重复校验并给仪表盘取还车照片补上校验（原先没有）
+- 后端 10MB 限制与 MIME 白名单不变（`image/webp` 已在白名单内）
+
 ### 行驶证支持上传两张（正页/副页）
 
 - 新增 `migrations/0006_vehicle_license_images.sql`：`vehicles` 增加 `license_images`（JSON 数组）、

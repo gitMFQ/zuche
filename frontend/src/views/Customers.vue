@@ -280,6 +280,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'elem
 import { Star } from '@element-plus/icons-vue'
 import { customerApi, blacklistApi, uploadApi, orderSourceApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 
 const router = useRouter()
 const loading = ref(false)
@@ -340,13 +341,9 @@ async function handleUpload(e: Event, type: 'id_card' | 'license') {
   const file = target.files?.[0]
   if (!file) return
 
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
 

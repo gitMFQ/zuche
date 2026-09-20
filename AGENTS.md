@@ -99,9 +99,12 @@ JWT 有效期 1 年，前端存 `localStorage.token`。密钥取自 `c.env.JWT_S
 
 ## 文件上传
 - 端点：`/api/upload` 或 `/api/upload/{inspection|insurance|violation|maintenance|vehicle|customer}`
-- 表单字段名固定为 `image`；仅 `insurance` 支持 PDF，其余仅图片；上限 10MB
+- 表单字段名固定为 `image`；仅 `insurance` 支持 PDF，其余仅图片；**后端**上限 10MB
+- **前端上传前统一压缩**（`frontend/src/api/index.ts` 的 `uploadImage` → `utils/image.ts`）：
+  最长边 1600px、≤500KB、输出 WebP；PDF/GIF 与失败情况自动退回原图，绝不阻断上传
+- 上传前校验统一用 `utils/upload.ts` 的 `validateUploadFile`（原始体积上限 50MB，只做防呆）
 - 可选字段 `name`：语义化文件名（如 `京A12345-行驶证`），后端清洗后拼成
-  `{dir}/{name}-{YYYYMMDD-HHmmss}-{随机6位}.jpg`，未传时用各类型默认名
+  `{dir}/{name}-{YYYYMMDD-HHmmss}-{随机6位}.webp`，未传时用各类型默认名
 - 返回 `{ success: true, data: { filename, url: '/uploads/{dir}/{file}', type } }`
 - `/uploads/*` 由 Worker 从 R2 读回，带 `Cache-Control: immutable`
 - key 允许中文，`serveUpload` 用 `SAFE_NAME` 逐段校验防路径穿越，两边规则要一起改
@@ -142,7 +145,9 @@ pending (待取车) → active (已取车) → completed (已还车)
 ## 前端约定
 - **API 调用**：统一走 `frontend/src/api/index.ts` 封装的对象，不要裸写 axios
 - **常量与映射**：用 `utils/constants.ts`（`PAYMENT_METHOD_OPTIONS`、`ORDER_STATUS_TYPE_MAP` 等），不要在组件里硬编码中文映射
-- **工具函数**：用 `utils/helpers.ts`（`getImageUrl`、`formatDateTime`、`isExpiringSoon` 等）
+- **工具函数**：用 `utils/helpers.ts`（`getImageUrl`、`formatDateTime`、`isExpiringSoon` 等）；
+  上传相关的额外两个文件：`utils/image.ts`（压缩）、`utils/upload.ts`（上传前校验）
+- **别在组件里手写上传校验**（MIME / 体积），统一用 `validateUploadFile`
 - **移动端优先**：断点以 `@media (min-width: 768px)` 区分移动端与桌面
 - **图片导出**：调度图导出用 `html2canvas`
 - **同源部署**：前后端同一个域，图片直接用后端返回的 `/uploads/...` 相对路径，不要拼域名

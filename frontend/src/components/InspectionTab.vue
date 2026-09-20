@@ -205,6 +205,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { inspectionApi, uploadApi } from '../api'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -289,15 +290,10 @@ async function handleImageChange(uploadFile: UploadFile) {
   const file = uploadFile.raw
   if (!file) return
 
-  // 检查文件类型
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-
-  // 检查文件大小 (10MB)
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  // 检查文件类型与体积
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
 

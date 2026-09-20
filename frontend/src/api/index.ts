@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { compressImage } from '../utils/image'
 
 const api = axios.create({
   baseURL: '/api',
@@ -198,8 +199,21 @@ export const uploadApi = {
   // 按类型上传图片到指定子目录（前后端同源，直接走 axios 实例的 /api 前缀）
   // name 是可选的语义化文件名（如「京A12345-行驶证」），后端会拼上日期时间生成对象名
   uploadImage: async (file: File, type: UploadType = 'other', name?: string): Promise<{ success: boolean; data?: { filename: string; url: string; type?: string }; message?: string }> => {
+    // 上传前统一压到 500KB 内（最长边 1600px、WebP），PDF/GIF 与压缩失败的情况自动退回原图
+    // 大图压缩要花几百毫秒到几秒，给个提示避免用户以为没反应而重复点击
+    const compressTip = file.size > 3 * 1024 * 1024
+      ? ElMessage({ message: '正在压缩图片…', duration: 0 })
+      : undefined
+
+    let compressed: File
+    try {
+      compressed = (await compressImage(file)).file
+    } finally {
+      compressTip?.close()
+    }
+
     const formData = new FormData()
-    formData.append('image', file)
+    formData.append('image', compressed)
     if (name) formData.append('name', name)
     const endpoint = type === 'other' ? '/upload' : `/upload/${type}`
     try {

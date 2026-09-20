@@ -360,6 +360,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { insuranceApi, vehicleApi, uploadApi } from '../api'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 
 interface DocumentItem {
   url: string
@@ -542,15 +543,10 @@ async function handleFileSelect(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  const isImage = file.type.startsWith('image/')
   const isPdf = file.type === 'application/pdf'
-  if (!isImage && !isPdf) {
-    ElMessage.error('请选择图片或PDF文件')
-    return
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('文件大小不能超过10MB')
+  const invalid = validateUploadFile(file, { allowPdf: true })
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
 

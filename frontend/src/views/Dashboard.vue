@@ -509,6 +509,7 @@ import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { dashboardApi, scheduleApi, orderApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
@@ -933,7 +934,15 @@ async function handlePickupImageUpload(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  
+  // 清空 input，便于重复选择同一张照片
+  target.value = ''
+
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
+    return
+  }
+
   try {
     const res: any = await uploadApi.uploadVehicle(file, `${selectedOrder.value?.plate_number || '订单'}-取车照片`)
     if (res.success && res.data) {
@@ -950,7 +959,15 @@ async function handleReturnImageUpload(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  
+  // 清空 input，便于重复选择同一张照片
+  target.value = ''
+
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
+    return
+  }
+
   try {
     const res: any = await uploadApi.uploadVehicle(file, `${selectedOrder.value?.plate_number || '订单'}-还车照片`)
     if (res.success && res.data) {

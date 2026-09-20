@@ -364,6 +364,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { maintenanceApi, vehicleApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -579,13 +580,9 @@ async function handleImageSelect(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
 

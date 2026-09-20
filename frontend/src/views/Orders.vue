@@ -794,6 +794,7 @@ import { Search, ArrowUp, Refresh } from '@element-plus/icons-vue'
 import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, DELIVERY_TYPE_OPTIONS, STORE_LOCATION_TEXT } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getServiceLabel, getServiceTagType } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -1053,13 +1054,9 @@ async function handleUpload(e: Event, type: 'id_card' | 'license') {
   const file = target.files?.[0]
   if (!file) return
 
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
 
@@ -1700,12 +1697,9 @@ async function handlePickupImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
   try {
@@ -1781,12 +1775,9 @@ async function handleReturnImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
   try {

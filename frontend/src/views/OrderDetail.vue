@@ -670,6 +670,7 @@ import {
   FEE_CATEGORY_TEXT_MAP
 } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getPaymentMethodText, getPaymentTypeText, getServiceLabel, getServiceTagType } from '../utils/helpers'
+import { validateUploadFile } from '../utils/upload'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -784,13 +785,9 @@ async function handleEditUpload(e: Event, type: 'id_card' | 'license') {
   const file = target.files?.[0]
   if (!file) return
 
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
 
@@ -968,12 +965,9 @@ async function handlePickupImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
   try {
@@ -1095,12 +1089,9 @@ async function handleReturnImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
-    return
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    ElMessage.error('图片大小不能超过10MB')
+  const invalid = validateUploadFile(file)
+  if (invalid) {
+    ElMessage.error(invalid)
     return
   }
   try {
