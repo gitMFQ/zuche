@@ -622,7 +622,7 @@ function showVehicleDetail(plateNumber: string) {
     engine_number: order.engine_number || '-',
     is_new_energy: order.is_new_energy,
     status: order.vehicle_status || 'available',
-    license_image: order.license_image || '',
+    license_images: order.license_images || [],
     registration_image: order.registration_image || '',
     remarks: order.remarks || '-'
   }

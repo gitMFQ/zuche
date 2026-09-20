@@ -53,10 +53,10 @@
           <span class="label">发动机号</span>
           <span class="value">{{ item.engine_number }}</span>
         </div>
-        <div class="mobile-card-images" v-if="item.license_image || item.registration_image">
+        <div class="mobile-card-images" v-if="item.license_images?.length || item.registration_image">
           <span class="label">证件</span>
           <div class="image-thumbs">
-            <img v-if="item.license_image" :src="getImageUrl(item.license_image)" @click="previewImage(item.license_image)" title="行驶证" />
+            <img v-for="(img, idx) in item.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证" />
             <img v-if="item.registration_image" :src="getImageUrl(item.registration_image)" @click="previewImage(item.registration_image)" title="登记证书" />
           </div>
         </div>
@@ -91,10 +91,10 @@
         </el-table-column>
         <el-table-column prop="vin" label="车架号" width="120" show-overflow-tooltip />
         <el-table-column prop="engine_number" label="发动机号" width="100" show-overflow-tooltip />
-        <el-table-column label="证件" width="80">
+        <el-table-column label="证件" width="110">
           <template #default="{ row }">
-            <div class="image-thumbs" v-if="row.license_image || row.registration_image">
-              <img v-if="row.license_image" :src="getImageUrl(row.license_image)" @click="previewImage(row.license_image)" title="行驶证" />
+            <div class="image-thumbs" v-if="row.license_images?.length || row.registration_image">
+              <img v-for="(img, idx) in row.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证" />
               <img v-if="row.registration_image" :src="getImageUrl(row.registration_image)" @click="previewImage(row.registration_image)" title="登记证书" />
             </div>
             <span v-else>-</span>
@@ -226,13 +226,13 @@
         </el-form-item>
         <el-form-item label="行驶证">
           <div class="image-upload">
-            <div v-if="form.license_image" class="image-preview">
-              <img :src="getImageUrl(form.license_image)" @click="previewImage(form.license_image)" />
-              <div class="image-remove" @click="form.license_image = ''">×</div>
+            <div v-for="(img, idx) in form.license_images" :key="idx" class="image-preview">
+              <img :src="getImageUrl(img)" @click="previewImage(img)" />
+              <div class="image-remove" @click="form.license_images.splice(idx, 1)">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerUpload('license')">
+            <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
               <el-icon><Plus /></el-icon>
-              <span>上传</span>
+              <span>{{ form.license_images.length }}/2</span>
             </div>
           </div>
         </el-form-item>
@@ -314,7 +314,7 @@ const form = reactive({
   mileage: 0,
   vin: '',
   engine_number: '',
-  license_image: '',
+  license_images: [] as string[],
   registration_image: '',
   is_new_energy: false,
   status: 'available',
@@ -382,7 +382,7 @@ function openDialog(row?: any) {
       mileage: row.mileage || 0,
       vin: row.vin || '',
       engine_number: row.engine_number || '',
-      license_image: row.license_image || '',
+      license_images: row.license_images || [],
       registration_image: row.registration_image || '',
       is_new_energy: row.is_new_energy === 1,
       status: row.status || 'available',
@@ -405,7 +405,7 @@ function openDialog(row?: any) {
       mileage: 0,
       vin: '',
       engine_number: '',
-      license_image: '',
+      license_images: [],
       registration_image: '',
       is_new_energy: false,
       status: 'available',
@@ -440,11 +440,12 @@ async function handleFileSelect(e: Event) {
   }
 
   try {
-    const label = uploadType.value === 'license' ? '行驶证' : '登记证书'
+    // 行驶证分正页、副页，用序号区分，避免两张照片重名
+    const label = uploadType.value === 'license' ? `行驶证${form.license_images.length + 1}` : '登记证书'
     const res = await uploadApi.uploadVehicle(file, `${form.plate_number || '车辆'}-${label}`)
     if (res.success && res.data) {
       if (uploadType.value === 'license') {
-        form.license_image = res.data.url
+        form.license_images.push(res.data.url)
       } else {
         form.registration_image = res.data.url
       }

@@ -53,7 +53,7 @@ export interface VehicleRow {
   updated_at: string;
   vin: string | null;
   engine_number: string | null;
-  license_image: string | null;
+  license_images: string | null;
   registration_image: string | null;
   is_new_energy: number;
   transmission: string | null;

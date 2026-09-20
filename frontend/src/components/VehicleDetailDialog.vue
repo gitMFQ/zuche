@@ -22,10 +22,10 @@
       </el-descriptions-item>
       <el-descriptions-item label="备注" :span="2">{{ vehicleData.remarks || '-' }}</el-descriptions-item>
     </el-descriptions>
-    <div class="view-images" v-if="vehicleData.license_image || vehicleData.registration_image">
-      <div class="view-image-item" v-if="vehicleData.license_image">
-        <div class="view-image-label">行驶证</div>
-        <img :src="getImageUrl(vehicleData.license_image)" @click="previewImage(vehicleData.license_image)" />
+    <div class="view-images" v-if="vehicleData.license_images?.length || vehicleData.registration_image">
+      <div class="view-image-item" v-for="(img, idx) in vehicleData.license_images || []" :key="idx">
+        <div class="view-image-label">行驶证{{ (vehicleData.license_images?.length || 0) > 1 ? Number(idx) + 1 : '' }}</div>
+        <img :src="getImageUrl(img)" @click="previewImage(img)" />
       </div>
       <div class="view-image-item" v-if="vehicleData.registration_image">
         <div class="view-image-label">登记证书</div>

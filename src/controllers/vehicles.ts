@@ -2,6 +2,7 @@ import { type Bind, execute, query, queryOne, queryWithPagination } from '../db/
 import type { VehicleRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
+import { parseStringArray, stringifyArray } from '../lib/json';
 import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
 import { now } from '../lib/time';
@@ -15,7 +16,9 @@ const STATUS_MAP: Record<string, string> = {
   unavailable: '不可用'
 };
 
-interface VehicleListItem extends VehicleRow {
+// license_images 库里是 JSON 数组字符串，对外统一给数组
+interface VehicleListItem extends Omit<VehicleRow, 'license_images'> {
+  license_images: string[];
   actual_status?: string;
   status_text: string;
 }
@@ -66,16 +69,18 @@ export async function getVehicles(c: AppContext): Promise<Response> {
     const busyIds = new Set(busyRows.map((row) => row.vehicle_id));
 
     const data: VehicleListItem[] = result.data.map((v) => {
+      const base = { ...v, license_images: parseStringArray(v.license_images) };
+
       // 维修或不可用状态保持原样
       if (v.status === 'maintenance' || v.status === 'unavailable') {
-        return { ...v, status_text: STATUS_MAP[v.status] || v.status };
+        return { ...base, status_text: STATUS_MAP[v.status] || v.status };
       }
 
       if (busyIds.has(v.id)) {
-        return { ...v, actual_status: 'rented', status_text: '已出租' };
+        return { ...base, actual_status: 'rented', status_text: '已出租' };
       }
 
-      return { ...v, actual_status: 'available', status_text: '可用' };
+      return { ...base, actual_status: 'available', status_text: '可用' };
     });
 
     return c.json({ success: true, data: { ...result, data } });
@@ -174,6 +179,7 @@ export async function getVehicle(c: AppContext): Promise<Response> {
       success: true,
       data: {
         ...vehicle,
+        license_images: parseStringArray(vehicle.license_images),
         status_text: STATUS_MAP[vehicle.status] || vehicle.status,
         orders
       }
@@ -197,6 +203,8 @@ interface VehicleBody {
   last_maintenance?: string;
   vin?: string;
   engine_number?: string;
+  license_images?: string[] | string;
+  /** 旧版前端发的是单张 license_image，兼容部署瞬间还没刷新的页面 */
   license_image?: string;
   registration_image?: string;
   is_new_energy?: boolean | number;
@@ -231,7 +239,7 @@ export async function createVehicle(c: AppContext): Promise<Response> {
 
     await execute(
       db,
-      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_image, registration_image, is_new_energy, remarks, transmission, fuel_type, body_type, doors, status, created_at, updated_at)
+      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_images, registration_image, is_new_energy, remarks, transmission, fuel_type, body_type, doors, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`,
       [
         id,
@@ -246,7 +254,7 @@ export async function createVehicle(c: AppContext): Promise<Response> {
         body.mileage ?? 0,
         body.vin ?? null,
         body.engine_number ?? null,
-        body.license_image ?? null,
+        stringifyArray(body.license_images ?? body.license_image),
         body.registration_image ?? null,
         body.is_new_energy ? 1 : 0,
         body.remarks ?? null,
@@ -305,7 +313,7 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
 
     await execute(
       db,
-      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_image = ?, registration_image = ?, is_new_energy = ?, remarks = ?, transmission = ?, fuel_type = ?, body_type = ?, doors = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_images = ?, registration_image = ?, is_new_energy = ?, remarks = ?, transmission = ?, fuel_type = ?, body_type = ?, doors = ?, updated_at = ? WHERE id = ?`,
       [
         plate_number,
         body.brand,
@@ -320,7 +328,7 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
         body.last_maintenance ?? null,
         body.vin ?? null,
         body.engine_number ?? null,
-        body.license_image ?? null,
+        stringifyArray(body.license_images ?? body.license_image),
         body.registration_image ?? null,
         body.is_new_energy ? 1 : 0,
         body.remarks ?? null,

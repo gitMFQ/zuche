@@ -1,5 +1,6 @@
 import { query } from '../db/helpers';
 import { handleError } from '../lib/errors';
+import { parseStringArray } from '../lib/json';
 import { formatDate } from '../lib/time';
 import type { AppContext } from '../types';
 
@@ -90,7 +91,7 @@ interface GanttOrder {
   engine_number: string | null;
   is_new_energy: number | null;
   vehicle_status: string | null;
-  license_image: string | null;
+  license_images: string | null;
   registration_image: string | null;
   remarks: string | null;
   customer_name: string | null;
@@ -123,7 +124,7 @@ export async function getGanttData(c: AppContext): Promise<Response> {
          o.pickup_location, o.return_location, o.vehicle_id,
          v.plate_number, v.brand, v.model, v.color, v.year, v.seats, v.mileage,
          v.daily_rate, v.deposit, v.vin, v.engine_number, v.is_new_energy,
-         v.status as vehicle_status, v.license_image, v.registration_image, v.remarks,
+         v.status as vehicle_status, v.license_images, v.registration_image, v.remarks,
          c.name as customer_name, c.phone as customer_phone,
          s.name as platform, s.color as platform_color
        FROM orders o
@@ -169,7 +170,7 @@ export async function getGanttData(c: AppContext): Promise<Response> {
         engine_number: order.engine_number,
         is_new_energy: order.is_new_energy,
         vehicle_status: order.vehicle_status,
-        license_image: order.license_image,
+        license_images: parseStringArray(order.license_images),
         registration_image: order.registration_image,
         remarks: order.remarks,
         platform: order.platform || '线下',

@@ -4,6 +4,15 @@
 
 ## 2026-09-20
 
+### 行驶证支持上传两张（正页/副页）
+
+- 新增 `migrations/0006_vehicle_license_images.sql`：`vehicles` 增加 `license_images`（JSON 数组）、
+  旧 `license_image` 用 `json_array()` 回填后删除，字段语义与 `customers.license_images` 对齐
+- 车辆列表/详情/甘特图接口统一输出 `license_images: string[]`，写入走 `stringifyArray`；
+  `VehicleBody` 仍接受旧的 `license_image`，避免部署瞬间未刷新的页面保存时把照片清掉
+- `VehiclesTab` 表单改为最多两张（带 `n/2` 计数、逐张删除），上传时按 `行驶证1`/`行驶证2` 命名；
+  列表缩略图、`VehicleDetailDialog` 支持两张，证件列宽由 80 调到 110
+
 ### 修复保险附件上传后前端看不到
 
 - `insurance.ts` 的 `parseDocuments` 只保留字符串，把前端存的 `{ url, type }` 对象全过滤掉了，
