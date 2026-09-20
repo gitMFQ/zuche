@@ -440,7 +440,8 @@ async function handleFileSelect(e: Event) {
   }
 
   try {
-    const res = await uploadApi.uploadVehicle(file)
+    const label = uploadType.value === 'license' ? '行驶证' : '登记证书'
+    const res = await uploadApi.uploadVehicle(file, `${form.plate_number || '车辆'}-${label}`)
     if (res.success && res.data) {
       if (uploadType.value === 'license') {
         form.license_image = res.data.url

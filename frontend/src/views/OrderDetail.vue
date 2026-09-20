@@ -399,7 +399,7 @@
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
-            <input ref="pickupImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handlePickupImageUpload" />
+            <input ref="pickupImageInput" type="file" accept="image/*" style="display: none" @change="handlePickupImageUpload" />
           </div>
         </el-form-item>
         <el-form-item label="实际取车时间">
@@ -436,7 +436,7 @@
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
-            <input ref="returnImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleReturnImageUpload" />
+            <input ref="returnImageInput" type="file" accept="image/*" style="display: none" @change="handleReturnImageUpload" />
           </div>
         </el-form-item>
         <el-form-item label="实际还车时间">
@@ -481,7 +481,7 @@
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="editIdCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleEditUpload($event, 'id_card')" />
+            <input ref="editIdCardInput" type="file" accept="image/*" style="display: none" @change="handleEditUpload($event, 'id_card')" />
           </div>
         </el-form-item>
         <el-form-item label="驾驶证">
@@ -498,7 +498,7 @@
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="editLicenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleEditUpload($event, 'license')" />
+            <input ref="editLicenseInput" type="file" accept="image/*" style="display: none" @change="handleEditUpload($event, 'license')" />
           </div>
         </el-form-item>
         
@@ -794,8 +794,10 @@ async function handleEditUpload(e: Event, type: 'id_card' | 'license') {
     return
   }
 
+  const label = type === 'id_card' ? '身份证' : '驾驶证'
+
   try {
-    const res: any = await uploadApi.uploadCustomer(file)
+    const res: any = await uploadApi.uploadCustomer(file, `${editForm.customer_name || '客户'}-${label}`)
     if (res.success && res.data) {
       if (type === 'id_card') {
         editForm.id_card_images.push(res.data.url)
@@ -975,7 +977,7 @@ async function handlePickupImageUpload(e: Event) {
     return
   }
   try {
-    const res = await uploadApi.uploadOther(file)
+    const res = await uploadApi.uploadOther(file, `${order.value?.plate_number || order.value?.order_no || '订单'}-取车照片`)
     if (res.success && res.data) {
       pickupForm.pickup_image = res.data.url
       ElMessage.success('上传成功')
@@ -1102,7 +1104,7 @@ async function handleReturnImageUpload(e: Event) {
     return
   }
   try {
-    const res = await uploadApi.uploadOther(file)
+    const res = await uploadApi.uploadOther(file, `${order.value?.plate_number || order.value?.order_no || '订单'}-还车照片`)
     if (res.success && res.data) {
       completeForm.return_image = res.data.url
       ElMessage.success('上传成功')

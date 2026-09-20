@@ -7,13 +7,30 @@ import {
 } from './constants'
 
 /**
- * 获取图片完整URL
- * 前后端由同一个 Worker 提供，属同源，后端返回的 /uploads/xxx 可直接用
+ * 拼接 Cloudflare Images 转换前缀
+ * 前后端同源，/uploads/xxx 这类相对路径可以直接交给 CDN 做压缩与格式协商
+ * 外链、base64、PDF 不参与转换
  */
-export function getImageUrl(url: string): string {
+function transformImageUrl(url: string, width: number): string {
   if (!url) return ''
   if (url.startsWith('http') || url.startsWith('data:')) return url
-  return url
+  if (/\.pdf(\?|#|$)/i.test(url)) return url
+  const path = url.startsWith('/') ? url : `/${url}`
+  return `/cdn-cgi/image/width=${width},format=auto${path}`
+}
+
+/**
+ * 获取图片完整URL
+ */
+export function getImageUrl(url: string): string {
+  return transformImageUrl(url, 600)
+}
+
+/**
+ * 获取 Logo URL（图标类小图，用更小的宽度）
+ */
+export function getLogoUrl(url: string): string {
+  return transformImageUrl(url, 200)
 }
 
 /**

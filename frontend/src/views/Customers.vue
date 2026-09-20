@@ -143,7 +143,7 @@
                 <span>{{ form.id_card_images.length }}/2</span>
               </div>
             </div>
-            <input ref="idCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'id_card')" />
+            <input ref="idCardInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'id_card')" />
           </div>
         </el-form-item>
         <el-form-item label="驾驶证">
@@ -161,7 +161,7 @@
                 <span>{{ form.license_images.length }}/2</span>
               </div>
             </div>
-            <input ref="licenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'license')" />
+            <input ref="licenseInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'license')" />
           </div>
         </el-form-item>
         <el-form-item label="驾照到期">
@@ -351,7 +351,8 @@ async function handleUpload(e: Event, type: 'id_card' | 'license') {
   }
 
   try {
-    const res = await uploadApi.uploadCustomer(file)
+    const label = type === 'id_card' ? '身份证' : '驾驶证'
+    const res = await uploadApi.uploadCustomer(file, `${form.name || '客户'}-${label}`)
     if (res.success && res.data) {
       if (type === 'id_card') {
         form.id_card_images.push(res.data.url)

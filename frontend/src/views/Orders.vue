@@ -338,7 +338,7 @@
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="idCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'id_card')" />
+            <input ref="idCardInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'id_card')" />
           </div>
         </el-form-item>
         <el-form-item label="驾驶证">
@@ -355,7 +355,7 @@
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="licenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'license')" />
+            <input ref="licenseInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'license')" />
           </div>
         </el-form-item>
         
@@ -511,7 +511,7 @@
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="idCardInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'id_card')" />
+            <input ref="idCardInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'id_card')" />
           </div>
         </el-form-item>
         <el-form-item label="驾驶证">
@@ -528,7 +528,7 @@
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
-            <input ref="licenseInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleUpload($event, 'license')" />
+            <input ref="licenseInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'license')" />
           </div>
         </el-form-item>
 
@@ -651,7 +651,7 @@
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
-            <input ref="pickupImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handlePickupImageUpload" />
+            <input ref="pickupImageInput" type="file" accept="image/*" style="display: none" @change="handlePickupImageUpload" />
           </div>
         </el-form-item>
         <el-form-item label="实际取车时间">
@@ -688,7 +688,7 @@
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
-            <input ref="returnImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleReturnImageUpload" />
+            <input ref="returnImageInput" type="file" accept="image/*" style="display: none" @change="handleReturnImageUpload" />
           </div>
         </el-form-item>
         <el-form-item label="还车时间">
@@ -1063,13 +1063,17 @@ async function handleUpload(e: Event, type: 'id_card' | 'license') {
     return
   }
 
+  const label = type === 'id_card' ? '身份证' : '驾驶证'
+  // 两个对话框共用这个上传回调，按当前打开的对话框决定归属与文件名
+  const targetForm = editDialogVisible.value ? editForm : form
+
   try {
-    const res = await uploadApi.uploadCustomer(file)
+    const res = await uploadApi.uploadCustomer(file, `${targetForm.customer_name || '客户'}-${label}`)
     if (res.success && res.data) {
       if (type === 'id_card') {
-        form.id_card_images.push(res.data.url)
+        targetForm.id_card_images.push(res.data.url)
       } else {
-        form.license_images.push(res.data.url)
+        targetForm.license_images.push(res.data.url)
       }
       ElMessage.success('上传成功')
     } else {
@@ -1705,7 +1709,7 @@ async function handlePickupImageUpload(e: Event) {
     return
   }
   try {
-    const res = await uploadApi.uploadOther(file)
+    const res = await uploadApi.uploadOther(file, `${currentOrder.value?.plate_number || currentOrder.value?.order_no || '订单'}-取车照片`)
     if (res.success && res.data) {
       pickupForm.pickup_image = res.data.url
       ElMessage.success('上传成功')
@@ -1786,7 +1790,7 @@ async function handleReturnImageUpload(e: Event) {
     return
   }
   try {
-    const res = await uploadApi.uploadOther(file)
+    const res = await uploadApi.uploadOther(file, `${currentOrder.value?.plate_number || currentOrder.value?.order_no || '订单'}-还车照片`)
     if (res.success && res.data) {
       returnForm.return_image = res.data.url
       ElMessage.success('上传成功')

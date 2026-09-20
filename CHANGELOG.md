@@ -2,6 +2,27 @@
 
 > 本文件从 `README.md` 拆出，最新记录在最前。
 
+## 2026-09-20
+
+### 图片走 Cloudflare Images 转换
+
+- `getImageUrl` 统一给 `/uploads/...` 拼上 `/cdn-cgi/image/width=600,format=auto` 前缀，外链、base64、PDF 不参与
+- 新增 `getLogoUrl`（`width=200`），`MainLayout.vue`、`Settings.vue` 的 Logo 改走它
+- 本地 `wrangler dev` 没有 Cloudflare 边缘，`/cdn-cgi/image/*` 不生效（图片会 404），线上才有效果
+
+### 上传文件名语义化
+
+- 7 个上传端点支持可选表单字段 `name`，清洗后与北京时间戳、短随机串拼成 R2 key，
+  如 `customer/张三-身份证-20260920-153045-a1b2c3.jpg`；未传时用各类型默认名（年检证/保险单/…）
+- `SAFE_NAME` 放开中文（仍禁止路径穿越），`serveUpload` 按原规则校验后回源
+- 前端 `uploadApi.*` 增加可选 `name` 参数，各调用点按「车牌号或客户名 + 用途」传名
+- 顺带修掉 `Orders.vue` 编辑订单弹窗上传证件照时图片错存进新建表单的问题
+
+### 修复安卓 Chrome 上传直接开相机
+
+- 移除各图片 `<input type="file">` 上的 `capture="environment"`（客户证件、取还车照片、违章、保养、
+  年检证 el-upload），恢复系统选择器，用户可自行选相机或相册
+
 ## 2026-09-19
 
 ### 订单详情支持删除订单

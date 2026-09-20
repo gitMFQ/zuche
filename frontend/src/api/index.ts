@@ -196,9 +196,11 @@ export type UploadType = 'inspection' | 'insurance' | 'violation' | 'maintenance
 
 export const uploadApi = {
   // 按类型上传图片到指定子目录（前后端同源，直接走 axios 实例的 /api 前缀）
-  uploadImage: async (file: File, type: UploadType = 'other'): Promise<{ success: boolean; data?: { filename: string; url: string; type?: string }; message?: string }> => {
+  // name 是可选的语义化文件名（如「京A12345-行驶证」），后端会拼上日期时间生成对象名
+  uploadImage: async (file: File, type: UploadType = 'other', name?: string): Promise<{ success: boolean; data?: { filename: string; url: string; type?: string }; message?: string }> => {
     const formData = new FormData()
     formData.append('image', file)
+    if (name) formData.append('name', name)
     const endpoint = type === 'other' ? '/upload' : `/upload/${type}`
     try {
       return await api.post(endpoint, formData, {
@@ -210,25 +212,25 @@ export const uploadApi = {
   },
   
   // 年检证图片上传（便捷方法）
-  uploadInspection: (file: File) => uploadApi.uploadImage(file, 'inspection'),
+  uploadInspection: (file: File, name?: string) => uploadApi.uploadImage(file, 'inspection', name),
   
   // 保险图片上传（便捷方法）
-  uploadInsurance: (file: File) => uploadApi.uploadImage(file, 'insurance'),
+  uploadInsurance: (file: File, name?: string) => uploadApi.uploadImage(file, 'insurance', name),
   
   // 违章图片上传（便捷方法）
-  uploadViolation: (file: File) => uploadApi.uploadImage(file, 'violation'),
+  uploadViolation: (file: File, name?: string) => uploadApi.uploadImage(file, 'violation', name),
   
   // 保养图片上传（便捷方法）
-  uploadMaintenance: (file: File) => uploadApi.uploadImage(file, 'maintenance'),
+  uploadMaintenance: (file: File, name?: string) => uploadApi.uploadImage(file, 'maintenance', name),
   
   // 车辆图片上传（便捷方法）
-  uploadVehicle: (file: File) => uploadApi.uploadImage(file, 'vehicle'),
+  uploadVehicle: (file: File, name?: string) => uploadApi.uploadImage(file, 'vehicle', name),
   
   // 客户图片上传（便捷方法）
-  uploadCustomer: (file: File) => uploadApi.uploadImage(file, 'customer'),
+  uploadCustomer: (file: File, name?: string) => uploadApi.uploadImage(file, 'customer', name),
 
   // 其他文件上传（便捷方法）
-  uploadOther: (file: File) => uploadApi.uploadImage(file, 'other')
+  uploadOther: (file: File, name?: string) => uploadApi.uploadImage(file, 'other', name)
 }
 
 export default api

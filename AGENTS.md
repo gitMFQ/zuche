@@ -100,8 +100,11 @@ JWT 有效期 1 年，前端存 `localStorage.token`。密钥取自 `c.env.JWT_S
 ## 文件上传
 - 端点：`/api/upload` 或 `/api/upload/{inspection|insurance|violation|maintenance|vehicle|customer}`
 - 表单字段名固定为 `image`；仅 `insurance` 支持 PDF，其余仅图片；上限 10MB
+- 可选字段 `name`：语义化文件名（如 `京A12345-行驶证`），后端清洗后拼成
+  `{dir}/{name}-{YYYYMMDD-HHmmss}-{随机6位}.jpg`，未传时用各类型默认名
 - 返回 `{ success: true, data: { filename, url: '/uploads/{dir}/{file}', type } }`
 - `/uploads/*` 由 Worker 从 R2 读回，带 `Cache-Control: immutable`
+- key 允许中文，`serveUpload` 用 `SAFE_NAME` 逐段校验防路径穿越，两边规则要一起改
 
 ## 业务规则
 **订单状态流转：**
@@ -143,6 +146,8 @@ pending (待取车) → active (已取车) → completed (已还车)
 - **移动端优先**：断点以 `@media (min-width: 768px)` 区分移动端与桌面
 - **图片导出**：调度图导出用 `html2canvas`
 - **同源部署**：前后端同一个域，图片直接用后端返回的 `/uploads/...` 相对路径，不要拼域名
+- **图片链接**：一律经 `getImageUrl`（`/cdn-cgi/image/width=600,format=auto` 前缀），
+  Logo 用 `getLogoUrl`（`width=200`）；直接写 `:src="row.image"` 会绕过 CDN 压缩
 
 ## 设计系统（Apple 风格）
 设计 token 全部定义在 `frontend/src/style.css`（`--sk-*` 变量），`frontend/src/components/Sk*.vue`

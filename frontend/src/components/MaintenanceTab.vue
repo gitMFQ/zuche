@@ -329,7 +329,7 @@
                 <span>{{ form.images.length }}/5</span>
               </div>
             </div>
-            <input ref="fileInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleImageSelect" />
+            <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleImageSelect" />
           </div>
         </el-form-item>
         <el-form-item label="状态">
@@ -590,7 +590,7 @@ async function handleImageSelect(e: Event) {
   }
 
   try {
-    const res = await uploadApi.uploadMaintenance(file)
+    const res = await uploadApi.uploadMaintenance(file, `${selectedVehicle.value?.plate_number || '车辆'}-保养照片`)
     if (res.success && res.data) {
       form.images.push(res.data.url)
       ElMessage.success('图片上传成功')

@@ -13,7 +13,7 @@
             <el-form-item label="系统Logo">
               <div class="logo-upload">
                 <div class="logo-preview" @click="triggerLogoUpload">
-                  <img v-if="systemLogo" :src="systemLogo" alt="Logo" />
+                  <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" />
                   <div v-else class="logo-placeholder">
                     <el-icon :size="32"><Plus /></el-icon>
                     <span>上传Logo</span>
@@ -84,6 +84,7 @@ import UsersTab from '../components/UsersTab.vue'
 import OrderSourcesTab from '../components/OrderSourcesTab.vue'
 import { settingsApi, uploadApi } from '../api'
 import { useUserStore } from '../stores/user'
+import { getLogoUrl } from '../utils/helpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,7 +170,7 @@ async function handleLogoChange(e: Event) {
   if (!file) return
   
   try {
-    const res: any = await uploadApi.uploadOther(file)
+    const res: any = await uploadApi.uploadOther(file, '系统Logo')
     if (res.success && res.data?.url) {
       systemLogo.value = res.data.url
     }

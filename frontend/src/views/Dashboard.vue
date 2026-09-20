@@ -436,7 +436,7 @@
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
-            <input ref="pickupImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handlePickupImageUpload" />
+            <input ref="pickupImageInput" type="file" accept="image/*" style="display: none" @change="handlePickupImageUpload" />
           </div>
         </el-form-item>
         <el-form-item label="实际取车时间">
@@ -473,7 +473,7 @@
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
-            <input ref="returnImageInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleReturnImageUpload" />
+            <input ref="returnImageInput" type="file" accept="image/*" style="display: none" @change="handleReturnImageUpload" />
           </div>
         </el-form-item>
         <el-form-item label="实际还车时间">
@@ -935,7 +935,7 @@ async function handlePickupImageUpload(event: Event) {
   if (!file) return
   
   try {
-    const res: any = await uploadApi.uploadVehicle(file)
+    const res: any = await uploadApi.uploadVehicle(file, `${selectedOrder.value?.plate_number || '订单'}-取车照片`)
     if (res.success && res.data) {
       pickupForm.value.pickup_image = res.data.url
     }
@@ -952,7 +952,7 @@ async function handleReturnImageUpload(event: Event) {
   if (!file) return
   
   try {
-    const res: any = await uploadApi.uploadVehicle(file)
+    const res: any = await uploadApi.uploadVehicle(file, `${selectedOrder.value?.plate_number || '订单'}-还车照片`)
     if (res.success && res.data) {
       completeForm.value.return_image = res.data.url
     }

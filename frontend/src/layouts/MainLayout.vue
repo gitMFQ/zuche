@@ -14,7 +14,7 @@
     >
       <div class="logo">
         <div class="logo-icon">
-          <img v-if="systemLogo" :src="systemLogo" alt="Logo" class="logo-img" />
+          <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" class="logo-img" />
           <el-icon v-else :size="26"><Car /></el-icon>
         </div>
         <span v-show="!isCollapse || isMobile" class="logo-text">{{ systemTitle }}</span>
@@ -139,6 +139,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { authApi, settingsApi } from '../api'
+import { getLogoUrl } from '../utils/helpers'
 
 const route = useRoute()
 const router = useRouter()

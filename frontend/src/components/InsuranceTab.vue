@@ -555,7 +555,7 @@ async function handleFileSelect(e: Event) {
   }
 
   try {
-    const res = await uploadApi.uploadInsurance(file)
+    const res = await uploadApi.uploadInsurance(file, `${selectedVehicle.value?.plate_number || '车辆'}-${isPdf ? '保单' : '保险照片'}`)
     if (res.success && res.data) {
       form.documents.push({
         url: res.data.url,

@@ -400,7 +400,7 @@
                 <span>{{ form.images.length }}/5</span>
               </div>
             </div>
-            <input ref="fileInput" type="file" accept="image/*" capture="environment" style="display: none" @change="handleImageSelect" />
+            <input ref="fileInput" type="file" accept="image/*" style="display: none" @change="handleImageSelect" />
           </div>
         </el-form-item>
         <el-form-item label="备注">
@@ -717,7 +717,7 @@ async function handleImageSelect(e: Event) {
   }
 
   try {
-    const res = await uploadApi.uploadViolation(file)
+    const res = await uploadApi.uploadViolation(file, `${selectedVehicle.value?.plate_number || form.customer_name || '车辆'}-违章照片`)
     if (res.success && res.data) {
       form.images.push(res.data.url)
       ElMessage.success('图片上传成功')

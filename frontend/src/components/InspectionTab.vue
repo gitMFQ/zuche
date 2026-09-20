@@ -164,7 +164,6 @@
               :auto-upload="false"
               :show-file-list="false"
               accept="image/*"
-              capture="environment"
               @change="handleImageChange"
             >
               <div v-if="form.certificate_image" class="image-preview">
@@ -304,7 +303,7 @@ async function handleImageChange(uploadFile: UploadFile) {
 
   // 上传文件到服务器（年检证专用目录）
   try {
-    const res = await uploadApi.uploadInspection(file)
+    const res = await uploadApi.uploadInspection(file, `${currentVehicle.value?.plate_number || '车辆'}-年检证`)
     if (res.success && res.data) {
       form.certificate_image = res.data.url
       ElMessage.success('图片上传成功')
