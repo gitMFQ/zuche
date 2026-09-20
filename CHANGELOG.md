@@ -4,6 +4,14 @@
 
 ## 2026-09-20
 
+### 修复保险附件上传后前端看不到
+
+- `insurance.ts` 的 `parseDocuments` 只保留字符串，把前端存的 `{ url, type }` 对象全过滤掉了，
+  导致保险附件列表、编辑回显都是空（Express → Worker 迁移时引入）
+- 改为统一归一化成 `{ url, type }`：对象按自身 type，纯 URL 字符串按 `.pdf` 后缀推断，
+  兼容历史数据与脏数据
+- `InsuranceBody.documents` 类型由 `string[]` 改为 `InsuranceDocument[]`
+
 ### 图片走 Cloudflare Images 转换
 
 - `getImageUrl` 统一给 `/uploads/...` 拼上 `/cdn-cgi/image/width=600,format=auto` 前缀，外链、base64、PDF 不参与

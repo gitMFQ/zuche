@@ -33,14 +33,43 @@ interface InsuranceWithVehicle extends InsuranceRow {
   model: string | null;
 }
 
-function parseDocuments(raw: string | null): string[] {
+/** 保险附件：前端上传时带 type 一起存，历史数据只有纯 URL 字符串 */
+export interface InsuranceDocument {
+  url: string;
+  type: 'image' | 'pdf';
+}
+
+function isPdfUrl(url: string): boolean {
+  return /\.pdf(\?|#|$)/i.test(url);
+}
+
+// documents 历史上存过纯 URL 数组，也存过 { url, type } 对象数组，读出来统一成对象
+function parseDocuments(raw: string | null): InsuranceDocument[] {
   if (!raw) return [];
+
+  let parsed: unknown;
   try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+    parsed = JSON.parse(raw);
   } catch {
     return [];
   }
+  if (!Array.isArray(parsed)) return [];
+
+  const documents: InsuranceDocument[] = [];
+  for (const item of parsed) {
+    if (typeof item === 'string') {
+      if (item) documents.push({ url: item, type: isPdfUrl(item) ? 'pdf' : 'image' });
+      continue;
+    }
+    if (typeof item !== 'object' || item === null || !('url' in item)) continue;
+
+    const url = item.url;
+    if (typeof url !== 'string' || !url) continue;
+
+    const type = 'type' in item && item.type === 'pdf' ? 'pdf' : isPdfUrl(url) ? 'pdf' : 'image';
+    documents.push({ url, type });
+  }
+  return documents;
 }
 
 // 获取保险列表
@@ -212,7 +241,7 @@ interface InsuranceBody {
   premium?: number;
   coverage_amount?: number;
   beneficiary?: string;
-  documents?: string[];
+  documents?: InsuranceDocument[];
   remarks?: string;
   status?: string;
 }
