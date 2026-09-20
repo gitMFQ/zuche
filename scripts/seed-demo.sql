@@ -1,5 +1,5 @@
 -- 本地开发用演示数据，不进入生产迁移。
--- 用法：npx wrangler d1 execute rental-db --local --file=./scripts/seed-demo.sql
+-- 用法：npx wrangler d1 execute zjzc --local --file=./scripts/seed-demo.sql
 
 INSERT OR IGNORE INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, status) VALUES
   ('veh-demo-001', '京A12345', '丰田', '凯美瑞', '白色', 2023, 5, 280, 2000, 'available'),

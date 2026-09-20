@@ -14,10 +14,10 @@
     "typecheck:worker": "tsc -p tsconfig.worker.json --noEmit",
     "typecheck:web": "vue-tsc -p tsconfig.frontend.json --noEmit",
     "cf-typegen": "wrangler types",
-    "d1:create": "wrangler d1 create rental-db",
-    "d1:migrate": "wrangler d1 migrations apply rental-db --local",
-    "d1:migrate:remote": "wrangler d1 migrations apply rental-db --remote",
-    "r2:create": "wrangler r2 bucket create rental-uploads"
+    "d1:create": "wrangler d1 create zjzc",
+    "d1:migrate": "wrangler d1 migrations apply zjzc --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply zjzc --remote",
+    "r2:create": "wrangler r2 bucket create zjzc"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

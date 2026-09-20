@@ -17,8 +17,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "rental-db",
-      "database_id": "108af864-1056-4b03-8207-e2c5ab5e87a2",
+      "database_name": "zjzc",
+      "database_id": "8ec3c62f-f4fd-452e-b717-97713066f776",
       "migrations_dir": "migrations"
     }
   ],
@@ -34,7 +34,7 @@
   "r2_buckets": [
     {
       "binding": "UPLOADS",
-      "bucket_name": "rental-uploads"
+      "bucket_name": "zjzc"
     }
   ],
 

@@ -117,7 +117,7 @@ npm run dev
 
 ```bash
 npm run d1:migrate                                  # 应用 migrations/ 到本地 D1
-npx wrangler d1 execute rental-db --local \
+npx wrangler d1 execute zjzc --local \
   --file=./scripts/seed-demo.sql                    # 可选：灌入演示数据
 ```
 
@@ -161,8 +161,8 @@ npm run deploy                        # 6. 构建前端并发布（前后端一�
 | 资源 | 名称 / 绑定名 | 说明 | 是否需要手动创建 |
 |---|---|---|---|
 | Worker | `rental-admin` | 唯一的部署单元，含前端静态资源 | 否，`wrangler deploy` 自动创建 |
-| D1 数据库 | `rental-db`，绑定 `DB` | 13 张业务表 | **是**，`npm run d1:create` |
-| R2 存储桶 | `rental-uploads`，绑定 `UPLOADS` | 上传的图片 / PDF | **是**，`npm run r2:create` |
+| D1 数据库 | `zjzc`，绑定 `DB` | 13 张业务表 | **是**，`npm run d1:create` |
+| R2 存储桶 | `zjzc`，绑定 `UPLOADS` | 上传的图片 / PDF | **是**，`npm run r2:create` |
 | Static Assets | 绑定 `ASSETS`，目录 `./frontend/dist` | 前端产物，每次发布重新打包上传 | 否 |
 | Secret | `JWT_SECRET` | JWT 签名密钥 | **是**，`wrangler secret put` |
 | 访问域名 | `wrangler.jsonc` 的 `routes` 指定，或默认 `*.workers.dev` | | 否 |
@@ -184,7 +184,7 @@ export CLOUDFLARE_ACCOUNT_ID=0123456789abcdef0123456789abcdef
 ### 3. 创建 D1 数据库并回填 `database_id`
 
 ```bash
-npm run d1:create          # = wrangler d1 create rental-db
+npm run d1:create          # = wrangler d1 create zjzc
 ```
 
 把输出里的 `database_id` 填进 `wrangler.jsonc`：
@@ -192,23 +192,23 @@ npm run d1:create          # = wrangler d1 create rental-db
 ```jsonc
 {
   "binding": "DB",
-  "database_name": "rental-db",
+  "database_name": "zjzc",
   "database_id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",   // ← 必须替换成真实 UUID
   "migrations_dir": "migrations"
 }
 ```
 
-> ⚠️ 仓库里的默认值是占位符 `00000000-0000-0000-0000-000000000000`。不替换的话 `wrangler deploy` 依然会显示成功，但线上所有接口都会报错（找不到该 D1）。这是最容易踩的一步。
+> ⚠️ 仓库里当前的 `database_id` 指向本项目已建好的库（`zjzc`）。换成自己的库时必须替换成真实 UUID，否则 `wrangler deploy` 依然会显示成功，但线上所有接口都会报错（找不到该 D1）。这是最容易踩的一步。
 
 ```bash
 npx wrangler d1 list            # 确认库已存在
-npx wrangler d1 info rental-db  # 查看详情
+npx wrangler d1 info zjzc  # 查看详情
 ```
 
 ### 4. 创建 R2 桶
 
 ```bash
-npm run r2:create              # = wrangler r2 bucket create rental-uploads
+npm run r2:create              # = wrangler r2 bucket create zjzc
 npx wrangler r2 bucket list    # 确认
 ```
 
@@ -230,7 +230,7 @@ npx wrangler secret list                                                        
 ### 6. 执行线上数据库迁移
 
 ```bash
-npm run d1:migrate:remote  # = wrangler d1 migrations apply rental-db --remote
+npm run d1:migrate:remote  # = wrangler d1 migrations apply zjzc --remote
 ```
 
 - 迁移是**增量**的，执行过的不会重复执行，重复跑是安全的
@@ -383,20 +383,20 @@ jobs:
 
 ```bash
 # 备份（结构 + 数据）
-npx wrangler d1 export rental-db --remote --output=backup-$(date +%Y%m%d-%H%M).sql
-npx wrangler d1 export rental-db --remote --no-data   --output=schema-only.sql
-npx wrangler d1 export rental-db --remote --no-schema --output=data-only.sql
+npx wrangler d1 export zjzc --remote --output=backup-$(date +%Y%m%d-%H%M).sql
+npx wrangler d1 export zjzc --remote --no-data   --output=schema-only.sql
+npx wrangler d1 export zjzc --remote --no-schema --output=data-only.sql
 
 # 恢复（没有 d1 import，就是把 SQL 灌回去）
-npx wrangler d1 execute rental-db --remote --file=backup-20260918-1200.sql
+npx wrangler d1 execute zjzc --remote --file=backup-20260918-1200.sql
 
 # Time Travel
-npx wrangler d1 time-travel info rental-db
-npx wrangler d1 time-travel restore rental-db --timestamp=2026-09-18T10:00:00Z
+npx wrangler d1 time-travel info zjzc
+npx wrangler d1 time-travel restore zjzc --timestamp=2026-09-18T10:00:00Z
 
 # 本地数据搬到线上
-npx wrangler d1 export rental-db --local --output=local-dump.sql
-npx wrangler d1 execute rental-db --remote --file=local-dump.sql
+npx wrangler d1 export zjzc --local --output=local-dump.sql
+npx wrangler d1 execute zjzc --remote --file=local-dump.sql
 ```
 
 > ⚠️ 导入前确认 `wrangler.jsonc` 的 `database_id` 指向目标库。导出的 SQL 含 `DROP TABLE` / `CREATE TABLE`，会覆盖同名表数据，先备份。
@@ -407,7 +407,7 @@ npx wrangler d1 execute rental-db --remote --file=local-dump.sql
 
 | 现象 | 原因 | 解决 |
 |---|---|---|
-| 部署成功但所有接口报错，日志含 `Couldn't find D1 DB` | `database_id` 还是占位符 | 用 `npx wrangler d1 info rental-db` 取真实 UUID 填回配置，重新 `npm run deploy` |
+| 部署成功但所有接口报错，日志含 `Couldn't find D1 DB` | `database_id` 还是占位符 | 用 `npx wrangler d1 info zjzc` 取真实 UUID 填回配置，重新 `npm run deploy` |
 | 上传图片失败，报 `The specified bucket does not exist` | R2 桶没建或名字对不上 | `npm run r2:create`，确认桶名与 `bucket_name` 一致 |
 | `...assets.directory field does not exist: frontend/dist` | 没构建前端 | 用 `npm run deploy`（含 `build:web`） |
 | 部署后页面是旧的 | 浏览器缓存或漏了构建 | 强刷（Cmd/Ctrl+Shift+R）；确认输出里有 `Uploaded` |
@@ -415,14 +415,14 @@ npx wrangler d1 execute rental-db --remote --file=local-dump.sql
 | API 返回 HTML 而不是 JSON | `/api/*` 没走 Worker | 确认 `assets.run_worker_first` 包含 `/api/*` |
 | 换完 `JWT_SECRET` 后所有人被踢下线 | 正常现象：旧 token 签名失效 | 重新登录即可；换密钥挑低峰期 |
 | 上传报超过 10MB / 类型不支持 | 后端硬限制：10MB，仅 `insurance` 允许 PDF | 前端上传前已自动压缩（≤500KB/WebP），仍报错说明压缩被跳过（PDF/GIF）或压缩失败；表单字段名必须固定为 `image` |
-| 图片打不开（404） | 文件不在 R2，或 key 与数据库记录不一致 | `npx wrangler r2 object get rental-uploads/<key> --file /dev/null` 核对 |
+| 图片打不开（404） | 文件不在 R2，或 key 与数据库记录不一致 | `npx wrangler r2 object get zjzc/<key> --file /dev/null` 核对 |
 | 迁移执行失败 | 目标表/列已存在，或 SQL 语法问题 | 按报错行号修 SQL；已成功的迁移不会被回退 |
 | `wrangler: command not found` | 依赖没装或没走 npx | `npm install`；脚本里统一用 `npx wrangler ...` |
 
 ### 14. 上线安全检查清单
 
 - [ ] `wrangler.jsonc` 的 `database_id` 已换成真实 UUID（不是 `00000000-...`）
-- [ ] R2 桶 `rental-uploads` 已创建，桶名与配置一致
+- [ ] R2 桶 `zjzc` 已创建，桶名与配置一致
 - [ ] 已 `wrangler secret put JWT_SECRET`（不使用代码里的默认密钥）
 - [ ] 已登录并改掉 `admin123`
 - [ ] `npm run typecheck` 通过
