@@ -115,18 +115,19 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50]"
-        layout="total, prev, pager, next"
-        background
-        class="pagination"
-        @size-change="loadData"
-        @current-change="loadData"
-      />
     </el-card>
+
+    <el-pagination
+      v-model:current-page="pagination.page"
+      v-model:page-size="pagination.pageSize"
+      :total="pagination.total"
+      :page-sizes="[10, 20, 50]"
+      layout="total, prev, pager, next"
+      background
+      class="pagination"
+      @size-change="loadData"
+      @current-change="loadData"
+    />
 
     <!-- 添加/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="formTitle" width="90%" :style="{ maxWidth: '450px' }">
@@ -531,11 +532,17 @@ onMounted(() => {
   .hide-mobile {
     display: table;
   }
+
+  .pagination {
+    justify-content: flex-end;
+  }
 }
 
 .pagination {
   margin-top: 16px;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 .vehicle-info {

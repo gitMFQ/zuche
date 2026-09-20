@@ -102,18 +102,19 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination
-          v-model:current-page="vehiclePagination.page"
-          v-model:page-size="vehiclePagination.pageSize"
-          :total="vehiclePagination.total"
-          :page-sizes="[10, 20, 50]"
-          layout="total, prev, pager, next"
-          background
-          class="pagination"
-          @size-change="loadVehicles"
-          @current-change="loadVehicles"
-        />
       </el-card>
+
+      <el-pagination
+        v-model:current-page="vehiclePagination.page"
+        v-model:page-size="vehiclePagination.pageSize"
+        :total="vehiclePagination.total"
+        :page-sizes="[10, 20, 50]"
+        layout="total, prev, pager, next"
+        background
+        class="pagination"
+        @size-change="loadVehicles"
+        @current-change="loadVehicles"
+      />
     </template>
 
     <!-- 车辆保险记录视图 -->
@@ -834,11 +835,17 @@ onMounted(() => {
   .hide-mobile {
     display: table;
   }
+
+  .pagination {
+    justify-content: flex-end;
+  }
 }
 
 .pagination {
   margin-top: 16px;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 /* 文件上传 */

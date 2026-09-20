@@ -366,11 +366,17 @@ html.dark .user-name {
   .hide-mobile {
     display: table;
   }
+
+  .pagination {
+    justify-content: flex-end;
+  }
 }
 
 .pagination {
   margin-top: 16px;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 /* 暗色模式 */
