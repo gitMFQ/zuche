@@ -65,6 +65,14 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:8787',
         changeOrigin: true
+      },
+      // 本地没有 Cloudflare 的图像处理层，getImageUrl() 拼出的
+      // /cdn-cgi/image/width=600,format=auto/uploads/xxx 在本地会落到 SPA 回退，
+      // 图片全变成 index.html。这里剥掉转换前缀再转给后端，让本地也能看到图。
+      '/cdn-cgi': {
+        target: 'http://localhost:8787',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/cdn-cgi\/image\/[^/]+(?=\/uploads\/)/, '')
       }
     }
   }
