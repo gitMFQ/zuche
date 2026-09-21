@@ -37,5 +37,8 @@ npm-debug.log*
 # CodeBuddy（会话记录与上传的附件）
 .codebuddy/
 
+# 本地 MCP 配置（含个人密钥，不入库）
+.mcp.json
+
 # 数据库导出备份（含客户证件等个人信息，绝不入库）
 .backup/
