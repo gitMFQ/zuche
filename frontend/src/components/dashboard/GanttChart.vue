@@ -220,12 +220,12 @@ function getOccupationText(order: any): string {
 function getOccupationTooltip(order: any): string {
   const lines = [
     `订单号：${order.order_no || '-'}`,
-    `客户：${order.customer_name || '-'}`,
-    `电话：${order.customer_phone || '-'}`,
+    `客户：${order.name || '-'}`,
+    `电话：${order.phone || '-'}`,
     `取车：${dayjs(order.startDateTime).format('MM-DD HH:mm')}`,
     `还车：${dayjs(order.endDateTime).format('MM-DD HH:mm')}`,
     `平台：${order.source_name || '线下'}`,
-    `金额：¥${order.total_amount || 0}`
+    `金额：¥${order.rmb || 0}`
   ]
   return lines.join('\n')
 }
