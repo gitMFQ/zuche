@@ -18,9 +18,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # v4 系列已进入弃用流程（目标 Node 20），改用当前主版本
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # 与 README 的环境要求一致（Vite 8 需要 Node 20.19+ / 22.12+）
           node-version: '22'

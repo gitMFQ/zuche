@@ -10,8 +10,10 @@
     "binding": "ASSETS",
     // vue-router 使用 createWebHistory，未知路径需回落到 index.html
     "not_found_handling": "single-page-application",
-    // API 与上传文件必须先进 Worker，其余走静态资源
-    "run_worker_first": ["/api/*", "/uploads/*"]
+    // API、上传文件与健康检查必须先进 Worker，其余走静态资源。
+    // /health 必须列在这里：它不在 run_worker_first 里时会被 SPA 回落吃掉，
+    // 请求返回的是 index.html 而不是 JSON，等于这个端点在生产环境根本不存在。
+    "run_worker_first": ["/api/*", "/uploads/*", "/health"]
   },
 
   "d1_databases": [
