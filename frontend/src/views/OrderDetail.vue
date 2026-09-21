@@ -21,7 +21,7 @@
 
         <!-- 订单来源和状态 -->
         <div class="order-detail-header" v-if="order.source_name">
-          <span class="source-tag" :style="{ background: order.source_color || '#409EFF' }">
+          <span class="source-tag" :style="{ background: order.source_color || '#0071e3' }">
             {{ order.source_name }}
           </span>
           <span class="order-no">{{ order.order_no }}</span>
@@ -231,11 +231,11 @@
         <div class="order-images">
           <div v-if="order.pickup_image" class="image-section">
             <span class="image-label">取车照片</span>
-            <img :src="getImageUrl(order.pickup_image)" class="order-image" @click="previewImage([order.pickup_image], 0)" />
+            <img :src="getImageUrl(order.pickup_image)" class="order-image" @click="previewImage([order.pickup_image], 0)"  alt="订单证件照片，点击可放大查看" />
           </div>
           <div v-if="order.return_image" class="image-section">
             <span class="image-label">还车照片</span>
-            <img :src="getImageUrl(order.return_image)" class="order-image" @click="previewImage([order.return_image], 0)" />
+            <img :src="getImageUrl(order.return_image)" class="order-image" @click="previewImage([order.return_image], 0)"  alt="订单证件照片，点击可放大查看" />
           </div>
         </div>
       </el-card>
@@ -392,10 +392,10 @@
         <el-form-item label="取车照片">
           <div class="single-upload">
             <div v-if="pickupForm.pickup_image" class="image-preview">
-              <img :src="getImageUrl(pickupForm.pickup_image)" @click="previewImage([pickupForm.pickup_image], 0)" />
-              <div class="image-remove" @click="pickupForm.pickup_image = ''">×</div>
+              <img :src="getImageUrl(pickupForm.pickup_image)" @click="previewImage([pickupForm.pickup_image], 0)"  alt="订单证件照片，点击可放大查看" />
+              <div class="image-remove" @click="pickupForm.pickup_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="pickupForm.pickup_image = ''" @keydown.space.prevent="pickupForm.pickup_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerPickupUpload">
+            <div v-else class="upload-btn" @click="triggerPickupUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerPickupUpload" @keydown.space.prevent="triggerPickupUpload">
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
@@ -429,10 +429,10 @@
         <el-form-item label="还车照片">
           <div class="single-upload">
             <div v-if="completeForm.return_image" class="image-preview">
-              <img :src="getImageUrl(completeForm.return_image)" @click="previewImage([completeForm.return_image], 0)" />
-              <div class="image-remove" @click="completeForm.return_image = ''">×</div>
+              <img :src="getImageUrl(completeForm.return_image)" @click="previewImage([completeForm.return_image], 0)"  alt="订单证件照片，点击可放大查看" />
+              <div class="image-remove" @click="completeForm.return_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="completeForm.return_image = ''" @keydown.space.prevent="completeForm.return_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerReturnUpload">
+            <div v-else class="upload-btn" @click="triggerReturnUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerReturnUpload" @keydown.space.prevent="triggerReturnUpload">
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
@@ -474,10 +474,10 @@
           <div class="mini-upload">
             <div class="image-list">
               <div v-for="(img, idx) in editForm.id_card_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(editForm.id_card_images, idx)" />
-                <div class="image-remove" @click="removeEditIdCardImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(editForm.id_card_images, idx)"  alt="订单证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeEditIdCardImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeEditIdCardImage(idx)" @keydown.space.prevent="removeEditIdCardImage(idx)">×</div>
               </div>
-              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerEditUpload('id_card')">
+              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerEditUpload('id_card')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerEditUpload('id_card')" @keydown.space.prevent="triggerEditUpload('id_card')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
@@ -491,10 +491,10 @@
           <div class="mini-upload">
             <div class="image-list">
               <div v-for="(img, idx) in editForm.license_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(editForm.license_images, idx)" />
-                <div class="image-remove" @click="removeEditLicenseImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(editForm.license_images, idx)"  alt="订单证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeEditLicenseImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeEditLicenseImage(idx)" @keydown.space.prevent="removeEditLicenseImage(idx)">×</div>
               </div>
-              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerEditUpload('license')">
+              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerEditUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerEditUpload('license')" @keydown.space.prevent="triggerEditUpload('license')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
@@ -649,7 +649,7 @@
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside">
         <el-carousel-item v-for="(img, idx) in previewImagesList" :key="idx">
-          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
+          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain"  alt="订单证件照片" />
         </el-carousel-item>
       </el-carousel>
     </el-dialog>
@@ -661,7 +661,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { orderApi, blacklistApi, vehicleApi, orderSourceApi, uploadApi, userApi } from '../api'
+import { orderApi, blacklistApi, vehicleApi, uploadApi } from '../api'
+import { useDictStore } from '../stores/dict'
+import { useMobile } from '../composables/useMobile'
 import {
   PAYMENT_METHOD_OPTIONS,
   PAYMENT_TYPE_OPTIONS,
@@ -670,7 +672,6 @@ import {
   FEE_CATEGORY_TEXT_MAP
 } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getPaymentMethodText, getPaymentTypeText, getServiceLabel, getServiceTagType } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -678,7 +679,7 @@ const router = useRouter()
 const loading = ref(true)
 const submitting = ref(false)
 const deleting = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const order = ref<any>({})
 const paymentDialogVisible = ref(false)
 const completeDialogVisible = ref(false)
@@ -695,7 +696,9 @@ const imagePreviewVisible = ref(false)
 const previewImagesList = ref<string[]>([])
 const previewIndex = ref(0)
 const vehicles = ref<any[]>([])
-const orderSources = ref<any[]>([])
+// 订单来源走字典缓存；司机选项同理
+const dictStore = useDictStore()
+const orderSources = computed(() => dictStore.orderSources)
 
 const paymentForm = reactive({
   amount: 0,
@@ -785,12 +788,6 @@ async function handleEditUpload(e: Event, type: 'id_card' | 'license') {
   const file = target.files?.[0]
   if (!file) return
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   const label = type === 'id_card' ? '身份证' : '驾驶证'
 
   try {
@@ -857,13 +854,8 @@ const driverForm = reactive<{ pickup_driver_id: string | null; return_driver_id:
 })
 
 async function openDriverDialog(): Promise<void> {
-  try {
-    const res: any = await userApi.getList()
-    const list = Array.isArray(res.data) ? res.data : res.data?.data ?? []
-    users.value = list.filter((user: any) => user.status !== 0)
-  } catch {
-    users.value = []
-  }
+  // 走 /users/options（只含 id/name）：/users 是管理员专属，员工指派司机会拿到 403
+  users.value = await dictStore.ensureUserOptions()
   driverForm.pickup_driver_id = order.value.pickup_driver_id ?? null
   driverForm.return_driver_id = order.value.return_driver_id ?? null
   driverDialogVisible.value = true
@@ -965,11 +957,6 @@ async function handlePickupImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
   try {
     const res = await uploadApi.uploadOther(file, `${order.value?.plate_number || order.value?.order_no || '订单'}-取车照片`)
     if (res.success && res.data) {
@@ -994,7 +981,8 @@ async function handlePickup() {
       pickup_image: pickupForm.pickup_image || undefined
     }
     if (pickupForm.actual_pickup_date) {
-      data.actual_pickup_date = pickupForm.actual_pickup_date.replace('T', ' ')
+      // 后端字段名是 actual_start_date；此前误传 actual_pickup_date，导致取车时间从未落库
+      data.actual_start_date = pickupForm.actual_pickup_date.replace('T', ' ') + ':00'
     }
     if (pickupForm.remarks) {
       data.remarks = pickupForm.remarks
@@ -1089,11 +1077,6 @@ async function handleReturnImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
   try {
     const res = await uploadApi.uploadOther(file, `${order.value?.plate_number || order.value?.order_no || '订单'}-还车照片`)
     if (res.success && res.data) {
@@ -1169,15 +1152,7 @@ async function loadVehicles() {
 
 // 加载订单来源
 async function loadOrderSources() {
-  try {
-    const res: any = await orderSourceApi.getList({ pageSize: 100 })
-    if (res.success) {
-      // 后端返回的是 data 数组，不是 data.data
-      orderSources.value = Array.isArray(res.data) ? res.data : (res.data.data || [])
-    }
-  } catch (error) {
-    console.error('加载订单来源失败', error)
-  }
+  await dictStore.ensureOrderSources()
 }
 
 // 打开编辑对话框
@@ -1245,10 +1220,52 @@ async function handleEditSubmit() {
       editDialogVisible.value = false
       loadOrder()
     }
-  } catch (error) {
+  } catch (error: any) {
+    // 换客户时命中黑名单：与新建订单同一套软拦截 + 二次确认
+    if (error?.response?.data?.code === 'BLACKLISTED') {
+      const record = error.response.data.data?.record ?? {}
+      const confirmed = await confirmBlacklistedOrder(record)
+      if (confirmed) {
+        try {
+          const retry: any = await orderApi.update(order.value.id, { ...editForm, force: true })
+          if (retry.success) {
+            ElMessage.success('订单修改成功（黑名单客户，已记入日志）')
+            editDialogVisible.value = false
+            loadOrder()
+          }
+        } catch (retryError) {
+          console.error('黑名单强制修改失败', retryError)
+        }
+      }
+      return
+    }
     console.error('修改失败', error)
   } finally {
     submitting.value = false
+  }
+}
+
+/** 黑名单风险二次确认，用户点「仍然保存」才返回 true */
+async function confirmBlacklistedOrder(record: any): Promise<boolean> {
+  const lines = [
+    `客户「${record.name ?? '未知'}」在黑名单中。`,
+    `原因：${record.reason ?? '未填写'}`,
+    record.created_at ? `拉黑时间：${formatDateTime(record.created_at)}` : '',
+    record.operator_name ? `操作人：${record.operator_name}` : '',
+    '',
+    '确认要继续保存吗？此操作会记入操作日志。'
+  ].filter((line) => line !== '')
+
+  try {
+    await ElMessageBox.confirm(lines.join('\n'), '风险提示', {
+      confirmButtonText: '仍然保存',
+      cancelButtonText: '取消',
+      type: 'warning',
+      customClass: 'pre-line-message'
+    })
+    return true
+  } catch {
+    return false
   }
 }
 
@@ -1321,9 +1338,7 @@ onMounted(async () => {
     await openEditDialog()
   }
   // 监听窗口大小变化
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -1363,7 +1378,7 @@ onMounted(async () => {
 }
 
 .section-title .el-icon {
-  color: #409EFF;
+  color: var(--primary-color);
 }
 
 .card-header-row {
@@ -1416,7 +1431,7 @@ onMounted(async () => {
 }
 
 .info-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 13px;
 }
 
@@ -1437,7 +1452,7 @@ onMounted(async () => {
 }
 
 .info-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -1473,7 +1488,7 @@ onMounted(async () => {
 
 .image-label {
   font-size: 13px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .order-image {
@@ -1517,7 +1532,7 @@ onMounted(async () => {
 }
 
 .payment-amount {
-  color: #409EFF;
+  color: var(--primary-color);
   font-weight: 500;
 }
 
@@ -1550,7 +1565,7 @@ onMounted(async () => {
 }
 
 .fee-amount {
-  color: #409EFF;
+  color: var(--primary-color);
   font-weight: 500;
 }
 
@@ -1565,15 +1580,15 @@ onMounted(async () => {
 }
 
 .payment-method, .payment-time {
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 /* 工具类 */
-.text-primary { color: #409EFF; font-weight: 500; }
-.text-success { color: #67C23A; }
-.text-warning { color: #E6A23C; }
-.text-danger { color: #F56C6C; font-weight: 500; }
+.text-primary { color: var(--primary-color); font-weight: 500; }
+.text-success { color: var(--sk-color-success); }
+.text-warning { color: var(--sk-color-warning); }
+.text-danger { color: var(--sk-color-danger); font-weight: 500; }
 
 .action-buttons {
   display: flex;
@@ -1589,12 +1604,12 @@ onMounted(async () => {
 
 .estimate {
   font-weight: 500;
-  color: #409EFF;
+  color: var(--primary-color);
 }
 
 :deep(.el-divider__text) {
   font-size: 13px;
-  color: #909399;
+  color: var(--sk-color-info);
   padding: 0 10px;
 }
 
@@ -1649,12 +1664,12 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mini-upload .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 /* 原生日期时间输入框样式 */
@@ -1673,7 +1688,7 @@ onMounted(async () => {
 }
 
 .native-datetime-input:focus {
-  border-color: #409EFF;
+  border-color: var(--primary-color);
 }
 
 .native-datetime-input::-webkit-datetime-edit {
@@ -1705,7 +1720,7 @@ onMounted(async () => {
 /* 免押到期日期 */
 .deposit-expiry {
   margin-left: 8px;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
@@ -1727,7 +1742,7 @@ onMounted(async () => {
 
 .order-images .image-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-bottom: 8px;
 }
 
@@ -1741,7 +1756,7 @@ onMounted(async () => {
 }
 
 .order-images .order-image:hover {
-  border-color: #409EFF;
+  border-color: var(--primary-color);
 }
 
 /* 单图上传 */
@@ -1790,13 +1805,13 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 .single-upload .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .single-upload .upload-btn .el-icon {
@@ -1920,15 +1935,15 @@ html.dark .text-primary {
 }
 
 html.dark .text-success {
-  color: #67C23A;
+  color: var(--sk-color-success);
 }
 
 html.dark .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 
 html.dark .text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 html.dark .estimate {

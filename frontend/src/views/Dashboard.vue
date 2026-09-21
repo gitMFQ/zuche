@@ -195,7 +195,7 @@
       <div class="mobile-cards" v-if="stats.recentOrders?.length">
         <div v-for="item in stats.recentOrders" :key="item.order_no" class="mobile-card" @click="$router.push('/orders')">
           <div class="mobile-card-header">
-            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#0071e3' }">{{ item.source_name }}</span>
             <span v-else class="text-muted">-</span>
             <el-tag :type="getStatusType(item.status)" size="small">{{ getStatusText(item.status) }}</el-tag>
           </div>
@@ -222,7 +222,7 @@
       <el-table :data="stats.recentOrders" stripe size="small" class="hide-mobile">
         <el-table-column label="来源" width="100">
           <template #default="{ row }">
-            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#0071e3' }">{{ row.source_name }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
@@ -334,7 +334,7 @@
         <!-- 头部信息 -->
         <div class="order-detail-header">
           <div class="header-left">
-            <span v-if="selectedOrder.source_name" class="source-tag" :style="{ background: selectedOrder.source_color || '#409EFF' }">
+            <span v-if="selectedOrder.source_name" class="source-tag" :style="{ background: selectedOrder.source_color || '#0071e3' }">
               {{ selectedOrder.source_name }}
             </span>
             <el-tag :type="getStatusType(selectedOrder.status)" size="small">
@@ -429,10 +429,10 @@
         <el-form-item label="取车照片">
           <div class="single-upload">
             <div v-if="pickupForm.pickup_image" class="image-preview">
-              <img :src="getImageUrl(pickupForm.pickup_image)" class="upload-preview" />
-              <div class="image-remove" @click="pickupForm.pickup_image = ''">×</div>
+              <img :src="getImageUrl(pickupForm.pickup_image)" class="upload-preview"  alt="取还车照片" />
+              <div class="image-remove" @click="pickupForm.pickup_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="pickupForm.pickup_image = ''" @keydown.space.prevent="pickupForm.pickup_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerPickupUpload">
+            <div v-else class="upload-btn" @click="triggerPickupUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerPickupUpload" @keydown.space.prevent="triggerPickupUpload">
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
@@ -466,10 +466,10 @@
         <el-form-item label="还车照片">
           <div class="single-upload">
             <div v-if="completeForm.return_image" class="image-preview">
-              <img :src="getImageUrl(completeForm.return_image)" class="upload-preview" />
-              <div class="image-remove" @click="completeForm.return_image = ''">×</div>
+              <img :src="getImageUrl(completeForm.return_image)" class="upload-preview"  alt="取还车照片" />
+              <div class="image-remove" @click="completeForm.return_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="completeForm.return_image = ''" @keydown.space.prevent="completeForm.return_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerReturnUpload">
+            <div v-else class="upload-btn" @click="triggerReturnUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerReturnUpload" @keydown.space.prevent="triggerReturnUpload">
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
@@ -509,7 +509,6 @@ import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { dashboardApi, scheduleApi, orderApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
@@ -810,7 +809,7 @@ function getOccupationStyle(order: any): Record<string, string> {
   const width = right - left
 
   // 使用订单来源的颜色作为背景色
-  const backgroundColor = order.platform_color || '#409EFF'
+  const backgroundColor = order.platform_color || '#0071e3'
 
   return {
     left: `${left}px`,
@@ -937,16 +936,13 @@ async function handlePickupImageUpload(event: Event) {
   // 清空 input，便于重复选择同一张照片
   target.value = ''
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   try {
     const res: any = await uploadApi.uploadVehicle(file, `${selectedOrder.value?.plate_number || '订单'}-取车照片`)
     if (res.success && res.data) {
       pickupForm.value.pickup_image = res.data.url
+    } else {
+      // 校验失败（格式/体积）也走这里，必须提示，否则用户以为传上去了
+      ElMessage.error(res.message || '上传失败')
     }
   } catch (error) {
     console.error('上传失败', error)
@@ -962,16 +958,13 @@ async function handleReturnImageUpload(event: Event) {
   // 清空 input，便于重复选择同一张照片
   target.value = ''
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   try {
     const res: any = await uploadApi.uploadVehicle(file, `${selectedOrder.value?.plate_number || '订单'}-还车照片`)
     if (res.success && res.data) {
       completeForm.value.return_image = res.data.url
+    } else {
+      // 校验失败（格式/体积）也走这里，必须提示，否则用户以为传上去了
+      ElMessage.error(res.message || '上传失败')
     }
   } catch (error) {
     console.error('上传失败', error)
@@ -1005,7 +998,8 @@ async function handlePickup() {
       data.pickup_image = pickupForm.value.pickup_image
     }
     if (pickupForm.value.actual_pickup_date) {
-      data.actual_pickup_date = pickupForm.value.actual_pickup_date.replace('T', ' ')
+      // 后端字段名是 actual_start_date；此前误传 actual_pickup_date，导致取车时间从未落库
+      data.actual_start_date = pickupForm.value.actual_pickup_date.replace('T', ' ') + ':00'
     }
     if (pickupForm.value.remarks) {
       data.remarks = pickupForm.value.remarks
@@ -1219,7 +1213,7 @@ function scrollGanttToToday() {
 
 .stat-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 2px;
 }
 
@@ -1235,7 +1229,7 @@ function scrollGanttToToday() {
   padding-top: 10px;
   border-top: 1px solid #ebeef5;
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .section-card {
@@ -1300,7 +1294,7 @@ function scrollGanttToToday() {
 .placeholder-content {
   padding: 40px 20px;
   text-align: center;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .placeholder-content p {
@@ -1467,7 +1461,7 @@ function scrollGanttToToday() {
 
 .empty-text {
   text-align: center;
-  color: #909399;
+  color: var(--sk-color-info);
   padding: 20px;
   font-size: 14px;
 }
@@ -1579,7 +1573,7 @@ function scrollGanttToToday() {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -1587,17 +1581,17 @@ function scrollGanttToToday() {
 }
 
 .text-primary {
-  color: #409EFF;
+  color: var(--primary-color);
   font-weight: 500;
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
   font-weight: 500;
 }
 
 .text-muted {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 /* PC 端隐藏表格 */
@@ -1671,7 +1665,7 @@ function scrollGanttToToday() {
 }
 
 .gantt-header-date.is-today {
-  background-color: #409EFF;
+  background-color: var(--primary-color);
   color: #fff;
 }
 
@@ -1681,7 +1675,7 @@ function scrollGanttToToday() {
 
 /* 今天且是周末时，今天的样式优先 */
 .gantt-header-date.is-today.is-weekend {
-  background-color: #409EFF;
+  background-color: var(--primary-color);
   color: #fff;
 }
 

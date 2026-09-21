@@ -181,7 +181,7 @@
           <div class="mobile-card-row" v-if="item.images && item.images.length">
             <span class="label">图片</span>
             <div class="images-preview-mini">
-              <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images, Number(idx))" />
+              <img v-for="(img, idx) in item.images.slice(0, 3)" :key="idx" :src="getImageUrl(img)" @click="previewImages(item.images, Number(idx))"  alt="保养照片，点击可放大查看" />
               <span v-if="item.images.length > 3" class="more">+{{ item.images.length - 3 }}</span>
             </div>
           </div>
@@ -214,7 +214,7 @@
           <el-table-column label="图片" width="80">
             <template #default="{ row }">
               <div class="images-mini" v-if="row.images && row.images.length">
-                <img :src="getImageUrl(row.images[0])" @click="previewImages(row.images)" />
+                <img :src="getImageUrl(row.images[0])" @click="previewImages(row.images)"  alt="保养照片，点击可放大查看" />
                 <span v-if="row.images.length > 1" class="badge">{{ row.images.length }}</span>
               </div>
               <span v-else>-</span>
@@ -322,10 +322,10 @@
           <div class="multi-upload">
             <div class="image-list">
               <div v-for="(img, idx) in form.images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" />
-                <div class="image-remove" @click="removeImage(idx)">×</div>
+                <img :src="getImageUrl(img)"  alt="保养照片" />
+                <div class="image-remove" @click="removeImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeImage(idx)" @keydown.space.prevent="removeImage(idx)">×</div>
               </div>
-              <div v-if="form.images.length < 5" class="upload-btn" @click="triggerUpload">
+              <div v-if="form.images.length < 5" class="upload-btn" @click="triggerUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload" @keydown.space.prevent="triggerUpload">
                 <el-icon><Plus /></el-icon>
                 <span>{{ form.images.length }}/5</span>
               </div>
@@ -353,7 +353,7 @@
     <el-dialog v-model="imagePreviewVisible" title="保养图片" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside">
         <el-carousel-item v-for="(img, idx) in previewImagesList" :key="idx">
-          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
+          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain"  alt="保养照片" />
         </el-carousel-item>
       </el-carousel>
     </el-dialog>
@@ -365,11 +365,11 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { maintenanceApi, vehicleApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
+import { useMobile } from '../composables/useMobile'
 
 const loading = ref(false)
 const submitting = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const vehicles = ref<any[]>([])
 const selectedVehicle = ref<any>(null)
 const maintenanceRecords = ref<any[]>([])
@@ -581,12 +581,6 @@ async function handleImageSelect(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   try {
     const res = await uploadApi.uploadMaintenance(file, `${selectedVehicle.value?.plate_number || '车辆'}-保养照片`)
     if (res.success && res.data) {
@@ -659,9 +653,7 @@ async function handleDelete(id: string) {
 
 onMounted(() => {
   loadVehicles()
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -707,9 +699,9 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.primary { border-left: 3px solid var(--primary-color, #409EFF); }
-.stat-card.warning { border-left: 3px solid #E6A23C; }
-.stat-card.success { border-left: 3px solid #67C23A; }
+.stat-card.primary { border-left: 3px solid var(--primary-color); }
+.stat-card.warning { border-left: 3px solid var(--sk-color-warning); }
+.stat-card.success { border-left: 3px solid var(--sk-color-success); }
 
 .stat-value {
   font-size: 18px;
@@ -719,7 +711,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 4px;
 }
 
@@ -752,7 +744,7 @@ onMounted(() => {
 
 .vehicle-info .brand {
   font-size: 13px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-cards {
@@ -792,7 +784,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -800,12 +792,12 @@ onMounted(() => {
 }
 
 .mobile-card-row .value.text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
   font-weight: 500;
 }
 
 .mobile-card-row .value.text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
   font-weight: 500;
 }
 
@@ -828,7 +820,7 @@ onMounted(() => {
 .empty-tip {
   text-align: center;
   padding: 30px;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 14px;
 }
 
@@ -841,20 +833,20 @@ onMounted(() => {
 }
 
 .text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 
 .text-muted {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mileage {
   font-size: 11px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-left: 2px;
 }
 
@@ -866,7 +858,7 @@ onMounted(() => {
 
 .date-sub {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .maintenance-cell {
@@ -960,13 +952,13 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 .upload-btn:hover {
-  border-color: var(--primary-color, #409EFF);
-  color: var(--primary-color, #409EFF);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .upload-btn .el-icon {
@@ -993,7 +985,7 @@ onMounted(() => {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #F56C6C;
+  background: var(--sk-color-danger);
   color: #fff;
   font-size: 10px;
   padding: 1px 4px;
@@ -1017,7 +1009,7 @@ onMounted(() => {
 
 .images-preview-mini .more {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 /* 暗色模式 */

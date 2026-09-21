@@ -38,8 +38,13 @@
     }
   ],
 
-  // 关闭 Workers Logs（观测/日志推送），如需排查问题再改回 true 并重新部署
+  // Workers Logs：线上出错时唯一的排查线索。按量计费，内部系统流量小，成本可控
   "observability": {
-    "enabled": false
+    "enabled": true
+  },
+
+  // 定时任务：清理过期的操作日志与登录失败计数（UTC 18:00 = 北京 02:00）
+  "triggers": {
+    "crons": ["0 18 * * *"]
   }
 }

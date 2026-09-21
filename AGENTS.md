@@ -18,12 +18,23 @@ npm run deploy      # 构建前端 + wrangler deploy（一条命令上线）
 ```
 
 ```bash
-# 类型检查（无测试框架、无 lint，这是唯一的验证方式）
+# 验证方式（CI 会跑 verify 里的全部内容，见 .github/workflows/ci.yml）
+npm run verify             # typecheck + lint + test 一条命令跑完（提交前跑这个）
 npm run typecheck          # 前后端都检查
 npm run typecheck:worker   # npx tsc -p tsconfig.worker.json --noEmit
 npm run typecheck:web      # npx vue-tsc -p tsconfig.frontend.json --noEmit
+npm run test               # vitest run（后端纯逻辑单测，test/ 目录）
+npm run lint               # biome check（只覆盖 src/ 与 test/，见下方说明）
 ```
 
+> **单测范围**：`test/` 下覆盖时区基准、金额计算、订单号、签名 URL、魔数校验、
+> JSON 兼容、导入列映射这些纯逻辑。改这些模块（尤其 `lib/time.ts`、`lib/import/`、
+> `lib/orderAmount.ts`）必须先让 `npm run test` 通过。
+>
+> **lint 范围**：`biome.json` 只包含 `src/**` 与 `test/**`。`.vue` 文件被排除是**有意**的 ——
+> biome 不认识 `<script setup>` 的模板用法，会对模板里用到的导入报一堆
+> `noUnusedImports` 误报。前端类型由 `vue-tsc` 把关。
+>
 > 环境要求：Node **20.19+ / 22.12+**（Vite 8 的硬性要求）。
 
 ## 目录结构
@@ -94,8 +105,10 @@ await logAction(db, {
 | try/catch → 500 | `return handleError(c, '标签:', error)` |
 
 响应格式统一 `{ success: boolean, data?: any, message?: string }`。
-JWT 有效期 1 年，前端存 `localStorage.token`。密钥取自 `c.env.JWT_SECRET`，
-**不要**依赖 `src/lib/auth.ts` 里的 `DEFAULT_SECRET`（公开代码里的默认值，仅本地兜底）。
+JWT 有效期 7 天，前端存 `localStorage.token`。密钥取自 `c.env.JWT_SECRET`，
+**必填**：`lib/auth.ts` 已移除默认值兜底，缺失时登录报「服务未正确配置」。
+令牌可吊销：`users.token_version` 与 JWT 里的 `tv` 比对，改密码/重置密码/禁用/改角色时自增
+（`middleware/auth.ts` 每个请求会多查一次 users 主键）。
 
 ## 文件上传
 - 端点：`/api/upload` 或 `/api/upload/{inspection|insurance|violation|maintenance|vehicle|customer}`
@@ -106,8 +119,16 @@ JWT 有效期 1 年，前端存 `localStorage.token`。密钥取自 `c.env.JWT_S
 - 可选字段 `name`：语义化文件名（如 `京A12345-行驶证`），后端清洗后拼成
   `{dir}/{name}-{YYYYMMDD-HHmmss}-{随机6位}.webp`，未传时用各类型默认名
 - 返回 `{ success: true, data: { filename, url: '/uploads/{dir}/{file}', type } }`
-- `/uploads/*` 由 Worker 从 R2 读回，带 `Cache-Control: immutable`
+- **读回必须带签名**：对外 URL 形态是 `/uploads/{exp}.{sig}/{dir}/{file}`，`serveUpload` 校验
+  HMAC 与过期时间（7 天）。签名放路径而非 query，因为前端会拼 `/cdn-cgi/image/<opts>/<路径>`，
+  图像转换层不会透传 query。
+- 签名是**响应后处理统一加的**（`lib/uploadUrl.ts` 的 `signUploadUrls` 中间件挂在 `/api` 上，
+  递归替换响应体里所有 `/uploads/` 字符串）。新增返回图片的接口不需要手动签名；
+  但**别在接口里返回已经签好的绝对链接**，让中间件统一处理
+- 库里存规范路径即可（即使存到带签名的旧值也安全：对外前会先剥旧签名再重签）
+- `/uploads/*` 由 Worker 从 R2 读回
 - key 允许中文，`serveUpload` 用 `SAFE_NAME` 逐段校验防路径穿越，两边规则要一起改
+- 上传前会校验文件魔数（`lib/uploadGuard.ts`），MIME 与真实格式不符直接 400
 
 ## 业务规则
 **订单状态流转：**

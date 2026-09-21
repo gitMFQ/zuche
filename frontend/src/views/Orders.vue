@@ -163,11 +163,20 @@
     </div>
 
     <!-- 移动端卡片列表 -->
+    <!-- 列表三态（加载中 / 加载失败可重试 / 空数据） -->
+    <DataState
+      :loading="loading"
+      :error="loadError"
+      :empty="tableData.length === 0"
+      empty-text="暂无订单记录"
+      skeleton
+      @retry="loadData"
+    >
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card" @click="goToDetail(item)">
         <div class="mobile-card-header">
           <span>
-            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#0071e3' }">{{ item.source_name }}</span>
           </span>
           <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
         </div>
@@ -221,7 +230,7 @@
 
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile" @row-click="handleRowClick">
+      <el-table :data="tableData" stripe class="hide-mobile" @row-click="handleRowClick">
         <el-table-column prop="customer_name" label="客户" width="80" show-overflow-tooltip />
         <el-table-column prop="customer_phone" label="电话" width="110" show-overflow-tooltip />
         <el-table-column prop="plate_number" label="车牌" width="130" show-overflow-tooltip>
@@ -251,7 +260,7 @@
         </el-table-column>
         <el-table-column prop="source_name" label="来源" width="90" show-overflow-tooltip>
           <template #default="{ row }">
-            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#0071e3' }">{{ row.source_name }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
@@ -279,6 +288,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </DataState>
 
     <el-pagination
       v-model:current-page="pagination.page"
@@ -332,10 +342,10 @@
           <div class="mini-upload">
             <div class="image-list">
               <div v-for="(img, idx) in form.id_card_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(form.id_card_images, idx)" />
-                <div class="image-remove" @click="removeIdCardImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(form.id_card_images, idx)"  alt="订单证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeIdCardImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeIdCardImage(idx)" @keydown.space.prevent="removeIdCardImage(idx)">×</div>
               </div>
-              <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')">
+              <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('id_card')" @keydown.space.prevent="triggerUpload('id_card')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
@@ -349,10 +359,10 @@
           <div class="mini-upload">
             <div class="image-list">
               <div v-for="(img, idx) in form.license_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(form.license_images, idx)" />
-                <div class="image-remove" @click="removeLicenseImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(form.license_images, idx)"  alt="订单证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeLicenseImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeLicenseImage(idx)" @keydown.space.prevent="removeLicenseImage(idx)">×</div>
               </div>
-              <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
+              <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
@@ -505,10 +515,10 @@
           <div class="mini-upload">
             <div class="image-list">
               <div v-for="(img, idx) in editForm.id_card_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(editForm.id_card_images, idx)" />
-                <div class="image-remove" @click="removeIdCardImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(editForm.id_card_images, idx)"  alt="订单证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeIdCardImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeIdCardImage(idx)" @keydown.space.prevent="removeIdCardImage(idx)">×</div>
               </div>
-              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')">
+              <div v-if="editForm.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('id_card')" @keydown.space.prevent="triggerUpload('id_card')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
@@ -522,10 +532,10 @@
           <div class="mini-upload">
             <div class="image-list">
               <div v-for="(img, idx) in editForm.license_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(editForm.license_images, idx)" />
-                <div class="image-remove" @click="removeLicenseImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(editForm.license_images, idx)"  alt="订单证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeLicenseImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeLicenseImage(idx)" @keydown.space.prevent="removeLicenseImage(idx)">×</div>
               </div>
-              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
+              <div v-if="editForm.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
                 <el-icon><Plus /></el-icon>
               </div>
             </div>
@@ -645,10 +655,10 @@
         <el-form-item label="取车照片">
           <div class="single-upload">
             <div v-if="pickupForm.pickup_image" class="image-preview">
-              <img :src="getImageUrl(pickupForm.pickup_image)" @click="previewImage([pickupForm.pickup_image], 0)" />
-              <div class="image-remove" @click="pickupForm.pickup_image = ''">×</div>
+              <img :src="getImageUrl(pickupForm.pickup_image)" @click="previewImage([pickupForm.pickup_image], 0)"  alt="订单证件照片，点击可放大查看" />
+              <div class="image-remove" @click="pickupForm.pickup_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="pickupForm.pickup_image = ''" @keydown.space.prevent="pickupForm.pickup_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerPickupUpload">
+            <div v-else class="upload-btn" @click="triggerPickupUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerPickupUpload" @keydown.space.prevent="triggerPickupUpload">
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
@@ -682,10 +692,10 @@
         <el-form-item label="还车照片">
           <div class="single-upload">
             <div v-if="returnForm.return_image" class="image-preview">
-              <img :src="getImageUrl(returnForm.return_image)" @click="previewImage([returnForm.return_image], 0)" />
-              <div class="image-remove" @click="returnForm.return_image = ''">×</div>
+              <img :src="getImageUrl(returnForm.return_image)" @click="previewImage([returnForm.return_image], 0)"  alt="订单证件照片，点击可放大查看" />
+              <div class="image-remove" @click="returnForm.return_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="returnForm.return_image = ''" @keydown.space.prevent="returnForm.return_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerReturnUpload">
+            <div v-else class="upload-btn" @click="triggerReturnUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerReturnUpload" @keydown.space.prevent="triggerReturnUpload">
               <el-icon><Plus /></el-icon>
               <span>上传照片</span>
             </div>
@@ -780,7 +790,7 @@
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside">
         <el-carousel-item v-for="(img, idx) in previewImagesList" :key="idx">
-          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
+          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain"  alt="订单证件照片" />
         </el-carousel-item>
       </el-carousel>
     </el-dialog>
@@ -792,10 +802,13 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Search, ArrowUp, Refresh } from '@element-plus/icons-vue'
-import { orderApi, vehicleApi, blacklistApi, orderSourceApi, uploadApi, customerApi } from '../api'
+import { orderApi, vehicleApi, blacklistApi, uploadApi, customerApi } from '../api'
+import { useDictStore } from '../stores/dict'
+import DataState from '../components/DataState.vue'
+import { useMobile } from '../composables/useMobile'
+import { useQuerySync } from '../composables/useQuerySync'
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS, DELIVERY_TYPE_OPTIONS, STORE_LOCATION_TEXT } from '../utils/constants'
 import { getImageUrl, formatDateTime, formatDateTimeLocal, getOrderStatusType as getStatusType, getServiceLabel, getServiceTagType } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -805,6 +818,8 @@ function goImport(): void {
   void router.push('/orders/import')
 }
 const loading = ref(false)
+// 加载失败时的提示文案，非空即由 DataState 展示错误态
+const loadError = ref<string | null>(null)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
@@ -816,8 +831,10 @@ const paymentDialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
 const vehicles = ref<any[]>([])
-const allVehicles = ref<any[]>([])
-const orderSources = ref<any[]>([])
+const filterOptions = reactive({ plateNumbers: [] as string[], models: [] as string[] })
+// 订单来源走字典缓存：多个页面共用，避免每个页面各请求一次
+const dictStore = useDictStore()
+const orderSources = computed(() => dictStore.orderSources)
 const regularCustomers = ref<any[]>([])
 const selectedRegularCustomer = ref('')
 const blacklistWarning = ref('')
@@ -848,13 +865,15 @@ const timeFilterCounts = reactive({
   tomorrow: 0,
   dayAfter: 0
 })
-// 存储当前标签页的所有订单数据（用于前端筛选）
-const currentTabOrders = ref<any[]>([])
-
-const isMobile = ref(window.innerWidth < 768)
-function handleResize() {
-  isMobile.value = window.innerWidth < 768
+// 前端用 dayAfter，后端参数用 day_after
+const TIME_FILTER_PARAM: Record<string, string> = {
+  overdue: 'overdue',
+  today: 'today',
+  tomorrow: 'tomorrow',
+  dayAfter: 'day_after'
 }
+
+const { isMobile } = useMobile()
 const searchExpanded = ref(false)
 const searchForm = reactive({
   keyword: '',
@@ -869,29 +888,48 @@ const searchForm = reactive({
 })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
 
-// 下拉选项
+// 筛选与分页同步到 URL：刷新不丢、可分享。tab 单独处理（它不在 searchForm 里）
+const { restore: restoreQuery, snapshot: snapshotQuery } = useQuerySync(searchForm, pagination, {
+  defaultPageSize: 10
+})
+const ORDER_TABS = ['pending', 'active', 'completed', 'cancelled']
+
+/** 挂载时从 URL 恢复筛选；没有 URL 参数时兼容旧的 sessionStorage 行为 */
+function restoreFromUrl() {
+  const tab = route.query.tab
+  if (typeof tab === 'string' && ORDER_TABS.includes(tab)) {
+    activeTab.value = tab
+  } else {
+    const saved = sessionStorage.getItem('orderListTab')
+    if (saved && ORDER_TABS.includes(saved)) {
+      activeTab.value = saved
+    }
+  }
+  restoreQuery()
+}
+
+/** 把当前筛选、分页与 tab 写回 URL */
+function syncToUrl() {
+  const query: Record<string, string> = snapshotQuery()
+  // pending 是默认 tab，不写进地址保持简洁
+  if (activeTab.value !== 'pending') {
+    query.tab = activeTab.value
+  }
+  if (JSON.stringify(query) === JSON.stringify(route.query)) return
+  void router.replace({ query })
+}
+
+// 下拉选项（车牌号 / 车型由后端去重返回，不再拉全量车辆）
 const plateNumberOptions = computed(() => {
-  return allVehicles.value.map(v => ({
-    label: v.plate_number,
-    value: v.plate_number
-  }))
+  return filterOptions.plateNumbers.map(p => ({ label: p, value: p }))
 })
 
 const vehicleModelOptions = computed(() => {
-  const models = new Map<string, string>()
-  allVehicles.value.forEach(v => {
-    const model = `${v.brand} ${v.model}`.trim()
-    if (model) {
-      models.set(model, model)
-    }
-  })
-  return Array.from(models.keys()).map(m => ({ label: m, value: m }))
+  return filterOptions.models.map(m => ({ label: m, value: m }))
 })
 onMounted(() => {
-  window.addEventListener('resize', handleResize)
 })
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
 })
 
 // 日期范围（用于 el-date-picker）
@@ -1055,12 +1093,6 @@ async function handleUpload(e: Event, type: 'id_card' | 'license') {
   const file = target.files?.[0]
   if (!file) return
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   const label = type === 'id_card' ? '身份证' : '驾驶证'
   // 两个对话框共用这个上传回调，按当前打开的对话框决定归属与文件名
   const targetForm = editDialogVisible.value ? editForm : form
@@ -1176,27 +1208,38 @@ function onTabChange() {
   loadOrderSources()
 }
 
-// 加载各状态数量
+// 加载各状态数量与时间筛选数量
+// 后端一条聚合查询算完；此前是拉 pageSize=10000 的全表在前端 count，
+// 被 queryWithPagination 的 100 条上限截断，订单超过 100 条计数就是错的。
 async function loadTabCounts() {
   try {
-    const res: any = await orderApi.getList({ pageSize: 10000 })
+    const res: any = await orderApi.getStats()
     if (res.success) {
-      const allOrders = res.data.data || []
-      tabCounts.pending = allOrders.filter((o: any) => o.status === 'pending').length
-      tabCounts.active = allOrders.filter((o: any) => o.status === 'active').length
-      tabCounts.completed = allOrders.filter((o: any) => o.status === 'completed').length
-      tabCounts.cancelled = allOrders.filter((o: any) => o.status === 'cancelled').length
-
-      // 更新时间筛选数量
-      updateTimeFilterCounts()
+      tabCounts.pending = res.data.pending
+      tabCounts.active = res.data.active
+      tabCounts.completed = res.data.completed
+      tabCounts.cancelled = res.data.cancelled
+      applyTimeFilterCounts(res.data.timeFilter)
     }
   } catch (error) {
     console.error('加载统计失败', error)
   }
 }
 
+// 时间筛选的计数按当前 tab 取（后端按 pending / active 分别算好）
+function applyTimeFilterCounts(timeFilter: any) {
+  const source = timeFilter?.[activeTab.value] ?? {}
+  timeFilterCounts.overdue = source.overdue ?? 0
+  timeFilterCounts.today = source.today ?? 0
+  timeFilterCounts.tomorrow = source.tomorrow ?? 0
+  timeFilterCounts.dayAfter = source.day_after ?? 0
+}
+
 async function loadData() {
   loading.value = true
+  loadError.value = null
+  // 所有筛选、分页、切 tab 最终都会走到这里，统一在此同步到 URL
+  syncToUrl()
   try {
     const params: any = {
       status: activeTab.value,
@@ -1214,23 +1257,20 @@ async function loadData() {
     if (searchForm.vehicle_model) params.vehicle_model = searchForm.vehicle_model
     if (searchForm.plate_number) params.plate_number = searchForm.plate_number
     if (searchForm.order_by) params.order_by = searchForm.order_by
-    
+    // 时间快捷筛选下推到 SQL，本地不再拉全量做过滤
+    if (timeFilter.value) params.time_filter = TIME_FILTER_PARAM[timeFilter.value]
+
     const res: any = await orderApi.getList(params)
     if (res.success) {
-      // 如果是待取车或待还车标签，存储所有数据用于前端时间筛选
-      if (activeTab.value === 'pending' || activeTab.value === 'active') {
-        // 获取完整列表（不加分页）
-        const allRes: any = await orderApi.getList({ status: activeTab.value, pageSize: 10000 })
-        if (allRes.success) {
-          currentTabOrders.value = allRes.data.data || []
-          updateTimeFilterCounts()
-        }
-      }
       tableData.value = res.data.data
       pagination.total = res.data.total
+    } else {
+      loadError.value = res.message || '加载失败，请重试'
     }
   } catch (error) {
     console.error('加载数据失败', error)
+    // 原来只打 console，页面上是一张空表格，用户分不清「没有数据」与「加载失败」
+    loadError.value = '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
@@ -1251,45 +1291,6 @@ function resetSearch() {
   loadData()
 }
 
-// 计算时间筛选数量
-function updateTimeFilterCounts() {
-  const today = dayjs().startOf('day')
-  const tomorrow = today.add(1, 'day')
-  const dayAfter = today.add(2, 'day')
-
-  const orders = currentTabOrders.value
-  const dateField = activeTab.value === 'pending' ? 'start_date' : 'end_date'
-
-  let overdue = 0, todayCount = 0, tomorrowCount = 0, dayAfterCount = 0
-
-  orders.forEach((order: any) => {
-    const orderDate = dayjs(order[dateField])
-    const orderDateStart = orderDate.startOf('day')
-
-    // 已逾期：日期已过但订单状态仍为 pending/active
-    if (orderDateStart.isBefore(today)) {
-      overdue++
-    }
-    // 今天
-    if (orderDateStart.isSame(today, 'day')) {
-      todayCount++
-    }
-    // 明天
-    if (orderDateStart.isSame(tomorrow, 'day')) {
-      tomorrowCount++
-    }
-    // 后天
-    if (orderDateStart.isSame(dayAfter, 'day')) {
-      dayAfterCount++
-    }
-  })
-
-  timeFilterCounts.overdue = overdue
-  timeFilterCounts.today = todayCount
-  timeFilterCounts.tomorrow = tomorrowCount
-  timeFilterCounts.dayAfter = dayAfterCount
-}
-
 // 切换时间筛选（点击已选中的按钮取消筛选）
 function toggleTimeFilter(filter: string) {
   if (timeFilter.value === filter) {
@@ -1301,47 +1302,10 @@ function toggleTimeFilter(filter: string) {
   applyTimeFilter()
 }
 
-// 应用时间筛选
+// 时间筛选下推到后端查询，这里只需要重置到第一页重新拉数据
 function applyTimeFilter() {
-  const today = dayjs().startOf('day')
-  const tomorrow = today.add(1, 'day')
-  const dayAfter = today.add(2, 'day')
-  const dateField = activeTab.value === 'pending' ? 'start_date' : 'end_date'
-
-  let filteredData: any[]
-
-  switch (timeFilter.value) {
-    case 'overdue':
-      filteredData = currentTabOrders.value.filter((order: any) => {
-        const orderDate = dayjs(order[dateField]).startOf('day')
-        return orderDate.isBefore(today)
-      })
-      break
-    case 'today':
-      filteredData = currentTabOrders.value.filter((order: any) => {
-        const orderDate = dayjs(order[dateField]).startOf('day')
-        return orderDate.isSame(today, 'day')
-      })
-      break
-    case 'tomorrow':
-      filteredData = currentTabOrders.value.filter((order: any) => {
-        const orderDate = dayjs(order[dateField]).startOf('day')
-        return orderDate.isSame(tomorrow, 'day')
-      })
-      break
-    case 'dayAfter':
-      filteredData = currentTabOrders.value.filter((order: any) => {
-        const orderDate = dayjs(order[dateField]).startOf('day')
-        return orderDate.isSame(dayAfter, 'day')
-      })
-      break
-    default:
-      // 无筛选时显示全部
-      filteredData = [...currentTabOrders.value]
-  }
-
-  tableData.value = filteredData
-  pagination.total = filteredData.length
+  pagination.page = 1
+  loadData()
 }
 
 // 切换搜索栏展开/折叠
@@ -1369,27 +1333,21 @@ async function loadVehicles(startDate?: string, endDate?: string, excludeOrderId
 }
 
 // 加载所有车辆（用于筛选下拉框）
-async function loadAllVehicles() {
+// 加载筛选下拉选项（后端去重，避免拉全量车辆被分页上限截断）
+async function loadFilterOptions() {
   try {
-    const res: any = await vehicleApi.getList({ pageSize: 10000 })
+    const res: any = await vehicleApi.getFilterOptions()
     if (res.success) {
-      allVehicles.value = res.data.data || []
+      filterOptions.plateNumbers = res.data.plateNumbers || []
+      filterOptions.models = res.data.models || []
     }
   } catch (error) {
-    console.error('加载全部车辆失败', error)
+    console.error('加载筛选项失败', error)
   }
 }
 
 async function loadOrderSources() {
-  try {
-    const res: any = await orderSourceApi.getList({ pageSize: 100 })
-    if (res.success) {
-      // 后端返回的是 data 数组，不是 data.data
-      orderSources.value = Array.isArray(res.data) ? res.data : (res.data.data || [])
-    }
-  } catch (error) {
-    console.error('加载订单来源失败', error)
-  }
+  await dictStore.ensureOrderSources()
 }
 
 async function loadRegularCustomers() {
@@ -1566,10 +1524,57 @@ async function handleSubmit() {
       loadData()
       loadTabCounts()
     }
-  } catch (error) {
+  } catch (error: any) {
+    // 黑名单软拦截：后端返回 code=BLACKLISTED，二次确认后可带 force 强制下单（会留痕）
+    if (error?.response?.data?.code === 'BLACKLISTED') {
+      const record = error.response.data.data?.record ?? {}
+      const confirmed = await confirmBlacklistedOrder(record)
+      if (confirmed) {
+        await submitWithForce()
+      }
+      return
+    }
     console.error('创建失败', error)
   } finally {
     submitting.value = false
+  }
+}
+
+/** 黑名单风险二次确认，用户点「仍然下单」才返回 true */
+async function confirmBlacklistedOrder(record: any): Promise<boolean> {
+  const lines = [
+    `客户「${record.name ?? '未知'}」在黑名单中。`,
+    `原因：${record.reason ?? '未填写'}`,
+    record.created_at ? `拉黑时间：${formatDateTime(record.created_at)}` : '',
+    record.operator_name ? `操作人：${record.operator_name}` : '',
+    '',
+    '确认要继续为该客户下单吗？此操作会记入操作日志。'
+  ].filter((line) => line !== '')
+
+  try {
+    await ElMessageBox.confirm(lines.join('\n'), '风险提示', {
+      confirmButtonText: '仍然下单',
+      cancelButtonText: '取消',
+      type: 'warning',
+      customClass: 'pre-line-message'
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function submitWithForce() {
+  try {
+    const res: any = await orderApi.create({ ...form, force: true })
+    if (res.success) {
+      ElMessage.success('订单创建成功（黑名单客户，已记入日志）')
+      dialogVisible.value = false
+      loadData()
+      loadTabCounts()
+    }
+  } catch (error) {
+    console.error('黑名单强制下单失败', error)
   }
 }
 
@@ -1698,11 +1703,6 @@ async function handlePickupImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
   try {
     const res = await uploadApi.uploadOther(file, `${currentOrder.value?.plate_number || currentOrder.value?.order_no || '订单'}-取车照片`)
     if (res.success && res.data) {
@@ -1727,7 +1727,8 @@ async function handlePickupConfirm() {
       pickup_image: pickupForm.pickup_image || undefined
     }
     if (pickupForm.actual_pickup_date) {
-      data.actual_pickup_date = pickupForm.actual_pickup_date.replace('T', ' ')
+      // 后端字段名是 actual_start_date；此前误传 actual_pickup_date，导致取车时间从未落库
+      data.actual_start_date = pickupForm.actual_pickup_date.replace('T', ' ') + ':00'
     }
     if (pickupForm.remarks) {
       data.remarks = pickupForm.remarks
@@ -1776,11 +1777,6 @@ async function handleReturnImageUpload(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
   try {
     const res = await uploadApi.uploadOther(file, `${currentOrder.value?.plate_number || currentOrder.value?.order_no || '订单'}-还车照片`)
     if (res.success && res.data) {
@@ -1977,18 +1973,14 @@ onMounted(() => {
   if (route.query.customer_id) {
     searchForm.keyword = route.query.customer_name as string || ''
   }
-  // 从 sessionStorage 恢复之前的标签页状态
-  const savedTab = sessionStorage.getItem('orderListTab')
-  if (savedTab && ['pending', 'active', 'completed', 'cancelled'].includes(savedTab)) {
-    activeTab.value = savedTab
-  }
+  // 恢复 URL 里的筛选与 tab（没有则回退到 sessionStorage）
+  restoreFromUrl()
   // 移动端默认折叠搜索栏
-  isMobile.value = window.innerWidth < 768
   searchExpanded.value = !isMobile.value
   loadData()
   loadTabCounts()
   loadOrderSources()
-  loadAllVehicles()
+  loadFilterOptions()
 })
 </script>
 
@@ -2158,7 +2150,7 @@ onMounted(() => {
 
 .expand-icon {
   font-size: 16px;
-  color: #909399;
+  color: var(--sk-color-info);
   transition: transform 0.3s;
 }
 
@@ -2281,7 +2273,7 @@ onMounted(() => {
   }
 
   .search-form :deep(.date-separator) {
-    color: #909399;
+    color: var(--sk-color-info);
     font-size: 14px;
     flex-shrink: 0;
   }
@@ -2392,7 +2384,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -2400,7 +2392,7 @@ onMounted(() => {
 }
 
 .mobile-card-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
   margin-left: 8px;
 }
@@ -2430,25 +2422,25 @@ onMounted(() => {
 }
 
 .paid {
-  color: #67C23A;
+  color: var(--sk-color-success);
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 
 .text-muted {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .estimate {
   font-weight: 500;
-  color: #409EFF;
+  color: var(--primary-color);
 }
 
 .net-amount {
   font-weight: 500;
-  color: #67C23A;
+  color: var(--sk-color-success);
   margin-left: 8px;
 }
 
@@ -2497,7 +2489,7 @@ onMounted(() => {
 
 :deep(.el-divider__text) {
   font-size: 13px;
-  color: #909399;
+  color: var(--sk-color-info);
   padding: 0 10px;
 }
 
@@ -2552,12 +2544,12 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mini-upload .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 /* 原生日期时间输入框样式 */
@@ -2576,7 +2568,7 @@ onMounted(() => {
 }
 
 .native-datetime-input:focus {
-  border-color: #409EFF;
+  border-color: var(--primary-color);
 }
 
 .native-datetime-input::-webkit-datetime-edit {
@@ -2651,13 +2643,13 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 .single-upload .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .single-upload .upload-btn .el-icon {
@@ -2717,7 +2709,7 @@ onMounted(() => {
 
 .expand-icon {
   font-size: 14px;
-  color: #909399;
+  color: var(--sk-color-info);
   transition: transform 0.25s ease;
 }
 
@@ -2804,7 +2796,7 @@ onMounted(() => {
   }
 
   .search-card .date-separator {
-    color: #909399;
+    color: var(--sk-color-info);
     font-size: 12px;
   }
 

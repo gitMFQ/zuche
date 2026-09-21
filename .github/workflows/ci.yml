@@ -1,0 +1,44 @@
+name: CI
+
+# 改造前 AGENTS.md 明确写着「typecheck 是唯一的验证方式」——
+# 也就是说没有任何自动化关卡，任何一次提交都可能把主分支弄坏。
+# 这里把类型检查、后端单测、Lint、前端构建串起来，作为 PR / push 的强制门槛。
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+# 同一分支连续推送时取消上一次未完成的运行，避免排队
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 与 README 的环境要求一致（Vite 8 需要 Node 20.19+ / 22.12+）
+          node-version: '22'
+          cache: npm
+
+      # npm ci 需要 package-lock.json 与 package.json 严格一致
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查（Worker + 前端）
+        run: npm run typecheck
+
+      - name: Lint（后端与测试）
+        run: npm run lint
+
+      - name: 单元测试
+        run: npm run test
+
+      # 构建能挡住「类型过了但打包失败」的情况（例如按需引入写错、资源引用丢失）
+      - name: 前端构建
+        run: npm run build:web

@@ -80,6 +80,9 @@ async function handleLogin() {
     if (res.success) {
       userStore.setToken(res.data.token)
       userStore.setUser(res.data.user)
+      // 默认口令（admin123）是公开的，后端会标记 must_change_password，
+      // 由主布局弹出不可关闭的改密弹窗
+      userStore.mustChangePassword = Boolean(res.data.must_change_password)
       ElMessage.success('登录成功')
       router.push('/dashboard')
     }

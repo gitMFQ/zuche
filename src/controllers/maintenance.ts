@@ -3,7 +3,7 @@ import type { MaintenanceRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { parseStringArray, stringifyArray } from '../lib/json';
-import { now } from '../lib/time';
+import { dateOffset, monthRange, now, today as todayDate } from '../lib/time';
 import type { AppContext } from '../types';
 
 // 保养类型映射
@@ -110,7 +110,8 @@ export async function getMaintenanceStats(c: AppContext): Promise<Response> {
       queryOne<{ count: number }>(
         db,
         `SELECT COUNT(*) as count FROM maintenance
-         WHERE strftime('%Y-%m', maintenance_date) = strftime('%Y-%m', 'now')`
+         WHERE maintenance_date >= ? AND maintenance_date < ?`,
+        [monthRange().start, monthRange().end]
       ),
       queryOne<{ count: number }>(
         db,
@@ -124,7 +125,8 @@ export async function getMaintenanceStats(c: AppContext): Promise<Response> {
       queryOne<{ total: number }>(
         db,
         `SELECT COALESCE(SUM(cost), 0) as total FROM maintenance
-         WHERE strftime('%Y-%m', maintenance_date) = strftime('%Y-%m', 'now')`
+         WHERE maintenance_date >= ? AND maintenance_date < ?`,
+        [monthRange().start, monthRange().end]
       ),
       query<UpcomingRow>(
         db,
@@ -133,12 +135,13 @@ export async function getMaintenanceStats(c: AppContext): Promise<Response> {
          WHERE (m.type LIKE '%"oil"%' OR m.type = 'oil')
          AND (
            (m.next_maintenance_date IS NOT NULL
-            AND m.next_maintenance_date >= date('now')
-            AND m.next_maintenance_date <= date('now', '+30 days'))
+            AND m.next_maintenance_date >= ?
+            AND m.next_maintenance_date <= ?)
            OR (m.next_maintenance_mileage IS NOT NULL
                AND v.mileage >= m.next_maintenance_mileage - 1000)
          )
-         ORDER BY m.next_maintenance_date ASC`
+         ORDER BY m.next_maintenance_date ASC`,
+        [todayDate(), dateOffset(30)]
       )
     ]);
 

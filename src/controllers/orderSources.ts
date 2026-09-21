@@ -85,7 +85,7 @@ export async function createOrderSource(c: AppContext): Promise<Response> {
     await execute(
       db,
       'INSERT INTO order_sources (id, name, commission_rate, color, remarks, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?)',
-      [id, name, commission_rate || 0, color || '#409EFF', remarks ?? null, currentTime, currentTime]
+      [id, name, commission_rate || 0, color || '#0071e3', remarks ?? null, currentTime, currentTime]
     );
 
     await logAction(db, {
@@ -99,7 +99,7 @@ export async function createOrderSource(c: AppContext): Promise<Response> {
 
     return c.json({
       success: true,
-      data: { id, name, commission_rate: commission_rate || 0, color: color || '#409EFF' },
+      data: { id, name, commission_rate: commission_rate || 0, color: color || '#0071e3' },
       message: '订单来源创建成功'
     });
   } catch (error) {

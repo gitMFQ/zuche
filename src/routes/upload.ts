@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { authMiddleware } from '../middleware/auth';
 import { handleError } from '../lib/errors';
+import { MAGIC_BYTES_TO_READ, magicMatchesMime } from '../lib/uploadGuard';
+import { verifyUploadSignature } from '../lib/uploadUrl';
 import type { AppContext, AppEnv } from '../types';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -103,6 +105,13 @@ function createUploadHandler(kind: UploadKind) {
         return c.json({ success: false, message: `只支持${typeName}` }, 400);
       }
 
+      // MIME 是客户端可控的，再按文件头确认真实格式，
+      // 避免把任意内容改名成 .jpg 后存进 R2 当图床用
+      const header = new Uint8Array(await file.slice(0, MAGIC_BYTES_TO_READ).arrayBuffer());
+      if (!magicMatchesMime(header, file.type)) {
+        return c.json({ success: false, message: '文件内容与格式不符，请重新选择文件' }, 400);
+      }
+
       // 前端可选传语义化名字（如「京A12345-行驶证」），未传时用该类型的默认名
       const name = toSafeName(form.get('name'), cfg.fallback);
       // 末尾短随机串保证同一秒内的同名上传不会互相覆盖
@@ -126,11 +135,24 @@ function createUploadHandler(kind: UploadKind) {
   };
 }
 
-// 从 R2 读取并回给浏览器，保持 /uploads/{dir}/{file} 的 URL 语义
+// 从 R2 读取并回给浏览器。路径形态为 /uploads/{exp}.{sig}/{dir}/{file}，
+// 必须带有效签名，否则任何人都能直接读客户证件照。
 export async function serveUpload(c: AppContext): Promise<Response> {
-  const key = decodeURIComponent(c.req.path.slice('/uploads/'.length));
+  const rest = decodeURIComponent(c.req.path.slice('/uploads/'.length));
 
-  if (!key || !key.split('/').every((part) => SAFE_NAME.test(part))) {
+  const secret = c.env.JWT_SECRET;
+  if (!secret) {
+    console.error('读取上传文件失败：JWT_SECRET 未配置，无法校验签名');
+    return c.json({ success: false, message: '服务未正确配置，请联系管理员' }, 500);
+  }
+
+  const verified = await verifyUploadSignature(rest, secret);
+  if (!verified.valid) {
+    return c.json({ success: false, message: '链接无效或已过期，请刷新页面重试' }, 403);
+  }
+
+  const key = verified.key;
+  if (!key?.split('/').every((part) => SAFE_NAME.test(part))) {
     return c.json({ success: false, message: '文件不存在' }, 404);
   }
 
@@ -148,8 +170,10 @@ export async function serveUpload(c: AppContext): Promise<Response> {
     const headers = new Headers();
     object.writeHttpMetadata(headers);
     headers.set('etag', object.httpEtag);
-    // key 内含随机串，内容不会变，可长期不可变缓存
-    headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    // 签名 URL 本身不可猜且会过期，可以放心缓存；缓存时长与签名有效期对齐
+    headers.set('Cache-Control', 'public, max-age=604800');
+    // 不把 URL（含签名）通过 Referer 泄露给第三方站点
+    headers.set('Referrer-Policy', 'no-referrer');
 
     const response = new Response(object.body, { headers });
     c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));

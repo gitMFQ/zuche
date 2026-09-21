@@ -53,9 +53,38 @@
       </el-form>
     </el-card>
 
+    <!-- 移动端卡片列表（桌面端隐藏） -->
+    <div class="mobile-cards">
+      <div v-for="item in logs" :key="item.id" class="mobile-card">
+        <div class="mobile-card-header">
+          <span class="log-action">
+            <el-tag size="small" :type="getActionTagType(item.action)">{{ item.action_text }}</el-tag>
+          </span>
+          <span class="log-time">{{ formatTime(item.created_at) }}</span>
+        </div>
+        <div class="mobile-card-row">
+          <span class="label">操作人</span>
+          <span class="value">{{ item.user_name || item.username || '-' }}</span>
+        </div>
+        <div class="mobile-card-row">
+          <span class="label">对象</span>
+          <span class="value">{{ item.entity_type_text || '-' }}</span>
+        </div>
+        <div class="mobile-card-row">
+          <span class="label">详情</span>
+          <span class="value">{{ item.details || '-' }}</span>
+        </div>
+        <div class="mobile-card-row">
+          <span class="label">IP</span>
+          <span class="value">{{ item.ip_address || '-' }}</span>
+        </div>
+      </div>
+      <el-empty v-if="!loading && logs.length === 0" description="暂无操作日志" />
+    </div>
+
     <!-- 日志列表 -->
-    <el-card shadow="never" class="list-card">
-      <el-table :data="logs" v-loading="loading" stripe>
+    <el-card shadow="never" class="list-card table-card">
+      <el-table :data="logs" v-loading="loading" stripe class="hide-mobile">
         <el-table-column prop="created_at" label="时间" width="170">
           <template #default="{ row }">
             {{ formatTime(row.created_at) }}
@@ -87,30 +116,34 @@
           </template>
         </el-table-column>
       </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchLogs"
-          @current-change="fetchLogs"
-        />
-      </div>
     </el-card>
+
+    <!-- 分页放在卡片外：卡片在移动端整体隐藏，分页需要一直可见 -->
+    <div class="pagination-container">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="fetchLogs"
+        @current-change="fetchLogs"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { logApi } from '../api'
+import { useDictStore } from '../stores/dict'
+import { useMobile } from '../composables/useMobile'
 import dayjs from 'dayjs'
 
+const dictStore = useDictStore()
+
 const loading = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const logs = ref<any[]>([])
 const actionTypes = ref<Record<string, string>>({})
 const entityTypes = ref<Record<string, string>>({})
@@ -200,16 +233,9 @@ async function fetchEntityTypes() {
   }
 }
 
-// 获取用户列表
+// 获取用户列表（字典缓存：只包含产生过日志的用户）
 async function fetchUsers() {
-  try {
-    const res: any = await logApi.getUsers()
-    if (res.success) {
-      users.value = res.data
-    }
-  } catch (error) {
-    console.error('获取用户列表失败', error)
-  }
+  users.value = await dictStore.ensureLogUsers()
 }
 
 // 搜索
@@ -236,9 +262,7 @@ onMounted(() => {
   fetchActionTypes()
   fetchEntityTypes()
   fetchUsers()
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -271,6 +295,73 @@ onMounted(() => {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 移动端卡片列表：桌面端隐藏 */
+.mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mobile-card {
+  background: var(--bg-color-secondary);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.log-time {
+  font-size: 13px;
+  color: var(--text-color-secondary);
+}
+
+.mobile-card-row {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.mobile-card-row .label {
+  flex: 0 0 56px;
+  color: var(--text-color-secondary);
+}
+
+.mobile-card-row .value {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+/* 桌面端隐藏卡片、显示表格；移动端反过来 */
+.hide-mobile,
+.table-card {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-cards {
+    display: none;
+  }
+
+  .table-card {
+    display: block;
+  }
+
+  .hide-mobile {
+    display: table;
+  }
 }
 
 @media (max-width: 768px) {

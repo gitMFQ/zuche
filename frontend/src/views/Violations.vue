@@ -47,6 +47,15 @@
     </div>
 
     <!-- 移动端卡片列表 -->
+    <!-- 列表三态（加载中 / 加载失败可重试 / 空数据） -->
+    <DataState
+      :loading="loading"
+      :error="loadError"
+      :empty="tableData.length === 0"
+      empty-text="暂无违章记录"
+      skeleton
+      @retry="loadData"
+    >
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
@@ -90,7 +99,7 @@
 
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
+      <el-table :data="tableData" stripe class="hide-mobile">
         <el-table-column prop="order_no" label="订单号" width="130">
           <template #default="{ row }">
             <span v-if="row.order_no" class="link" @click="$router.push(`/orders/${row.order_id}`)">{{ row.order_no }}</span>
@@ -127,6 +136,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </DataState>
 
     <el-pagination
       v-model:current-page="pagination.page"
@@ -262,10 +272,14 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { violationApi, vehicleApi, orderApi } from '../api'
+import { useMobile } from '../composables/useMobile'
+import DataState from '../components/DataState.vue'
 
 const loading = ref(false)
+// 加载失败时的提示文案，非空即由 DataState 展示错误态
+const loadError = ref<string | null>(null)
 const submitting = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const handleDialogVisible = ref(false)
@@ -317,6 +331,7 @@ function getStatusType(status: string) {
 
 async function loadData() {
   loading.value = true
+  loadError.value = null
   try {
     const [listRes, statsRes]: any[] = await Promise.all([
       violationApi.getList({ ...searchForm, ...pagination }),
@@ -325,12 +340,16 @@ async function loadData() {
     if (listRes.success) {
       tableData.value = listRes.data.data
       pagination.total = listRes.data.total
+    } else {
+      loadError.value = listRes.message || '加载失败，请重试'
     }
     if (statsRes.success) {
       Object.assign(stats, statsRes.data)
     }
   } catch (error) {
     console.error('加载数据失败', error)
+    // 原来只打 console，页面上是一张空表格，用户分不清「没有数据」与「加载失败」
+    loadError.value = '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
@@ -498,9 +517,7 @@ async function handleDelete(row: any) {
 
 onMounted(() => {
   loadData()
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -547,10 +564,10 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.warning { border-left: 3px solid #E6A23C; }
-.stat-card.primary { border-left: 3px solid #409EFF; }
-.stat-card.success { border-left: 3px solid #67C23A; }
-.stat-card.danger { border-left: 3px solid #F56C6C; }
+.stat-card.warning { border-left: 3px solid var(--sk-color-warning); }
+.stat-card.primary { border-left: 3px solid var(--primary-color); }
+.stat-card.success { border-left: 3px solid var(--sk-color-success); }
+.stat-card.danger { border-left: 3px solid var(--sk-color-danger); }
 
 .stat-value {
   font-size: 18px;
@@ -560,7 +577,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 4px;
 }
 
@@ -609,7 +626,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -617,17 +634,17 @@ onMounted(() => {
 }
 
 .mobile-card-row .value.text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
   font-weight: 500;
 }
 
 .mobile-card-row .value.text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
   font-weight: 500;
 }
 
 .mobile-card-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
   margin-left: 8px;
 }
@@ -656,7 +673,7 @@ onMounted(() => {
 }
 
 .link {
-  color: #409EFF;
+  color: var(--primary-color);
   cursor: pointer;
 }
 
@@ -691,7 +708,7 @@ onMounted(() => {
 }
 
 :deep(a) {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -708,7 +725,7 @@ onMounted(() => {
 
 .form-tip {
   font-size: 12px;
-  color: #67C23A;
+  color: var(--sk-color-success);
   margin-top: 6px;
   display: flex;
   align-items: center;
@@ -716,7 +733,7 @@ onMounted(() => {
 }
 
 .form-tip.warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 
 .form-tip .el-icon {
@@ -760,10 +777,10 @@ html.dark .mobile-card-actions {
 }
 
 html.dark .form-tip {
-  color: #67C23A;
+  color: var(--sk-color-success);
 }
 
 html.dark .form-tip.warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 </style>

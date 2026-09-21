@@ -3,7 +3,7 @@ import type { InsuranceRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { parseStringArray, stringifyArray } from '../lib/json';
-import { now } from '../lib/time';
+import { dateOffset, now, today as todayDate, yearRange } from '../lib/time';
 import type { AppContext } from '../types';
 
 // 保险类型映射
@@ -22,10 +22,6 @@ const STATUS_MAP: Record<string, string> = {
 
 function getTypeText(typeStr: string): string {
   return parseStringArray(typeStr).map((t) => INSURANCE_TYPE_MAP[t] || t).join('、') || '-';
-}
-
-function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
 }
 
 interface InsuranceWithVehicle extends InsuranceRow {
@@ -108,7 +104,7 @@ export async function getInsuranceList(c: AppContext): Promise<Response> {
 
     const result = await queryWithPagination<InsuranceWithVehicle>(db, sql, params, Number(page), Number(pageSize));
 
-    const today = todayStr();
+    const today = todayDate();
     const data = result.data.map((i) => {
       let actualStatus = i.status;
       if (i.end_date < today) {
@@ -139,8 +135,8 @@ export async function getInsuranceList(c: AppContext): Promise<Response> {
 export async function getInsuranceStats(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const today = todayStr();
-    const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const today = todayDate();
+    const thirtyDaysLater = dateOffset(30);
 
     const [expiringSoon, expiredCount, activeCount, thisYearPremium] = await Promise.all([
       query<InsuranceWithVehicle>(
@@ -175,7 +171,8 @@ export async function getInsuranceStats(c: AppContext): Promise<Response> {
       queryOne<{ total: number }>(
         db,
         `SELECT COALESCE(SUM(premium), 0) as total FROM insurance
-         WHERE strftime('%Y', start_date) = strftime('%Y', 'now')`
+         WHERE start_date >= ? AND start_date < ?`,
+        [yearRange().start, yearRange().end]
       )
     ]);
 
@@ -273,7 +270,7 @@ export async function createInsurance(c: AppContext): Promise<Response> {
     const currentTime = now();
 
     // 计算状态
-    const today = todayStr();
+    const today = todayDate();
     let status = 'active';
     if (start_date > today) {
       status = 'pending';

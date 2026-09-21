@@ -142,7 +142,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload, CircleCheck } from '@element-plus/icons-vue'
-import { importApi, orderSourceApi } from '../api'
+import { importApi } from '../api'
+import { useDictStore } from '../stores/dict'
 import { ORDER_STATUS_TEXT_MAP, PLATFORM_TEXT_MAP } from '../utils/constants'
 
 interface RowIssue {
@@ -172,6 +173,7 @@ interface PreviewRow {
 type Step = 'upload' | 'preview' | 'done'
 
 const router = useRouter()
+const dictStore = useDictStore()
 const step = ref<Step>('upload')
 const fileInput = ref<HTMLInputElement | null>(null)
 const platform = ref('')
@@ -340,12 +342,7 @@ function goOrders(): void {
 }
 
 onMounted(async () => {
-  try {
-    const res: any = await orderSourceApi.getList()
-    sources.value = Array.isArray(res.data) ? res.data : res.data?.data ?? []
-  } catch {
-    sources.value = []
-  }
+  sources.value = await dictStore.ensureOrderSources()
 })
 </script>
 
@@ -359,7 +356,7 @@ onMounted(async () => {
   font-size: 28px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--sk-text-primary, #1d1d1f);
+  color: var(--sk-text-near-black);
 }
 
 .page-subtitle {

@@ -44,6 +44,8 @@ export interface PreparedRow {
   returnDriver: MatchedDriver | null;
   /** 库内已存在同 order_no 的记录 */
   duplicate: boolean;
+  /** 命中黑名单（按手机号或姓名）。只做提示，不阻断导入 */
+  blacklisted: boolean;
   /** 可通过校验、可以落库 */
   importable: boolean;
 }
@@ -56,6 +58,8 @@ export interface PrepareSummary {
   duplicates: number;
   newCustomers: number;
   newVehicles: number;
+  /** 命中黑名单的行数（仅提示，不阻断导入） */
+  blacklisted: number;
 }
 
 export interface PrepareResult {
@@ -84,14 +88,19 @@ async function buildLookup<T>(
   column: string,
   select: string,
   values: string[],
-  toKey: (row: T) => string
+  toKey: (row: T) => string,
+  extraWhere = ''
 ): Promise<Map<string, T>> {
   const map = new Map<string, T>();
   const unique = [...new Set(values.filter((item) => item !== ''))];
 
   for (const part of chunk(unique, CHUNK)) {
     const placeholders = part.map(() => '?').join(', ');
-    const rows = await query<T>(db, `SELECT ${select} FROM ${table} WHERE ${column} IN (${placeholders})`, part);
+    const rows = await query<T>(
+      db,
+      `SELECT ${select} FROM ${table} WHERE ${column} IN (${placeholders})${extraWhere}`,
+      part
+    );
     for (const row of rows) {
       map.set(toKey(row), row);
     }
@@ -111,7 +120,7 @@ export async function prepareRows(
   platform: Platform,
   rows: NormalizedRow[]
 ): Promise<PrepareResult> {
-  const [customers, vehicles, drivers, existingOrders] = await Promise.all([
+  const [customers, vehicles, drivers, existingOrders, blacklistByPhone, blacklistByName] = await Promise.all([
     buildLookup<MatchedCustomer>(db, 'customers', 'name', 'id, name', rows.map((r) => r.customer_name), (row) => row.name),
     buildLookup<MatchedVehicle>(
       db,
@@ -129,7 +138,27 @@ export async function prepareRows(
       rows.flatMap((r) => [r.pickup_driver ?? '', r.return_driver ?? '']),
       (row) => row.name
     ),
-    buildLookup<{ order_no: string }>(db, 'orders', 'order_no', 'order_no', rows.map((r) => r.external_no), (row) => row.order_no)
+    buildLookup<{ order_no: string }>(db, 'orders', 'order_no', 'order_no', rows.map((r) => r.external_no), (row) => row.order_no),
+    // 黑名单只保留 status = 1 的生效记录。平台导出的手机号常被脱敏，
+    // 所以手机号与姓名两条线都查，任一中命中即标记。
+    buildLookup<{ phone: string; reason: string }>(
+      db,
+      'blacklist',
+      'phone',
+      'phone, reason',
+      rows.map((r) => r.customer_phone),
+      (row) => row.phone,
+      ' AND status = 1'
+    ),
+    buildLookup<{ name: string; reason: string }>(
+      db,
+      'blacklist',
+      'name',
+      'name, reason',
+      rows.map((r) => r.customer_name),
+      (row) => row.name,
+      ' AND status = 1'
+    )
   ]);
 
   // 库内同车牌已排的时间段，用于提示重叠
@@ -206,6 +235,15 @@ export async function prepareRows(
 
     const hasError = issues.some((issue) => issue.level === 'error');
 
+    // 黑名单命中只给警告：平台导出的是历史账单，导入是补录行为，
+    // 强行拦截会让整批数据进不来。真正的风险提示留给建单路径去拦。
+    const blacklistHit =
+      (row.customer_phone ? blacklistByPhone.get(row.customer_phone) : undefined) ??
+      (row.customer_name ? blacklistByName.get(row.customer_name) : undefined);
+    if (blacklistHit) {
+      issues.push({ field: 'customer_name', message: `客户在黑名单中：${blacklistHit.reason}`, level: 'warning' });
+    }
+
     return {
       rowIndex: row.rowIndex,
       row,
@@ -217,6 +255,7 @@ export async function prepareRows(
       pickupDriver: row.pickup_driver ? (drivers.get(row.pickup_driver) ?? null) : null,
       returnDriver: row.return_driver ? (drivers.get(row.return_driver) ?? null) : null,
       duplicate,
+      blacklisted: Boolean(blacklistHit),
       importable: !hasError
     };
   });
@@ -228,7 +267,8 @@ export async function prepareRows(
     warning: prepared.filter((item) => item.issues.some((i) => i.level === 'warning')).length,
     duplicates: prepared.filter((item) => item.duplicate).length,
     newCustomers: prepared.filter((item) => item.customerAction === 'create').length,
-    newVehicles: prepared.filter((item) => item.vehicleAction === 'create').length
+    newVehicles: prepared.filter((item) => item.vehicleAction === 'create').length,
+    blacklisted: prepared.filter((item) => item.blacklisted).length
   };
 
   return { platform, rows: prepared, summary };

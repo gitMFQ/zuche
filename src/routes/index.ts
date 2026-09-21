@@ -20,17 +20,27 @@ import * as schedulesController from '../controllers/schedules';
 import * as importController from '../controllers/import';
 
 import { uploadRoutes } from './upload';
+import { signUploadUrls } from '../lib/uploadUrl';
 
 export const apiRoutes = new Hono<AppEnv>();
+
+// 统一把响应体里的上传路径替换成带签名的 URL。
+// 图片字段散落在 8 个 controller 的十几个字段里（含 JSON 数组与 {url,type} 对象），
+// 集中做一次避免逐字段手写漏签；必须注册在业务路由之前才能包住它们。
+apiRoutes.use('*', signUploadUrls);
 
 // ==================== 认证路由 ====================
 apiRoutes.post('/auth/login', authController.login);
 apiRoutes.get('/auth/me', authMiddleware, authController.getCurrentUser);
 apiRoutes.put('/auth/password', authMiddleware, authController.changePassword);
+apiRoutes.post('/auth/logout', authMiddleware, authController.logout);
 
 // ==================== 用户管理路由 ====================
 apiRoutes.get('/users', authMiddleware, adminOnly, usersController.getUsers);
-apiRoutes.get('/users/:id', authMiddleware, usersController.getUser);
+// 只含 id/name，供司机指派等选人场景使用（员工也需要），必须放在 /users/:id 之前
+apiRoutes.get('/users/options', authMiddleware, usersController.getUserOptions);
+// 单个用户信息含手机号/邮箱，仅管理员可读
+apiRoutes.get('/users/:id', authMiddleware, adminOnly, usersController.getUser);
 apiRoutes.post('/users', authMiddleware, adminOnly, usersController.createUser);
 apiRoutes.put('/users/:id', authMiddleware, adminOnly, usersController.updateUser);
 apiRoutes.delete('/users/:id', authMiddleware, adminOnly, usersController.deleteUser);
@@ -48,6 +58,7 @@ apiRoutes.delete('/customers/:id', authMiddleware, customersController.deleteCus
 // ==================== 车辆管理路由 ====================
 apiRoutes.get('/vehicles/available', authMiddleware, vehiclesController.getAvailableVehicles);
 apiRoutes.get('/vehicles/brands', authMiddleware, vehiclesController.getVehicleBrands);
+apiRoutes.get('/vehicles/options', authMiddleware, vehiclesController.getVehicleFilterOptions);
 apiRoutes.get('/vehicles', authMiddleware, vehiclesController.getVehicles);
 apiRoutes.get('/vehicles/:id', authMiddleware, vehiclesController.getVehicle);
 apiRoutes.post('/vehicles', authMiddleware, vehiclesController.createVehicle);
@@ -56,6 +67,8 @@ apiRoutes.delete('/vehicles/:id', authMiddleware, vehiclesController.deleteVehic
 
 // ==================== 订单管理路由 ====================
 apiRoutes.get('/orders', authMiddleware, ordersController.getOrders);
+// 必须放在 /orders/:id 之前，否则会被参数路由捕获
+apiRoutes.get('/orders/stats', authMiddleware, ordersController.getOrderStats);
 apiRoutes.get('/orders/:id', authMiddleware, ordersController.getOrder);
 apiRoutes.post('/orders', authMiddleware, ordersController.createOrder);
 apiRoutes.put('/orders/:id', authMiddleware, ordersController.updateOrder);

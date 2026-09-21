@@ -2,12 +2,8 @@ import { type Bind, execute, query, queryOne, queryWithPagination } from '../db/
 import type { InspectionRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
-import { now } from '../lib/time';
+import { dateOffset, now, today as todayDate } from '../lib/time';
 import type { AppContext } from '../types';
-
-function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
 
 interface InspectionRowItem {
   vehicle_id: string;
@@ -22,23 +18,29 @@ interface InspectionRowItem {
   certificate_image: string | null;
   remarks: string | null;
   inspection_created_at: string | null;
+  inspection_status: string;
 }
 
 type InspectionListItem = InspectionRowItem & {
-  inspection_status: string;
   status_text: string;
 };
 
 // 年检状态是算出来的：未登记 / 已过期 / 有效
-function resolveStatus(item: InspectionRowItem, today: string): InspectionListItem {
-  if (!item.inspection_id) {
-    return { ...item, inspection_status: 'none', status_text: '未登记' };
-  }
-  if (item.expiry_date && item.expiry_date < today) {
-    return { ...item, inspection_status: 'expired', status_text: '已过期' };
-  }
-  return { ...item, inspection_status: 'valid', status_text: '有效' };
-}
+const INSPECTION_STATUS_TEXT: Record<string, string> = {
+  none: '未登记',
+  expired: '已过期',
+  valid: '有效'
+};
+
+/**
+ * 状态判定表达式。SELECT 与 WHERE 必须复用同一段，否则筛选与计数会对不上。
+ * 参数：今天（YYYY-MM-DD）。
+ */
+const INSPECTION_STATUS_CASE = `CASE
+  WHEN i.id IS NULL THEN 'none'
+  WHEN i.expiry_date IS NOT NULL AND i.expiry_date < ? THEN 'expired'
+  ELSE 'valid'
+END`;
 
 // 获取车辆年检状态列表（显示所有车辆）
 export async function getInspectionList(c: AppContext): Promise<Response> {
@@ -46,6 +48,10 @@ export async function getInspectionList(c: AppContext): Promise<Response> {
   try {
     const { page = '1', pageSize = '10', keyword = '', status = '' } = c.req.query();
 
+    const today = todayDate();
+
+    // 状态原本是先分页取一页、再在内存里过滤，导致筛选结果不完整、total 也不对。
+    // 现在把状态判定下推到 SQL，筛选与计数都交给分页函数。
     let sql = `
       SELECT
         v.id as vehicle_id,
@@ -59,12 +65,14 @@ export async function getInspectionList(c: AppContext): Promise<Response> {
         i.expiry_date,
         i.certificate_image,
         i.remarks,
-        i.created_at as inspection_created_at
+        i.created_at as inspection_created_at,
+        ${INSPECTION_STATUS_CASE} AS inspection_status
       FROM vehicles v
       LEFT JOIN inspections i ON v.id = i.vehicle_id
       WHERE 1=1
     `;
-    const params: Bind[] = [];
+    // 与上面的 CASE 占位符顺序一致
+    const params: Bind[] = [today];
 
     if (keyword) {
       sql += ' AND (v.plate_number LIKE ? OR v.brand LIKE ? OR v.model LIKE ?)';
@@ -72,19 +80,21 @@ export async function getInspectionList(c: AppContext): Promise<Response> {
       params.push(likeKeyword, likeKeyword, likeKeyword);
     }
 
+    if (status) {
+      sql += ` AND ${INSPECTION_STATUS_CASE} = ?`;
+      params.push(today, status);
+    }
+
     sql += ' ORDER BY v.plate_number ASC';
 
     const result = await queryWithPagination<InspectionRowItem>(db, sql, params, Number(page), Number(pageSize));
 
-    const today = todayStr();
-    let data = result.data.map((item) => resolveStatus(item, today));
+    const data: InspectionListItem[] = result.data.map((item) => ({
+      ...item,
+      status_text: INSPECTION_STATUS_TEXT[item.inspection_status] || item.inspection_status
+    }));
 
-    // 按状态筛选（状态是计算出来的，只能在取到数据后过滤）
-    if (status) {
-      data = data.filter((item) => item.inspection_status === status);
-    }
-
-    return c.json({ success: true, data: { ...result, data, total: status ? data.length : result.total } });
+    return c.json({ success: true, data: { ...result, data } });
   } catch (error) {
     return handleError(c, '获取年检列表错误:', error);
   }
@@ -99,8 +109,8 @@ interface InspectionWithVehicle extends InspectionRow {
 export async function getInspectionStats(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const today = todayStr();
-    const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const today = todayDate();
+    const thirtyDaysLater = dateOffset(30);
 
     const [vehicleTotal, inspectionTotal, expiringSoon, expired, valid] = await Promise.all([
       queryOne<{ count: number }>(db, 'SELECT COUNT(*) as count FROM vehicles'),

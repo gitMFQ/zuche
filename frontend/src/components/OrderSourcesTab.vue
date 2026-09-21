@@ -12,7 +12,7 @@
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
           <span class="name">
-            <span class="color-dot" :style="{ background: item.color || '#409EFF' }"></span>
+            <span class="color-dot" :style="{ background: item.color || '#0071e3' }"></span>
             {{ item.name }}
           </span>
         </div>
@@ -39,7 +39,7 @@
     <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
       <el-table-column prop="name" label="来源名称" min-width="150">
         <template #default="{ row }">
-          <span class="color-dot" :style="{ background: row.color || '#409EFF' }"></span>
+          <span class="color-dot" :style="{ background: row.color || '#0071e3' }"></span>
           {{ row.name }}
         </template>
       </el-table-column>
@@ -98,6 +98,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { orderSourceApi } from '../api'
+import { useDictStore } from '../stores/dict'
+
+const dictStore = useDictStore()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -110,13 +113,13 @@ const editingId = ref('')
 const form = reactive({
   name: '',
   commission_rate: 0,
-  color: '#409EFF',
+  color: '#0071e3',
   remarks: ''
 })
 
 // 预定义颜色
 const predefineColors = [
-  '#409EFF',
+  '#0071e3',
   '#67C23A',
   '#E6A23C',
   '#F56C6C',
@@ -136,6 +139,8 @@ const rules: FormRules = {
 async function loadData() {
   loading.value = true
   try {
+    // 改完来源要让字典缓存失效，否则其它页面的下拉框还是旧数据
+    dictStore.invalidateOrderSources()
     const res: any = await orderSourceApi.getList()
     if (res.success) {
       tableData.value = res.data
@@ -153,7 +158,7 @@ function openDialog(data?: any) {
   Object.assign(form, {
     name: data?.name || '',
     commission_rate: data?.commission_rate || 0,
-    color: data?.color || '#409EFF',
+    color: data?.color || '#0071e3',
     remarks: data?.remarks || ''
   })
   dialogVisible.value = true
@@ -266,7 +271,7 @@ html.dark .name {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -282,7 +287,7 @@ html.dark .name {
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
   font-weight: 500;
 }
 
@@ -302,7 +307,7 @@ html.dark .name {
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 4px;
 }
 

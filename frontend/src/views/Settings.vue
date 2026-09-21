@@ -173,6 +173,9 @@ async function handleLogoChange(e: Event) {
     const res: any = await uploadApi.uploadOther(file, '系统Logo')
     if (res.success && res.data?.url) {
       systemLogo.value = res.data.url
+    } else {
+      // 校验失败（格式/体积）也走这里，必须提示，否则用户以为换成功了
+      ElMessage.error(res.message || '上传Logo失败')
     }
   } catch (error) {
     console.error('上传Logo失败', error)

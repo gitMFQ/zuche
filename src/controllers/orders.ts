@@ -1,27 +1,23 @@
 import { type Bind, batchExecute, execute, query, queryOne, queryWithPagination, type Stmt } from '../db/helpers';
-import type { OrderExtensionRow, OrderFeeRow, OrderRow } from '../db/rows';
+import type { D1Database } from '@cloudflare/workers-types';
+import type { BlacklistRow, OrderExtensionRow, OrderFeeRow, OrderRow } from '../db/rows';
 import { generateId, generateOrderNo } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
-import { now } from '../lib/time';
-import { PAYMENT_TYPE_FEE_CATEGORY, PAYMENT_TYPE_TEXT } from '../lib/constants';
+import { dateOffset, normalizeDateTime, now, today } from '../lib/time';
+import { calcDailyRate, calcNetAmount, calcRentalDays } from '../lib/orderAmount';
+import { PAYMENT_TYPE_FEE_CATEGORY, PAYMENT_TYPE_TEXT, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_TEXT } from '../lib/constants';
 import type { AppContext } from '../types';
 
 // 订单状态映射
-const STATUS_MAP: Record<string, string> = {
-  pending: '待取车',
-  active: '已取车',
-  completed: '已还车',
-  cancelled: '已取消',
-  overdue: '已逾期'
-};
+const STATUS_MAP = { ...ORDER_STATUS_TEXT };
 
 const PHONE_PATTERN = /^1[3-9]\d{9}$/;
 
 /** 订单连同车辆车牌一起取出，避免写日志时再回查一次 */
 const ORDER_WITH_PLATE_SQL = `
-  SELECT o.*, v.plate_number
+  SELECT o.*, COALESCE(o.plate_number, v.plate_number) AS plate_number
   FROM orders o
   LEFT JOIN vehicles v ON o.vehicle_id = v.id
   WHERE o.id = ?
@@ -44,6 +40,39 @@ function serializeImages(images: string[] | undefined): string | null {
   return JSON.stringify(images);
 }
 
+/** 订单号唯一冲突时的最大重试次数 */
+const ORDER_NO_MAX_ATTEMPTS = 5;
+
+/**
+ * 插入订单，订单号撞唯一约束时换号重试。
+ *
+ * D1 的 batch 是隐式事务，任一条失败会整体回滚，所以直接重放整批是安全的。
+ * 只在明确是 order_no 唯一冲突时才换号，其它错误（外键、类型等）原样抛出，
+ * 避免把真实的业务错误伪装成重试。
+ */
+async function insertOrderWithOrderNoRetry(
+  db: D1Database,
+  buildStatements: (orderNo: string) => Stmt[]
+): Promise<string> {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < ORDER_NO_MAX_ATTEMPTS; attempt += 1) {
+    const orderNo = generateOrderNo();
+    try {
+      await batchExecute(db, buildStatements(orderNo));
+      return orderNo;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!(message.includes('UNIQUE') && message.includes('order_no'))) {
+        throw error;
+      }
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error('订单号生成失败');
+}
+
 // 获取订单列表
 export async function getOrders(c: AppContext): Promise<Response> {
   const db = c.env.DB;
@@ -52,10 +81,20 @@ export async function getOrders(c: AppContext): Promise<Response> {
     const page = Number(q.page ?? 1);
     const pageSize = Number(q.pageSize ?? 10);
 
+    // 列表不返回 pickup_image / return_image（编辑、取还车弹窗都是重新上传，从不回显旧图），
+    // 其余字段保留：弹窗在 getOne 失败时会退回用列表行做预填，裁太狠会让预填缺字段。
     let sql = `
-      SELECT o.*,
+      SELECT o.id, o.order_no, o.status, o.customer_id, o.vehicle_id, o.user_id,
+        o.start_date, o.end_date, o.actual_start_date, o.actual_end_date,
+        o.daily_rate, o.deposit, o.violation_deposit, o.total_amount, o.paid_amount,
+        o.pickup_mileage, o.return_mileage, o.pickup_location, o.return_location,
+        o.service_type, o.deposit_waived, o.deposit_waived_expiry, o.contract_number,
+        o.source_id, o.commission_rate, o.net_amount, o.remarks,
+        o.platform, o.external_no, o.import_batch_id, o.cancel_reason, o.cancelled_at,
+        o.created_at, o.updated_at,
         c.name as customer_name, c.phone as customer_phone,
-        v.plate_number, v.brand, v.model, v.is_new_energy,
+        COALESCE(o.plate_number, v.plate_number) as plate_number,
+        v.brand, v.model, v.is_new_energy,
         u.name as operator_name,
         s.name as source_name, s.color as source_color
       FROM orders o
@@ -127,6 +166,31 @@ export async function getOrders(c: AppContext): Promise<Response> {
       params.push(`%${q.plate_number}%`);
     }
 
+    // 时间快捷筛选（今天/明天/后天/逾期）。
+    // 原来在前端拉全表过滤，被分页上限截断；这里下推到 SQL。
+    // dateField 只可能是下面两个字面量之一，不参与用户输入拼接。
+    if (q.time_filter) {
+      const dateField = q.status === 'active' ? 'o.end_date' : 'o.start_date';
+      switch (q.time_filter) {
+        case 'overdue':
+          sql += ` AND date(${dateField}) < ?`;
+          params.push(today());
+          break;
+        case 'today':
+          sql += ` AND date(${dateField}) = ?`;
+          params.push(today());
+          break;
+        case 'tomorrow':
+          sql += ` AND date(${dateField}) = ?`;
+          params.push(dateOffset(1));
+          break;
+        case 'day_after':
+          sql += ` AND date(${dateField}) = ?`;
+          params.push(dateOffset(2));
+          break;
+      }
+    }
+
     // 排序处理
     switch (q.order_by) {
       case 'start_date_asc':
@@ -167,6 +231,85 @@ export async function getOrders(c: AppContext): Promise<Response> {
   }
 }
 
+interface OrderStatsRow {
+  pending: number;
+  active: number;
+  completed: number;
+  cancelled: number;
+  pending_overdue: number;
+  pending_today: number;
+  pending_tomorrow: number;
+  pending_day_after: number;
+  active_overdue: number;
+  active_today: number;
+  active_tomorrow: number;
+  active_day_after: number;
+}
+
+/**
+ * 订单统计：状态分桶 + 时间快捷筛选分桶。
+ *
+ * 前端原本用 pageSize=10000 拉全表在前端计数，但 queryWithPagination 把 pageSize
+ * 上限锁在 100，订单超过 100 条后 tab 计数与时间筛选计数就全是错的。
+ * 这里用一条条件聚合查询一次算完。
+ */
+export async function getOrderStats(c: AppContext): Promise<Response> {
+  const db = c.env.DB;
+  try {
+    const todayStr = today();
+    const tomorrowStr = dateOffset(1);
+    const dayAfterStr = dateOffset(2);
+
+    const row = await queryOne<OrderStatsRow>(
+      db,
+      `SELECT
+         COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending,
+         COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0) AS active,
+         COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) AS completed,
+         COALESCE(SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END), 0) AS cancelled,
+         COALESCE(SUM(CASE WHEN status = 'pending' AND date(start_date) < ? THEN 1 ELSE 0 END), 0) AS pending_overdue,
+         COALESCE(SUM(CASE WHEN status = 'pending' AND date(start_date) = ? THEN 1 ELSE 0 END), 0) AS pending_today,
+         COALESCE(SUM(CASE WHEN status = 'pending' AND date(start_date) = ? THEN 1 ELSE 0 END), 0) AS pending_tomorrow,
+         COALESCE(SUM(CASE WHEN status = 'pending' AND date(start_date) = ? THEN 1 ELSE 0 END), 0) AS pending_day_after,
+         COALESCE(SUM(CASE WHEN status = 'active' AND date(end_date) < ? THEN 1 ELSE 0 END), 0) AS active_overdue,
+         COALESCE(SUM(CASE WHEN status = 'active' AND date(end_date) = ? THEN 1 ELSE 0 END), 0) AS active_today,
+         COALESCE(SUM(CASE WHEN status = 'active' AND date(end_date) = ? THEN 1 ELSE 0 END), 0) AS active_tomorrow,
+         COALESCE(SUM(CASE WHEN status = 'active' AND date(end_date) = ? THEN 1 ELSE 0 END), 0) AS active_day_after
+       FROM orders`,
+      [
+        todayStr, todayStr, tomorrowStr, dayAfterStr,
+        todayStr, todayStr, tomorrowStr, dayAfterStr
+      ]
+    );
+
+    return c.json({
+      success: true,
+      data: {
+        pending: row?.pending ?? 0,
+        active: row?.active ?? 0,
+        completed: row?.completed ?? 0,
+        cancelled: row?.cancelled ?? 0,
+        timeFilter: {
+          pending: {
+            overdue: row?.pending_overdue ?? 0,
+            today: row?.pending_today ?? 0,
+            tomorrow: row?.pending_tomorrow ?? 0,
+            day_after: row?.pending_day_after ?? 0
+          },
+          active: {
+            overdue: row?.active_overdue ?? 0,
+            today: row?.active_today ?? 0,
+            tomorrow: row?.active_tomorrow ?? 0,
+            day_after: row?.active_day_after ?? 0
+          }
+        }
+      }
+    });
+  } catch (error) {
+    return handleError(c, '获取订单统计错误:', error);
+  }
+}
+
 interface OrderDetailRow extends OrderRow {
   customer_name: string | null;
   customer_phone: string | null;
@@ -196,7 +339,8 @@ export async function getOrder(c: AppContext): Promise<Response> {
         `SELECT o.*,
            c.name as customer_name, c.phone as customer_phone, c.id_card, c.license_number,
            c.id_card_images, c.license_images,
-           v.plate_number, v.brand, v.model, v.color, v.is_new_energy,
+           COALESCE(o.plate_number, v.plate_number) as plate_number,
+           v.brand, v.model, v.color, v.is_new_energy,
            u.name as operator_name,
            s.name as source_name, s.color as source_color
          FROM orders o
@@ -259,6 +403,8 @@ interface CreateOrderBody {
   prepay_amount?: number;
   prepay_method?: string;
   prepay_type?: string;
+  /** 命中黑名单时，前端二次确认后带 force=true 强制下单（会写日志留痕） */
+  force?: boolean;
 }
 
 // 创建订单（支持自动创建客户）
@@ -285,7 +431,7 @@ export async function createOrder(c: AppContext): Promise<Response> {
     }
 
     // 先把需要判断的数据全部读出来
-    const [vehicle, existingCustomer, source] = await Promise.all([
+    const [vehicle, existingCustomer, source, blacklistHit] = await Promise.all([
       queryOne<{ id: string; status: string; plate_number: string }>(db, 'SELECT id, status, plate_number FROM vehicles WHERE id = ?', [vehicle_id]),
       // 没有手机号时退回按姓名匹配，否则空串会误命中上一个无手机号的客户
       queryOne<{ id: string }>(
@@ -295,8 +441,39 @@ export async function createOrder(c: AppContext): Promise<Response> {
       ),
       body.source_id
         ? queryOne<{ commission_rate: number }>(db, 'SELECT commission_rate FROM order_sources WHERE id = ? AND status = 1', [body.source_id])
-        : Promise.resolve(null)
+        : Promise.resolve(null),
+      // 黑名单命中检查：优先手机号，无手机号时退回姓名
+      queryOne<BlacklistRow>(
+        db,
+        customer_phone
+          ? 'SELECT * FROM blacklist WHERE phone = ? AND status = 1'
+          : 'SELECT * FROM blacklist WHERE name = ? AND status = 1',
+        [customer_phone || customer_name]
+      )
     ]);
+
+    // 黑名单软拦截：提示风险但允许强制下单（可能存在误拉黑、欠款已结清未移出的情况），
+    // 硬性拒绝会直接卡住门店营业。强制下单会写日志留痕。
+    if (blacklistHit && !body.force) {
+      return c.json(
+        {
+          success: false,
+          code: 'BLACKLISTED',
+          message: '该客户在黑名单中',
+          data: {
+            record: {
+              id: blacklistHit.id,
+              name: blacklistHit.name,
+              phone: blacklistHit.phone,
+              reason: blacklistHit.reason,
+              operator_name: blacklistHit.operator_name,
+              created_at: blacklistHit.created_at
+            }
+          }
+        },
+        409
+      );
+    }
 
     if (!vehicle) {
       return c.json({ success: false, message: '车辆不存在' }, 400);
@@ -326,10 +503,7 @@ export async function createOrder(c: AppContext): Promise<Response> {
     }
 
     // 计算天数
-    const start = new Date(start_date);
-    const end = new Date(end_date);
-    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    const days = Math.max(1, Math.ceil(hours / 24));
+    const days = calcRentalDays(start_date, end_date);
 
     // 计算总金额：如果提供了总租金则使用，否则按日租金计算
     let totalAmount = total_amount;
@@ -341,15 +515,14 @@ export async function createOrder(c: AppContext): Promise<Response> {
 
     // 如果只有总租金，反推日租金
     if (totalAmount && !daily_rate) {
-      finalDailyRate = Math.round(totalAmount / days);
+      finalDailyRate = calcDailyRate(totalAmount, days);
     }
 
     // 计算到账金额（扣除平台服务费）
     const commissionRate = source?.commission_rate || 0;
-    const netAmount = (totalAmount ?? 0) * (1 - commissionRate / 100);
+    const netAmount = calcNetAmount(totalAmount ?? 0, commissionRate);
 
     const id = generateId();
-    const orderNo = generateOrderNo();
     const currentTime = now();
     const userId = getAuthUser(c)?.id ?? null;
 
@@ -364,93 +537,101 @@ export async function createOrder(c: AppContext): Promise<Response> {
 
     // 客户的新建/更新与订单、支付记录放进同一个 batch，保证原子性
     const customerId = existingCustomer?.id ?? generateId();
-    const stmts: Stmt[] = [];
 
-    if (existingCustomer) {
-      stmts.push({
-        sql: 'UPDATE customers SET name = ?, id_card = ?, license_number = ?, id_card_images = ?, license_images = ?, updated_at = ? WHERE id = ?',
-        params: [
-          customer_name,
-          body.customer_id_card ?? null,
-          body.customer_license ?? null,
-          serializeImages(body.id_card_images),
-          serializeImages(body.license_images),
-          currentTime,
-          customerId
-        ]
-      });
-    } else {
-      stmts.push({
-        sql: 'INSERT INTO customers (id, name, phone, id_card, license_number, id_card_images, license_images, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)',
-        params: [
-          customerId,
-          customer_name,
-          customer_phone,
-          body.customer_id_card ?? null,
-          body.customer_license ?? null,
-          serializeImages(body.id_card_images),
-          serializeImages(body.license_images),
-          currentTime,
-          currentTime
-        ]
-      });
-    }
+    const customerStmt: Stmt = existingCustomer
+      ? {
+          sql: 'UPDATE customers SET name = ?, id_card = ?, license_number = ?, id_card_images = ?, license_images = ?, updated_at = ? WHERE id = ?',
+          params: [
+            customer_name,
+            body.customer_id_card ?? null,
+            body.customer_license ?? null,
+            serializeImages(body.id_card_images),
+            serializeImages(body.license_images),
+            currentTime,
+            customerId
+          ]
+        }
+      : {
+          sql: 'INSERT INTO customers (id, name, phone, id_card, license_number, id_card_images, license_images, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)',
+          params: [
+            customerId,
+            customer_name,
+            customer_phone,
+            body.customer_id_card ?? null,
+            body.customer_license ?? null,
+            serializeImages(body.id_card_images),
+            serializeImages(body.license_images),
+            currentTime,
+            currentTime
+          ]
+        };
 
-    stmts.push({
-      sql: `INSERT INTO orders (id, order_no, customer_id, vehicle_id, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, pickup_location, return_location, delivery_type, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      params: [
-        id,
-        orderNo,
-        customerId,
-        vehicle_id,
-        userId,
-        start_date,
-        end_date,
-        finalDailyRate || 0,
-        finalDeposit,
-        totalAmount,
-        initialPaidAmount,
-        body.remarks ?? null,
-        body.source_id ?? null,
-        commissionRate,
-        netAmount,
-        body.service_type || 'basic',
-        isDepositWaived,
-        depositWaivedExpiry,
-        body.contract_number ?? null,
-        body.pickup_location ?? null,
-        body.return_location ?? null,
-        body.delivery_type ?? null,
-        currentTime,
-        currentTime
-      ]
-    });
+    // 订单号随机生成，理论上可能撞唯一约束，所以按号重建整批语句以便重试
+    const buildStatements = (orderNo: string): Stmt[] => {
+      const list: Stmt[] = [customerStmt];
 
-    // 如果有预付，添加支付记录
-    if (hasPrepay && body.prepay_method && body.prepay_type) {
-      stmts.push({
-        sql: 'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      list.push({
+        sql: `INSERT INTO orders (id, order_no, customer_id, vehicle_id, plate_number, user_id, start_date, end_date, daily_rate, deposit, total_amount, paid_amount, status, remarks, source_id, commission_rate, net_amount, service_type, deposit_waived, deposit_waived_expiry, contract_number, pickup_location, return_location, delivery_type, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params: [
-          generateId(),
           id,
-          body.prepay_amount ?? 0,
-          body.prepay_method,
-          body.prepay_type,
-          '下单时预付',
+          orderNo,
+          customerId,
+          vehicle_id,
+          // 车牌快照：删车后历史订单仍能显示车牌（orders.vehicle_id 刻意无外键）
+          vehicle.plate_number,
+          userId,
+          start_date,
+          end_date,
+          finalDailyRate || 0,
+          finalDeposit,
+          totalAmount,
+          initialPaidAmount,
+          body.remarks ?? null,
+          body.source_id ?? null,
+          commissionRate,
+          netAmount,
+          body.service_type || 'basic',
+          isDepositWaived,
+          depositWaivedExpiry,
+          body.contract_number ?? null,
+          body.pickup_location ?? null,
+          body.return_location ?? null,
+          body.delivery_type ?? null,
+          currentTime,
           currentTime
         ]
       });
-    }
 
-    await batchExecute(db, stmts);
+      // 如果有预付，添加支付记录
+      if (hasPrepay && body.prepay_method && body.prepay_type) {
+        list.push({
+          sql: 'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          params: [
+            generateId(),
+            id,
+            body.prepay_amount ?? 0,
+            body.prepay_method,
+            body.prepay_type,
+            '下单时预付',
+            currentTime
+          ]
+        });
+      }
+
+      return list;
+    };
+
+    const orderNo = await insertOrderWithOrderNoRetry(db, buildStatements);
 
     await logAction(db, {
       userId: userId ?? '',
       action: '创建订单',
       entityType: 'order',
       entityId: id,
-      details: `创建订单 ${orderNo}，客户：${customer_name}，车辆：${vehicle.plate_number}`,
+      details: `创建订单 ${orderNo}，客户：${customer_name}，车辆：${vehicle.plate_number}${
+        blacklistHit ? `（黑名单客户强制下单，原因：${blacklistHit.reason}）` : ''
+      }`,
       ipAddress: getClientIp(c)
     });
 
@@ -490,9 +671,27 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
     }>();
     const { status } = body;
 
+    if (!status) {
+      return c.json({ success: false, message: '订单状态不能为空' }, 400);
+    }
+
     const order = await queryOne<OrderWithPlate>(db, ORDER_WITH_PLATE_SQL, [id]);
     if (!order) {
       return c.json({ success: false, message: '订单不存在' }, 404);
+    }
+
+    // 状态机校验：只允许 ORDER_STATUS_TRANSITIONS 声明的流转。
+    // 同状态视为幂等重试（前端重发、网络重试），直接放行。
+    if (status !== order.status) {
+      const allowed = ORDER_STATUS_TRANSITIONS[order.status];
+      if (!allowed) {
+        return c.json({ success: false, message: `订单当前状态异常：${order.status}` }, 400);
+      }
+      if (!allowed.includes(status)) {
+        const from = STATUS_MAP[order.status] || order.status;
+        const to = STATUS_MAP[status] || status;
+        return c.json({ success: false, message: `订单为「${from}」，不能变更为「${to}」` }, 400);
+      }
     }
 
     const currentTime = now();
@@ -506,22 +705,28 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
       });
     }
 
-    // 计算实际金额（如果有实际还车日期）
+    // 计算实际金额（如果有实际还车日期）。
+    // daily_rate 为 0 时不做重算，否则会把总额直接清零。
     let totalAmount = order.total_amount;
-    if (body.actual_end_date && status === 'completed') {
-      const start = new Date(order.start_date);
-      const end = new Date(body.actual_end_date);
-      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      const days = Math.max(1, Math.ceil(hours / 24));
+    if (body.actual_end_date && status === 'completed' && order.daily_rate > 0) {
+      const days = calcRentalDays(order.start_date, body.actual_end_date);
       totalAmount = days * order.daily_rate;
     }
+    // total_amount 变了必须同步 net_amount，否则平台单的净收入与总额对不上
+    const netAmount = calcNetAmount(totalAmount, order.commission_rate || 0);
+
+    // 未传 actual_end_date 时保留原值：取车等操作不应该把已记录的还车时间清空
+    const actualEndDate =
+      body.actual_end_date !== undefined ? normalizeDateTime(body.actual_end_date) : order.actual_end_date;
 
     // 构建更新字段
-    let updateSql = 'UPDATE orders SET status = ?, actual_end_date = ?, total_amount = ?, remarks = ?, updated_at = ?';
+    let updateSql =
+      'UPDATE orders SET status = ?, actual_end_date = ?, total_amount = ?, net_amount = ?, remarks = ?, updated_at = ?';
     const updateParams: Bind[] = [
       status,
-      body.actual_end_date ?? null,
+      actualEndDate,
       totalAmount,
+      netAmount,
       body.remarks ?? order.remarks,
       currentTime
     ];
@@ -530,7 +735,7 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
     if (status === 'active') {
       // 实际取车时间与还车时间对称，未传则取当前时间
       updateSql += ', actual_start_date = ?';
-      updateParams.push(body.actual_start_date ?? currentTime);
+      updateParams.push(normalizeDateTime(body.actual_start_date) ?? currentTime);
 
       if (body.pickup_mileage !== undefined && body.pickup_mileage !== null) {
         updateSql += ', pickup_mileage = ?';
@@ -560,17 +765,21 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
     stmts.push({ sql: updateSql, params: updateParams });
     await batchExecute(db, stmts);
 
-    const statusText = STATUS_MAP[status ?? ''] || status;
+    const statusText = STATUS_MAP[status] || status;
     await logAction(db, {
       userId: getAuthUser(c)?.id ?? '',
-      action: statusText ?? '更新订单状态',
+      action: statusText || '更新订单状态',
       entityType: 'order',
       entityId: id,
       details: `订单 ${order.order_no} 状态变更为${statusText}，车辆：${order.plate_number || ''}`,
       ipAddress: getClientIp(c)
     });
 
-    return c.json({ success: true, message: '订单状态更新成功' });
+    return c.json({
+      success: true,
+      data: { status, total_amount: totalAmount, net_amount: netAmount },
+      message: '订单状态更新成功'
+    });
   } catch (error) {
     return handleError(c, '更新订单状态错误:', error);
   }
@@ -597,6 +806,8 @@ interface UpdateOrderBody {
   contract_number?: string;
   pickup_location?: string;
   return_location?: string;
+  /** 命中黑名单时，前端二次确认后带 force=true 强制保存 */
+  force?: boolean;
 }
 
 // 更新订单信息
@@ -643,6 +854,38 @@ export async function updateOrder(c: AppContext): Promise<Response> {
           ? await queryOne<{ id: string }>(db, 'SELECT id FROM customers WHERE name = ?', [body.customer_name])
           : null;
 
+      // 换客户（或新建客户）时同样过一遍黑名单，否则改单就成了绕过黑名单的口子
+      const isChangingCustomer = customer ? customer.id !== order.customer_id : Boolean(body.customer_phone);
+      if (isChangingCustomer && !body.force) {
+        const hit = await queryOne<BlacklistRow>(
+          db,
+          body.customer_phone
+            ? 'SELECT * FROM blacklist WHERE phone = ? AND status = 1'
+            : 'SELECT * FROM blacklist WHERE name = ? AND status = 1',
+          [body.customer_phone || body.customer_name || '']
+        );
+        if (hit) {
+          return c.json(
+            {
+              success: false,
+              code: 'BLACKLISTED',
+              message: '该客户在黑名单中',
+              data: {
+                record: {
+                  id: hit.id,
+                  name: hit.name,
+                  phone: hit.phone,
+                  reason: hit.reason,
+                  operator_name: hit.operator_name,
+                  created_at: hit.created_at
+                }
+              }
+            },
+            409
+          );
+        }
+      }
+
       if (customer && customer.id !== order.customer_id) {
         customerId = customer.id;
       } else if (!customer && body.customer_phone) {
@@ -680,14 +923,15 @@ export async function updateOrder(c: AppContext): Promise<Response> {
     }
 
     // 处理车辆更换（仅在待确认状态可以换车）
+    let plateNumber = order.plate_number;
     if (body.vehicle_id && body.vehicle_id !== order.vehicle_id) {
       if (order.status !== 'pending') {
         return c.json({ success: false, message: '进行中的订单不能更换车辆' }, 400);
       }
 
-      const newVehicle = await queryOne<{ id: string; status: string }>(
+      const newVehicle = await queryOne<{ id: string; status: string; plate_number: string }>(
         db,
-        'SELECT id, status FROM vehicles WHERE id = ?',
+        'SELECT id, status, plate_number FROM vehicles WHERE id = ?',
         [body.vehicle_id]
       );
       if (!newVehicle) {
@@ -696,6 +940,8 @@ export async function updateOrder(c: AppContext): Promise<Response> {
       if (newVehicle.status === 'maintenance' || newVehicle.status === 'unavailable') {
         return c.json({ success: false, message: '该车辆当前处于维修或不可用状态' }, 400);
       }
+      // 换车时同步车牌快照，否则列表会一直显示旧车牌
+      plateNumber = newVehicle.plate_number;
 
       // 检查新车辆在订单时间段是否可用
       const startDate = body.start_date || order.start_date;
@@ -722,10 +968,7 @@ export async function updateOrder(c: AppContext): Promise<Response> {
     // 计算天数
     const startDate = body.start_date || order.start_date;
     const endDate = body.end_date || order.end_date;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    const days = Math.max(1, Math.ceil(hours / 24));
+    const days = calcRentalDays(startDate, endDate);
 
     // 计算总金额：如果提供了总租金则使用，否则按日租金计算
     let totalAmount = body.total_amount;
@@ -737,7 +980,7 @@ export async function updateOrder(c: AppContext): Promise<Response> {
 
     // 如果只有总租金，反推日租金
     if (totalAmount && !finalDailyRate) {
-      finalDailyRate = Math.round(totalAmount / days);
+      finalDailyRate = calcDailyRate(totalAmount, days);
     }
 
     // 处理订单来源变化
@@ -764,7 +1007,7 @@ export async function updateOrder(c: AppContext): Promise<Response> {
     }
 
     // 重新计算到账金额
-    const netAmount = Math.round((totalAmount ?? 0) * (1 - commissionRate / 100));
+    const netAmount = calcNetAmount(totalAmount ?? 0, commissionRate);
 
     // 处理免押相关
     const isDepositWaived = body.deposit_waived ? 1 : 0;
@@ -773,7 +1016,7 @@ export async function updateOrder(c: AppContext): Promise<Response> {
 
     stmts.push({
       sql: `UPDATE orders SET
-        customer_id = ?, vehicle_id = ?, source_id = ?, source_name = ?, commission_rate = ?,
+        customer_id = ?, vehicle_id = ?, plate_number = ?, source_id = ?, source_name = ?, commission_rate = ?,
         start_date = ?, end_date = ?, daily_rate = ?, total_amount = ?, net_amount = ?,
         deposit = ?, deposit_waived = ?, deposit_waived_expiry = ?, service_type = ?,
         contract_number = ?, pickup_location = ?, return_location = ?, remarks = ?, updated_at = ?
@@ -781,6 +1024,7 @@ export async function updateOrder(c: AppContext): Promise<Response> {
       params: [
         customerId,
         body.vehicle_id || order.vehicle_id,
+        plateNumber,
         sourceId,
         sourceName,
         commissionRate,
@@ -856,15 +1100,14 @@ export async function extendOrder(c: AppContext): Promise<Response> {
     const currentTime = now();
 
     // 计算续租天数（按小时精确计算，向上取整）
-    const hours = (newEndDateObj.getTime() - currentEndDate.getTime()) / (1000 * 60 * 60);
-    const extendDays = Math.max(1, Math.ceil(hours / 24));
+    const extendDays = calcRentalDays(order.end_date, new_end_date);
 
     // 使用传入的续租金额
     const newTotalAmount = order.total_amount + extend_amount;
 
     // 重新计算到账金额
     const commissionRate = order.commission_rate || 0;
-    const newNetAmount = newTotalAmount * (1 - commissionRate / 100);
+    const newNetAmount = calcNetAmount(newTotalAmount, commissionRate);
 
     // 计算新的已付金额
     let newPaidAmount = order.paid_amount || 0;

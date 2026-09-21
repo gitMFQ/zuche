@@ -21,6 +21,32 @@ export const PAYMENT_TYPE_TEXT: Record<string, string> = {
   other: '其他'
 };
 
+/**
+ * 订单状态中文名。
+ * overdue（已逾期）是派生状态，不落库 —— 由 `active 且 end_date < 当前时间` 算出来。
+ * 落库会引入"需要定时任务把 active 改成 overdue、续租又要改回来"的同步负担，
+ * 且取消/续租路径都要额外处理。展示与筛选统一用派生的方式。
+ */
+export const ORDER_STATUS_TEXT: Record<string, string> = {
+  pending: '待取车',
+  active: '已取车',
+  completed: '已还车',
+  cancelled: '已取消',
+  overdue: '已逾期'
+};
+
+/**
+ * 订单状态机：key 是当前状态，value 是允许变更到的状态。
+ * 空数组表示终态，不允许再流转。
+ * 逾期不参与流转（它是派生的），因此不在表里出现。
+ */
+export const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
+  pending: ['active', 'cancelled'],
+  active: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: []
+};
+
 /** 到店取车/还车都在门店完成，不记录具体地址，取还车位置统一记为门店 */
 export const STORE_LOCATION_TEXT = '门店';
 

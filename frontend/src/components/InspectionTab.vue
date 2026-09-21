@@ -206,11 +206,11 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { inspectionApi, uploadApi } from '../api'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
+import { useMobile } from '../composables/useMobile'
 
 const loading = ref(false)
 const submitting = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
@@ -292,12 +292,6 @@ async function handleImageChange(uploadFile: UploadFile) {
   if (!file) return
 
   // 检查文件类型与体积
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   // 上传文件到服务器（年检证专用目录）
   try {
     const res = await uploadApi.uploadInspection(file, `${currentVehicle.value?.plate_number || '车辆'}-年检证`)
@@ -355,9 +349,7 @@ async function handleDelete(vehicleId: string) {
 
 onMounted(() => {
   loadData()
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -399,10 +391,10 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.success { border-left: 3px solid #67C23A; }
-.stat-card.warning { border-left: 3px solid #E6A23C; }
-.stat-card.danger { border-left: 3px solid #F56C6C; }
-.stat-card.info { border-left: 3px solid #909399; }
+.stat-card.success { border-left: 3px solid var(--sk-color-success); }
+.stat-card.warning { border-left: 3px solid var(--sk-color-warning); }
+.stat-card.danger { border-left: 3px solid var(--sk-color-danger); }
+.stat-card.info { border-left: 3px solid var(--sk-color-info); }
 
 .stat-value {
   font-size: 18px;
@@ -412,7 +404,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 4px;
 }
 
@@ -437,15 +429,15 @@ onMounted(() => {
 }
 
 .mobile-card.expired {
-  border-left: 3px solid #F56C6C;
+  border-left: 3px solid var(--sk-color-danger);
 }
 
 .mobile-card.valid {
-  border-left: 3px solid #67C23A;
+  border-left: 3px solid var(--sk-color-success);
 }
 
 .mobile-card.none {
-  border-left: 3px solid #909399;
+  border-left: 3px solid var(--sk-color-info);
 }
 
 .mobile-card-header {
@@ -469,7 +461,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -477,17 +469,17 @@ onMounted(() => {
 }
 
 .mobile-card-row .value.text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
   font-weight: 500;
 }
 
 .mobile-card-row .value.text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
   font-weight: 500;
 }
 
 .mobile-card-row .value.text-success {
-  color: #67C23A;
+  color: var(--sk-color-success);
   font-weight: 500;
 }
 
@@ -509,15 +501,15 @@ onMounted(() => {
 }
 
 .text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 
 .text-success {
-  color: #67C23A;
+  color: var(--sk-color-success);
 }
 
 @media (min-width: 768px) {
@@ -588,13 +580,13 @@ onMounted(() => {
 }
 
 .upload-trigger:hover {
-  border-color: var(--primary-color, #409EFF);
+  border-color: var(--primary-color);
   background: rgba(var(--primary-color-rgb, 64, 158, 255), 0.05);
 }
 
 .upload-icon {
   font-size: 32px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-bottom: 8px;
 }
 

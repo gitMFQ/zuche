@@ -15,11 +15,64 @@
   --sk-bg-light-gray: #f5f5f7;
   --sk-text-near-black: #1d1d1f;
   --sk-text-white: #ffffff;
+  --sk-text-primary: #1d1d1f;
   --sk-text-secondary: rgba(0, 0, 0, 0.8);
   --sk-text-tertiary: rgba(0, 0, 0, 0.48);
   --sk-focus-color: #0071e3;
   --sk-link-color: #0066cc;
   --sk-link-color-dark: #2997ff;
+
+  /* 语义色（与 Element Plus 的 success/warning/danger/info 对齐）
+     之前只覆盖了 primary，success/warning/danger 只能在各组件里硬编码
+     #67C23A / #E6A23C / #F56C6C，同一个颜色散落十几处。 */
+  --sk-color-success: #34c759;
+  --sk-color-warning: #ff9f0a;
+  --sk-color-danger: #ff3b30;
+  --sk-color-info: #8e8e93;
+
+  /* Element Plus 调色板：把语义色灌进 Element 的变量层，
+     标签、提示、按钮、开关等组件一次性全部对齐 Apple 配色。
+     light-N / dark-2 是按 Element 的混色公式（与白/黑按 10% 步进混合）预先算好的，
+     用具体色值而不是 color-mix()，避免在旧浏览器上变量失效导致颜色整个丢失。 */
+  --el-color-primary: var(--sk-focus-color);
+  --el-color-primary-light-3: #4d9ceb;
+  --el-color-primary-light-5: #80b8f1;
+  --el-color-primary-light-7: #b2d4f7;
+  --el-color-primary-light-8: #cce3f9;
+  --el-color-primary-light-9: #e6f1fc;
+  --el-color-primary-dark-2: #005ab6;
+
+  --el-color-success: var(--sk-color-success);
+  --el-color-success-light-3: #71d88b;
+  --el-color-success-light-5: #9ae3ac;
+  --el-color-success-light-7: #c2eecd;
+  --el-color-success-light-8: #d6f4de;
+  --el-color-success-light-9: #ebf9ee;
+  --el-color-success-dark-2: #2a9f47;
+
+  --el-color-warning: var(--sk-color-warning);
+  --el-color-warning-light-3: #ffbc54;
+  --el-color-warning-light-5: #ffcf84;
+  --el-color-warning-light-7: #ffe2b6;
+  --el-color-warning-light-8: #ffecce;
+  --el-color-warning-light-9: #fff5e6;
+  --el-color-warning-dark-2: #cc7f08;
+
+  --el-color-danger: var(--sk-color-danger);
+  --el-color-danger-light-3: #ff766e;
+  --el-color-danger-light-5: #ff9d98;
+  --el-color-danger-light-7: #ffc4c1;
+  --el-color-danger-light-8: #ffd8d6;
+  --el-color-danger-light-9: #ffebea;
+  --el-color-danger-dark-2: #cc2f26;
+
+  --el-color-info: var(--sk-color-info);
+  --el-color-info-light-3: #b0b0b3;
+  --el-color-info-light-5: #c6c6c9;
+  --el-color-info-light-7: #dddddf;
+  --el-color-info-light-8: #e8e8e9;
+  --el-color-info-light-9: #f4f4f4;
+  --el-color-info-dark-2: #727276;
   
   /* Surface Colors (Dark Mode) */
   --sk-surface-dark-1: #272729;
@@ -67,6 +120,46 @@ html.dark {
   --mask-color: rgba(255, 255, 255, 0.3);
   --hover-bg-color: var(--sk-surface-dark-2);
   --active-bg-color: var(--sk-surface-dark-3);
+
+  /* 文本色必须在深色下反转。
+     组件里有多处直接写 var(--sk-text-tertiary)（如 MainLayout 的 .user-role），
+     而它原先只在 :root 定义，深色模式下仍是 rgba(0,0,0,.48) —— 黑底黑字，等于看不见。
+     注意不反转 --sk-text-near-black / --sk-text-white：那两个是字面色值，不是语义角色。 */
+  --sk-text-primary: #ffffff;
+  --sk-text-secondary: rgba(255, 255, 255, 0.8);
+  --sk-text-tertiary: rgba(255, 255, 255, 0.48);
+
+  /* 深色模式下 Element 的 light-N 是「与黑混合」而不是与白混合，
+     否则标签/提示的背景会是浅色块，在深色界面上很突兀 */
+  --el-color-primary-light-3: #004f9f;
+  --el-color-primary-light-5: #003872;
+  --el-color-primary-light-7: #002244;
+  --el-color-primary-light-8: #00172d;
+  --el-color-primary-light-9: #000b17;
+
+  --el-color-success-light-3: #248b3e;
+  --el-color-success-light-5: #1a642c;
+  --el-color-success-light-7: #103c1b;
+  --el-color-success-light-8: #0a2812;
+  --el-color-success-light-9: #051409;
+
+  --el-color-warning-light-3: #b26f07;
+  --el-color-warning-light-5: #805005;
+  --el-color-warning-light-7: #4d3003;
+  --el-color-warning-light-8: #332002;
+  --el-color-warning-light-9: #191001;
+
+  --el-color-danger-light-3: #b22922;
+  --el-color-danger-light-5: #801e18;
+  --el-color-danger-light-7: #4d120e;
+  --el-color-danger-light-8: #330c0a;
+  --el-color-danger-light-9: #190605;
+
+  --el-color-info-light-3: #636367;
+  --el-color-info-light-5: #47474a;
+  --el-color-info-light-7: #2b2b2c;
+  --el-color-info-light-8: #1c1c1d;
+  --el-color-info-light-9: #0e0e0f;
 
   /* Element Plus dark mode root variables */
   --el-bg-color: var(--sk-bg-pure-black);
@@ -136,66 +229,15 @@ body {
   letter-spacing: -0.28px;
 }
 
-.sk-display-section {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 2.50rem; /* 40px */
-  font-weight: 600;
-  line-height: 1.10;
-  letter-spacing: normal;
-}
-
-.sk-display-tile {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 1.75rem; /* 28px */
-  font-weight: 400;
-  line-height: 1.14;
-  letter-spacing: 0.196px;
-}
-
-.sk-display-card {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 1.31rem; /* 21px */
-  font-weight: 700;
-  line-height: 1.19;
-  letter-spacing: 0.231px;
-}
-
 .sk-display-subheading {
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 1.31rem; /* 21px */
   font-weight: 400;
   line-height: 1.19;
-  letter-spacing: 0.231px;
+  letter-spacing: -0.2px;
 }
 
 /* Body Text - SF Pro Text */
-.sk-body {
-  font-size: 1.06rem; /* 17px */
-  font-weight: 400;
-  line-height: 1.47;
-  letter-spacing: -0.374px;
-}
-
-.sk-body-emphasis {
-  font-size: 1.06rem; /* 17px */
-  font-weight: 600;
-  line-height: 1.24;
-  letter-spacing: -0.374px;
-}
-
-.sk-caption {
-  font-size: 0.88rem; /* 14px */
-  font-weight: 400;
-  line-height: 1.29;
-  letter-spacing: -0.224px;
-}
-
-.sk-caption-bold {
-  font-size: 0.88rem; /* 14px */
-  font-weight: 600;
-  line-height: 1.29;
-  letter-spacing: -0.224px;
-}
 
 .sk-micro {
   font-size: 0.75rem; /* 12px */
@@ -245,105 +287,10 @@ body {
 }
 
 /* Dark CTA Button */
-.sk-button-dark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--sk-text-near-black);
-  color: var(--sk-text-white);
-  padding: 8px 15px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 2.41;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.sk-button-dark:hover {
-  background-color: #000000;
-}
-
-.sk-button-dark:active {
-  background-color: var(--sk-button-active);
-}
-
-.sk-button-dark:focus-visible {
-  outline: 2px solid var(--sk-focus-color);
-  outline-offset: 2px;
-}
 
 /* Pill Link Button (Learn More / Shop) */
-.sk-button-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: transparent;
-  color: var(--sk-link-color);
-  padding: 8px 15px;
-  border-radius: 980px;
-  border: 1px solid var(--sk-link-color);
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.43;
-  letter-spacing: -0.224px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.sk-button-pill:hover {
-  text-decoration: underline;
-}
-
-.sk-button-pill:focus-visible {
-  outline: 2px solid var(--sk-focus-color);
-  outline-offset: 2px;
-}
-
-html.dark .sk-button-pill {
-  color: var(--sk-link-color-dark);
-  border-color: var(--sk-link-color-dark);
-}
 
 /* Filter / Search Button */
-.sk-button-filter {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--sk-button-default-light);
-  color: rgba(0, 0, 0, 0.8);
-  padding: 0px 14px;
-  border-radius: 11px;
-  border: 3px solid rgba(0, 0, 0, 0.04);
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sk-button-filter:hover {
-  background-color: #f0f0f5;
-}
-
-.sk-button-filter:focus-visible {
-  outline: 2px solid var(--sk-focus-color);
-  outline-offset: 2px;
-}
-
-html.dark .sk-button-filter {
-  background-color: var(--sk-surface-dark-2);
-  color: rgba(255, 255, 255, 0.8);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-html.dark .sk-button-filter:hover {
-  background-color: var(--sk-surface-dark-3);
-}
 
 /* ========================================
    Apple Card System
@@ -360,103 +307,17 @@ html.dark .sk-button-filter:hover {
   transform: translateY(-2px);
 }
 
-.sk-card-light {
-  background-color: var(--sk-bg-light-gray);
-}
-
-.sk-card-dark {
-  background-color: var(--sk-surface-dark-1);
-}
-
-.sk-card-elevated {
-  box-shadow: var(--sk-card-shadow);
-}
-
 /* ========================================
    Apple Navigation Glass
    ======================================== */
-
-.sk-nav-glass {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  height: 48px;
-  background-color: rgba(0, 0, 0, 0.8);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-}
-
-.sk-nav-glass .sk-nav-link {
-  color: var(--sk-text-white);
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  text-decoration: none;
-  padding: 0 12px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  transition: opacity 0.2s ease;
-}
-
-.sk-nav-glass .sk-nav-link:hover {
-  opacity: 0.7;
-}
-
-html.dark .sk-nav-glass {
-  background-color: rgba(0, 0, 0, 0.8);
-}
 
 /* ========================================
    Apple Section Layout
    ======================================== */
 
-.sk-section {
-  width: 100%;
-  padding: 60px 16px;
-}
-
-.sk-section-dark {
-  background-color: var(--sk-bg-pure-black);
-  color: var(--sk-text-white);
-}
-
-.sk-section-light {
-  background-color: var(--sk-bg-light-gray);
-  color: var(--sk-text-near-black);
-}
-
-.sk-section-content {
-  max-width: 980px;
-  margin: 0 auto;
-}
-
 /* ========================================
    Apple Links
    ======================================== */
-
-.sk-link {
-  color: var(--sk-link-color);
-  text-decoration: none;
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.43;
-  letter-spacing: -0.224px;
-  transition: opacity 0.2s ease;
-}
-
-.sk-link:hover {
-  text-decoration: underline;
-}
-
-html.dark .sk-link {
-  color: var(--sk-link-color-dark);
-}
 
 a {
   color: var(--sk-link-color);
@@ -699,15 +560,13 @@ a:hover {
 }
 
 .plate-number.new-energy {
-  background: linear-gradient(135deg, #00a870 0%, #00c853 100%);
+  background: #00a870;
   color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 168, 112, 0.3);
 }
 
 .plate-number.fuel {
-  background: linear-gradient(135deg, #0066cc 0%, #0080ff 100%);
+  background: #0066cc;
   color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
 }
 
 /* Source Tag */
@@ -798,6 +657,14 @@ html.dark .el-message-box__title {
 
 html.dark .el-message-box__content {
   color: var(--text-color-secondary);
+}
+
+/* 风险提示类弹窗的消息是多行文本（黑名单原因等），
+   ElMessageBox 默认会折叠换行，这里保留。用 CSS 而不是 dangerouslyUseHTMLString，
+   避免把用户填写的内容当 HTML 渲染。 */
+.pre-line-message .el-message-box__message p {
+  white-space: pre-line;
+  line-height: 1.6;
 }
 
 html.dark .el-input__wrapper {
@@ -1314,70 +1181,6 @@ html.dark ::-webkit-scrollbar-thumb {
    Utility Classes
    ======================================== */
 
-.sk-text-center {
-  text-align: center;
-}
-
-.sk-text-left {
-  text-align: left;
-}
-
-.sk-text-right {
-  text-align: right;
-}
-
-.sk-hidden {
-  display: none;
-}
-
-.sk-flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sk-flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sk-gap-8 {
-  gap: 8px;
-}
-
-.sk-gap-16 {
-  gap: 16px;
-}
-
-.sk-gap-24 {
-  gap: 24px;
-}
-
-.sk-mt-8 {
-  margin-top: 8px;
-}
-
-.sk-mt-16 {
-  margin-top: 16px;
-}
-
-.sk-mt-24 {
-  margin-top: 24px;
-}
-
-.sk-mb-8 {
-  margin-bottom: 8px;
-}
-
-.sk-mb-16 {
-  margin-bottom: 16px;
-}
-
-.sk-mb-24 {
-  margin-bottom: 24px;
-}
-
 /* Hide number input arrows */
 .el-input-number__decrease,
 .el-input-number__increase {
@@ -1448,7 +1251,7 @@ html.dark ::-webkit-scrollbar-thumb {
   font-size: 28px;
   font-weight: 600;
   line-height: 1.14;
-  letter-spacing: 0.196px;
+  letter-spacing: -0.1px;
   color: var(--sk-text-near-black);
 }
 
@@ -1823,7 +1626,7 @@ html.dark .page-container .el-card :deep(.el-card__header) {
   font-size: 28px;
   font-weight: 600;
   line-height: 1.14;
-  letter-spacing: 0.196px;
+  letter-spacing: -0.1px;
   color: var(--sk-text-near-black);
 }
 

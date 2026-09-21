@@ -164,8 +164,8 @@
             <span class="label">附件</span>
             <div class="docs-mini">
               <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
-                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents || [], Number(idx))" />
-                <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents || [], Number(idx))"  alt="保险附件，点击可放大查看" />
+                <div v-else class="pdf-icon" @click="openPdf(doc.url)" role="button" tabindex="0" aria-label="打开 PDF 附件" @keydown.enter.prevent="openPdf(doc.url)" @keydown.space.prevent="openPdf(doc.url)">
                   <el-icon><Document /></el-icon>
                 </div>
               </template>
@@ -207,8 +207,8 @@
             <template #default="{ row }">
               <div class="docs-mini" v-if="row.documents && row.documents.length">
                 <template v-for="(doc, idx) in row.documents.slice(0, 2)" :key="idx">
-                  <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)" />
-                  <div v-else class="pdf-icon" @click="openPdf(doc.url)">
+                  <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)"  alt="保险附件，点击可放大查看" />
+                  <div v-else class="pdf-icon" @click="openPdf(doc.url)" role="button" tabindex="0" aria-label="打开 PDF 附件" @keydown.enter.prevent="openPdf(doc.url)" @keydown.space.prevent="openPdf(doc.url)">
                     <el-icon><Document /></el-icon>
                   </div>
                 </template>
@@ -314,14 +314,14 @@
           <div class="multi-upload">
             <div class="file-list">
               <div v-for="(doc, idx) in form.documents" :key="idx" class="file-item">
-                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" />
+                <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)"  alt="保险附件" />
                 <div v-else class="pdf-thumb">
                   <el-icon><Document /></el-icon>
                   <span>PDF</span>
                 </div>
-                <div class="file-remove" @click="removeDocument(idx)">×</div>
+                <div class="file-remove" @click="removeDocument(idx)" role="button" tabindex="0" aria-label="删除这个附件" @keydown.enter.prevent="removeDocument(idx)" @keydown.space.prevent="removeDocument(idx)">×</div>
               </div>
-              <div v-if="form.documents.length < 5" class="upload-btn" @click="triggerUpload">
+              <div v-if="form.documents.length < 5" class="upload-btn" @click="triggerUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload" @keydown.space.prevent="triggerUpload">
                 <el-icon><Plus /></el-icon>
                 <span>{{ form.documents.length }}/5</span>
               </div>
@@ -344,7 +344,7 @@
     <el-dialog v-model="imagePreviewVisible" title="附件预览" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside" v-if="previewDocs.length">
         <el-carousel-item v-for="(doc, idx) in previewDocs" :key="idx">
-          <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" style="width: 100%; height: 100%; object-fit: contain" />
+          <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" style="width: 100%; height: 100%; object-fit: contain"  alt="保险附件" />
           <div v-else class="pdf-preview">
             <el-icon :size="60"><Document /></el-icon>
             <p>PDF 文件</p>
@@ -361,7 +361,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { insuranceApi, vehicleApi, uploadApi } from '../api'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
+import { useMobile } from '../composables/useMobile'
 
 interface DocumentItem {
   url: string
@@ -370,7 +370,7 @@ interface DocumentItem {
 
 const loading = ref(false)
 const submitting = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const vehicles = ref<any[]>([])
 const selectedVehicle = ref<any>(null)
 const insuranceRecords = ref<any[]>([])
@@ -545,12 +545,6 @@ async function handleFileSelect(e: Event) {
   if (!file) return
 
   const isPdf = file.type === 'application/pdf'
-  const invalid = validateUploadFile(file, { allowPdf: true })
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   try {
     const res = await uploadApi.uploadInsurance(file, `${selectedVehicle.value?.plate_number || '车辆'}-${isPdf ? '保单' : '保险照片'}`)
     if (res.success && res.data) {
@@ -620,9 +614,7 @@ async function handleDelete(id: string) {
 
 onMounted(() => {
   loadVehicles()
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -668,10 +660,10 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-card.primary { border-left: 3px solid var(--primary-color, #409EFF); }
-.stat-card.warning { border-left: 3px solid #E6A23C; }
-.stat-card.danger { border-left: 3px solid #F56C6C; }
-.stat-card.success { border-left: 3px solid #67C23A; }
+.stat-card.primary { border-left: 3px solid var(--primary-color); }
+.stat-card.warning { border-left: 3px solid var(--sk-color-warning); }
+.stat-card.danger { border-left: 3px solid var(--sk-color-danger); }
+.stat-card.success { border-left: 3px solid var(--sk-color-success); }
 
 .stat-value {
   font-size: 18px;
@@ -681,7 +673,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 4px;
 }
 
@@ -724,7 +716,7 @@ onMounted(() => {
 
 .vehicle-info .brand {
   font-size: 13px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-cards {
@@ -768,7 +760,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -776,7 +768,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .value.text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
   font-weight: 500;
 }
 
@@ -799,7 +791,7 @@ onMounted(() => {
 .empty-tip {
   text-align: center;
   padding: 30px;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 14px;
 }
 
@@ -812,15 +804,15 @@ onMounted(() => {
 }
 
 .text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
 }
 
 .text-muted {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 @media (min-width: 768px) {
@@ -882,7 +874,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background: #f5f7fa;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .pdf-thumb .el-icon {
@@ -919,13 +911,13 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 .upload-btn:hover {
-  border-color: var(--primary-color, #409EFF);
-  color: var(--primary-color, #409EFF);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .upload-btn .el-icon {
@@ -935,7 +927,7 @@ onMounted(() => {
 
 .upload-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 8px;
 }
 
@@ -962,20 +954,20 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F56C6C;
+  color: var(--sk-color-danger);
   cursor: pointer;
 }
 
 .docs-mini .more {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .docs-mini .badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #F56C6C;
+  background: var(--sk-color-danger);
   color: #fff;
   font-size: 10px;
   padding: 1px 4px;
@@ -989,11 +981,11 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .pdf-preview .el-icon {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 /* 暗色模式 */

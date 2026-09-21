@@ -44,7 +44,7 @@ export async function updateSettings(c: AppContext): Promise<Response> {
     }
 
     // 使用 INSERT OR REPLACE 来更新或插入
-    await execute(db, "INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))", [
+    await execute(db, "INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, datetime('now', '+8 hours'))", [
       key,
       value || ''
     ]);

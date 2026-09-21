@@ -56,8 +56,8 @@
         <div class="mobile-card-images" v-if="item.license_images?.length || item.registration_image">
           <span class="label">证件</span>
           <div class="image-thumbs">
-            <img v-for="(img, idx) in item.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证" />
-            <img v-if="item.registration_image" :src="getImageUrl(item.registration_image)" @click="previewImage(item.registration_image)" title="登记证书" />
+            <img v-for="(img, idx) in item.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证"  alt="车辆证件照片，点击可放大查看" />
+            <img v-if="item.registration_image" :src="getImageUrl(item.registration_image)" @click="previewImage(item.registration_image)" title="登记证书"  alt="车辆证件照片，点击可放大查看" />
           </div>
         </div>
         <div class="mobile-card-actions">
@@ -94,8 +94,8 @@
         <el-table-column label="证件" width="110">
           <template #default="{ row }">
             <div class="image-thumbs" v-if="row.license_images?.length || row.registration_image">
-              <img v-for="(img, idx) in row.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证" />
-              <img v-if="row.registration_image" :src="getImageUrl(row.registration_image)" @click="previewImage(row.registration_image)" title="登记证书" />
+              <img v-for="(img, idx) in row.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证"  alt="车辆证件照片，点击可放大查看" />
+              <img v-if="row.registration_image" :src="getImageUrl(row.registration_image)" @click="previewImage(row.registration_image)" title="登记证书"  alt="车辆证件照片，点击可放大查看" />
             </div>
             <span v-else>-</span>
           </template>
@@ -228,10 +228,10 @@
         <el-form-item label="行驶证">
           <div class="image-upload">
             <div v-for="(img, idx) in form.license_images" :key="idx" class="image-preview">
-              <img :src="getImageUrl(img)" @click="previewImage(img)" />
-              <div class="image-remove" @click="form.license_images.splice(idx, 1)">×</div>
+              <img :src="getImageUrl(img)" @click="previewImage(img)"  alt="车辆证件照片，点击可放大查看" />
+              <div class="image-remove" @click="form.license_images.splice(idx, 1)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="form.license_images.splice(idx, 1)" @keydown.space.prevent="form.license_images.splice(idx, 1)">×</div>
             </div>
-            <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
+            <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
               <el-icon><Plus /></el-icon>
               <span>{{ form.license_images.length }}/2</span>
             </div>
@@ -240,10 +240,10 @@
         <el-form-item label="登记证书">
           <div class="image-upload">
             <div v-if="form.registration_image" class="image-preview">
-              <img :src="getImageUrl(form.registration_image)" @click="previewImage(form.registration_image)" />
-              <div class="image-remove" @click="form.registration_image = ''">×</div>
+              <img :src="getImageUrl(form.registration_image)" @click="previewImage(form.registration_image)"  alt="车辆证件照片，点击可放大查看" />
+              <div class="image-remove" @click="form.registration_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="form.registration_image = ''" @keydown.space.prevent="form.registration_image = ''">×</div>
             </div>
-            <div v-else class="upload-btn" @click="triggerUpload('registration')">
+            <div v-else class="upload-btn" @click="triggerUpload('registration')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('registration')" @keydown.space.prevent="triggerUpload('registration')">
               <el-icon><Plus /></el-icon>
               <span>上传</span>
             </div>
@@ -269,7 +269,7 @@
 
     <!-- 图片预览 -->
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '600px' }">
-      <img :src="previewImageUrl" style="width: 100%; max-height: 70vh; object-fit: contain" />
+      <img :src="previewImageUrl" style="width: 100%; max-height: 70vh; object-fit: contain"  alt="车辆证件照片" />
     </el-dialog>
 
     <!-- 查看详情对话框 -->
@@ -285,7 +285,6 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { vehicleApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
 import VehicleDetailDialog from './VehicleDetailDialog.vue'
 
 const loading = ref(false)
@@ -431,12 +430,6 @@ async function handleFileSelect(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   try {
     // 行驶证分正页、副页，用序号区分，避免两张照片重名
     const label = uploadType.value === 'license' ? `行驶证${form.license_images.length + 1}` : '登记证书'
@@ -560,7 +553,7 @@ onMounted(() => loadData())
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -575,12 +568,12 @@ onMounted(() => loadData())
 }
 
 .mobile-card-images .label {
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 13px;
 }
 
 .text-primary {
-  color: #409EFF;
+  color: var(--primary-color);
   font-weight: 500;
 }
 
@@ -686,13 +679,13 @@ onMounted(() => loadData())
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 .upload-btn:hover {
-  border-color: var(--primary-color, #409EFF);
-  color: var(--primary-color, #409EFF);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .upload-btn .el-icon {

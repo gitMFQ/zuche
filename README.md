@@ -224,8 +224,9 @@ npx wrangler secret put JWT_SECRET                                              
 npx wrangler secret list                                                        # 确认（只列名字）
 ```
 
-> ⚠️ 不设置也能跑：`src/lib/auth.ts` 里硬编码了默认值 `rental-admin-secret-key-2026`，这个字符串就在公开代码里，任何人都能用它伪造 JWT，**上线必须设置**。
-> ⚠️ 更换 `JWT_SECRET` 会让所有已签发的 token 立即失效（JWT 有效期 1 年，前端存 `localStorage.token`），换密钥请挑低峰期。
+> ⚠️ **必须设置**。`src/lib/auth.ts` 已不再提供默认密钥：`JWT_SECRET` 缺失时登录接口会直接报「服务未正确配置」，`/uploads/*` 也会因为无法校验签名而全部 403。改完代码后若不设置，整个系统不可用。
+> ⚠️ 更换 `JWT_SECRET` 会让所有已签发的 token 立即失效（JWT 有效期 7 天，前端存 `localStorage.token`），换密钥请挑低峰期。
+> ℹ️ 上传文件的签名 URL 用 `JWT_SECRET` 派生出的子密钥签名，换密钥会让已加载页面里的图片链接失效，刷新即可。
 
 ### 6. 执行线上数据库迁移
 
@@ -423,17 +424,40 @@ npx wrangler d1 execute zjzc --remote --file=local-dump.sql
 
 - [ ] `wrangler.jsonc` 的 `database_id` 已换成真实 UUID（不是 `00000000-...`）
 - [ ] R2 桶 `zjzc` 已创建，桶名与配置一致
-- [ ] 已 `wrangler secret put JWT_SECRET`（不使用代码里的默认密钥）
-- [ ] 已登录并改掉 `admin123`
+- [ ] 已 `wrangler secret put JWT_SECRET`（**必须**，代码里已无默认密钥兜底）
+- [ ] 已登录并改掉 `admin123`（首页会强制弹出改密弹窗，改完才放行）
+- [ ] **页面级安全响应头已在 Zone 层配置**（Worker 只能覆盖 `/api/*` 与 `/uploads/*`，
+      HTML/JS/CSS 由 Static Assets 直接返回）：Cloudflare Dashboard →
+      规则 → Transform Rules → Modify Response Header，对 `/**` 添加
+      `Content-Security-Policy`、`X-Frame-Options: DENY`、`Strict-Transport-Security`。
+      建议先用 `Content-Security-Policy-Report-Only` 观察一轮再切强制
 - [ ] `npm run typecheck` 通过
 - [ ] 备份策略已就绪（定期 `d1 export`）
+
+#### 已知依赖问题：xlsx
+
+`npm audit` 会报 `xlsx@0.18.5` 的 **Prototype Pollution**（GHSA-4r6h-8v6p-xvw6，CVSS 7.8）。
+SheetJS 在 0.18.5 之后不再往 npm 发布，受影响范围是 `<0.19.3`，`npm audit` 提示 npm 上暂无修复版本。
+
+**风险判断**：影响面有限。xlsx 只在前端「订单批量导入」页用于解析**用户自己选择**的 Excel 文件，
+触发条件是自己上传一个恶意构造的表格，不涉及服务端解析或他人投递，因此暂不阻断上线。
+
+**修复方式**（需要时再做）：从 SheetJS 官方源安装，API 完全兼容，改动仅一行 package.json：
+
+```bash
+npm i https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+```
+
+注意该地址不是 npm registry，需确认 CI 与 Cloudflare 构建环境都能访问它，否则会构建失败。
+
 
 ### 15. 费用与额度提醒
 
 - **免费额度**：D1 5GB 存储 + 每日读写额度；Workers 每日 10 万请求；Static Assets 单文件上限 10MiB（当前产物最大约 874KB，安全）
 - **R2 需绑定支付方式**（即便完全在免费额度内），免费额度为每月 10GB 存储，出流量免费
-- `wrangler.jsonc` 的 `observability.enabled` 控制 Workers Logs，当前为 `false`（关闭）；开启会产生日志存储与采样开销
-- `/uploads/*` 配了 `run_worker_first`，每次读取都会进 Worker（有 `caches.default` 缓存兜底）并产生一次 R2 读操作
+- `wrangler.jsonc` 的 `observability.enabled` 控制 Workers Logs，当前为 `true`（开启，用于线上排查）；若在意日志存储开销可改回 `false`
+- `/uploads/*` 配了 `run_worker_first`，每次读取都会进 Worker（有 `caches.default` 缓存兜底）并产生一次 R2 读操作；
+  图片 URL 现在是带签名的（`/uploads/{exp}.{sig}/{dir}/{file}`），换 `JWT_SECRET` 会让旧链接失效
 
 ## 数据表结构
 

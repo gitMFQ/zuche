@@ -1,9 +1,9 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+// Element Plus 组件由 unplugin-vue-components 按需自动引入（见 vite.config.ts）。
+// 这里保留全量样式：组件样式按需注入需要额外的 resolver 配置，
+// 而 CSS 是独立产物、不影响主 JS 体积，全量引入更稳（不会漏样式）。
 import 'element-plus/dist/index.css'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 import App from './App.vue'
 import router from './router'
@@ -12,15 +12,9 @@ import './style.css'
 
 const app = createApp(App)
 
-// 注册所有 Element Plus 图标
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
-
 const pinia = createPinia()
 app.use(pinia)
 app.use(router)
-app.use(ElementPlus, { locale: zhCn })
 
 const userStore = useUserStore()
 function applyDarkMode() {

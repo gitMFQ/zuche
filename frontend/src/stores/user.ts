@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { useDictStore } from './dict'
 
 export interface User {
   id: string
@@ -53,6 +54,8 @@ function getSystemPrefersDark(): boolean {
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('token') || '')
   const user = ref<User | null>(null)
+  /** 是否必须先改密码（默认口令 admin123 未改）。由登录/获取用户信息接口设置 */
+  const mustChangePassword = ref(false)
 
   // 用户主题设置
   const themeSettings = ref<UserThemeSettings>(loadThemeSettings())
@@ -77,7 +80,10 @@ export const useUserStore = defineStore('user', () => {
   function logout() {
     token.value = ''
     user.value = null
+    mustChangePassword.value = false
     localStorage.removeItem('token')
+    // 清掉字典缓存，避免下一个登录的人看到上一个人的缓存数据
+    useDictStore().reset()
     // 注意：不清除主题设置，保留用户的深色模式偏好
   }
 
@@ -120,6 +126,7 @@ export const useUserStore = defineStore('user', () => {
   return {
     token,
     user,
+    mustChangePassword,
     themeSettings,
     setToken,
     setUser,

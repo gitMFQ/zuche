@@ -19,8 +19,17 @@
       </el-button>
     </div>
 
-    <!-- 移动端卡片列表 -->
-    <div class="mobile-cards">
+    <!-- 列表三态（加载中 / 加载失败可重试 / 空数据） -->
+    <DataState
+      :loading="loading"
+      :error="loadError"
+      :empty="tableData.length === 0"
+      empty-text="还没有客户，点右上角添加第一个"
+      skeleton
+      @retry="loadData"
+    >
+      <!-- 移动端卡片列表 -->
+      <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
           <span class="customer-name">
@@ -46,7 +55,7 @@
         <div class="mobile-card-row" v-if="item.source_name">
           <span class="label">来源</span>
           <span class="value">
-            <span class="source-tag" :style="{ background: item.source_color || '#409EFF' }">{{ item.source_name }}</span>
+            <span class="source-tag" :style="{ background: item.source_color || '#0071e3' }">{{ item.source_name }}</span>
           </span>
         </div>
         <div class="mobile-card-actions">
@@ -64,7 +73,7 @@
 
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
+      <el-table :data="tableData" stripe class="hide-mobile">
         <el-table-column prop="name" label="姓名" width="100">
           <template #default="{ row }">
             <span>
@@ -79,7 +88,7 @@
         <el-table-column prop="license_expiry" label="驾照到期" width="100" />
         <el-table-column prop="source_name" label="来源" width="90">
           <template #default="{ row }">
-            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#409EFF' }">{{ row.source_name }}</span>
+            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#0071e3' }">{{ row.source_name }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
@@ -107,6 +116,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </DataState>
 
     <el-pagination
       v-model:current-page="pagination.page"
@@ -136,10 +146,10 @@
           <div class="multi-upload">
             <div class="image-list">
               <div v-for="(img, idx) in form.id_card_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(form.id_card_images, idx)" />
-                <div class="image-remove" @click="removeIdCardImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(form.id_card_images, idx)"  alt="客户证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeIdCardImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeIdCardImage(idx)" @keydown.space.prevent="removeIdCardImage(idx)">×</div>
               </div>
-              <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')">
+              <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('id_card')" @keydown.space.prevent="triggerUpload('id_card')">
                 <el-icon><Plus /></el-icon>
                 <span>{{ form.id_card_images.length }}/2</span>
               </div>
@@ -154,10 +164,10 @@
           <div class="multi-upload">
             <div class="image-list">
               <div v-for="(img, idx) in form.license_images" :key="idx" class="image-item">
-                <img :src="getImageUrl(img)" @click="previewImage(form.license_images, idx)" />
-                <div class="image-remove" @click="removeLicenseImage(idx)">×</div>
+                <img :src="getImageUrl(img)" @click="previewImage(form.license_images, idx)"  alt="客户证件照片，点击可放大查看" />
+                <div class="image-remove" @click="removeLicenseImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeLicenseImage(idx)" @keydown.space.prevent="removeLicenseImage(idx)">×</div>
               </div>
-              <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')">
+              <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
                 <el-icon><Plus /></el-icon>
                 <span>{{ form.license_images.length }}/2</span>
               </div>
@@ -215,7 +225,7 @@
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '500px' }">
       <el-carousel :initial-index="previewIndex" indicator-position="outside">
         <el-carousel-item v-for="(img, idx) in previewImagesList" :key="idx">
-          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain" />
+          <img :src="getImageUrl(img)" style="width: 100%; height: 100%; object-fit: contain"  alt="客户证件照片" />
         </el-carousel-item>
       </el-carousel>
     </el-dialog>
@@ -238,7 +248,7 @@
           </span>
         </el-descriptions-item>
         <el-descriptions-item label="客户来源">
-          <span v-if="viewData.source_name" class="source-tag" :style="{ background: viewData.source_color || '#409EFF' }">{{ viewData.source_name }}</span>
+          <span v-if="viewData.source_name" class="source-tag" :style="{ background: viewData.source_color || '#0071e3' }">{{ viewData.source_name }}</span>
           <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item label="地址">{{ viewData.address || '-' }}</el-descriptions-item>
@@ -253,13 +263,13 @@
         <div class="view-image-group" v-if="viewData.id_card_images?.length">
           <div class="view-image-label">身份证照片</div>
           <div class="view-image-list">
-            <img v-for="(img, idx) in viewData.id_card_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.id_card_images || [], Number(idx))" />
+            <img v-for="(img, idx) in viewData.id_card_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.id_card_images || [], Number(idx))"  alt="客户证件照片，点击可放大查看" />
           </div>
         </div>
         <div class="view-image-group" v-if="viewData.license_images?.length">
           <div class="view-image-label">驾驶证照片</div>
           <div class="view-image-list">
-            <img v-for="(img, idx) in viewData.license_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.license_images || [], Number(idx))" />
+            <img v-for="(img, idx) in viewData.license_images" :key="idx" :src="getImageUrl(img)" @click="previewImage(viewData.license_images || [], Number(idx))"  alt="客户证件照片，点击可放大查看" />
           </div>
         </div>
       </div>
@@ -275,18 +285,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Star } from '@element-plus/icons-vue'
-import { customerApi, blacklistApi, uploadApi, orderSourceApi } from '../api'
+import { customerApi, blacklistApi, uploadApi } from '../api'
+import { useDictStore } from '../stores/dict'
+import DataState from '../components/DataState.vue'
+import { useMobile } from '../composables/useMobile'
 import { getImageUrl } from '../utils/helpers'
-import { validateUploadFile } from '../utils/upload'
 
 const router = useRouter()
 const loading = ref(false)
+const loadError = ref<string | null>(null)
 const submitting = ref(false)
-const isMobile = ref(window.innerWidth < 768)
+const { isMobile } = useMobile()
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const editingId = ref('')
@@ -298,7 +311,9 @@ const previewImagesList = ref<string[]>([])
 const previewIndex = ref(0)
 const viewDialogVisible = ref(false)
 const viewData = reactive<any>({})
-const orderSources = ref<any[]>([])
+// 订单来源走字典缓存：多个页面共用，避免每个页面各请求一次
+const dictStore = useDictStore()
+const orderSources = computed(() => dictStore.orderSources)
 
 const searchForm = reactive({ keyword: '', status: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
@@ -342,12 +357,6 @@ async function handleUpload(e: Event, type: 'id_card' | 'license') {
   const file = target.files?.[0]
   if (!file) return
 
-  const invalid = validateUploadFile(file)
-  if (invalid) {
-    ElMessage.error(invalid)
-    return
-  }
-
   try {
     const label = type === 'id_card' ? '身份证' : '驾驶证'
     const res = await uploadApi.uploadCustomer(file, `${form.name || '客户'}-${label}`)
@@ -378,14 +387,19 @@ function removeLicenseImage(index: number) {
 
 async function loadData() {
   loading.value = true
+  loadError.value = null
   try {
     const res: any = await customerApi.getList({ ...searchForm, ...pagination })
     if (res.success) {
       tableData.value = res.data.data
       pagination.total = res.data.total
+    } else {
+      loadError.value = res.message || '加载失败，请重试'
     }
   } catch (error) {
     console.error('加载数据失败', error)
+    // 原来只打 console，页面上是一张空表格，用户看不出是「没有数据」还是「加载失败」
+    loadError.value = '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
@@ -523,14 +537,7 @@ async function toggleRegular(customer: any) {
 
 // 加载订单来源
 async function loadOrderSources() {
-  try {
-    const res: any = await orderSourceApi.getList({ pageSize: 100 })
-    if (res.success) {
-      orderSources.value = Array.isArray(res.data) ? res.data : (res.data.data || [])
-    }
-  } catch (error) {
-    console.error('加载订单来源失败', error)
-  }
+  await dictStore.ensureOrderSources()
 }
 
 // 查看客户订单
@@ -540,9 +547,7 @@ function viewOrders(customer: any) {
 
 onMounted(() => {
   loadData()
-  window.addEventListener('resize', () => {
-    isMobile.value = window.innerWidth < 768
-  })
+
 })
 </script>
 
@@ -618,7 +623,7 @@ onMounted(() => {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -626,7 +631,7 @@ onMounted(() => {
 }
 
 .mobile-card-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -723,13 +728,13 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #909399;
+  color: var(--sk-color-info);
   font-size: 12px;
 }
 
 .upload-btn:hover {
-  border-color: #409EFF;
-  color: #409EFF;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .upload-btn .el-icon {
@@ -757,7 +762,7 @@ onMounted(() => {
 
 .view-image-label {
   font-size: 13px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-bottom: 8px;
 }
 
@@ -777,15 +782,15 @@ onMounted(() => {
 }
 
 .view-image-list img:hover {
-  border-color: #409EFF;
+  border-color: var(--primary-color);
 }
 
 .text-danger {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 .text-muted {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 /* 来源标签 */

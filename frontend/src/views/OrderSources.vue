@@ -8,11 +8,20 @@
     </div>
 
     <!-- 移动端卡片列表 -->
+    <!-- 列表三态（加载中 / 加载失败可重试 / 空数据） -->
+    <DataState
+      :loading="loading"
+      :error="loadError"
+      :empty="tableData.length === 0"
+      empty-text="还没有订单来源，点右上角添加"
+      skeleton
+      @retry="loadData"
+    >
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
           <span class="name">
-            <span class="color-dot" :style="{ background: item.color || '#409EFF' }"></span>
+            <span class="color-dot" :style="{ background: item.color || '#0071e3' }"></span>
             {{ item.name }}
           </span>
         </div>
@@ -37,10 +46,10 @@
 
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
+      <el-table :data="tableData" stripe class="hide-mobile">
         <el-table-column prop="name" label="来源名称" min-width="150">
           <template #default="{ row }">
-            <span class="color-dot" :style="{ background: row.color || '#409EFF' }"></span>
+            <span class="color-dot" :style="{ background: row.color || '#0071e3' }"></span>
             {{ row.name }}
           </template>
         </el-table-column>
@@ -65,6 +74,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </DataState>
 
     <!-- 添加/编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑来源' : '添加来源'" width="90%" :style="{ maxWidth: '400px' }">
@@ -100,8 +110,14 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { orderSourceApi } from '../api'
+import { useDictStore } from '../stores/dict'
+import DataState from '../components/DataState.vue'
+
+const dictStore = useDictStore()
 
 const loading = ref(false)
+// 加载失败时的提示文案，非空即由 DataState 展示错误态
+const loadError = ref<string | null>(null)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
@@ -112,13 +128,13 @@ const form = reactive({
   id: '',
   name: '',
   commission_rate: 0,
-  color: '#409EFF',
+  color: '#0071e3',
   remarks: ''
 })
 
 // 预定义颜色
 const predefineColors = [
-  '#409EFF',
+  '#0071e3',
   '#67C23A',
   '#E6A23C',
   '#F56C6C',
@@ -137,13 +153,21 @@ const rules: FormRules = {
 
 async function loadData() {
   loading.value = true
+  loadError.value = null
   try {
+    // 这里同时承担「加载」与「强制刷新」两个职责：改完来源后要让字典缓存失效，
+    // 否则其它页面的下拉框还是旧数据
+    dictStore.invalidateOrderSources()
     const res: any = await orderSourceApi.getList()
     if (res.success) {
       tableData.value = res.data
+    } else {
+      loadError.value = res.message || '加载失败，请重试'
     }
   } catch (error) {
     console.error('加载数据失败', error)
+    // 原来只打 console，页面上是一张空表格，用户分不清「没有数据」与「加载失败」
+    loadError.value = '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
@@ -155,7 +179,7 @@ function openDialog(data?: any) {
     id: data?.id || '',
     name: data?.name || '',
     commission_rate: data?.commission_rate || 0,
-    color: data?.color || '#409EFF',
+    color: data?.color || '#0071e3',
     remarks: data?.remarks || ''
   })
   dialogVisible.value = true
@@ -266,7 +290,7 @@ onMounted(() => loadData())
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -282,7 +306,7 @@ onMounted(() => loadData())
 }
 
 .text-warning {
-  color: #E6A23C;
+  color: var(--sk-color-warning);
   font-weight: 500;
 }
 
@@ -310,7 +334,7 @@ onMounted(() => loadData())
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--sk-color-info);
   margin-top: 4px;
 }
 

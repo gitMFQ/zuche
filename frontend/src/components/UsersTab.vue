@@ -333,7 +333,7 @@ html.dark .user-name {
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -341,7 +341,7 @@ html.dark .user-name {
 }
 
 .mobile-card-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 

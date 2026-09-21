@@ -25,11 +25,11 @@
     <div class="view-images" v-if="vehicleData.license_images?.length || vehicleData.registration_image">
       <div class="view-image-item" v-for="(img, idx) in vehicleData.license_images || []" :key="idx">
         <div class="view-image-label">行驶证{{ (vehicleData.license_images?.length || 0) > 1 ? Number(idx) + 1 : '' }}</div>
-        <img :src="getImageUrl(img)" @click="previewImage(img)" />
+        <img :src="getImageUrl(img)" @click="previewImage(img)"  alt="车辆证件照片，点击可放大查看" />
       </div>
       <div class="view-image-item" v-if="vehicleData.registration_image">
         <div class="view-image-label">登记证书</div>
-        <img :src="getImageUrl(vehicleData.registration_image)" @click="previewImage(vehicleData.registration_image)" />
+        <img :src="getImageUrl(vehicleData.registration_image)" @click="previewImage(vehicleData.registration_image)"  alt="车辆证件照片，点击可放大查看" />
       </div>
     </div>
     <template #footer>
@@ -39,7 +39,7 @@
 
     <!-- 图片预览对话框 -->
     <el-dialog v-model="imagePreviewVisible" title="图片预览" width="90%" :style="{ maxWidth: '600px' }">
-      <img :src="previewImageUrl" style="width: 100%; display: block;" />
+      <img :src="previewImageUrl" style="width: 100%; display: block;"  alt="车辆证件照片" />
     </el-dialog>
   </el-dialog>
 </template>

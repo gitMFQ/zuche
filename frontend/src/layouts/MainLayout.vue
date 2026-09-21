@@ -69,6 +69,7 @@
             class="collapse-btn" 
             @click="isCollapse = !isCollapse"
             :icon="isCollapse ? 'Expand' : 'Fold'"
+            :aria-label="isCollapse ? '展开侧边栏' : '收起侧边栏'"
             circle
             size="large"
           />
@@ -85,6 +86,7 @@
             size="large"
             @click="toggleDarkMode"
             :title="isDarkMode ? '切换到浅色模式' : '切换到深色模式'"
+            :aria-label="isDarkMode ? '切换到浅色模式' : '切换到深色模式'"
           />
           <el-dropdown @command="handleCommand" trigger="click">
             <span class="user-dropdown">
@@ -112,8 +114,25 @@
       </el-main>
     </el-container>
 
-    <!-- 修改密码对话框 -->
-    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="90%" :style="{ maxWidth: '400px' }">
+    <!-- 修改密码对话框。默认口令未改时必须改完才能继续用，此时不可关闭 -->
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="修改密码"
+      width="90%"
+      :style="{ maxWidth: '400px' }"
+      :close-on-click-modal="!mustChangePassword"
+      :close-on-press-escape="!mustChangePassword"
+      :show-close="!mustChangePassword"
+    >
+      <el-alert
+        v-if="mustChangePassword"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="首次登录必须修改密码"
+        description="系统默认口令是公开的，请设置一个只有你知道的新密码（至少 8 位，需包含字母和数字）。"
+        style="margin-bottom: 16px"
+      />
       <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="80px">
         <el-form-item label="旧密码" prop="oldPassword">
           <el-input v-model="passwordForm.oldPassword" type="password" show-password />
@@ -126,7 +145,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="passwordDialogVisible = false">取消</el-button>
+        <el-button v-if="!mustChangePassword" @click="passwordDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleChangePassword">确定</el-button>
       </template>
     </el-dialog>
@@ -134,19 +153,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { authApi, settingsApi } from '../api'
 import { getLogoUrl } from '../utils/helpers'
+import { useMobile } from '../composables/useMobile'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+/** 默认口令未改时必须先改密，弹窗此时不可关闭 */
+const mustChangePassword = computed(() => userStore.mustChangePassword)
 
-const isMobile = ref(false)
+const { isMobile } = useMobile()
 const isCollapse = ref(true)
+
+// 移动端自动收起侧栏，桌面端展开（immediate 保证首屏就是正确状态）
+watch(isMobile, (mobile) => {
+  isCollapse.value = mobile
+}, { immediate: true })
 const passwordDialogVisible = ref(false)
 const passwordFormRef = ref<FormInstance>()
 const systemTitle = ref('租车管理系统')
@@ -243,15 +270,6 @@ function handleAutoDarkModeChange(e: CustomEvent) {
   }
 }
 
-function checkMobile() {
-  isMobile.value = window.innerWidth < 768
-  if (isMobile.value) {
-    isCollapse.value = true
-  } else {
-    isCollapse.value = false
-  }
-}
-
 function handleMenuSelect() {
   if (isMobile.value) {
     isCollapse.value = true
@@ -259,9 +277,7 @@ function handleMenuSelect() {
 }
 
 onMounted(async () => {
-  checkMobile()
   loadSystemTitle()
-  window.addEventListener('resize', checkMobile)
   window.addEventListener('systemTitleChange', handleTitleChange as EventListener)
   window.addEventListener('systemLogoChange', handleLogoChange as EventListener)
   window.addEventListener('autoDarkModeChange', handleAutoDarkModeChange as EventListener)
@@ -271,15 +287,25 @@ onMounted(async () => {
       const res: any = await authApi.getCurrentUser()
       if (res.success) {
         userStore.setUser(res.data)
+        // 刷新页面后 user 会丢，这里顺带把「必须改密」标记恢复回来
+        userStore.mustChangePassword = Boolean(res.data.must_change_password)
       }
     } catch (error) {
       console.error('获取用户信息失败', error)
     }
   }
+
+  openForcedPasswordDialog()
 })
 
+/** 默认口令未改时，登录/刷新后立即弹出不可关闭的改密弹窗 */
+function openForcedPasswordDialog() {
+  if (!userStore.mustChangePassword) return
+  passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
+  passwordDialogVisible.value = true
+}
+
 onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
   window.removeEventListener('systemTitleChange', handleTitleChange as EventListener)
   window.removeEventListener('systemLogoChange', handleLogoChange as EventListener)
   window.removeEventListener('autoDarkModeChange', handleAutoDarkModeChange as EventListener)
@@ -292,6 +318,8 @@ function handleCommand(command: string) {
       cancelButtonText: '取消',
       type: 'warning'
     }).then(() => {
+      // 服务端只记审计日志，失败也不该挡住登出
+      void authApi.logout().catch(() => undefined)
       userStore.logout()
       router.push('/login')
     })
@@ -311,6 +339,12 @@ async function handleChangePassword() {
       newPassword: passwordForm.value.newPassword
     })
     if (res.success) {
+      // 后端改密会自增 token_version 使旧 token 全部失效，并回传一个新 token，
+      // 必须换掉本地 token，否则下一个请求就会 401 被踢回登录页
+      if (res.data?.token) {
+        userStore.setToken(res.data.token)
+      }
+      userStore.mustChangePassword = false
       ElMessage.success('密码修改成功')
       passwordDialogVisible.value = false
     }

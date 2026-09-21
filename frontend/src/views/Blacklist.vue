@@ -20,6 +20,15 @@
     </div>
 
     <!-- 移动端卡片列表 -->
+    <!-- 列表三态（加载中 / 加载失败可重试 / 空数据） -->
+    <DataState
+      :loading="loading"
+      :error="loadError"
+      :empty="tableData.length === 0"
+      empty-text="黑名单是空的，没有被拉黑的客户"
+      skeleton
+      @retry="loadData"
+    >
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
@@ -55,7 +64,7 @@
 
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
+      <el-table :data="tableData" stripe class="hide-mobile">
         <el-table-column prop="name" label="姓名" width="80" />
         <el-table-column prop="phone" label="手机" width="110">
           <template #default="{ row }">
@@ -75,6 +84,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </DataState>
 
     <el-pagination
       v-model:current-page="pagination.page"
@@ -116,8 +126,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { blacklistApi } from '../api'
+import DataState from '../components/DataState.vue'
 
 const loading = ref(false)
+// 加载失败时的提示文案，非空即由 DataState 展示错误态
+const loadError = ref<string | null>(null)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
@@ -144,14 +157,19 @@ const rules: FormRules = {
 
 async function loadData() {
   loading.value = true
+  loadError.value = null
   try {
     const res: any = await blacklistApi.getList({ ...searchForm, ...pagination })
     if (res.success) {
       tableData.value = res.data.data
       pagination.total = res.data.total
+    } else {
+      loadError.value = res.message || '加载失败，请重试'
     }
   } catch (error) {
     console.error('加载数据失败', error)
+    // 原来只打 console，页面上是一张空表格，用户分不清「没有数据」与「加载失败」
+    loadError.value = '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
@@ -245,7 +263,7 @@ onMounted(() => loadData())
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  border-left: 3px solid #F56C6C;
+  border-left: 3px solid var(--sk-color-danger);
 }
 
 .mobile-card-header {
@@ -269,7 +287,7 @@ onMounted(() => loadData())
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -277,11 +295,11 @@ onMounted(() => loadData())
 }
 
 .mobile-card-row .value.reason {
-  color: #F56C6C;
+  color: var(--sk-color-danger);
 }
 
 .mobile-card-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -321,7 +339,7 @@ onMounted(() => loadData())
 }
 
 :deep(a) {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 

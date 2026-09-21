@@ -20,6 +20,15 @@
     </div>
 
     <!-- 移动端卡片列表 -->
+    <!-- 列表三态（加载中 / 加载失败可重试 / 空数据） -->
+    <DataState
+      :loading="loading"
+      :error="loadError"
+      :empty="tableData.length === 0"
+      empty-text="还没有用户，点右上角添加"
+      skeleton
+      @retry="loadData"
+    >
     <div class="mobile-cards">
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
@@ -59,7 +68,7 @@
 
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
+      <el-table :data="tableData" stripe class="hide-mobile">
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="role" label="角色" width="80">
@@ -91,6 +100,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    </DataState>
 
     <el-pagination
       v-model:current-page="pagination.page"
@@ -147,8 +157,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { userApi } from '../api'
+import DataState from '../components/DataState.vue'
 
 const loading = ref(false)
+// 加载失败时的提示文案，非空即由 DataState 展示错误态
+const loadError = ref<string | null>(null)
 const submitting = ref(false)
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
@@ -180,14 +193,19 @@ const rules: FormRules = {
 
 async function loadData() {
   loading.value = true
+  loadError.value = null
   try {
     const res: any = await userApi.getList({ ...searchForm, ...pagination })
     if (res.success) {
       tableData.value = res.data.data
       pagination.total = res.data.total
+    } else {
+      loadError.value = res.message || '加载失败，请重试'
     }
   } catch (error) {
     console.error('加载数据失败', error)
+    // 原来只打 console，页面上是一张空表格，用户分不清「没有数据」与「加载失败」
+    loadError.value = '加载失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
@@ -346,7 +364,7 @@ onMounted(() => loadData())
 }
 
 .mobile-card-row .label {
-  color: #909399;
+  color: var(--sk-color-info);
 }
 
 .mobile-card-row .value {
@@ -354,7 +372,7 @@ onMounted(() => loadData())
 }
 
 .mobile-card-row a {
-  color: #409EFF;
+  color: var(--primary-color);
   text-decoration: none;
 }
 

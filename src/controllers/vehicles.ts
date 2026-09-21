@@ -6,12 +6,12 @@ import { parseStringArray, stringifyArray } from '../lib/json';
 import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
 import { now } from '../lib/time';
+import { VEHICLE_STATUS_WHITELIST, busyVehicleIds } from '../lib/vehicles';
 import type { AppContext } from '../types';
 
-// 车辆状态映射
+// 车辆状态映射。不含 rented：已出租是派生状态，由订单时间区间算出（见 lib/vehicles.ts）
 const STATUS_MAP: Record<string, string> = {
   available: '可用',
-  rented: '已出租',
   maintenance: '维修中',
   unavailable: '不可用'
 };
@@ -29,6 +29,8 @@ export async function getVehicles(c: AppContext): Promise<Response> {
   try {
     const { page = '1', pageSize = '10', keyword = '', status = '', brand = '' } = c.req.query();
 
+    const currentTime = now();
+
     let sql = 'SELECT * FROM vehicles WHERE 1=1';
     const params: Bind[] = [];
 
@@ -38,10 +40,21 @@ export async function getVehicles(c: AppContext): Promise<Response> {
       params.push(likeKeyword, likeKeyword, likeKeyword);
     }
 
-    // 注意：这里按数据库中的状态筛选，前端显示的状态会动态计算
-    if (status) {
+    // 状态筛选按「显示状态」过滤。列表展示的是派生状态（可用/已出租/维修中/不可用），
+    // 而库里只存人工状态，所以 available 与 rented 都要结合订单占用情况判断，
+    // 只按 status 列筛会出现「筛已出租筛不出来、筛可用却是别人正在租的车」。
+    if (status === 'maintenance' || status === 'unavailable') {
       sql += ' AND status = ?';
       params.push(status);
+    } else if (status === 'rented' || status === 'available') {
+      const busyCondition = `EXISTS (
+        SELECT 1 FROM orders o
+        WHERE o.vehicle_id = vehicles.id
+          AND o.status IN ('pending', 'active')
+          AND o.start_date <= ? AND o.end_date > ?
+      )`;
+      sql += ` AND status NOT IN ('maintenance', 'unavailable') AND ${status === 'rented' ? busyCondition : `NOT ${busyCondition}`}`;
+      params.push(currentTime, currentTime);
     }
 
     if (brand) {
@@ -51,22 +64,11 @@ export async function getVehicles(c: AppContext): Promise<Response> {
 
     sql += ' ORDER BY created_at DESC';
 
-    const currentTime = now();
-
     // 分页数据与「正在出租的车辆 id」并发查询，避免逐车回库（D1 下每次都是一次往返）
-    const [result, busyRows] = await Promise.all([
+    const [result, busyIds] = await Promise.all([
       queryWithPagination<VehicleRow>(db, sql, params, Number(page), Number(pageSize)),
-      query<{ vehicle_id: string }>(
-        db,
-        `SELECT DISTINCT vehicle_id FROM orders
-         WHERE status IN ('pending', 'active')
-           AND start_date <= ?
-           AND end_date > ?`,
-        [currentTime, currentTime]
-      )
+      busyVehicleIds(db, currentTime)
     ]);
-
-    const busyIds = new Set(busyRows.map((row) => row.vehicle_id));
 
     const data: VehicleListItem[] = result.data.map((v) => {
       const base = { ...v, license_images: parseStringArray(v.license_images) };
@@ -294,9 +296,17 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
     const body = await c.req.json<VehicleBody>();
     const { plate_number } = body;
 
-    const vehicle = await queryOne<{ id: string }>(db, 'SELECT id FROM vehicles WHERE id = ?', [id]);
+    const vehicle = await queryOne<{ id: string; status: string }>(db, 'SELECT id, status FROM vehicles WHERE id = ?', [id]);
     if (!vehicle) {
       return c.json({ success: false, message: '车辆不存在' }, 404);
+    }
+
+    // 「已出租」是订单推导出来的派生状态，不允许手工写入，否则又会出现两套真相
+    if (body.status !== undefined && !VEHICLE_STATUS_WHITELIST.includes(body.status)) {
+      return c.json(
+        { success: false, message: '车辆状态无效：只能是可用、维修中或不可用（「已出租」由订单自动判定）' },
+        400
+      );
     }
 
     // 检查车牌号是否被其他车辆使用
@@ -323,7 +333,7 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
         body.seats ?? 5,
         body.daily_rate ?? 0,
         body.deposit ?? 0,
-        body.status,
+        body.status ?? vehicle.status,
         body.mileage ?? 0,
         body.last_maintenance ?? null,
         body.vin ?? null,
@@ -401,5 +411,38 @@ export async function getVehicleBrands(c: AppContext): Promise<Response> {
     return c.json({ success: true, data: brands.map((b) => b.brand) });
   } catch (error) {
     return handleError(c, '获取品牌列表错误:', error);
+  }
+}
+
+/**
+ * 车辆筛选下拉的去重选项（车牌号 / 车型）。
+ *
+ * 前端原本拉 pageSize=10000 的全量车辆在前端去重，但 queryWithPagination 把
+ * pageSize 上限锁在 100，车牌或车型超过 100 条后下拉选项就不全了。
+ * 这里在后端直接去重，返回的 payload 也远小于整行数据。
+ */
+export async function getVehicleFilterOptions(c: AppContext): Promise<Response> {
+  const db = c.env.DB;
+  try {
+    const [plates, models] = await Promise.all([
+      query<{ plate_number: string }>(db, 'SELECT DISTINCT plate_number FROM vehicles ORDER BY plate_number'),
+      query<{ model: string }>(
+        db,
+        `SELECT DISTINCT TRIM(brand || ' ' || model) AS model
+         FROM vehicles
+         WHERE brand IS NOT NULL AND model IS NOT NULL AND TRIM(brand || ' ' || model) <> ''
+         ORDER BY model`
+      )
+    ]);
+
+    return c.json({
+      success: true,
+      data: {
+        plateNumbers: plates.map((row) => row.plate_number),
+        models: models.map((row) => row.model)
+      }
+    });
+  } catch (error) {
+    return handleError(c, '获取车辆筛选项错误:', error);
   }
 }

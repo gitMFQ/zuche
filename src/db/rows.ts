@@ -14,6 +14,10 @@ export interface UserRow {
   status: number;
   created_at: string;
   updated_at: string;
+  /** 令牌版本：改密码/禁用/删除时自增，使已签发的 JWT 立即失效 */
+  token_version: number;
+  /** 首次登录强制改密标记（seed 的 admin 默认口令是公开的） */
+  must_change_password: number | null;
 }
 
 export interface CustomerRow {
@@ -106,6 +110,8 @@ export interface OrderRow {
   return_driver_id: string | null;
   return_driver_name: string | null;
   booked_model: string | null;
+  /** 车牌快照：orders.vehicle_id 无外键，删车后靠它保留可读的车牌 */
+  plate_number: string | null;
 }
 
 export interface OrderFeeRow {

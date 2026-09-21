@@ -33,7 +33,7 @@ const STMT_CHUNK = 200;
 
 const ORDER_INSERT_SQL = `
   INSERT INTO orders (
-    id, order_no, customer_id, vehicle_id, user_id,
+    id, order_no, customer_id, vehicle_id, plate_number, user_id,
     start_date, end_date, actual_start_date, actual_end_date,
     daily_rate, deposit, violation_deposit, total_amount, paid_amount,
     status, remarks, source_id, source_name, commission_rate, net_amount,
@@ -41,7 +41,7 @@ const ORDER_INSERT_SQL = `
     platform, external_no, import_batch_id, cancel_reason, cancelled_at,
     delivery_type, pickup_driver_id, pickup_driver_name, return_driver_id, return_driver_name,
     booked_model, created_at, updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `;
 
 function daysBetween(start: string, end: string): number {
@@ -199,17 +199,15 @@ export async function commitImport(c: AppContext): Promise<Response> {
     }
 
     const statements: Stmt[] = [];
-    let newCustomers = 0;
-    let newVehicles = 0;
 
     for (const item of targets) {
       const { row } = item;
 
+      // 新建客户/车辆的数量由 customerIds / vehicleIds 两个 Map 的 size 统计，
+      // 写入 import_batches 时直接用它们（这里曾经有一对只自增、没被读取的计数器）
       const customerId = item.customer?.id ?? customerIds.get(row.customer_name) ?? '';
-      if (!item.customer) newCustomers += 1;
 
       const vehicleId = item.vehicle?.id ?? vehicleIds.get(row.plate_number) ?? '';
-      if (!item.vehicle) newVehicles += 1;
 
       if (!customerId || !vehicleId) continue;
 
@@ -237,6 +235,8 @@ export async function commitImport(c: AppContext): Promise<Response> {
         row.external_no,
         customerId,
         vehicleId,
+        // 车牌快照：与系统内建单保持一致，删车后历史订单仍能显示车牌
+        row.plate_number,
         userId || null,
         row.start_date,
         finalEndDate,

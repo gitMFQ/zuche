@@ -36,7 +36,7 @@ export async function getRecentSchedules(c: AppContext): Promise<Response> {
          LEFT JOIN vehicles v ON o.vehicle_id = v.id
          LEFT JOIN order_sources s ON o.source_id = s.id
          WHERE o.status NOT IN ('completed', 'cancelled')
-         AND o.start_date >= datetime('now')
+         AND o.start_date >= datetime('now', '+8 hours')
          ORDER BY o.start_date ASC`
       ),
       query<ScheduleItem>(
@@ -54,7 +54,7 @@ export async function getRecentSchedules(c: AppContext): Promise<Response> {
          LEFT JOIN vehicles v ON o.vehicle_id = v.id
          LEFT JOIN order_sources s ON o.source_id = s.id
          WHERE o.status NOT IN ('completed', 'cancelled')
-         AND o.end_date >= datetime('now')
+         AND o.end_date >= datetime('now', '+8 hours')
          ORDER BY o.end_date ASC`
       )
     ]);

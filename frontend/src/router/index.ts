@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
+import { authApi } from '../api'
 
 const routes = [
   {
@@ -59,15 +61,23 @@ const routes = [
         path: 'logs',
         name: 'Logs',
         component: () => import('../views/Logs.vue'),
-        meta: { title: '操作日志' }
+        // 后端已用 adminOnly 拦住接口，这里补前端守卫，避免输 URL 进去看到空页面
+        meta: { title: '操作日志', roles: ['admin'] }
       },
       {
         path: 'settings',
         name: 'Settings',
         component: () => import('../views/Settings.vue'),
-        meta: { title: '设置' }
+        meta: { title: '设置', roles: ['admin'] }
       }
     ]
+  },
+  {
+    // 兜底路由：不写的话未知路径会渲染空白页（SPA 回落到 index.html 但没有匹配的组件）
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../views/NotFound.vue'),
+    meta: { title: '页面不存在' }
   }
 ]
 
@@ -77,19 +87,45 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, _, next) => {
+router.beforeEach(async (to) => {
   document.title = `${to.meta.title || '租车管理系统'} - 租车管理系统`
 
   const userStore = useUserStore()
   const token = userStore.token || localStorage.getItem('token')
 
   if (to.path !== '/login' && !token) {
-    next('/login')
-  } else if (to.path === '/login' && token) {
-    next('/dashboard')
-  } else {
-    next()
+    return '/login'
   }
+  if (to.path === '/login') {
+    return token ? '/dashboard' : true
+  }
+
+  // 刷新页面后 store 里的 user 会丢（原先只在登录时 setUser），
+  // 不补拉一次的话 isAdmin() 恒为 false —— 管理员菜单会消失，角色校验也会失效
+  if (!userStore.user) {
+    try {
+      const res: any = await authApi.getCurrentUser()
+      if (res.success) {
+        userStore.setUser(res.data)
+        userStore.mustChangePassword = Boolean(res.data.must_change_password)
+      }
+    } catch (error: any) {
+      // 401 由响应拦截器统一处理（清 token 并跳登录页）；
+      // 网络异常不要误判成未登录，否则会把人直接踢出系统
+      if (error?.response?.status === 401) {
+        return '/login'
+      }
+      return true
+    }
+  }
+
+  const roles = to.meta.roles as string[] | undefined
+  if (roles && roles.length > 0 && !roles.includes(userStore.user?.role ?? '')) {
+    ElMessage.error('没有访问该页面的权限')
+    return '/dashboard'
+  }
+
+  return true
 })
 
 export default router
