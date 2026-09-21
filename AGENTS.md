@@ -45,20 +45,31 @@ src/routes/upload.ts       7 个上传端点 + 从 R2 读回
 src/controllers/*.ts       业务处理，签名统一 async (c: AppContext) => Promise<Response>
 src/db/helpers.ts          query/queryOne/execute/queryWithPagination/batchExecute
 src/db/rows.ts             各表行类型
-src/lib/*                  auth(jwt)/ids/time/request/errors/log/json
+src/lib/*                  auth(jwt)/ids/time/request/errors/log/json/constants
+                           /orderAmount/vehicles/uploadGuard/uploadUrl
+src/lib/import/            批量导入：normalize/templates/validate
 src/middleware/auth.ts     authMiddleware、adminOnly
 src/types.ts               Bindings、AppContext
 
-migrations/                D1 迁移 SQL（0001_schema / 0002_indexes / 0003_seed）
+scripts/dev-backend.mjs    本机跑不起 workerd 时的本地后端：node:sqlite + 本地目录替代 D1/R2，
+                           首次启动自动跑 migrations/ 并灌 scripts/seed-demo.sql
+
+migrations/                D1 迁移 SQL（0001_schema … 0011_brand_color，按文件名顺序 apply）
 
 frontend/src/
 ├── api/index.ts           API 封装，baseURL 是相对路径 /api
-├── components/            公共组件（Sk* 为 Apple 风格基础件，*Tab.vue 为业务分栏）
+├── api/types.ts           前端接口类型，与后端 src/db/rows.ts 行类型对应
+├── components/            公共组件：order/（订单表单与各业务弹窗）、dashboard/（甘特图、统计卡）、
+│                          vehicle/（车辆选择器与车务表单弹窗）；另有 *Tab.vue 业务分栏、
+│                          ImagePreviewDialog.vue、DataState.vue
+├── composables/           useMobile（768px 断点）、useQuerySync（筛选/分页与 URL query 同步）
 ├── layouts/               布局组件
 ├── router/                路由（createWebHistory）
 ├── stores/                Pinia
 ├── utils/constants.ts     公共常量（支付/订单/服务类型映射）
 ├── utils/helpers.ts       格式化与状态映射工具
+├── utils/image.ts         上传前压缩（最长边 1600px、≤500KB、WebP）
+├── utils/upload.ts        validateUploadFile 上传前校验
 ├── views/                 页面视图
 └── style.css              全局样式，Apple 设计 token 都在里面
 ```
@@ -137,7 +148,7 @@ pending (待取车) → active (已取车) → completed (已还车)
                  ↘ cancelled (已取消)
 ```
 
-**支付方式：** `platform` 平台支付、`wechat` 微信、`alipay` 支付宝、`cash` 现金、`bank` 银行转账、`other` 其他
+**支付方式：** `platform` 平台支付、`wechat` 微信、`alipay` 支付宝、`cash` 现金、`bank` 银行卡、`other` 其他
 
 **支付类型：** `rent` 租金、`deposit` 押金、`rent_deposit` 租金+押金、`violation_deposit` 违章押金、`damage` 车损、`other` 其他
 
@@ -146,13 +157,16 @@ pending (待取车) → active (已取车) → completed (已还车)
 - 收车任务：从已取车 (active) 订单提取还车时间和位置
 - 仅显示当前时间及以后的调度，按时间升序排列
 
-## 数据表（13 张）
+## 数据表（17 张）
 | 表名 | 说明 |
 |---|---|
 | users | 用户（username, password, role, phone, email） |
 | customers | 客户（is_regular、source_id、证件照片） |
 | vehicles | 车辆（is_new_energy、vin、engine_number、证件照片） |
 | orders | 订单（来源、服务类型、免押、里程、取还车照片） |
+| order_fees | 订单费用明细（fee_category 租金/服务费/押金/违约金/附加，保留平台原始名） |
+| order_extensions | 续租记录（原/新还车时间、续租天数与金额） |
+| import_batches | 批量导入批次（平台、文件名、成功/跳过行数） |
 | payments | 支付记录 |
 | order_sources | 订单来源（佣金比例、颜色） |
 | violations | 违章记录 |
@@ -162,6 +176,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 | inspections | 年检证 |
 | system_settings | 系统设置 |
 | operation_logs | 操作日志 |
+| login_attempts | 登录失败计数与锁定时长（限流） |
 
 ## 前端约定
 - **API 调用**：统一走 `frontend/src/api/index.ts` 封装的对象，不要裸写 axios
@@ -176,9 +191,9 @@ pending (待取车) → active (已取车) → completed (已还车)
   Logo 用 `getLogoUrl`（`width=200`）；直接写 `:src="row.image"` 会绕过 CDN 压缩
 
 ## 设计系统（Apple 风格）
-设计 token 全部定义在 `frontend/src/style.css`（`--sk-*` 变量），`frontend/src/components/Sk*.vue`
-是对应的基础组件（SkButton/SkCard/SkSection/SkTypography/SkNavGlass）。业务页面用的是 Element Plus
-组件，主题色已固定为全局 Apple Blue `#0071e3`（`--sk-focus-color`），不支持用户在系统设置里自定义。
+设计 token 全部定义在 `frontend/src/style.css`（`--sk-*` 变量），业务页面用的是 Element Plus 组件，
+主题色已固定为全局 Apple Blue `#0071e3`（`--sk-focus-color`），不支持用户在系统设置里自定义。
+（早年的 `Sk*.vue` 基础组件已删除，样式一律走 style.css 的 token，不要再建同名组件。）
 
 - **唯一强调色** Apple Blue `#0071e3`，只用在可交互元素上
 - **背景**：纯黑 `#000000` 与浅灰 `#f5f5f7` 交替分章节；深色卡片 `#272729`-`#2a2a2d`

@@ -2,7 +2,207 @@
 
 > 本文件从 `README.md` 拆出，最新记录在最前。
 
+## 2026-09-21
+
+### 同步三份文档到当前仓库状态
+
+- `README.md` / `AGENTS.md`：表数统一为 17 张（`0001` 建 13 张，`0004` 加 3 张、`0008` 加 1 张），
+  JWT 有效期统一为 7 天，去掉指向已删文件的入口说明
+- 补录 `67ee686`（修复 11 个前端存量类型错误）—— 该提交此前从未进过本文件
+- 抽查过的数字：vitest 仍是 7 个文件 90 个用例；迁移 `0007` 涉及 16 张表、`0010` 新增 7 个索引；
+  组件拆分的行数变化按 `git show` 实测值写；构建产物体积按 `frontend/dist/assets` 实测值写
+- 只改文档，无代码行为变化
+
+### 删除无路由引用的孤儿页面 Users.vue 与 OrderSources.vue
+
+- 两者在 `router/index.ts` 没有路由注册，全仓也没有任何 import（与上一个提交删掉的
+  `views/Violations.vue` 是同一类）；用户管理与订单来源的能力由 `Settings.vue` 里的
+  `<UsersTab />` 与 `<OrderSourcesTab />` 承载
+- 已通过 `npm run verify`（typecheck / lint / 90 项单测）
+
+### 统一支付方式 bank 的中文名
+
+- `frontend/src/utils/constants.ts` 的 `PAYMENT_METHOD_OPTIONS` 写的是「银行转账」，与后端
+  `src/lib/constants.ts`、前端 `PAYMENT_METHOD_TEXT_MAP` 以及 README 的「银行卡」不一致，
+  下拉框与列表回显会出现两种叫法；统一为「银行卡」
+
+### 修正库存日历浮窗读取的客户与金额字段名
+
+- `getGanttData` 序列化后客户信息下发的是 `name`/`phone`/`rmb`，`GanttChart.vue` 的浮窗却读
+  `customer_name`/`customer_phone`/`total_amount`，导致悬浮时客户与电话恒为 `-`、金额恒为 ¥0
+- 按后端实际字段修正 `getOccupationTooltip`；只改前端展示，**无数据迁移**
+
+### 删除无路由引用的孤儿页面 Violations.vue
+
+- `frontend/src/views/Violations.vue`（787 行）在 `router/index.ts` 没有任何路由注册，全仓也没有 import 引用；
+  全量违章列表的能力已由车辆页的 `ViolationsTab` 承载，直接删除避免死代码误导后续维护
+- 已通过 `npm run verify`（typecheck / lint / 90 项单测）与 `npm run build:web`
+
+### 本机改用 Node 版本地后端
+
+- 新增 `scripts/dev-backend.mjs`：本机跑不起 workerd，改用 esbuild 把同一份 `src/index.ts` 打成 Node ESM，
+  DB 换成 `node:sqlite`、UPLOADS 换成本地目录，接口路径与签名机制保持不变
+- `vite.config.ts` 增加 `/cdn-cgi` 代理：剥掉 `getImageUrl()` 拼出的图像转换前缀再转发，
+  否则本地图片会落到 SPA 回退变成 index.html
+- 仅影响本地开发，不参与部署
+
+### 拆分巨型页面与 Tab 为可复用子组件
+
+- 新增 15 个组件：订单域 `components/order/` 下 `OrderFormDialog`、`OrderInfoSections`、
+  `MileagePhotoDialog`、`ExtendDialog`、`PaymentDialog`、`AssignDriverDialog`；
+  仪表盘 `components/dashboard/` 下 `GanttChart`、`OrderDetailDialog`、`ScheduleTable`、`StatCards`；
+  车辆域 `components/vehicle/` 下 `ViolationFormDialog`、`InsuranceFormDialog`、`VehiclePicker`、
+  `MaintenanceFormDialog`；公共 `components/ImagePreviewDialog.vue`
+- `Orders` 与 `OrderDetail` 改为共用同一套编辑表单、取还车表单与预览逻辑；仪表盘的取车/还车弹窗
+  复用 `order/MileagePhotoDialog`；三个车辆 Tab 的图片预览统一走 `ImagePreviewDialog`
+- 行数变化：`Dashboard.vue` 2245→756、`OrderDetail.vue` 1970→516、`Orders.vue` 2869→1676、
+  `ViolationsTab.vue` 1292→840、`MaintenanceTab.vue` 1063→674、`InsuranceTab.vue` 1048→636
+- 顺带修掉两个问题：编辑弹窗删照片时误改到新建表单的数组；`OrderDetail` 编辑回写把身份证清空
+- 纯结构重构，UI 与接口契约不变，**无数据迁移**
+
+### 忽略本地 MCP 配置文件
+
+- `.gitignore` 增加 `.mcp.json`（含个人密钥，不入库）
+
+### 修复按需引入后图标全部不显示
+
+- 改造为按需引入时删掉了 `main.ts` 里全局注册图标的循环，但 `ElementPlusResolver` 只解析 `/^El[A-Z]/`
+  开头的组件名，裸图标名（如 `<Plus />`）不会被自动导入，模板里的图标全部渲染不出来
+- 18 个 `.vue` 文件补上 `@element-plus/icons-vue` 的手动 import
+- 字符串式图标改为绑定式：`el-avatar` 的 `icon`、收起/展开与主题切换按钮的 `:icon`、
+  `el-switch` 的 `active-icon` / `inactive-icon`
+- `MainLayout` 与 `Login.vue` 里图标包不存在的 `<Car />` 改为 `<Van />`；
+  `el-link` 的 `underline` 适配 Element Plus 3.0 的 `'always'|'hover'|'never'`
+- `vite.config.ts` 用 `optimizeDeps.include` 预热，避免 dev 期依赖重新预构建打断在飞请求
+  （表现为 `ERR_CONNECTION_CLOSED`）
+
+### 修复 /health 在生产不可达
+
+- `wrangler.jsonc` 的 `run_worker_first` 加入 `/health`：它原先不在列表里，会被 SPA 回落吃掉，
+  线上访问 `/health` 返回的是 index.html 而不是 JSON，等于该端点从未生效（部署后实测发现）
+- `.github/workflows/ci.yml` 的 `actions/checkout` 与 `setup-node` 由 v4 升到 v7
+  （v4 系列目标 Node 20 已进入弃用流程）
+
+### 统一时区并修正存量时间（迁移 0007）
+
+- `src/lib/time.ts` 的 `now()` 改为北京时间基准，11 处 SQL 的日期时间函数加 `+8 hours`
+- `migrations/0007_timezone_unify.sql` 按列来源分别修正存量：系统写入的审计列加 8 小时，
+  用户录入的业务列不动；`orders.actual_start_date` 只修 `import_batch_id IS NULL` 的行
+  （导入单的时间来自平台数据，不是系统时间）
+- 格式异常行用 `COALESCE(datetime(x,'+8 hours'), x)` 兜底，避免个别脏值让整表 UPDATE 失败
+- 涉及 16 张表的存量 UPDATE，**需执行 `npm run d1:migrate`（本地）/ `npm run d1:migrate:remote`（远端）**
+
+### 新增订单聚合统计与年检状态下推
+
+- 新增 `GET /api/orders/stats`：原先前端拉全表再自己数，会被分页上限截断导致计数偏小；
+  改为一条 SQL 聚合出各状态数量与今日/明日/逾期计数
+- `src/controllers/inspection.ts` 把年检状态判定下推到 SQL，且 SELECT 与 WHERE 复用同一段
+  `INSPECTION_STATUS_CASE` 表达式，修掉「先分页后过滤」导致的筛选结果不完整、计数与筛选对不上
+
+### 引入订单状态机并修正派生字段
+
+- 新增 `ORDER_STATUS_TRANSITIONS`（`src/lib/constants.ts`），订单状态变更改为按白名单流转
+- 还车时同步写入 `net_amount`；「逾期」改为按日期派生，不再存成一个状态
+- 订单号随机段由 4 位加长到 6 位（`src/lib/ids.ts`，100 万种组合），并在撞唯一约束时换号重试
+- 修掉取车时间字段名不匹配：前端传 `actual_pickup_date`、后端读 `actual_start_date`，该字段从未落库
+
+### 加固用户与角色权限
+
+- 角色改为白名单校验；禁止改自己的角色与状态；保护最后一个管理员不被降级或禁用
+- 新增密码强度校验（`src/lib/auth.ts` 的 `validatePassword`）；种子管理员首次登录强制改密
+  （`users.must_change_password`）
+
+### 加固认证：密钥、有效期、吊销与限流
+
+- `src/lib/auth.ts` 移除 JWT 默认密钥兜底：`JWT_SECRET` 缺失时直接抛错，登录报「服务未正确配置」。
+  **部署前必须确认线上已执行 `wrangler secret put JWT_SECRET`**，否则所有人无法登录
+- 令牌有效期由 1 年缩短到 7 天，配合 `users.token_version` 实现吊销：改密码 / 重置密码 / 禁用 /
+  删除用户时自增，`src/middleware/auth.ts` 每个请求比对一次
+- 新增登出接口；登录失败按 `username:IP` 限流，15 分钟内失败 5 次锁 15 分钟
+  （带 username 是因为门店常共用同一个出口 IP，只按 IP 会互相误伤；只按 username 又拦不住换号撞库）
+- bcrypt cost 由 8 提到 10
+- 迁移 0008 新增 `login_attempts` 表存放限流计数
+
+### 上传改为签名 URL 并校验文件魔数
+
+- `/uploads/*` 改为签名 URL：对外形态 `/uploads/{exp}.{sig}/{dir}/{file}`，HMAC 签名 + 7 天过期；
+  存储侧仍是 `/uploads/{dir}/{file}`，只在响应时签（`src/lib/uploadUrl.ts` 挂在 `/api` 上递归替换）
+- 签名放路径而非 query，是因为前端会拼 `/cdn-cgi/image/<opts>/<路径>`，图像转换层不透传 query
+- 新增 `src/lib/uploadGuard.ts` 校验文件魔数，MIME 与真实格式不符直接 400
+
+### 给接口与文件响应加安全响应头
+
+- `src/index.ts` 挂 `hono/secure-headers`：CSP、`X-Frame-Options: DENY`、HSTS、`nosniff`、
+  `Referrer-Policy: no-referrer`（最后一项是为了不让带签名的图片 URL 通过 Referer 泄露）
+- **覆盖范围只有 `/api/*` 与 `/uploads/*`**：HTML/JS/CSS 由 Static Assets 直接返回不进 Worker，
+  页面级 CSP 与 X-Frame-Options 需在 Cloudflare Zone 层用 Response Header Transform Rules 配
+
+### 前端类型化与列表三态
+
+- 新增 `frontend/src/api/types.ts`：响应信封、分页、实体全部类型化，`api/index.ts` 消除 `any`
+- 新增 `components/DataState.vue` 统一加载中 / 失败可重试 / 空三态
+- 新增字典 Pinia（`stores/dict.ts`，订单来源与用户选项，带 TTL 与失效），替换 5 处重复请求
+- 筛选与分页同步到 URL（`composables/useQuerySync.ts`）；路由加角色守卫与 404 页；
+  修掉刷新后 `user` 丢失导致管理员菜单消失
+- 上传校验下沉到 API 层——原先 23 处重复校验仍然漏了仪表盘
+
+### 按需引入瘦身主包
+
+- Element Plus 与图标改为按需引入，主包 874KB → 约 45KB（gzip 约 18KB）
+- 删除 5 个零引用组件与示例资源，清理 49 条无用 CSS，色值收敛到语义 token
+- 修 8 处 resize 监听未解绑的内存泄漏；补 43 个图片 `alt` 与 40 个可点击元素的键盘可达性
+- 修复深色模式下文本色未反转（黑底黑字）
+
+### 健康检查真探依赖并开启日志
+
+- `/health` 改为真的探 D1（`SELECT 1`）与 R2（`UPLOADS.head`），任一不可用即返回 `degraded` 与 503
+- `wrangler.jsonc` 开启 Workers Logs；仪表盘统计加缓存
+- `src/index.ts` 定时清理操作日志（保留 180 天）与登录限流记录
+
+### 工程化：单测、biome 与 CI
+
+- 新增 vitest：`test/` 下 7 个文件共 90 个用例，覆盖时区、金额、订单号、签名 URL、魔数校验、导入列映射
+- 新增 biome（`biome.json` 只覆盖 `src/` 与 `test/`，`.vue` 有意排除——biome 不认识 `<script setup>`
+  模板用法会误报）与 `.github/workflows/ci.yml`
+- 新增 `npm run verify`：typecheck + lint + test 一条命令跑完
+
+### 补齐查询索引（迁移 0010）
+
+- `migrations/0010_missing_indexes.sql` 新增 7 个索引：收入报表与客户/车辆/订单来源/违章列表的
+  `created_at`、订单 `actual_end_date`、以及车辆占用判定用的
+  `orders(vehicle_id, status, start_date, end_date)`
+
+### 车辆状态改为派生并给订单存车牌快照
+
+- 迁移 0009：`vehicles.status` 只表达人工设定的可用性，是否在租一律由订单推导，存量 `rented`
+  归一为 `available`（仪表盘「已出租」原先恒为 0，因为订单流转从不维护这一列）
+- 迁移 0008：`orders` 新增 `plate_number` 车牌快照并按车辆回填，车辆删除后历史订单仍可读到车牌
+- 迁移 0011：订单来源默认色由 Element 蓝 `#409EFF` 归一到品牌蓝 `#0071e3`；用户自行配置的渠道色不动
+  （那是渠道身份标识，不属于主题色）
+
+### 黑名单接入建单与改单
+
+- 建单 / 改单命中黑名单改为软拦截：返回命中记录（姓名、电话、原因）交给前端二次确认，
+  带 `force` 才放行，并写操作日志留痕
+- 无手机号时黑名单按姓名匹配
+- 0007-0011 这五个迁移已按提交说明在线上执行并逐条校验；本地环境仍需 `npm run d1:migrate` 才会生效
+
 ## 2026-09-20
+
+### 修复移动端翻页按钮不可见
+
+- 分页组件原先写在 `<el-card class="table-card">` 内，移动端 `.table-card` 被 `display:none` 隐藏，
+  翻页按钮一并消失
+- 把 `el-pagination` 移出 table-card，移动端与桌面端共用同一份分页；`.pagination` 在移动端居中并允许
+  换行，`@media (min-width: 768px)` 内恢复右对齐
+- 覆盖 11 个文件：车辆列表、客户、订单、用户、黑名单、违章管理，以及车辆详情的保养/保险/年检/违章 Tab
+
+### 云端资源切换到 zjzc
+
+- `wrangler.jsonc`：D1 `database_name` / `database_id` 改为 `zjzc`，R2 `bucket_name` 改为 `zjzc`
+- `package.json` 的 `d1:*` / `r2:*` 脚本、`README.md` 与 `scripts/seed-demo.sql` 里的命令同步改名
+- 只改配置与文档；**部署前需确认新的 D1 与 R2 已创建并跑过迁移**，否则线上接口查不到表、
+  历史上传的文件也读不回来
 
 ### 上传前统一压缩图片（≤500KB / 1600px / WebP）
 
@@ -55,6 +255,34 @@
 
 ## 2026-09-19
 
+### 首页统计排除已取消订单
+
+- `src/controllers/dashboard.ts`：订单数 `COUNT(*)` 未过滤 `cancelled`，取消后总数不减；
+  本月收入直接汇总 `payments`，取消订单的收款仍计入收入
+- 两处都加上 `status != 'cancelled'`，收入报表同样处理；并给 JOIN 后的 `created_at` 补上表别名
+  避免字段歧义
+
+### 客户手机号由必填改为选填
+
+- 平台导出的客户没有完整手机号，强制必填会挡住录入
+- 后端：创建 / 更新客户时手机号留空不再报错，也不参与重复性判断（否则第二个无手机号客户会被上一个
+  空串拦住）；`customers.phone` 是 NOT NULL，所以空白收敛成空串而不是 NULL
+- 建单 / 改单时无手机号改为按姓名匹配客户——若仍按 `phone` 查，空串会命中库里第一个无手机号的客户，
+  把订单错挂到别人名下
+- 前端：客户与订单表单去掉 `required`，保留格式校验（`^(1[3-9]\d{9})?$`）
+
+### 修复添加客户时空身份证撞唯一约束导致 500
+
+- 前端不填身份证时传的是空串，原逻辑 `if (id_card)` 判假跳过重复检查，但空串在 UNIQUE 索引里
+  是实打实的值，第二个客户插入即 `UNIQUE constraint failed`
+- `src/controllers/customers.ts` 新增 `normalizeOptional`，把空白串收敛成 NULL（NULL 之间互不冲突），
+  create 与 update 都处理
+
+### 修复创建订单时插入列与占位符数量不匹配
+
+- 0004 迁移给 `orders` 加了 `delivery_type` 并同步进 `createOrder` 的列列表，但 VALUES 占位符多了一个，
+  导致所有新建订单报 500（26 values for 25 columns）
+
 ### 订单详情支持删除订单
 
 - 新增 `DELETE /api/orders/:id` 与 `deleteOrder`，支付、费用、续租记录随外键级联删除，违章保留（外键 SET NULL）
@@ -75,6 +303,21 @@
   （`commitImport` 校验 `default_source_id`，`prepareRows` 移除来源匹配逻辑）
 - 订单列表页「批量导入订单」入口从页面顶部移到「新建订单」按钮后面
 
+### 新增订单批量导入功能
+
+- 新增 `src/controllers/import.ts` 与 `src/lib/import/`（`normalize` / `templates` / `validate`），
+  新增 `frontend/src/views/OrderImport.vue`（531 行）并在 `router/index.ts` 注册
+- 携程与自有平台两套导出模板，按表头列名嗅探而非 sheet 名；preview 只校验不落库、commit 才写入，
+  按外部订单号幂等；客户按姓名匹配、车辆按车牌匹配，匹配不到就自动建
+- 迁移 `migrations/0004_import.sql`：`orders` 补 `platform`、`external_no`、`import_batch_id`、
+  `actual_start_date`、`violation_deposit`、`cancel_reason`、`cancelled_at`、`delivery_type`、
+  取还司机 id/name、`booked_model`；`vehicles` 补 `transmission`、`fuel_type`、`body_type`、`doors`；
+  `order_sources` 补 `platform` 支持「平台 → 渠道」两级；新建 `order_fees`（费用明细）、
+  `order_extensions`（续租历史）、`import_batches`（导入批次，支持整批撤销）
+- 顺带补全：取车时记录实际取车时间（原先只有还车时间）、取消订单记录原因与时间、
+  续租与添加支付写入历史与费用明细
+- **需执行 `npm run d1:migrate`（本地）/ `npm run d1:migrate:remote`（远端）**
+
 ### 移除主题自定义设置
 
 - 移除「系统设置」中的主题色、侧边栏风格、自定义渐变三项
@@ -91,6 +334,17 @@
 - 数据库换成 **D1**，上传文件改存 **R2**
 - 前端构建产物改由 Worker 的 Static Assets 托管，**前后端一体部署**，不再需要单独部署前端
 - 删除 `backend/`，后端源码统一到 `src/`；数据库变更改为 `migrations/*.sql` 迁移文件
+
+### 修复 11 个前端存量类型错误
+
+- `SkButton.vue` / `SkCard.vue` / `SkSection.vue` / `SkTypography.vue` 四个基础组件用了 `computed`
+  却没有导入，渲染时会抛 `ReferenceError`，分别补上 `import { computed } from 'vue'`
+- `ViolationsTab.vue` 与 `views/Violations.vue` 的 `onViolationDateChange` 同时被原生 `<input>` 与
+  `el-date-picker` 绑定，前者传 `Event` 后者传字符串，函数按 `string` 使用会让移动端日期匹配失效；
+  改为接收 `string | Event | null` 并统一归一化
+- `MainLayout.vue` 删掉 3 个未接入模板的导航样式 `computed` 及随之失效的 `colorWithAlpha()`；
+  `Dashboard.vue` 删掉未被使用的 `ganttContainer` ref
+- 前端类型检查由 11 个错误降为 0
 
 ### 首次上线
 

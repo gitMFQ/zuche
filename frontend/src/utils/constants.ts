@@ -44,7 +44,7 @@ export const PAYMENT_METHOD_OPTIONS = [
   { label: '微信', value: 'wechat' },
   { label: '支付宝', value: 'alipay' },
   { label: '现金', value: 'cash' },
-  { label: '银行转账', value: 'bank' },
+  { label: '银行卡', value: 'bank' },
   { label: '其他', value: 'other' }
 ]
 
