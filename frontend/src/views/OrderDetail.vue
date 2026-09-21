@@ -147,7 +147,7 @@
           </div>
           <div class="info-row">
             <span class="label">联系电话</span>
-            <span class="row-value"><el-link :href="'tel:' + order.customer_phone" type="primary" underline>{{ order.customer_phone }}</el-link></span>
+            <span class="row-value"><el-link :href="'tel:' + order.customer_phone" type="primary" underline="always">{{ order.customer_phone }}</el-link></span>
           </div>
           <div class="info-row" v-if="order.id_card">
             <span class="label">身份证</span>
@@ -660,7 +660,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { ChatDotRound, Clock, Document, Location, Money, Picture, Plus, User, Van } from '@element-plus/icons-vue'
 import { orderApi, blacklistApi, vehicleApi, uploadApi } from '../api'
 import { useDictStore } from '../stores/dict'
 import { useMobile } from '../composables/useMobile'

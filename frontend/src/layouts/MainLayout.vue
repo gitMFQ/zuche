@@ -15,7 +15,7 @@
       <div class="logo">
         <div class="logo-icon">
           <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" class="logo-img" />
-          <el-icon v-else :size="26"><Car /></el-icon>
+          <el-icon v-else :size="26"><Van /></el-icon>
         </div>
         <span v-show="!isCollapse || isMobile" class="logo-text">{{ systemTitle }}</span>
       </div>
@@ -51,7 +51,7 @@
       </nav>
       <div class="sidebar-footer" v-show="!isCollapse || isMobile">
         <div class="user-card">
-          <el-avatar :size="36" icon="UserFilled" />
+          <el-avatar :size="36" :icon="UserFilled" />
           <div class="user-info">
             <span class="user-name">{{ userStore.user?.name }}</span>
             <span class="user-role">{{ userStore.isAdmin() ? '管理员' : '员工' }}</span>
@@ -68,7 +68,7 @@
           <el-button 
             class="collapse-btn" 
             @click="isCollapse = !isCollapse"
-            :icon="isCollapse ? 'Expand' : 'Fold'"
+            :icon="isCollapse ? Expand : Fold"
             :aria-label="isCollapse ? '展开侧边栏' : '收起侧边栏'"
             circle
             size="large"
@@ -81,7 +81,7 @@
         <div class="header-right">
           <el-button
             class="theme-toggle-btn"
-            :icon="isDarkMode ? 'Moon' : 'Sunny'"
+            :icon="isDarkMode ? Moon : Sunny"
             circle
             size="large"
             @click="toggleDarkMode"
@@ -90,7 +90,7 @@
           />
           <el-dropdown @command="handleCommand" trigger="click">
             <span class="user-dropdown">
-              <el-avatar :size="32" icon="UserFilled" />
+              <el-avatar :size="32" :icon="UserFilled" />
               <span class="user-name hide-mobile">{{ userStore.user?.name }}</span>
               <el-icon class="hide-mobile"><ArrowDown /></el-icon>
             </span>
@@ -156,6 +156,21 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import {
+  ArrowDown,
+  CircleClose,
+  DataAnalysis,
+  Document,
+  Expand,
+  Fold,
+  List,
+  Moon,
+  Setting,
+  Sunny,
+  User,
+  UserFilled,
+  Van
+} from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { authApi, settingsApi } from '../api'
 import { getLogoUrl } from '../utils/helpers'

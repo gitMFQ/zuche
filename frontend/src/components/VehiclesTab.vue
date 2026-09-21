@@ -283,6 +283,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { vehicleApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
 import VehicleDetailDialog from './VehicleDetailDialog.vue'

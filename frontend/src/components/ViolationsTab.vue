@@ -486,6 +486,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { ArrowLeft, ArrowRight, InfoFilled, Plus, WarningFilled } from '@element-plus/icons-vue'
 import { violationApi, vehicleApi, orderApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
 import { useMobile } from '../composables/useMobile'

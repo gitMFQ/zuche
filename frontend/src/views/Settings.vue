@@ -39,8 +39,8 @@
               <div class="dark-mode-settings">
                 <el-switch
                   v-model="isDarkMode"
-                  active-icon="Moon"
-                  inactive-icon="Sunny"
+                  :active-icon="Moon"
+                  :inactive-icon="Sunny"
                   inline-prompt
                   @change="handleDarkModeChange"
                 />
@@ -79,7 +79,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Moon, Plus, Sunny } from '@element-plus/icons-vue'
 import UsersTab from '../components/UsersTab.vue'
 import OrderSourcesTab from '../components/OrderSourcesTab.vue'
 import { settingsApi, uploadApi } from '../api'

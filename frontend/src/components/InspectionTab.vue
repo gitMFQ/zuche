@@ -204,6 +204,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
+import { Camera } from '@element-plus/icons-vue'
 import { inspectionApi, uploadApi } from '../api'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
 import { useMobile } from '../composables/useMobile'

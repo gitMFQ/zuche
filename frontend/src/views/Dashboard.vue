@@ -395,7 +395,7 @@
           </div>
           <div class="detail-row-compact">
             <span class="row-label-compact">电话</span>
-            <span class="row-value-compact"><el-link :href="`tel:${selectedOrder.phone}`" type="primary" :underline="false">{{ selectedOrder.phone }}</el-link></span>
+            <span class="row-value-compact"><el-link :href="`tel:${selectedOrder.phone}`" type="primary" underline="never">{{ selectedOrder.phone }}</el-link></span>
           </div>
         </div>
 
@@ -511,6 +511,7 @@ import { dashboardApi, scheduleApi, orderApi, uploadApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
+import { Calendar, Clock, Document, Download, FullScreen, Grid, Location, Money, Plus, User, Van } from '@element-plus/icons-vue'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
 
 const router = useRouter()
