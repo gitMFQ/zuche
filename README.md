@@ -84,7 +84,7 @@ zuche/
     ├── utils/                    # constants（枚举与映射）、helpers（格式化与状态映射）、
     │                             #   image（上传前压缩）、upload（上传前校验）
     ├── views/                    # 页面：Login/Dashboard/Orders/OrderDetail/OrderImport/
-    │                             #   Customers/Vehicles/Blacklist/Settings/Logs/NotFound
+    │                             #   Customers/Vehicles/Settings/Logs/NotFound
     └── style.css                 # 全局样式 + Apple 设计 token（--sk-*）
 ```
 
@@ -123,7 +123,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 | 客户管理 | 客户信息、常用客户标记、来源标记、证件与驾照照片、快速查看历史订单 |
 | 车辆管理 | 车辆 CRUD、新能源标识、VIN/发动机号、行驶证多图（正副页）、详情弹窗；分页签承载保养/保险/年检/违章 |
 | 违章管理 | 违章登记、罚款与扣分、多图上传、处理状态跟踪、押金扣款（车辆页「违章」分栏） |
-| 黑名单 | 添加/移除、原因记录、手机号与身份证检查 |
+| 黑名单 | 添加/移除、原因记录、手机号与身份证检查（客户管理页「黑名单」分栏） |
 | 保养管理 | 按车辆查看、保养类型（常规/大保养/小修）、里程提醒、成本统计 |
 | 保险管理 | 按车辆查看、险种多选（交强险/商业险/座位险）、到期提醒、保费统计 |
 | 年检证 | 年检状态列表、证书图片、到期提醒 |
