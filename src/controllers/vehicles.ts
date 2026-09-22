@@ -7,6 +7,11 @@ import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
 import { now } from '../lib/time';
 import { VEHICLE_STATUS_WHITELIST, busyVehicleIds } from '../lib/vehicles';
+import { OWNERSHIP_TYPES, oneOf } from '../lib/ledger';
+import { VEHICLE_CATEGORY_TEXT } from '../lib/constants';
+
+/** 车型分类枚举直接取自中文名映射的 key，避免再维护第三份清单 */
+const VEHICLE_CATEGORIES = Object.keys(VEHICLE_CATEGORY_TEXT);
 import type { AppContext } from '../types';
 
 // 车辆状态映射。不含 rented：已出租是派生状态，由订单时间区间算出（见 lib/vehicles.ts）
@@ -215,6 +220,92 @@ interface VehicleBody {
   fuel_type?: string;
   body_type?: string;
   doors?: number;
+  /** 车辆编号（台账里的 01-18 序号），可空但填了必须唯一 */
+  vehicle_no?: string | null;
+  /** 车型分类：suv / sedan / mpv / pickup / other。与 body_type（携程车型串解析结果）用途不同 */
+  category?: string | null;
+  purchase_date?: string | null;
+  purchase_price?: number | null;
+  initial_mileage?: number | null;
+  /** 车主/合伙人 id（软引用 owners.id） */
+  owner_id?: string | null;
+  /** company 自有 / attached 挂靠。挂靠车才有车主公司管理费 */
+  ownership_type?: string;
+  monthly_payment?: number;
+  loan_total?: number | null;
+  loan_terms?: number | null;
+  loan_start_date?: string | null;
+  loan_account_id?: string | null;
+}
+
+/**
+ * 档案相关的 12 个列名与取值。create/update 共用，避免两处列清单漂移。
+ *
+ * `current` 是更新场景下的现有行：字段缺省时**沿用原值而不是重置成默认值**。
+ * 这 12 个字段与钱直接相关（车主决定结算费率、月供进单车月报），
+ * 被一次不带这些字段的更新清空会造成「车还在、车主没了」——
+ * 车直接掉出车主对账单，结算单也会悄悄按 0 费率算，全程没有任何报错。
+ */
+function archiveColumns(body: VehicleBody, current?: VehicleRow) {
+  const pick = <K extends keyof VehicleBody>(key: K, fallback: unknown) =>
+    body[key] !== undefined ? body[key] : fallback;
+  return {
+    columns: 'vehicle_no, category, purchase_date, purchase_price, initial_mileage, owner_id, ownership_type, monthly_payment, loan_total, loan_terms, loan_start_date, loan_account_id',
+    values: [
+      String(pick('vehicle_no', current?.vehicle_no ?? '') ?? '').trim() || null,
+      String(pick('category', current?.category ?? '') ?? '').trim() || null,
+      String(pick('purchase_date', current?.purchase_date ?? '') ?? '').trim() || null,
+      toNullableNumber(pick('purchase_price', current?.purchase_price ?? null)),
+      toNullableNumber(pick('initial_mileage', current?.initial_mileage ?? null)),
+      String(pick('owner_id', current?.owner_id ?? '') ?? '').trim() || null,
+      String(pick('ownership_type', current?.ownership_type ?? 'company') ?? 'company'),
+      toNullableNumber(pick('monthly_payment', current?.monthly_payment ?? 0)) ?? 0,
+      toNullableNumber(pick('loan_total', current?.loan_total ?? null)),
+      toNullableNumber(pick('loan_terms', current?.loan_terms ?? null)),
+      String(pick('loan_start_date', current?.loan_start_date ?? '') ?? '').trim() || null,
+      String(pick('loan_account_id', current?.loan_account_id ?? '') ?? '').trim() || null
+    ]
+  };
+}
+
+/** 数字字段统一收敛：非有限数按 null（金额为 0 的语义由调用方决定，不在这里兜底成 0） */
+function toNullableNumber(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * 档案字段的跨表校验。
+ * 返回错误提示字符串，通过时返回 null。
+ */
+async function validateArchive(db: D1Database, body: VehicleBody, excludeId?: string): Promise<string | null> {
+  if (body.ownership_type !== undefined && !oneOf(body.ownership_type, OWNERSHIP_TYPES)) {
+    return '车辆归属只能是自有或挂靠';
+  }
+  if (body.category != null && body.category !== '' && !oneOf(body.category, VEHICLE_CATEGORIES)) {
+    return '车型分类不合法';
+  }
+  // 车辆编号有部分唯一索引兜底，这里先查一次是为了给出能看懂的提示
+  const vehicleNo = body.vehicle_no?.trim();
+  if (vehicleNo) {
+    const conflict = await queryOne<{ id: string }>(
+      db,
+      'SELECT id FROM vehicles WHERE vehicle_no = ? AND id != ?',
+      [vehicleNo, excludeId ?? '']
+    );
+    if (conflict) {
+      return `车辆编号 ${vehicleNo} 已被其他车辆使用`;
+    }
+  }
+  if (body.owner_id?.trim()) {
+    const owner = await queryOne<{ id: string }>(db, 'SELECT id FROM owners WHERE id = ? AND status = 1', [
+      body.owner_id.trim()
+    ]);
+    if (!owner) {
+      return '车主不存在或已停用';
+    }
+  }
+  return null;
 }
 
 // 创建车辆
@@ -236,13 +327,19 @@ export async function createVehicle(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '该车牌号已存在' }, 400);
     }
 
+    const archiveError = await validateArchive(db, body);
+    if (archiveError) {
+      return c.json({ success: false, message: archiveError }, 400);
+    }
+
+    const archive = archiveColumns(body);
     const id = generateId();
     const currentTime = now();
 
     await execute(
       db,
-      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_images, registration_image, is_new_energy, remarks, transmission, fuel_type, body_type, doors, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`,
+      `INSERT INTO vehicles (id, plate_number, brand, model, color, year, seats, daily_rate, deposit, mileage, vin, engine_number, license_images, registration_image, is_new_energy, remarks, transmission, fuel_type, body_type, doors, ${archive.columns}, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${archive.values.map(() => '?').join(', ')}, 'available', ?, ?)`,
       [
         id,
         plate_number,
@@ -264,6 +361,7 @@ export async function createVehicle(c: AppContext): Promise<Response> {
         body.fuel_type ?? null,
         body.body_type ?? null,
         body.doors ?? null,
+        ...archive.values,
         currentTime,
         currentTime
       ]
@@ -321,9 +419,19 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
       }
     }
 
+    const archiveError = await validateArchive(db, body, id);
+    if (archiveError) {
+      return c.json({ success: false, message: archiveError }, 400);
+    }
+    // 传入现有行：缺省的档案字段沿用原值，避免「只改里程」把车主与归属清掉
+    const existingVehicle = await queryOne<VehicleRow>(db, 'SELECT * FROM vehicles WHERE id = ?', [id]);
+    const archive = archiveColumns(body, existingVehicle ?? undefined);
+
     await execute(
       db,
-      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_images = ?, registration_image = ?, is_new_energy = ?, remarks = ?, transmission = ?, fuel_type = ?, body_type = ?, doors = ?, updated_at = ? WHERE id = ?`,
+      `UPDATE vehicles SET plate_number = ?, brand = ?, model = ?, color = ?, year = ?, seats = ?, daily_rate = ?, deposit = ?, status = ?, mileage = ?, last_maintenance = ?, vin = ?, engine_number = ?, license_images = ?, registration_image = ?, is_new_energy = ?, remarks = ?, transmission = ?, fuel_type = ?, body_type = ?, doors = ?,
+         vehicle_no = ?, category = ?, purchase_date = ?, purchase_price = ?, initial_mileage = ?, owner_id = ?, ownership_type = ?, monthly_payment = ?, loan_total = ?, loan_terms = ?, loan_start_date = ?, loan_account_id = ?,
+         updated_at = ? WHERE id = ?`,
       [
         plate_number,
         body.brand,
@@ -346,6 +454,7 @@ export async function updateVehicle(c: AppContext): Promise<Response> {
         body.fuel_type ?? null,
         body.body_type ?? null,
         body.doors ?? null,
+        ...archive.values,
         now(),
         id
       ]
@@ -381,6 +490,20 @@ export async function deleteVehicle(c: AppContext): Promise<Response> {
 
     if (activeOrders && activeOrders.count > 0) {
       return c.json({ success: false, message: '该车辆有未完成的订单，无法删除' }, 400);
+    }
+
+    // 结算行外键是 RESTRICT（钱的历史不能跟着车一起消失），
+    // 先查一次是为了给出能看懂的原因，而不是让用户收到一句外键约束失败
+    const settlements = await queryOne<{ count: number }>(
+      db,
+      'SELECT COUNT(*) as count FROM settlement_lines WHERE vehicle_id = ?',
+      [id]
+    );
+    if (settlements && settlements.count > 0) {
+      return c.json(
+        { success: false, message: `该车辆已有 ${settlements.count} 条结算记录，无法删除，请改为「不可用」` },
+        400
+      );
     }
 
     const vehicle = await queryOne<{ plate_number: string }>(db, 'SELECT plate_number FROM vehicles WHERE id = ?', [

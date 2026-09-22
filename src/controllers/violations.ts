@@ -1,10 +1,12 @@
-import { type Bind, execute, queryOne, queryWithPagination } from '../db/helpers';
+import { type Bind, batchExecute, execute, queryOne, queryWithPagination } from '../db/helpers';
 import type { ViolationRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
+import { roundMoney, toAmount } from '../lib/money';
 import { now } from '../lib/time';
+import { buildMirrorDeleteStmts, buildMirrorSyncStmts, findPaidMirror } from '../lib/expenseMirror';
 import type { AppContext } from '../types';
 
 // 违章状态映射
@@ -149,32 +151,62 @@ export async function createViolation(c: AppContext): Promise<Response> {
     const id = generateId();
     const currentTime = now();
 
-    await execute(
+    // 违章也进车辆费用台账：
+    //   支出侧 = 罚款金额（公司去缴的钱）
+    //   收入侧 = 已收客户的罚款 + 代办费（创建时通常为 0，收费用时补上）
+    // 付款状态一律在「车辆费用台账」页标记，不在这里写死 —— 一处标记、一处出流水
+    const violationImages = serializeImages(body.images);
+    const vehicle = await queryOne<{ owner_id: string | null }>(db, 'SELECT owner_id FROM vehicles WHERE id = ?', [
+      vehicle_id
+    ]);
+    const mirror = await buildMirrorSyncStmts(
       db,
-      `INSERT INTO violations
-        (id, order_id, vehicle_id, customer_id, customer_name, customer_phone, plate_number,
-         violation_type, violation_date, location, fine_amount, penalty_points, penalty_fee, images, status, remarks, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
-      [
-        id,
-        body.order_id ?? null,
-        vehicle_id,
-        body.customer_id ?? null,
-        customer_name,
-        body.customer_phone ?? null,
-        plate_number,
-        violation_type,
-        violation_date,
-        body.location ?? null,
-        body.fine_amount || 0,
-        body.penalty_points || 0,
-        body.penalty_fee || 0,
-        serializeImages(body.images),
-        body.remarks ?? null,
-        currentTime,
-        currentTime
-      ]
+      {
+        sourceType: 'violation',
+        sourceId: id,
+        vehicleId: vehicle_id,
+        plateNumber: plate_number,
+        ownerId: vehicle?.owner_id ?? null,
+        expenseDate: violation_date,
+        expenseType: 'violation',
+        expenseTypeName: '违章',
+        incomeAmount: 0,
+        expenseAmount: body.fine_amount || 0,
+        remarks: body.remarks ?? null,
+        images: violationImages
+      },
+      { operatorId: getAuthUser(c)?.id ?? null, currentTime },
+      { id }
     );
+
+    await batchExecute(db, [
+      {
+        sql: `INSERT INTO violations
+          (id, order_id, vehicle_id, customer_id, customer_name, customer_phone, plate_number,
+           violation_type, violation_date, location, fine_amount, penalty_points, penalty_fee, images, status, remarks, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+        params: [
+          id,
+          body.order_id ?? null,
+          vehicle_id,
+          body.customer_id ?? null,
+          customer_name,
+          body.customer_phone ?? null,
+          plate_number,
+          violation_type,
+          violation_date,
+          body.location ?? null,
+          body.fine_amount || 0,
+          body.penalty_points || 0,
+          body.penalty_fee || 0,
+          violationImages,
+          body.remarks ?? null,
+          currentTime,
+          currentTime
+        ]
+      },
+      ...mirror.stmts
+    ]);
 
     await logAction(db, {
       userId: getAuthUser(c)?.id ?? '',
@@ -294,13 +326,52 @@ export async function collectFee(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '违章记录不存在' }, 404);
     }
 
-    await execute(
+    const currentTime = now();
+    const income = roundMoney(toAmount(collected_penalty) + toAmount(collected_fine));
+
+    const vehicle = await queryOne<{ owner_id: string | null }>(db, 'SELECT owner_id FROM vehicles WHERE id = ?', [
+      violation.vehicle_id
+    ]);
+    const mirror = await buildMirrorSyncStmts(
       db,
-      `UPDATE violations SET
-        collected_penalty = ?, collected_fine = ?, fee_remarks = ?, updated_at = ?
-       WHERE id = ?`,
-      [collected_penalty || 0, collected_fine || 0, fee_remarks ?? null, now(), id]
+      {
+        sourceType: 'violation',
+        sourceId: id ?? '',
+        vehicleId: violation.vehicle_id,
+        plateNumber: violation.plate_number,
+        ownerId: vehicle?.owner_id ?? null,
+        expenseDate: violation.violation_date,
+        expenseType: 'violation',
+        expenseTypeName: '违章',
+        // 收入侧 = 已收罚款 + 已收代办费
+        incomeAmount: income,
+        expenseAmount: violation.fine_amount,
+        remarks: fee_remarks ?? violation.remarks
+      },
+      { operatorId: getAuthUser(c)?.id ?? null, currentTime }
     );
+    if (mirror.blocked) {
+      return c.json({ success: false, message: mirror.blocked }, 400);
+    }
+
+    await batchExecute(db, [
+      {
+        sql: `UPDATE violations SET
+          collected_penalty = ?, collected_fine = ?, fee_remarks = ?, updated_at = ?
+         WHERE id = ?`,
+        params: [collected_penalty || 0, collected_fine || 0, fee_remarks ?? null, currentTime, id]
+      },
+      ...mirror.stmts
+    ]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '收取违章费用',
+      entityType: 'violation',
+      entityId: id,
+      details: `违章收费 ${violation.plate_number}：罚款 ${collected_fine || 0} + 代办费 ${collected_penalty || 0}`,
+      ipAddress: getClientIp(c)
+    });
 
     return c.json({ success: true, message: '费用记录更新成功' });
   } catch (error) {
@@ -319,7 +390,15 @@ export async function deleteViolation(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '违章记录不存在' }, 404);
     }
 
-    await execute(db, 'DELETE FROM violations WHERE id = ?', [id]);
+    const paid = await findPaidMirror(db, 'violation', id ?? '');
+    if (paid) {
+      return c.json({ success: false, message: '该违章的费用已在车辆费用台账标记付款，请先撤销付款再删除' }, 400);
+    }
+
+    await batchExecute(db, [
+      ...buildMirrorDeleteStmts('violation', id ?? ''),
+      { sql: 'DELETE FROM violations WHERE id = ?', params: [id] }
+    ]);
 
     await logAction(db, {
       userId: getAuthUser(c)?.id ?? '',

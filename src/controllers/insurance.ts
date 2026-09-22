@@ -1,9 +1,12 @@
-import { type Bind, execute, query, queryOne, queryWithPagination } from '../db/helpers';
+import { type Bind, batchExecute, query, queryOne, queryWithPagination } from '../db/helpers';
 import type { InsuranceRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { parseStringArray, stringifyArray } from '../lib/json';
 import { dateOffset, now, today as todayDate, yearRange } from '../lib/time';
+import { buildMirrorDeleteStmts, buildMirrorSyncStmts, findPaidMirror } from '../lib/expenseMirror';
+import { logAction } from '../lib/log';
+import { getAuthUser, getClientIp } from '../lib/request';
 import type { AppContext } from '../types';
 
 // 保险类型映射
@@ -241,6 +244,12 @@ interface InsuranceBody {
   documents?: InsuranceDocument[];
   remarks?: string;
   status?: string;
+  /** 车辆费用台账侧的信息，可选 */
+  invoice_status?: string;
+  account_id?: string | null;
+  paid_at?: string | null;
+  /** 保费按月分摊进单车月报，默认 12（年险） */
+  amortize_months?: number;
 }
 
 // 创建保险记录
@@ -278,31 +287,67 @@ export async function createInsurance(c: AppContext): Promise<Response> {
       status = 'expired';
     }
 
-    await execute(
+    const vehicle = await queryOne<{ owner_id: string | null }>(db, 'SELECT owner_id FROM vehicles WHERE id = ?', [
+      vehicle_id
+    ]);
+    // 保费按年缴，默认分 12 个月摊进单车月报 —— 否则续保那个月的「结余」会是一条巨大的负数
+    const mirror = await buildMirrorSyncStmts(
       db,
-      `INSERT INTO insurance (
-        id, vehicle_id, plate_number, insurance_type, insurance_company, policy_number,
-        start_date, end_date, premium, coverage_amount, beneficiary, documents, remarks, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        vehicle_id,
-        plateNum,
-        typeStr,
-        body.insurance_company,
-        body.policy_number ?? null,
-        start_date,
-        end_date,
-        body.premium || 0,
-        body.coverage_amount || 0,
-        body.beneficiary ?? null,
-        body.documents ? JSON.stringify(body.documents) : null,
-        body.remarks ?? null,
-        status,
-        currentTime,
-        currentTime
-      ]
+      {
+        sourceType: 'insurance',
+        sourceId: id,
+        vehicleId: vehicle_id,
+        plateNumber: plateNum,
+        ownerId: vehicle?.owner_id ?? null,
+        expenseDate: start_date,
+        expenseType: 'insurance',
+        expenseTypeName: '保险',
+        incomeAmount: 0,
+        expenseAmount: body.premium || 0,
+        amortizeMonths: Number.isFinite(body.amortize_months) ? Number(body.amortize_months) : 12,
+        invoiceStatus: body.invoice_status,
+        remarks: body.remarks ?? null
+      },
+      { operatorId: getAuthUser(c)?.id ?? null, currentTime },
+      { id, paidAccountId: body.account_id ?? null, paidAt: body.paid_at ?? start_date }
     );
+
+    await batchExecute(db, [
+      {
+        sql: `INSERT INTO insurance (
+          id, vehicle_id, plate_number, insurance_type, insurance_company, policy_number,
+          start_date, end_date, premium, coverage_amount, beneficiary, documents, remarks, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [
+          id,
+          vehicle_id,
+          plateNum,
+          typeStr,
+          body.insurance_company,
+          body.policy_number ?? null,
+          start_date,
+          end_date,
+          body.premium || 0,
+          body.coverage_amount || 0,
+          body.beneficiary ?? null,
+          body.documents ? JSON.stringify(body.documents) : null,
+          body.remarks ?? null,
+          status,
+          currentTime,
+          currentTime
+        ]
+      },
+      ...mirror.stmts
+    ]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '创建保险记录',
+      entityType: 'insurance',
+      entityId: id,
+      details: `创建保险记录 ${plateNum ?? ''} ${body.insurance_company}，保费 ${body.premium || 0}`,
+      ipAddress: getClientIp(c)
+    });
 
     return c.json({
       success: true,
@@ -328,30 +373,72 @@ export async function updateInsurance(c: AppContext): Promise<Response> {
 
     const typeStr = stringifyArray(body.insurance_types) ?? body.insurance_type ?? insurance.insurance_type;
 
-    await execute(
+    const currentTime = now();
+    const vehicleId = body.vehicle_id || insurance.vehicle_id;
+    const startDate = body.start_date || insurance.start_date;
+    const premium = body.premium ?? 0;
+
+    const vehicle = await queryOne<{ owner_id: string | null }>(db, 'SELECT owner_id FROM vehicles WHERE id = ?', [
+      vehicleId
+    ]);
+    const mirror = await buildMirrorSyncStmts(
       db,
-      `UPDATE insurance SET
-        vehicle_id = ?, insurance_type = ?, insurance_company = ?, policy_number = ?,
-        start_date = ?, end_date = ?, premium = ?, coverage_amount = ?,
-        beneficiary = ?, documents = ?, remarks = ?, status = ?, updated_at = ?
-      WHERE id = ?`,
-      [
-        body.vehicle_id || insurance.vehicle_id,
-        typeStr,
-        body.insurance_company,
-        body.policy_number ?? null,
-        body.start_date,
-        body.end_date,
-        body.premium ?? 0,
-        body.coverage_amount ?? 0,
-        body.beneficiary ?? null,
-        body.documents ? JSON.stringify(body.documents) : null,
-        body.remarks ?? null,
-        body.status || insurance.status,
-        now(),
-        id
-      ]
+      {
+        sourceType: 'insurance',
+        sourceId: id ?? '',
+        vehicleId,
+        plateNumber: insurance.plate_number,
+        ownerId: vehicle?.owner_id ?? null,
+        expenseDate: startDate,
+        expenseType: 'insurance',
+        expenseTypeName: '保险',
+        incomeAmount: 0,
+        expenseAmount: premium,
+        amortizeMonths: Number.isFinite(body.amortize_months) ? Number(body.amortize_months) : undefined,
+        invoiceStatus: body.invoice_status,
+        remarks: body.remarks ?? null
+      },
+      { operatorId: getAuthUser(c)?.id ?? null, currentTime }
     );
+    if (mirror.blocked) {
+      return c.json({ success: false, message: mirror.blocked }, 400);
+    }
+
+    await batchExecute(db, [
+      {
+        sql: `UPDATE insurance SET
+          vehicle_id = ?, insurance_type = ?, insurance_company = ?, policy_number = ?,
+          start_date = ?, end_date = ?, premium = ?, coverage_amount = ?,
+          beneficiary = ?, documents = ?, remarks = ?, status = ?, updated_at = ?
+        WHERE id = ?`,
+        params: [
+          vehicleId,
+          typeStr,
+          body.insurance_company,
+          body.policy_number ?? null,
+          startDate,
+          body.end_date,
+          premium,
+          body.coverage_amount ?? 0,
+          body.beneficiary ?? null,
+          body.documents ? JSON.stringify(body.documents) : null,
+          body.remarks ?? null,
+          body.status || insurance.status,
+          currentTime,
+          id
+        ]
+      },
+      ...mirror.stmts
+    ]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '更新保险记录',
+      entityType: 'insurance',
+      entityId: id,
+      details: `更新保险记录 ${insurance.plate_number ?? ''}，保费 ${premium}`,
+      ipAddress: getClientIp(c)
+    });
 
     return c.json({ success: true, message: '保险记录更新成功' });
   } catch (error) {
@@ -363,8 +450,31 @@ export async function updateInsurance(c: AppContext): Promise<Response> {
 export async function deleteInsurance(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
-    await execute(db, 'DELETE FROM insurance WHERE id = ?', [id]);
+    const id = c.req.param('id') ?? '';
+    const insurance = await queryOne<InsuranceRow>(db, 'SELECT * FROM insurance WHERE id = ?', [id]);
+    if (!insurance) {
+      return c.json({ success: false, message: '保险记录不存在' }, 404);
+    }
+
+    const paid = await findPaidMirror(db, 'insurance', id);
+    if (paid) {
+      return c.json({ success: false, message: '该保险的费用已在车辆费用台账标记付款，请先撤销付款再删除' }, 400);
+    }
+
+    await batchExecute(db, [
+      ...buildMirrorDeleteStmts('insurance', id),
+      { sql: 'DELETE FROM insurance WHERE id = ?', params: [id] }
+    ]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '删除保险记录',
+      entityType: 'insurance',
+      entityId: id,
+      details: `删除保险记录 ${insurance.plate_number ?? ''} ${insurance.insurance_company}，保费 ${insurance.premium}`,
+      ipAddress: getClientIp(c)
+    });
+
     return c.json({ success: true, message: '保险记录删除成功' });
   } catch (error) {
     return handleError(c, '删除保险记录错误:', error);

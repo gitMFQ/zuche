@@ -18,6 +18,11 @@ import * as settingsController from '../controllers/settings';
 import * as logsController from '../controllers/logs';
 import * as schedulesController from '../controllers/schedules';
 import * as importController from '../controllers/import';
+import * as ownersController from '../controllers/owners';
+import * as financeController from '../controllers/finance';
+import * as expensesController from '../controllers/expenses';
+import * as settlementController from '../controllers/settlement';
+import * as reportsController from '../controllers/reports';
 
 import { uploadRoutes } from './upload';
 import { signUploadUrls } from '../lib/uploadUrl';
@@ -151,6 +156,87 @@ apiRoutes.get('/logs/:id', authMiddleware, adminOnly, logsController.getLog);
 // ==================== 调度路由 ====================
 apiRoutes.get('/schedules/recent', authMiddleware, schedulesController.getRecentSchedules);
 apiRoutes.get('/schedules/gantt', authMiddleware, schedulesController.getGanttData);
+
+// ==================== 车主 / 合伙人 ====================
+// 静态段（/options）必须排在同级 /:id 之前，否则会被参数路由捕获
+apiRoutes.get('/owners/options', authMiddleware, ownersController.getOwnerOptions);
+apiRoutes.get('/owners', authMiddleware, ownersController.getOwners);
+apiRoutes.get('/owners/:id', authMiddleware, ownersController.getOwner);
+apiRoutes.get('/owners/:id/statement', authMiddleware, ownersController.getOwnerStatement);
+apiRoutes.get('/owners/:id/advances', authMiddleware, ownersController.getOwnerAdvances);
+apiRoutes.post('/owners/:id/advances', authMiddleware, ownersController.createAdvance);
+apiRoutes.put('/owners/:id/advances/:advanceId', authMiddleware, ownersController.updateAdvance);
+apiRoutes.put('/owners/:id/advances/:advanceId/pay', authMiddleware, ownersController.payAdvance);
+apiRoutes.delete('/owners/:id/advances/:advanceId', authMiddleware, adminOnly, ownersController.deleteAdvance);
+// 车主档案的增删改只给管理员：费率直接决定结算金额，属于财务配置
+apiRoutes.post('/owners', authMiddleware, adminOnly, ownersController.createOwner);
+apiRoutes.put('/owners/:id', authMiddleware, adminOnly, ownersController.updateOwner);
+apiRoutes.delete('/owners/:id', authMiddleware, adminOnly, ownersController.deleteOwner);
+
+// ==================== 资金账户与流水 ====================
+apiRoutes.get('/finance/accounts', authMiddleware, financeController.getFundAccounts);
+apiRoutes.get('/finance/accounts/:id', authMiddleware, financeController.getFundAccount);
+apiRoutes.post('/finance/accounts', authMiddleware, adminOnly, financeController.createFundAccount);
+apiRoutes.put('/finance/accounts/:id', authMiddleware, adminOnly, financeController.updateFundAccount);
+apiRoutes.delete('/finance/accounts/:id', authMiddleware, adminOnly, financeController.deleteFundAccount);
+apiRoutes.get('/finance/transactions', authMiddleware, financeController.getFundTransactions);
+apiRoutes.post('/finance/transactions', authMiddleware, financeController.createFundTransaction);
+apiRoutes.put('/finance/transactions/:id', authMiddleware, adminOnly, financeController.updateFundTransaction);
+apiRoutes.put('/finance/transactions/:id/account', authMiddleware, adminOnly, financeController.reassignFundTransaction);
+apiRoutes.post('/finance/transactions/:id/reverse', authMiddleware, adminOnly, financeController.reverseFundTransaction);
+apiRoutes.get('/finance/transfers', authMiddleware, financeController.getFundTransfers);
+apiRoutes.post('/finance/transfers', authMiddleware, adminOnly, financeController.createTransfer);
+apiRoutes.get('/finance/summary', authMiddleware, financeController.getFundSummary);
+apiRoutes.get('/finance/period-locks', authMiddleware, financeController.getPeriodLocks);
+apiRoutes.put('/finance/period-locks/:period', authMiddleware, adminOnly, financeController.lockPeriod);
+apiRoutes.delete('/finance/period-locks/:period', authMiddleware, adminOnly, financeController.unlockPeriod);
+
+// ==================== 费用台账 ====================
+// 财务模块的字典（账户 + 开支项目 + 车辆费用类型 + 车主选项），前端首屏一次拉完
+apiRoutes.get('/finance/dicts', authMiddleware, expensesController.getFinanceDicts);
+
+// 车辆费用：记账对所有人开放（门店员工天天要记洗车/补油/过路费），
+// 但删除只给管理员，避免随手删掉已经入账的费用
+apiRoutes.get('/vehicle-expenses/stats', authMiddleware, expensesController.getVehicleExpenseStats);
+apiRoutes.get('/vehicle-expenses', authMiddleware, expensesController.getVehicleExpenses);
+apiRoutes.post('/vehicle-expenses', authMiddleware, expensesController.createVehicleExpense);
+apiRoutes.put('/vehicle-expenses/:id', authMiddleware, expensesController.updateVehicleExpense);
+apiRoutes.put('/vehicle-expenses/:id/pay', authMiddleware, expensesController.payVehicleExpense);
+apiRoutes.put('/vehicle-expenses/:id/unpay', authMiddleware, adminOnly, expensesController.unpayVehicleExpense);
+apiRoutes.delete('/vehicle-expenses/:id', authMiddleware, adminOnly, expensesController.deleteVehicleExpense);
+
+// 运营开支
+apiRoutes.get('/operating-expenses/stats', authMiddleware, expensesController.getOperatingExpenseStats);
+apiRoutes.get('/operating-expenses', authMiddleware, expensesController.getOperatingExpenses);
+apiRoutes.post('/operating-expenses', authMiddleware, expensesController.createOperatingExpense);
+apiRoutes.put('/operating-expenses/:id', authMiddleware, expensesController.updateOperatingExpense);
+apiRoutes.put('/operating-expenses/:id/pay', authMiddleware, expensesController.payOperatingExpense);
+apiRoutes.put('/operating-expenses/:id/unpay', authMiddleware, adminOnly, expensesController.unpayOperatingExpense);
+apiRoutes.delete('/operating-expenses/:id', authMiddleware, adminOnly, expensesController.deleteOperatingExpense);
+
+// ==================== 车主结算 ====================
+// 静态段必须排在 /:id 之前
+apiRoutes.get('/settlements/lines', authMiddleware, settlementController.getSettlementLines);
+apiRoutes.post('/settlements/lines', authMiddleware, settlementController.createSettlementLine);
+// 生成与刷新会让整期金额变化，属于财务动作，只给管理员
+apiRoutes.post('/settlements/lines/generate', authMiddleware, adminOnly, settlementController.generateSettlementLines);
+apiRoutes.put('/settlements/lines/:id', authMiddleware, adminOnly, settlementController.updateSettlementLine);
+apiRoutes.post('/settlements/lines/:id/void', authMiddleware, adminOnly, settlementController.voidSettlementLine);
+apiRoutes.post('/settlements/lines/:id/restore', authMiddleware, adminOnly, settlementController.restoreSettlementLine);
+apiRoutes.get('/settlements/openings', authMiddleware, settlementController.getSettlementOpenings);
+apiRoutes.post('/settlements/openings', authMiddleware, adminOnly, settlementController.upsertSettlementOpening);
+apiRoutes.delete('/settlements/openings/:id', authMiddleware, adminOnly, settlementController.deleteSettlementOpening);
+apiRoutes.get('/settlements/payouts', authMiddleware, settlementController.getSettlementPayouts);
+apiRoutes.post('/settlements/payouts', authMiddleware, adminOnly, settlementController.createSettlementPayout);
+apiRoutes.delete('/settlements/payouts/:id', authMiddleware, adminOnly, settlementController.deleteSettlementPayout);
+
+// ==================== 财务报表 ====================
+// 报表口径见 src/controllers/reports.ts 的文件头（经营收入 / 结算收入 / 现金余额三条线）
+apiRoutes.get('/reports/vehicle-monthly', authMiddleware, reportsController.getVehicleMonthlyReport);
+apiRoutes.get('/reports/vehicle-ranking', authMiddleware, reportsController.getVehicleRanking);
+apiRoutes.get('/reports/company-monthly', authMiddleware, reportsController.getCompanyMonthlyReport);
+apiRoutes.get('/reports/fund-flow', authMiddleware, reportsController.getFundFlowReport);
+apiRoutes.get('/reports/owner-statement', authMiddleware, reportsController.getOwnerStatementReport);
 
 // ==================== 文件上传路由 ====================
 apiRoutes.route('/', uploadRoutes);

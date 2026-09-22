@@ -7,7 +7,32 @@ import { logAction } from '../lib/log';
 import { getAuthUser, getClientIp } from '../lib/request';
 import { dateOffset, normalizeDateTime, now, today } from '../lib/time';
 import { calcDailyRate, calcNetAmount, calcRentalDays } from '../lib/orderAmount';
-import { PAYMENT_TYPE_FEE_CATEGORY, PAYMENT_TYPE_TEXT, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_TEXT } from '../lib/constants';
+import {
+  PAYMENT_TYPE_FEE_CATEGORY,
+  PAYMENT_TYPE_TEXT,
+  PAYMENT_TXN_CATEGORY,
+  PAYMENT_TXN_SLOT,
+  ORDER_STATUS_TRANSITIONS,
+  ORDER_STATUS_TEXT
+} from '../lib/constants';
+import { resolveAccountIdByMethod } from '../lib/fundAccount';
+import {
+  buildReverseStmts,
+  findFirstLockedPeriod,
+  findPeriodLock,
+  INVOICE_STATUSES,
+  oneOf,
+  pushFundTxn,
+  type ReversibleTxn,
+  SETTLE_STATUSES
+} from '../lib/ledger';
+import { roundMoney, toAmount } from '../lib/money';
+import {
+  buildSettlementAmounts,
+  buildSettlementRefreshStmt,
+  buildSettlementVoidStmt,
+  resolveCompanyRate
+} from '../lib/settlement';
 import type { AppContext } from '../types';
 
 // 订单状态映射
@@ -24,6 +49,47 @@ const ORDER_WITH_PLATE_SQL = `
 `;
 
 type OrderWithPlate = OrderRow & { plate_number: string | null };
+
+/**
+ * 生成「按订单重算结算行」的语句。订单金额/费率/还车时间变动时都要带上它。
+ *
+ * 费率的两个来源：平台费率取订单上的 commission_rate（来源配置的快照），
+ * 公司费率取车辆所属车主的配置。取不到就返回 null —— 这张单还没生成过结算行，
+ * 没有需要重算的东西，省掉一次无意义的 UPDATE。
+ */
+async function buildSettlementRefresh(
+  db: D1Database,
+  orderId: string,
+  order: { vehicle_id: string; commission_rate: number },
+  totalAmount: number,
+  currentTime: string
+): Promise<Stmt> {
+  const companyRate = await resolveCompanyRate(db, order.vehicle_id);
+  const amounts = buildSettlementAmounts({
+    totalAmount,
+    platformRate: order.commission_rate || 0,
+    companyRate
+  });
+  return buildSettlementRefreshStmt(orderId, amounts, currentTime);
+}
+
+/** 读订单下所有收款流水（用于删除订单时写红字） */
+async function loadOrderTxnRows(db: D1Database, orderId: string): Promise<ReversibleTxn[]> {
+  const payments = await query<{ id: string }>(db, 'SELECT id FROM payments WHERE order_id = ?', [orderId]);
+  if (payments.length === 0) return [];
+
+  const placeholders = payments.map(() => '?').join(', ');
+  return query<ReversibleTxn>(
+    db,
+    `SELECT id, account_id, txn_date, direction, amount, category, counterparty, summary
+     FROM fund_transactions
+     WHERE source_type IN ('prepay', 'payment', 'extension')
+       AND source_id IN (${placeholders})
+       AND status = 'posted'
+       AND reverses_id IS NULL`,
+    payments.map((row) => row.id)
+  );
+}
 
 function parseImages(raw: string | null): string[] {
   if (!raw) return [];
@@ -91,6 +157,7 @@ export async function getOrders(c: AppContext): Promise<Response> {
         o.service_type, o.deposit_waived, o.deposit_waived_expiry, o.contract_number,
         o.source_id, o.commission_rate, o.net_amount, o.remarks,
         o.platform, o.external_no, o.import_batch_id, o.cancel_reason, o.cancelled_at,
+        o.invoice_amount, o.invoice_status, o.settle_status, o.settle_remarks,
         o.created_at, o.updated_at,
         c.name as customer_name, c.phone as customer_phone,
         COALESCE(o.plate_number, v.plate_number) as plate_number,
@@ -125,6 +192,16 @@ export async function getOrders(c: AppContext): Promise<Response> {
     if (q.vehicle_id) {
       sql += ' AND o.vehicle_id = ?';
       params.push(q.vehicle_id);
+    }
+
+    // 结算状态是人工维护的枚举（台账「未结清」列被当备注用过，所以不跟 paid_amount 自动联动）
+    if (oneOf(q.settle_status, SETTLE_STATUSES)) {
+      sql += ' AND o.settle_status = ?';
+      params.push(q.settle_status);
+    }
+    if (oneOf(q.invoice_status, INVOICE_STATUSES)) {
+      sql += ' AND o.invoice_status = ?';
+      params.push(q.invoice_status);
     }
 
     // 取车时间范围筛选
@@ -566,6 +643,12 @@ export async function createOrder(c: AppContext): Promise<Response> {
           ]
         };
 
+    // 预付流水的账户在重试循环外解析一次即可（重试只是换订单号）
+    const prepayAccountId = hasPrepay ? await resolveAccountIdByMethod(db, body.prepay_method) : null;
+    // 支付记录 id 必须提前生成：资金流水要用它做幂等键的 source_id，
+    // 原来是内联 generateId()，流水引用不上、重复执行也拦不住
+    const prepayPaymentId = generateId();
+
     // 订单号随机生成，理论上可能撞唯一约束，所以按号重建整批语句以便重试
     const buildStatements = (orderNo: string): Stmt[] => {
       const list: Stmt[] = [customerStmt];
@@ -603,12 +686,12 @@ export async function createOrder(c: AppContext): Promise<Response> {
         ]
       });
 
-      // 如果有预付，添加支付记录
+      // 如果有预付，添加支付记录 + 对应的资金流水
       if (hasPrepay && body.prepay_method && body.prepay_type) {
         list.push({
           sql: 'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
           params: [
-            generateId(),
+            prepayPaymentId,
             id,
             body.prepay_amount ?? 0,
             body.prepay_method,
@@ -617,6 +700,22 @@ export async function createOrder(c: AppContext): Promise<Response> {
             currentTime
           ]
         });
+        pushFundTxn(
+          list,
+          {
+            accountId: prepayAccountId,
+            txnDate: today(),
+            direction: 'in',
+            amount: body.prepay_amount ?? 0,
+            category: PAYMENT_TXN_CATEGORY[body.prepay_type] ?? 'other',
+            sourceType: 'prepay',
+            sourceId: prepayPaymentId,
+            sourceKind: PAYMENT_TXN_SLOT[body.prepay_type] ?? 'other_in',
+            counterparty: customer_name,
+            summary: `下单预付 ${orderNo}（${customer_name}）`
+          },
+          { operatorId: userId, currentTime }
+        );
       }
 
       return list;
@@ -658,7 +757,7 @@ export async function createOrder(c: AppContext): Promise<Response> {
 export async function updateOrderStatus(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id') ?? '';
     const body = await c.req.json<{
       status?: string;
       actual_start_date?: string;
@@ -763,6 +862,13 @@ export async function updateOrderStatus(c: AppContext): Promise<Response> {
     updateParams.push(id);
 
     stmts.push({ sql: updateSql, params: updateParams });
+
+    // 还车会按实际天数重算 total_amount，结算行的系统口径要跟着更新。
+    // 人工改过金额的结算行由 CASE 守卫保护，不会被覆盖。
+    if (totalAmount !== order.total_amount) {
+      stmts.push(await buildSettlementRefresh(db, id, order, totalAmount, currentTime));
+    }
+
     await batchExecute(db, stmts);
 
     const statusText = STATUS_MAP[status] || status;
@@ -806,6 +912,13 @@ interface UpdateOrderBody {
   contract_number?: string;
   pickup_location?: string;
   return_location?: string;
+  /** 开票金额。台账的「开票金额」常常大于总租金（含税含服务费），不能由总额推导 */
+  invoice_amount?: number;
+  /** none 未开 / pending 待开 / issued 已开 */
+  invoice_status?: string;
+  /** unpaid 未结清 / partial 部分 / paid 已结清。人工维护，不跟 paid_amount 自动联动 */
+  settle_status?: string;
+  settle_remarks?: string | null;
   /** 命中黑名单时，前端二次确认后带 force=true 强制保存 */
   force?: boolean;
 }
@@ -814,7 +927,7 @@ interface UpdateOrderBody {
 export async function updateOrder(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id') ?? '';
     const body = await c.req.json<UpdateOrderBody>();
 
     const order = await queryOne<OrderRow>(db, 'SELECT * FROM orders WHERE id = ?', [id]);
@@ -1019,7 +1132,9 @@ export async function updateOrder(c: AppContext): Promise<Response> {
         customer_id = ?, vehicle_id = ?, plate_number = ?, source_id = ?, source_name = ?, commission_rate = ?,
         start_date = ?, end_date = ?, daily_rate = ?, total_amount = ?, net_amount = ?,
         deposit = ?, deposit_waived = ?, deposit_waived_expiry = ?, service_type = ?,
-        contract_number = ?, pickup_location = ?, return_location = ?, remarks = ?, updated_at = ?
+        contract_number = ?, pickup_location = ?, return_location = ?, remarks = ?,
+        invoice_amount = ?, invoice_status = ?, settle_status = ?, settle_remarks = ?,
+        updated_at = ?
        WHERE id = ?`,
       params: [
         customerId,
@@ -1041,12 +1156,37 @@ export async function updateOrder(c: AppContext): Promise<Response> {
         body.pickup_location !== undefined ? body.pickup_location : order.pickup_location,
         body.return_location !== undefined ? body.return_location : order.return_location,
         body.remarks ?? order.remarks,
+        body.invoice_amount !== undefined ? roundMoney(toAmount(body.invoice_amount)) : order.invoice_amount,
+        oneOf(body.invoice_status, INVOICE_STATUSES) ? body.invoice_status : order.invoice_status,
+        oneOf(body.settle_status, SETTLE_STATUSES) ? body.settle_status : order.settle_status,
+        body.settle_remarks !== undefined ? body.settle_remarks : order.settle_remarks,
         currentTime,
         id
       ]
     });
 
     await batchExecute(db, stmts);
+
+    // 改价 / 改费率 / 换车 / 改来源都会影响结算口径，同步重算一次。
+    // 改还车时间也可能改变归属月份，但结算期是生成时人工选定的，这里不动 period。
+    // totalAmount 为 undefined 表示本次请求没带总额（不是「改成 0」），按不变处理
+    const effectiveTotal = totalAmount ?? order.total_amount;
+    if (
+      effectiveTotal !== order.total_amount ||
+      commissionRate !== (order.commission_rate || 0) ||
+      (body.vehicle_id || order.vehicle_id) !== order.vehicle_id
+    ) {
+      const currentTime = now();
+      await batchExecute(db, [
+        await buildSettlementRefresh(
+          db,
+          id,
+          { vehicle_id: body.vehicle_id || order.vehicle_id, commission_rate: commissionRate },
+          effectiveTotal,
+          currentTime
+        )
+      ]);
+    }
 
     return c.json({
       success: true,
@@ -1062,7 +1202,7 @@ export async function updateOrder(c: AppContext): Promise<Response> {
 export async function extendOrder(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id') ?? '';
     const { new_end_date, extend_amount, has_payment, payment_amount, payment_method } = await c.req.json<{
       new_end_date?: string;
       extend_amount?: number;
@@ -1116,6 +1256,9 @@ export async function extendOrder(c: AppContext): Promise<Response> {
       newPaidAmount += payment_amount ?? 0;
     }
 
+    const extendPaymentId = generateId();
+    const extendAccountId = hasPayment && payment_method ? await resolveAccountIdByMethod(db, payment_method) : null;
+
     // 续租留痕：原来只改 end_date 累加金额，看不出一张单续过几次
     const stmts: Stmt[] = [
       {
@@ -1139,13 +1282,40 @@ export async function extendOrder(c: AppContext): Promise<Response> {
       }
     ];
 
-    // 如果有支付，添加支付记录
+    // 如果有支付，添加支付记录 + 资金流水
     if (hasPayment && payment_method) {
       stmts.push({
         sql: 'INSERT INTO payments (id, order_id, amount, payment_method, payment_type, remarks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        params: [generateId(), id, payment_amount ?? 0, payment_method, 'rent', '续租支付', currentTime]
+        params: [extendPaymentId, id, payment_amount ?? 0, payment_method, 'rent', '续租支付', currentTime]
       });
+      pushFundTxn(
+        stmts,
+        {
+          accountId: extendAccountId,
+          txnDate: today(),
+          direction: 'in',
+          amount: payment_amount ?? 0,
+          category: 'rent',
+          sourceType: 'extension',
+          sourceId: extendPaymentId,
+          sourceKind: 'rent_in',
+          counterparty: order.plate_number,
+          summary: `续租收款 ${order.order_no}`
+        },
+        { operatorId: getAuthUser(c)?.id ?? null, currentTime }
+      );
     }
+
+    // 续租改了总额，结算行的系统口径同步跟上
+    stmts.push(
+      await buildSettlementRefresh(
+        db,
+        id,
+        { vehicle_id: order.vehicle_id, commission_rate: commissionRate },
+        newTotalAmount,
+        currentTime
+      )
+    );
 
     await batchExecute(db, stmts);
 
@@ -1179,7 +1349,7 @@ export async function extendOrder(c: AppContext): Promise<Response> {
 export async function addPayment(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id') ?? '';
     const { amount, payment_method, payment_type, remarks } = await c.req.json<{
       amount?: number;
       payment_method?: string;
@@ -1199,6 +1369,7 @@ export async function addPayment(c: AppContext): Promise<Response> {
     const paymentId = generateId();
     const currentTime = now();
     const newPaidAmount = (order.paid_amount || 0) + amount;
+    const accountId = await resolveAccountIdByMethod(db, payment_method);
 
     // 支付记录、订单已付金额、费用明细必须同时生效
     await batchExecute(db, [
@@ -1221,7 +1392,30 @@ export async function addPayment(c: AppContext): Promise<Response> {
           amount,
           currentTime
         ]
-      }
+      },
+      ...(() => {
+        // 资金流水与支付记录同批写入：宁可整笔记账失败，也不允许出现「有收款无流水」。
+        // 账户未配置时 pushFundTxn 会跳过，不会把整笔业务带崩。
+        const flows: Stmt[] = [];
+        pushFundTxn(
+          flows,
+          {
+            accountId,
+            txnDate: today(),
+            direction: 'in',
+            amount,
+            category: PAYMENT_TXN_CATEGORY[payment_type] ?? 'other',
+            sourceType: 'payment',
+            sourceId: paymentId,
+            sourceKind: PAYMENT_TXN_SLOT[payment_type] ?? 'other_in',
+            counterparty: order.plate_number,
+            summary: `订单 ${order.order_no} 收款（${PAYMENT_TYPE_TEXT[payment_type] ?? payment_type}）`,
+            remarks: remarks ?? null
+          },
+          { operatorId: getAuthUser(c)?.id ?? null, currentTime }
+        );
+        return flows;
+      })()
     ]);
 
     await logAction(db, {
@@ -1305,21 +1499,41 @@ export async function assignDrivers(c: AppContext): Promise<Response> {
 export async function deleteOrder(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id') ?? '';
     const order = await queryOne<OrderWithPlate>(db, ORDER_WITH_PLATE_SQL, [id]);
 
     if (!order) {
       return c.json({ success: false, message: '订单不存在' }, 404);
     }
 
-    await execute(db, 'DELETE FROM orders WHERE id = ?', [id]);
+    // 删单会动到取车日所属结算期与各笔收款的账期，锁月时一律拒绝
+    const txns = await loadOrderTxnRows(db, id);
+    const locked = await findFirstLockedPeriod(db, [order.start_date, ...txns.map((txn) => txn.txn_date)]);
+    if (locked) {
+      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法删除该订单` }, 400);
+    }
+
+    const currentTime = now();
+    // payments / order_fees / order_extensions 都是 CASCADE，删订单就一并没了，
+    // 所以流水必须在 DELETE 之前读出来写红字，否则历史现金流会被静默抹掉
+    const stmts: Stmt[] = [
+      ...buildReverseStmts(txns, `订单 ${order.order_no} 删除`, {
+        operatorId: getAuthUser(c)?.id ?? null,
+        currentTime
+      }),
+      buildSettlementVoidStmt(id, `订单 ${order.order_no} 删除`, currentTime),
+      { sql: 'DELETE FROM orders WHERE id = ?', params: [id] }
+    ];
+    await batchExecute(db, stmts);
 
     await logAction(db, {
       userId: getAuthUser(c)?.id ?? '',
       action: '删除订单',
       entityType: 'order',
       entityId: id,
-      details: `删除订单 ${order.order_no}，车辆：${order.plate_number || ''}`,
+      details: `删除订单 ${order.order_no}，车辆：${order.plate_number || ''}${
+        txns.length ? `（同批冲销 ${txns.length} 条收款流水）` : ''
+      }`,
       ipAddress: getClientIp(c)
     });
 
@@ -1333,7 +1547,7 @@ export async function deleteOrder(c: AppContext): Promise<Response> {
 export async function cancelOrder(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
+    const id = c.req.param('id') ?? '';
     const { remarks, cancel_reason } = await c.req.json<{ remarks?: string; cancel_reason?: string }>();
 
     const order = await queryOne<OrderWithPlate>(db, ORDER_WITH_PLATE_SQL, [id]);
@@ -1345,12 +1559,22 @@ export async function cancelOrder(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '只能取消待确认或进行中的订单' }, 400);
     }
 
+    // 取消会动到取车日所属结算期
+    const locked = await findPeriodLock(db, order.start_date);
+    if (locked) {
+      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法取消该订单` }, 400);
+    }
+
     const currentTime = now();
-    await execute(
-      db,
-      `UPDATE orders SET status = 'cancelled', remarks = ?, cancel_reason = ?, cancelled_at = ?, updated_at = ? WHERE id = ?`,
-      [remarks ?? order.remarks, cancel_reason ?? null, currentTime, currentTime, id]
-    );
+    // 只作废结算行，**不动现金流水**：钱确实收过，退钱要单独走退款动作。
+    // 直接冲销会让「收过又退过」变成「没收过」，账目反而看不清。
+    await batchExecute(db, [
+      {
+        sql: `UPDATE orders SET status = 'cancelled', remarks = ?, cancel_reason = ?, cancelled_at = ?, updated_at = ? WHERE id = ?`,
+        params: [remarks ?? order.remarks, cancel_reason ?? null, currentTime, currentTime, id]
+      },
+      buildSettlementVoidStmt(id, '订单取消', currentTime)
+    ]);
 
     await logAction(db, {
       userId: getAuthUser(c)?.id ?? '',

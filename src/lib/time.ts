@@ -73,3 +73,50 @@ export function normalizeDateTime(input: string | null | undefined): string | nu
   const withSpace = input.replace('T', ' ');
   return withSpace.length === 16 ? `${withSpace}:00` : withSpace;
 }
+
+/**
+ * 取出日期/时间串所属的账期 'YYYY-MM'。
+ * 财务模块用它做月度归属（`settlement_lines.period`、`operating_expenses` 的月份筛选）。
+ * 格式不符时返回空串，由调用方决定是报错还是兜底。
+ */
+export function periodOf(date: string | null | undefined): string {
+  const value = (date ?? '').trim();
+  return /^\d{4}-\d{2}/.test(value) ? value.substring(0, 7) : '';
+}
+
+/** 账期 'YYYY-MM' 是否合法 */
+export function isPeriod(value: string | null | undefined): boolean {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test((value ?? '').trim());
+}
+
+/**
+ * 账期偏移 N 个月，返回 'YYYY-MM'。
+ * 输入非法时返回空串 —— 财务写路径会先 isPeriod 校验，这里不抛错是为了让报表查询能安全兜底。
+ */
+export function addMonths(period: string | null | undefined, months: number): string {
+  const value = periodOf(period);
+  if (!isPeriod(value)) return '';
+  const year = Number(value.substring(0, 4));
+  const month = Number(value.substring(5, 7));
+  const total = year * 12 + (month - 1) + (Number.isFinite(months) ? Math.trunc(months) : 0);
+  const nextYear = Math.floor(total / 12);
+  const nextMonth = total - nextYear * 12 + 1;
+  return `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}`;
+}
+
+/**
+ * 指定账期的起止边界，半开区间 [start, end)，与 monthRange() 同风格。
+ * 半开区间让 `>= start AND < end` 能走索引，避免 `strftime('%Y-%m', x) = ?` 的全表扫描。
+ */
+export function monthRangeOf(period: string | null | undefined): { start: string; end: string } {
+  const value = periodOf(period);
+  const next = addMonths(value, 1);
+  if (!isPeriod(value) || !next) return { start: '', end: '' };
+  return { start: `${value}-01 00:00:00`, end: `${next}-01 00:00:00` };
+}
+
+/** 取日期串所属年份（财务上的「年」即自然年），非法时返回 0 */
+export function fiscalYearOf(date: string | null | undefined): number {
+  const value = (date ?? '').trim();
+  return /^\d{4}/.test(value) ? Number(value.substring(0, 4)) : 0;
+}

@@ -1,9 +1,12 @@
-import { type Bind, execute, query, queryOne, queryWithPagination } from '../db/helpers';
+import { type Bind, type Stmt, batchExecute, query, queryOne, queryWithPagination } from '../db/helpers';
 import type { MaintenanceRow } from '../db/rows';
 import { generateId } from '../lib/ids';
 import { handleError } from '../lib/errors';
 import { parseStringArray, stringifyArray } from '../lib/json';
 import { dateOffset, monthRange, now, today as todayDate } from '../lib/time';
+import { buildMirrorDeleteStmts, buildMirrorSyncStmts, findPaidMirror } from '../lib/expenseMirror';
+import { logAction } from '../lib/log';
+import { getAuthUser, getClientIp } from '../lib/request';
 import type { AppContext } from '../types';
 
 // 保养类型映射
@@ -207,6 +210,10 @@ interface MaintenanceBody {
   images?: string[];
   remarks?: string;
   status?: string;
+  /** 以下三个是车辆费用台账侧的信息：源单据不关心钱从哪出，所以留成可选 */
+  invoice_status?: string;
+  account_id?: string | null;
+  paid_at?: string | null;
 }
 
 // 创建保养记录
@@ -231,41 +238,79 @@ export async function createMaintenance(c: AppContext): Promise<Response> {
 
     const id = generateId();
     const currentTime = now();
+    const images = body.images && body.images.length > 0 ? JSON.stringify(body.images) : null;
 
-    await execute(
+    // 保养单与它的车辆费用镜像必须同批写入：两处各写一次很容易漏，而且漏了没人发现
+    const vehicle = await queryOne<{ owner_id: string | null }>(db, 'SELECT owner_id FROM vehicles WHERE id = ?', [
+      vehicle_id
+    ]);
+    const mirror = await buildMirrorSyncStmts(
       db,
-      `INSERT INTO maintenance (
-        id, vehicle_id, plate_number, type, maintenance_date, cost, mileage,
-        garage, next_maintenance_date, next_maintenance_mileage, images, remarks, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        vehicle_id,
-        plateNum,
-        stringifyArray(body.type),
-        maintenance_date,
-        body.cost || 0,
-        mileage || 0,
-        body.garage ?? null,
-        body.next_maintenance_date ?? null,
-        body.next_maintenance_mileage ?? null,
-        body.images && body.images.length > 0 ? JSON.stringify(body.images) : null,
-        body.remarks ?? null,
-        body.status || 'completed',
-        currentTime,
-        currentTime
-      ]
+      {
+        sourceType: 'maintenance',
+        sourceId: id,
+        vehicleId: vehicle_id,
+        plateNumber: plateNum,
+        ownerId: vehicle?.owner_id ?? null,
+        expenseDate: maintenance_date,
+        // 保养单的类型是数组，费用台账里统一归到「保养」（只有维修成本单独走 repair 时另说）
+        expenseType: 'maintenance',
+        expenseTypeName: '保养',
+        incomeAmount: 0,
+        expenseAmount: body.cost || 0,
+        invoiceStatus: body.invoice_status,
+        remarks: body.remarks ?? null,
+        images
+      },
+      { operatorId: getAuthUser(c)?.id ?? null, currentTime },
+      { id, paidAccountId: body.account_id ?? null, paidAt: body.paid_at ?? maintenance_date }
     );
+
+    const stmts: Stmt[] = [
+      {
+        sql: `INSERT INTO maintenance (
+          id, vehicle_id, plate_number, type, maintenance_date, cost, mileage,
+          garage, next_maintenance_date, next_maintenance_mileage, images, remarks, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        params: [
+          id,
+          vehicle_id,
+          plateNum,
+          stringifyArray(body.type),
+          maintenance_date,
+          body.cost || 0,
+          mileage || 0,
+          body.garage ?? null,
+          body.next_maintenance_date ?? null,
+          body.next_maintenance_mileage ?? null,
+          images,
+          body.remarks ?? null,
+          body.status || 'completed',
+          currentTime,
+          currentTime
+        ]
+      },
+      ...mirror.stmts
+    ];
 
     // 更新车辆的里程和上次保养日期
     if (mileage) {
-      await execute(db, 'UPDATE vehicles SET mileage = ?, last_maintenance = ?, updated_at = ? WHERE id = ?', [
-        mileage,
-        maintenance_date,
-        currentTime,
-        vehicle_id
-      ]);
+      stmts.push({
+        sql: 'UPDATE vehicles SET mileage = ?, last_maintenance = ?, updated_at = ? WHERE id = ?',
+        params: [mileage, maintenance_date, currentTime, vehicle_id]
+      });
     }
+
+    await batchExecute(db, stmts);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '创建保养记录',
+      entityType: 'maintenance',
+      entityId: id,
+      details: `创建保养记录 ${plateNum ?? ''} ${maintenance_date}，费用 ${body.cost || 0}`,
+      ipAddress: getClientIp(c)
+    });
 
     return c.json({
       success: true,
@@ -289,29 +334,72 @@ export async function updateMaintenance(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '保养记录不存在' }, 404);
     }
 
-    await execute(
+    const currentTime = now();
+    const images = body.images && body.images.length > 0 ? JSON.stringify(body.images) : null;
+    const vehicleId = body.vehicle_id || maintenance.vehicle_id;
+    const maintenanceDate = body.maintenance_date || maintenance.maintenance_date;
+    const cost = body.cost ?? 0;
+
+    const vehicle = await queryOne<{ owner_id: string | null }>(db, 'SELECT owner_id FROM vehicles WHERE id = ?', [
+      vehicleId
+    ]);
+    const mirror = await buildMirrorSyncStmts(
       db,
-      `UPDATE maintenance SET
-        vehicle_id = ?, type = ?, maintenance_date = ?, cost = ?, mileage = ?,
-        garage = ?, next_maintenance_date = ?, next_maintenance_mileage = ?,
-        images = ?, remarks = ?, status = ?, updated_at = ?
-      WHERE id = ?`,
-      [
-        body.vehicle_id || maintenance.vehicle_id,
-        stringifyArray(body.type),
-        body.maintenance_date,
-        body.cost ?? 0,
-        body.mileage ?? 0,
-        body.garage ?? null,
-        body.next_maintenance_date ?? null,
-        body.next_maintenance_mileage ?? null,
-        body.images && body.images.length > 0 ? JSON.stringify(body.images) : null,
-        body.remarks ?? null,
-        body.status || maintenance.status,
-        now(),
-        id
-      ]
+      {
+        sourceType: 'maintenance',
+        sourceId: id ?? '',
+        vehicleId,
+        plateNumber: maintenance.plate_number,
+        ownerId: vehicle?.owner_id ?? null,
+        expenseDate: maintenanceDate,
+        expenseType: 'maintenance',
+        expenseTypeName: '保养',
+        incomeAmount: 0,
+        expenseAmount: cost,
+        invoiceStatus: body.invoice_status,
+        remarks: body.remarks ?? null,
+        images
+      },
+      { operatorId: getAuthUser(c)?.id ?? null, currentTime }
     );
+    if (mirror.blocked) {
+      return c.json({ success: false, message: mirror.blocked }, 400);
+    }
+
+    await batchExecute(db, [
+      {
+        sql: `UPDATE maintenance SET
+          vehicle_id = ?, type = ?, maintenance_date = ?, cost = ?, mileage = ?,
+          garage = ?, next_maintenance_date = ?, next_maintenance_mileage = ?,
+          images = ?, remarks = ?, status = ?, updated_at = ?
+        WHERE id = ?`,
+        params: [
+          vehicleId,
+          stringifyArray(body.type),
+          maintenanceDate,
+          cost,
+          body.mileage ?? 0,
+          body.garage ?? null,
+          body.next_maintenance_date ?? null,
+          body.next_maintenance_mileage ?? null,
+          images,
+          body.remarks ?? null,
+          body.status || maintenance.status,
+          currentTime,
+          id
+        ]
+      },
+      ...mirror.stmts
+    ]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '更新保养记录',
+      entityType: 'maintenance',
+      entityId: id,
+      details: `更新保养记录 ${maintenance.plate_number ?? ''} ${maintenanceDate}，费用 ${cost}`,
+      ipAddress: getClientIp(c)
+    });
 
     return c.json({ success: true, message: '保养记录更新成功' });
   } catch (error) {
@@ -323,8 +411,32 @@ export async function updateMaintenance(c: AppContext): Promise<Response> {
 export async function deleteMaintenance(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const id = c.req.param('id');
-    await execute(db, 'DELETE FROM maintenance WHERE id = ?', [id]);
+    const id = c.req.param('id') ?? '';
+    const maintenance = await queryOne<MaintenanceRow>(db, 'SELECT * FROM maintenance WHERE id = ?', [id]);
+    if (!maintenance) {
+      return c.json({ success: false, message: '保养记录不存在' }, 404);
+    }
+
+    // 镜像行已付款意味着这笔钱已经进过资金流水，不能在源单据上悄悄删掉
+    const paid = await findPaidMirror(db, 'maintenance', id);
+    if (paid) {
+      return c.json({ success: false, message: '该保养的费用已在车辆费用台账标记付款，请先撤销付款再删除' }, 400);
+    }
+
+    await batchExecute(db, [
+      ...buildMirrorDeleteStmts('maintenance', id),
+      { sql: 'DELETE FROM maintenance WHERE id = ?', params: [id] }
+    ]);
+
+    await logAction(db, {
+      userId: getAuthUser(c)?.id ?? '',
+      action: '删除保养记录',
+      entityType: 'maintenance',
+      entityId: id,
+      details: `删除保养记录 ${maintenance.plate_number ?? ''} ${maintenance.maintenance_date}，费用 ${maintenance.cost}`,
+      ipAddress: getClientIp(c)
+    });
+
     return c.json({ success: true, message: '保养记录删除成功' });
   } catch (error) {
     return handleError(c, '删除保养记录错误:', error);

@@ -64,6 +64,25 @@ export interface VehicleRow {
   fuel_type: string | null;
   body_type: string | null;
   doors: number | null;
+  /** 车辆编号（台账里的 01-18 两位序号），可空但填了必须唯一 */
+  vehicle_no: string | null;
+  /** 车型分类：SUV / sedan 轿车 / MPV / pickup 皮卡。与 body_type（携程车型串解析结果）用途不同 */
+  category: string | null;
+  purchase_date: string | null;
+  purchase_price: number | null;
+  /** 购入时表显里程；单车月报算里程差用 mileage − initial_mileage */
+  initial_mileage: number | null;
+  /** 车主/合伙人 id（软引用 owners.id，无外键） */
+  owner_id: string | null;
+  /** company 自有 / attached 挂靠 */
+  ownership_type: string;
+  /** 月供（车贷） */
+  monthly_payment: number;
+  loan_total: number | null;
+  loan_terms: number | null;
+  loan_start_date: string | null;
+  /** 月供扣款账户（软引用 fund_accounts.id，无外键） */
+  loan_account_id: string | null;
 }
 
 export interface OrderRow {
@@ -112,6 +131,13 @@ export interface OrderRow {
   booked_model: string | null;
   /** 车牌快照：orders.vehicle_id 无外键，删车后靠它保留可读的车牌 */
   plate_number: string | null;
+  /** 开票金额。常大于 total_amount（含税含服务费），不能由总额推导 */
+  invoice_amount: number;
+  /** none 未开 / pending 待开 / issued 已开 */
+  invoice_status: string;
+  /** unpaid 未结清 / partial 部分 / paid 已付。人工枚举，不跟 paid_amount 自动联动 */
+  settle_status: string;
+  settle_remarks: string | null;
 }
 
 export interface OrderFeeRow {
@@ -281,4 +307,247 @@ export interface OperationLogRow {
   details: string | null;
   ip_address: string | null;
   created_at: string;
+}
+
+// ==================== 财务 / 结算 ====================
+
+/** 车主 / 合伙人档案。一个实体两种角色：既可能是挂靠车的车主，也可能在公司有往来垫付 */
+export interface OwnerRow {
+  id: string;
+  name: string;
+  phone: string | null;
+  id_card: string | null;
+  /** owner 挂靠车主 / partner 合伙人 / both 两者兼具 */
+  role: string;
+  /** 公司管理费率（%）。捷途 15 / 雅阁 10 / 自营 0，按车主配 */
+  company_fee_rate: number;
+  bank_name: string | null;
+  bank_account: string | null;
+  /** 往来期初余额（正数 = 公司应付此人） */
+  opening_balance: number;
+  opening_date: string | null;
+  status: number;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FundAccountRow {
+  id: string;
+  name: string;
+  /** bank / wechat / alipay / cash / virtual */
+  account_type: string;
+  /** 映射 payments.payment_method；为空表示不参与自动映射 */
+  method_key: string | null;
+  opening_balance: number;
+  opening_date: string;
+  is_active: number;
+  sort_order: number;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 资金流水。amount 恒为正，方向由 direction 表达；余额是派生值，不落库 */
+export interface FundTransactionRow {
+  id: string;
+  account_id: string;
+  txn_date: string;
+  direction: string;
+  amount: number;
+  category: string | null;
+  source_type: string;
+  source_id: string | null;
+  source_kind: string;
+  counterparty: string | null;
+  summary: string;
+  /** posted 已入账 / reversed 已冲销 */
+  status: string;
+  reverses_id: string | null;
+  reversed_by_id: string | null;
+  operator_id: string | null;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FundTransferRow {
+  id: string;
+  transfer_date: string;
+  from_account_id: string;
+  to_account_id: string;
+  amount: number;
+  remarks: string | null;
+  operator_id: string | null;
+  created_at: string;
+}
+
+export interface FinancePeriodLockRow {
+  period: string;
+  locked_at: string;
+  locked_by: string | null;
+  remarks: string | null;
+}
+
+/**
+ * 车主结算行。金额分两组：
+ * calc_* 是系统算出来的（每次重算都更新），其余是最终值（amount_overridden=1 时不再被覆盖）。
+ */
+export interface SettlementLineRow {
+  id: string;
+  owner_id: string;
+  vehicle_id: string | null;
+  order_id: string | null;
+  period: string;
+  line_date: string;
+  order_no: string | null;
+  plate_number: string | null;
+  source_id_ref: string | null;
+  source_name: string | null;
+  customer_name: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  days: number;
+  unit_price: number;
+  calc_total_amount: number;
+  calc_platform_rate: number;
+  calc_platform_fee: number;
+  calc_settlement_amount: number;
+  calc_company_rate: number;
+  calc_company_fee: number;
+  calc_owner_amount: number;
+  total_amount: number;
+  platform_fee: number;
+  settlement_amount: number;
+  company_fee: number;
+  other_fee: number;
+  owner_amount: number;
+  amount_overridden: number;
+  override_note: string | null;
+  source_type: string;
+  source_id: string | null;
+  line_kind: string;
+  status: string;
+  voided_reason: string | null;
+  remarks: string | null;
+  operator_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 车辆/车主年初结转（台账里的「2024年余额 5387」） */
+export interface SettlementOpeningRow {
+  id: string;
+  owner_id: string;
+  vehicle_id: string | null;
+  /** owner_id || ':' || COALESCE(vehicle_id,'')，用于绕开 SQLite 里 NULL 互不相等的唯一约束问题 */
+  owner_vehicle_key: string;
+  fiscal_year: number;
+  amount: number;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 结算付款（台账底部的支出区：结车款 / 预付车款），每条会产生一条 out 流水 */
+export interface SettlementPayoutRow {
+  id: string;
+  owner_id: string;
+  vehicle_id: string | null;
+  period: string;
+  payout_type: string;
+  amount: number;
+  account_id: string;
+  paid_at: string;
+  remarks: string | null;
+  operator_id: string | null;
+  created_at: string;
+}
+
+export interface ExpenseCategoryRow {
+  id: string;
+  name: string;
+  sort_order: number;
+  is_active: number;
+  created_at: string;
+}
+
+export interface VehicleExpenseTypeRow {
+  id: string;
+  name: string;
+  sort_order: number;
+  /** expense / income / both */
+  default_direction: string;
+  is_active: number;
+  created_at: string;
+}
+
+/** 车辆费用台账。收支双列：同一行可以同时有收入和支出（台账 2026.4.13 违章行） */
+export interface VehicleExpenseRow {
+  id: string;
+  vehicle_id: string;
+  plate_number: string | null;
+  owner_id: string | null;
+  expense_date: string;
+  expense_type: string;
+  expense_type_name: string;
+  income_amount: number;
+  expense_amount: number;
+  /** none 无票 / pending 待开 / issued 已开 */
+  invoice_status: string;
+  invoice_no: string | null;
+  /** 只有已付款的行才写资金流水 */
+  is_paid: number;
+  paid_at: string | null;
+  account_id: string | null;
+  /** 年费按 N 个月分摊进单车月报；1 = 现金口径 */
+  amortize_months: number;
+  amount_overridden: number;
+  source_type: string | null;
+  source_id: string | null;
+  source_kind: string;
+  remarks: string | null;
+  images: string | null;
+  operator_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 运营开支台账（台账 4 的 27 类项目） */
+export interface OperatingExpenseRow {
+  id: string;
+  expense_date: string;
+  category: string;
+  category_name: string;
+  amount: number;
+  account_id: string | null;
+  is_paid: number;
+  paid_at: string | null;
+  invoice_status: string;
+  invoice_no: string | null;
+  payee: string | null;
+  remarks: string | null;
+  operator_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 合伙人往来账（台账 file-5） */
+export interface PartnerAdvanceRow {
+  id: string;
+  owner_id: string;
+  advance_date: string;
+  /** setup 开办费 / advance 垫资 / loan 借款 / salary 领工资 / writeoff 下账 / reimburse 报销 / repay 还款 / other */
+  subject: string;
+  subject_name: string;
+  amount: number;
+  /** in 公司应付增加 / out 已付给合伙人 */
+  direction: string;
+  is_paid: number;
+  paid_at: string | null;
+  account_id: string | null;
+  remarks: string | null;
+  operator_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
