@@ -115,7 +115,6 @@ apiRoutes.put('/order-sources/:id', authMiddleware, adminOnly, orderSourcesContr
 apiRoutes.delete('/order-sources/:id', authMiddleware, adminOnly, orderSourcesController.deleteOrderSource);
 
 // ==================== 仪表盘路由 ====================
-apiRoutes.get('/dashboard/stats', authMiddleware, dashboardController.getDashboardStats);
 apiRoutes.get('/dashboard/income', authMiddleware, dashboardController.getIncomeReport);
 
 // ==================== 保养管理路由 ====================

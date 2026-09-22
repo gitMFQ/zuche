@@ -1,49 +1,51 @@
 <template>
-  <div ref="containerRef" class="gantt-container" :class="{ 'full-view': fullView }">
-    <div class="gantt-grid" v-if="Object.keys(data).length">
-      <!-- 表头行 -->
-      <div class="gantt-header-row">
-        <div class="gantt-header-cell gantt-header-plate">车牌</div>
-        <div v-for="(dateInfo, index) in columns" :key="index"
-             class="gantt-header-cell gantt-header-date"
-             :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
-          <div class="date-text">{{ dateInfo.dateStr }}</div>
-          <div class="week-text">{{ dateInfo.weekStr }}</div>
+  <div class="gantt">
+    <div ref="containerRef" class="gantt-container" :class="{ 'full-view': fullView }">
+      <div class="gantt-grid" v-if="vehicles.length">
+        <!-- 表头行 -->
+        <div class="gantt-header-row">
+          <div class="gantt-header-cell gantt-header-plate">车牌</div>
+          <div v-for="dateInfo in columns" :key="dateInfo.dateKey"
+               class="gantt-header-cell gantt-header-date"
+               :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
+            <div class="date-text">{{ dateInfo.dateStr }}</div>
+            <div class="week-text">{{ dateInfo.weekStr }}</div>
+          </div>
+        </div>
+
+        <!-- 数据行：一辆车一行，窗口内没订单也要占位 -->
+        <div v-for="vehicle in vehicles" :key="vehicle.plate_number" class="gantt-row">
+          <div class="gantt-cell-plate"
+               @click="emit('vehicle-click', vehicle.plate_number)"
+               @mouseenter="showTooltip"
+               @mousemove="moveTooltip"
+               @mouseleave="hideTooltip"
+               :data-tooltip="getVehicleTooltip(vehicle)"
+               style="cursor: pointer;">
+            <div class="plate-number" :class="vehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ vehicle.plate_number }}</div>
+          </div>
+
+          <!-- 日期单元格（背景） -->
+          <div v-for="dateInfo in columns" :key="dateInfo.dateKey"
+               class="gantt-cell"
+               :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
+          </div>
+
+          <!-- 订单占用块 -->
+          <div v-for="order in orders[vehicle.plate_number] || []" :key="order.id"
+               class="gantt-occupation"
+               :style="getOccupationStyle(order)"
+               @click="emit('order-click', order)"
+               @mouseenter="showTooltip"
+               @mousemove="moveTooltip"
+               @mouseleave="hideTooltip"
+               :data-tooltip="getOccupationTooltip(order)">
+            <span class="occupation-text">{{ getOccupationText(order) }}</span>
+          </div>
         </div>
       </div>
-
-      <!-- 数据行 -->
-      <div v-for="(orders, plateNumber) in data" :key="plateNumber" class="gantt-row">
-        <div class="gantt-cell-plate"
-             @click="emit('vehicle-click', plateNumber)"
-             @mouseenter="showTooltip"
-             @mousemove="moveTooltip"
-             @mouseleave="hideTooltip"
-             :data-tooltip="getVehicleTooltip(orders)"
-             style="cursor: pointer;">
-          <div class="plate-number" :class="orders[0]?.is_new_energy ? 'new-energy' : 'fuel'">{{ plateNumber }}</div>
-        </div>
-
-        <!-- 日期单元格（背景） -->
-        <div v-for="(dateInfo, index) in columns" :key="index"
-             class="gantt-cell"
-             :class="{ 'is-today': dateInfo.isToday, 'is-weekend': dateInfo.isWeekend }">
-        </div>
-
-        <!-- 订单占用块 -->
-        <div v-for="order in orders" :key="order.id"
-             class="gantt-occupation"
-             :style="getOccupationStyle(order)"
-             @click="emit('order-click', order)"
-             @mouseenter="showTooltip"
-             @mousemove="moveTooltip"
-             @mouseleave="hideTooltip"
-             :data-tooltip="getOccupationTooltip(order)">
-          <span class="occupation-text">{{ getOccupationText(order) }}</span>
-        </div>
-      </div>
+      <div v-else class="empty-text">暂无车辆数据</div>
     </div>
-    <div v-else class="empty-text">暂无订单数据</div>
 
     <!-- 自定义跟随鼠标的 tooltip -->
     <div v-if="tooltipVisible" class="custom-tooltip" :style="{ left: tooltipPosition.left + 'px', top: tooltipPosition.top + 'px' }">
@@ -56,13 +58,30 @@
 import { computed, onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 
+interface Vehicle {
+  plate_number: string
+  brand?: string | null
+  model?: string | null
+  mileage?: number | null
+  is_new_energy?: number | null
+  seats?: number | null
+  daily_rate?: number | null
+  status?: string | null
+}
+
 const props = withDefaults(defineProps<{
-  data: Record<string, any[]>
-  viewMode?: string
+  /** 全部车辆，一辆一行（窗口内无订单的车也要列出） */
+  vehicles: Vehicle[]
+  /** 按车牌分组的订单占用 */
+  orders: Record<string, any[]>
+  /** 窗口首日 YYYY-MM-DD */
+  startDate: string
+  /** 窗口天数，默认 91 天 */
+  days?: number
   /** 完整视图（对话框内）用更高的 max-height，主页面为紧凑视图 */
   fullView?: boolean
 }>(), {
-  viewMode: '60',
+  days: 91,
   fullView: false
 })
 
@@ -79,43 +98,27 @@ const tooltipContent = ref('')
 const tooltipPosition = ref({ left: 0, top: 0 })
 const isTouchDevice = ref(false)
 
-// 日期范围配置
-const VIEW_MODES = {
-  '30': { past: 15, future: 15 },
-  '60': { past: 30, future: 30 },
-  '90': { past: 45, future: 45 }
-}
-
 // 单元格宽度与车牌列宽度，需与样式里的 .gantt-cell / .gantt-cell-plate 保持一致
 const CELL_WIDTH = 40
 const PLATE_WIDTH = 90
+const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六']
 
-// 生成甘特图日期列
-function generateDateColumns(mode: { past: number; future: number }) {
-  const columns: { dateStr: string; weekStr: string; isToday: boolean; isWeekend: boolean; date: Date }[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  for (let i = -mode.past; i <= mode.future; i++) {
-    const date = new Date(today)
-    date.setDate(date.getDate() + i)
-    const dayOfWeek = date.getDay()
-
-    columns.push({
-      dateStr: `${date.getMonth() + 1}/${date.getDate()}`,
-      weekStr: ['日', '一', '二', '三', '四', '五', '六'][dayOfWeek],
-      isToday: i === 0,
-      isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
-      date: date
-    })
-  }
-
-  return columns
-}
-
+// 日期列完全由窗口首日 + 天数决定：切到其他时间段时，父组件换 startDate 即可
 const columns = computed(() => {
-  const mode = VIEW_MODES[props.viewMode as keyof typeof VIEW_MODES]
-  return generateDateColumns(mode)
+  const start = dayjs(props.startDate).startOf('day')
+  const todayKey = dayjs().format('YYYY-MM-DD')
+
+  return Array.from({ length: props.days }, (_, index) => {
+    const date = start.add(index, 'day')
+    const dayOfWeek = date.day()
+    return {
+      dateKey: date.format('YYYY-MM-DD'),
+      dateStr: `${date.month() + 1}/${date.date()}`,
+      weekStr: WEEK_LABELS[dayOfWeek],
+      isToday: date.format('YYYY-MM-DD') === todayKey,
+      isWeekend: dayOfWeek === 0 || dayOfWeek === 6
+    }
+  })
 })
 
 // 自定义 tooltip（触摸设备不显示）
@@ -147,42 +150,51 @@ function hideTooltip() {
   tooltipVisible.value = false
 }
 
+// 把某一列滚到「车牌列右边第一个位置」。
+// 车牌列是 sticky 的，永远盖住视口左侧 PLATE_WIDTH 像素，
+// 目标列必须落在 scrollLeft + PLATE_WIDTH 之后，否则会被车牌列压在下面看不见
+function scrollToColumn(index: number) {
+  const container = containerRef.value
+  if (!container) return
+  container.scrollLeft = Math.max(0, index * CELL_WIDTH - 10)
+}
+
+// 定位到今天；今天不在当前窗口内时定位到窗口首日
+function scrollToToday() {
+  const index = columns.value.findIndex((column) => column.isToday)
+  scrollToColumn(index < 0 ? 0 : index)
+}
+
 // 获取车辆信息 tooltip
-function getVehicleTooltip(orders: any[]): string {
-  if (!orders || !orders.length) return '暂无信息'
-  const firstOrder = orders[0]
+function getVehicleTooltip(vehicle: Vehicle): string {
   const lines = [
-    `车牌：${firstOrder.plate_number || '-'}`,
-    `车型：${firstOrder.brand || ''} ${firstOrder.model || ''}`.trim(),
-    `能源类型：${firstOrder.is_new_energy ? '新能源' : '燃油车'}`,
-    `当前订单数：${orders.length}`
+    `车牌：${vehicle.plate_number}`,
+    `车型：${vehicle.brand || ''} ${vehicle.model || ''}`.trim(),
+    `能源类型：${vehicle.is_new_energy ? '新能源' : '燃油车'}`,
+    `当前订单数：${props.orders[vehicle.plate_number]?.length || 0}`
   ]
   return lines.filter(line => line).join('\n')
 }
 
-// 计算占用块样式
+// 计算占用块样式（列索引相对窗口首日，窗口可以停在任何时间段）
 function getOccupationStyle(order: any): Record<string, string> {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const base = dayjs(props.startDate).startOf('day').valueOf()
 
   const startDate = new Date(order.startDateTime)
   const endDate = new Date(order.endDateTime)
 
-  // 计算开始索引（相对于今天）
-  const startDiff = Math.floor((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  const endDiff = Math.floor((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  // 转换为列索引（相对窗口首日）
+  let startIdx = Math.floor((startDate.getTime() - base) / (1000 * 60 * 60 * 24))
+  let endIdx = Math.floor((endDate.getTime() - base) / (1000 * 60 * 60 * 24))
 
-  // 获取当前视图模式的日期范围
-  const mode = VIEW_MODES[props.viewMode as keyof typeof VIEW_MODES]
-  const totalDays = mode.past + mode.future + 1
-
-  // 转换为列索引
-  let startIdx = startDiff + mode.past
-  let endIdx = endDiff + mode.past
+  // 整段都在窗口外，直接不画（窗口可以停在任何时间段，不能像以前那样夹到边界上）
+  if (endIdx < 0 || startIdx >= props.days) {
+    return { display: 'none' }
+  }
 
   // 限制在可见范围内
   if (startIdx < 0) startIdx = 0
-  if (endIdx >= totalDays) endIdx = totalDays - 1
+  if (endIdx >= props.days) endIdx = props.days - 1
 
   if (startIdx > endIdx) {
     return { display: 'none' }
@@ -230,17 +242,6 @@ function getOccupationTooltip(order: any): string {
   return lines.join('\n')
 }
 
-// 滚动到当天日期（只作用于主页面的紧凑视图，对话框内的完整视图不滚动）
-function scrollToToday() {
-  if (props.fullView) return
-  const container = containerRef.value
-  if (container) {
-    const mode = VIEW_MODES[props.viewMode as keyof typeof VIEW_MODES]
-    const scrollLeft = PLATE_WIDTH + (mode.past - 2) * CELL_WIDTH - 10
-    container.scrollLeft = Math.max(0, scrollLeft)
-  }
-}
-
 onMounted(() => {
   isTouchDevice.value = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 })
@@ -258,11 +259,11 @@ defineExpose({ scrollToToday })
 
 .gantt-container {
   overflow: auto;
-  max-height: 300px;
+  max-height: 600px;
 }
 
 .gantt-container.full-view {
-  max-height: 500px;
+  max-height: 800px;
 }
 
 .gantt-grid {
@@ -273,6 +274,10 @@ defineExpose({ scrollToToday })
 /* 表头行 */
 .gantt-header-row {
   display: flex;
+  /* 车辆全列出行数会很多，表头吸顶，纵向滚动时日期始终可见 */
+  position: sticky;
+  top: 0;
+  z-index: 4;
 }
 
 .gantt-header-cell {

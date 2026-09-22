@@ -247,11 +247,6 @@ export const orderSourceApi = {
   delete: (id: string) => del<null>(`/order-sources/${id}`)
 }
 
-// ==================== 仪表盘 API ====================
-export const dashboardApi = {
-  getStats: () => get<Record<string, unknown>>('/dashboard/stats')
-}
-
 // ==================== 保养管理 API ====================
 export const maintenanceApi = {
   getList: (params?: PageQuery & { status?: string; type?: string; vehicle_id?: string }) =>
@@ -299,7 +294,7 @@ export const logApi = {
 // ==================== 调度 API ====================
 export const scheduleApi = {
   getRecent: () => api.get('/schedules/recent'),
-  getGantt: () => api.get('/schedules/gantt')
+  getGantt: (params?: { start_date?: string; end_date?: string }) => api.get('/schedules/gantt', { params })
 }
 
 // ==================== 文件上传 API ====================

@@ -1,14 +1,14 @@
 <template>
   <div class="dashboard">
-    <!-- 统计卡片 -->
-    <StatCards :stats="stats" />
-
     <!-- 库存日历区域 -->
     <el-card class="section-card gantt-card" shadow="hover">
       <template #header>
         <div class="card-header">
           <span><el-icon><Calendar /></el-icon> 库存日历</span>
           <div class="header-actions">
+            <el-button type="primary" link @click="backToToday">
+              <el-icon><RefreshLeft /></el-icon> 回到今天
+            </el-button>
             <el-button type="primary" link @click="ganttDialogVisible = true">
               <el-icon><FullScreen /></el-icon> 完整视图
             </el-button>
@@ -17,8 +17,9 @@
       </template>
       <GanttChart
         ref="ganttRef"
-        :data="ganttData"
-        :view-mode="viewMode"
+        :vehicles="ganttData.vehicles"
+        :orders="ganttData.orders"
+        :start-date="windowStart"
         @order-click="showOrderDetail"
         @vehicle-click="showVehicleDetail"
       />
@@ -64,72 +65,6 @@
       </el-col>
     </el-row>
 
-    <!-- 最近订单 -->
-    <el-card class="section-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span><el-icon><Clock /></el-icon> 最近订单</span>
-          <el-button type="primary" link @click="$router.push('/orders')">查看全部</el-button>
-        </div>
-      </template>
-
-      <!-- 移动端卡片 -->
-      <div class="mobile-cards" v-if="stats.recentOrders?.length">
-        <div v-for="item in stats.recentOrders" :key="item.order_no" class="mobile-card" @click="$router.push('/orders')">
-          <div class="mobile-card-header">
-            <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#0071e3' }">{{ item.source_name }}</span>
-            <span v-else class="text-muted">-</span>
-            <el-tag :type="getStatusType(item.status)" size="small">{{ getStatusText(item.status) }}</el-tag>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">客户</span>
-            <span class="value">{{ item.customer_name }}</span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">车牌</span>
-            <span class="value"><span class="plate-number" :class="item.is_new_energy ? 'new-energy' : 'fuel'">{{ item.plate_number }}</span></span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">金额</span>
-            <span class="value text-primary">¥{{ item.total_amount }}</span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">时间</span>
-            <span class="value">{{ formatDate(item.created_at) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- PC 端表格 -->
-      <el-table :data="stats.recentOrders" stripe size="small" class="hide-mobile">
-        <el-table-column label="来源" width="100">
-          <template #default="{ row }">
-            <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#0071e3' }">{{ row.source_name }}</span>
-            <span v-else class="text-muted">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="customer_name" label="客户" />
-        <el-table-column prop="plate_number" label="车牌" width="120">
-          <template #default="{ row }">
-            <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="total_amount" label="金额" width="100">
-          <template #default="{ row }">¥{{ row.total_amount }}</template>
-        </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="160">
-          <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
     <!-- 调度完整视图对话框 -->
     <el-dialog v-model="scheduleDialogVisible" title="待收送 - 完整视图" width="90%" :style="{ maxWidth: '600px' }">
       <ScheduleTable :schedules="schedules" full-view @row-click="showScheduleOrderDetail" />
@@ -138,13 +73,30 @@
     <!-- 甘特图完整视图对话框 -->
     <el-dialog v-model="ganttDialogVisible" title="库存日历 - 完整视图" width="95%" :style="{ maxWidth: '1400px' }">
       <template #header>
-        <div class="card-header">
-          <span>库存日历 - 完整视图</span>
+        <div class="card-header dialog-header">
+          <span class="dialog-title">库存日历 - 完整视图</span>
+          <div class="header-actions">
+            <el-date-picker
+              v-model="centerDate"
+              type="date"
+              size="small"
+              placeholder="选择日期"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :clearable="false"
+              class="window-picker"
+            />
+            <el-button type="primary" link @click="backToToday">
+              <el-icon><RefreshLeft /></el-icon> 回到今天
+            </el-button>
+          </div>
         </div>
       </template>
       <GanttChart
-        :data="ganttData"
-        :view-mode="viewMode"
+        ref="ganttDialogRef"
+        :vehicles="ganttData.vehicles"
+        :orders="ganttData.orders"
+        :start-date="windowStart"
         full-view
         @order-click="showOrderDetail"
         @vehicle-click="showVehicleDetail"
@@ -190,29 +142,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { dashboardApi, scheduleApi, orderApi } from '../api'
+import { scheduleApi, orderApi } from '../api'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
-import { Calendar, Clock, Download, FullScreen, Grid } from '@element-plus/icons-vue'
+import { Calendar, Download, FullScreen, Grid, RefreshLeft } from '@element-plus/icons-vue'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
-import StatCards from '../components/dashboard/StatCards.vue'
 import GanttChart from '../components/dashboard/GanttChart.vue'
 import ScheduleTable from '../components/dashboard/ScheduleTable.vue'
 import OrderDetailDialog from '../components/dashboard/OrderDetailDialog.vue'
 import MileagePhotoDialog from '../components/order/MileagePhotoDialog.vue'
 
 const router = useRouter()
-
-const stats = ref<any>({
-  vehicles: {},
-  orders: {},
-  customerCount: 0,
-  monthIncome: 0,
-  recentOrders: [],
-  expiringOrders: []
-})
 
 // 车辆详情对话框状态
 const vehicleDialogVisible = ref(false)
@@ -232,36 +174,56 @@ const shareLoading = ref(false)
 
 // 甘特图相关数据
 const ganttRef = ref<InstanceType<typeof GanttChart> | null>(null)
-const ganttData = ref<Record<string, any[]>>({})
+const ganttDialogRef = ref<InstanceType<typeof GanttChart> | null>(null)
+const ganttData = ref<{ vehicles: any[]; orders: Record<string, any[]> }>({ vehicles: [], orders: {} })
 const ganttDialogVisible = ref(false)
-const viewMode = ref('60') // 默认 60 天
 const selectedOrder = ref<any>(null)
 const orderDetailVisible = ref(false)
+
+// 库存日历窗口：以「中心日」往前 30 天、往后 60 天（共 91 天）。
+// 日期选择器选的是中心日，默认中心就是今天 —— 用来翻看别的档期。
+const WINDOW_DAYS = 91
+const PAST_DAYS = 30
+const anchorDate = ref('')
+
+// 窗口中心日（日期选择器绑这个值）
+const centerDate = computed({
+  get: () => anchorDate.value || dayjs().format('YYYY-MM-DD'),
+  set: (value: string) => {
+    if (!value || value === centerDate.value) return
+    applyWindow(value)
+  }
+})
+
+// 窗口首日 = 中心日往前 30 天
+const windowStart = computed(() => dayjs(centerDate.value).subtract(PAST_DAYS, 'day').format('YYYY-MM-DD'))
+
+// 切换窗口（传中心日，不传则回到今天）：重新拉数据，并把两处日历都定位到今天
+// （今天不在窗口内时，组件会定位到窗口首日）
+async function applyWindow(center?: string) {
+  anchorDate.value = center ? dayjs(center).format('YYYY-MM-DD') : ''
+  await loadGanttData()
+  await nextTick()
+  ganttRef.value?.scrollToToday()
+  ganttDialogRef.value?.scrollToToday()
+}
+
+// 回到默认窗口（以今天为基准）
+function backToToday() {
+  applyWindow()
+}
+
+// 打开完整视图时定位到今天，否则默认停在窗口首日（可能是 30 天前）
+watch(ganttDialogVisible, async (visible) => {
+  if (!visible) return
+  await nextTick()
+  ganttDialogRef.value?.scrollToToday()
+})
 
 // 取车/还车对话框
 const pickupDialogVisible = ref(false)
 const completeDialogVisible = ref(false)
 const submitting = ref(false)
-
-const statusMap: Record<string, { text: string; type: string }> = {
-  pending: { text: '待取车', type: 'warning' },
-  active: { text: '已取车', type: 'primary' },
-  completed: { text: '已完成', type: 'success' },
-  cancelled: { text: '已取消', type: 'info' },
-  overdue: { text: '已逾期', type: 'danger' }
-}
-
-function getStatusText(status: string) {
-  return statusMap[status]?.text || status
-}
-
-function getStatusType(status: string) {
-  return statusMap[status]?.type || 'info'
-}
-
-function formatDate(date: string) {
-  return dayjs(date).format('MM-DD HH:mm')
-}
 
 async function loadSchedules() {
   try {
@@ -274,10 +236,12 @@ async function loadSchedules() {
   }
 }
 
-// 加载甘特图数据
+// 加载甘特图数据（窗口随 windowStart 走，换档期要重新拉）
 async function loadGanttData() {
   try {
-    const res: any = await scheduleApi.getGantt()
+    const start = windowStart.value
+    const end = dayjs(start).add(WINDOW_DAYS - 1, 'day').format('YYYY-MM-DD')
+    const res: any = await scheduleApi.getGantt({ start_date: start, end_date: end })
     if (res.success) {
       ganttData.value = res.data
     }
@@ -300,35 +264,28 @@ function goToOrderFromGantt() {
   }
 }
 
-// 显示车辆详情
+// 显示车辆详情（车牌来自车辆表本身，窗口内没有订单也能打开）
 function showVehicleDetail(plateNumber: string) {
-  // 从甘特图数据中查找该车辆的所有订单
-  const orders = ganttData.value[plateNumber]
-  if (!orders || !orders.length) {
+  const vehicle = ganttData.value.vehicles.find(v => v.plate_number === plateNumber)
+  if (!vehicle) {
     ElMessage.warning('未找到车辆信息')
     return
   }
 
-  // 使用第一个订单中的车辆数据（所有订单共享同一辆车）
-  const order = orders[0]
   vehicleData.value = {
-    id: order.vehicle_id || '',
-    plate_number: order.plate_number,
-    brand: order.brand,
-    model: order.model,
-    color: order.color || '-',
-    year: order.year || '-',
-    seats: order.seats || '-',
-    mileage: order.mileage || 0,
-    daily_rate: order.daily_rate || 0,
-    deposit: order.deposit || 0,
-    vin: order.vin || '-',
-    engine_number: order.engine_number || '-',
-    is_new_energy: order.is_new_energy,
-    status: order.vehicle_status || 'available',
-    license_images: order.license_images || [],
-    registration_image: order.registration_image || '',
-    remarks: order.remarks || '-'
+    ...vehicle,
+    color: vehicle.color || '-',
+    year: vehicle.year || '-',
+    seats: vehicle.seats || '-',
+    mileage: vehicle.mileage || 0,
+    daily_rate: vehicle.daily_rate || 0,
+    deposit: vehicle.deposit || 0,
+    vin: vehicle.vin || '-',
+    engine_number: vehicle.engine_number || '-',
+    status: vehicle.status || 'available',
+    license_images: vehicle.license_images || [],
+    registration_image: vehicle.registration_image || '',
+    remarks: vehicle.remarks || '-'
   }
 
   vehicleDialogVisible.value = true
@@ -512,15 +469,6 @@ async function shareSchedule() {
 }
 
 onMounted(async () => {
-  try {
-    const res: any = await dashboardApi.getStats()
-    if (res.success) {
-      stats.value = res.data
-    }
-  } catch (error) {
-    console.error('获取统计数据失败', error)
-  }
-
   loadSchedules()
 
   // 加载甘特图数据
@@ -560,7 +508,65 @@ onMounted(async () => {
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+  /* 标题被隐藏时（窄屏）也要靠右 */
+  margin-left: auto;
+}
+
+/* 弹窗标题行：标题 + 日期选择器 + 回到今天，撑满整行、控件靠右 */
+.dialog-header {
+  flex: 1;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dialog-title {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.window-picker {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+/* 窄屏：标题让位给日期选择器 */
+@media (max-width: 767px) {
+  .dialog-title {
+    display: none;
+  }
+
+  /* 标题栏收紧：默认上下 18px 内边距 + 21px 标题在手机上太占高度，
+     缩成上下 2px + 17px 标题，高度从约 61px 降到约 29px */
+  .dashboard .section-card :deep(.el-card__header) {
+    padding: 2px 12px;
+  }
+
+  .dashboard .card-header > span {
+    font-size: 17px;
+  }
+
+  /* 弹窗标题栏同样收紧：默认上 16px（弹窗内边距）+ 下 16px + 18px 标题 */
+  .el-dialog {
+    padding: 10px 12px;
+  }
+
+  .el-dialog :deep(.el-dialog__header) {
+    padding-bottom: 8px;
+  }
+
+  .el-dialog :deep(.el-dialog__title) {
+    font-size: 16px;
+  }
+
+  /* 关闭按钮默认 48×48，标题栏压矮后会顶到正文里 */
+  .el-dialog :deep(.el-dialog__headerbtn) {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 /* 调度表格样式 */
@@ -609,78 +615,6 @@ onMounted(async () => {
   color: #c0c4cc;
 }
 
-/* 移动端卡片样式 */
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mobile-card {
-  background: #fafafa;
-  border-radius: 8px;
-  padding: 12px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.mobile-card:hover {
-  background: #f0f0f0;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
-}
-
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
-.text-primary {
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-.text-warning {
-  color: var(--sk-color-warning);
-  font-weight: 500;
-}
-
-.text-muted {
-  color: var(--sk-color-info);
-}
-
-/* PC 端隐藏表格 */
-.hide-mobile {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .mobile-cards {
-    display: none;
-  }
-
-  .hide-mobile {
-    display: table;
-  }
-}
-
 /* 甘特图样式 */
 .gantt-card {
   padding: 0 !important;
@@ -688,14 +622,6 @@ onMounted(async () => {
 
 .gantt-card :deep(.el-card__body) {
   padding: 0 !important;
-}
-
-/* 来源标签 */
-.source-tag {
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 12px;
 }
 
 /* 暗色模式 */
@@ -726,27 +652,6 @@ html.dark .order-label {
 }
 
 html.dark .plate-number {
-  color: var(--text-color);
-}
-
-/* 移动端卡片暗色模式 */
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-}
-
-html.dark .mobile-card:hover {
-  background: var(--hover-bg-color);
-}
-
-html.dark .mobile-card-header {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .mobile-card-row .label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card-row .value {
   color: var(--text-color);
 }
 </style>

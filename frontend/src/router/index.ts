@@ -19,7 +19,7 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
-        meta: { title: '首页' }
+        meta: { title: '总览' }
       },
       {
         path: 'vehicles',

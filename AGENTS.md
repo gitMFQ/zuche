@@ -59,7 +59,7 @@ migrations/                D1 迁移 SQL（0001_schema … 0017_self_owned_owner
 frontend/src/
 ├── api/index.ts           API 封装，baseURL 是相对路径 /api
 ├── api/types.ts           前端接口类型，与后端 src/db/rows.ts 行类型对应
-├── components/            公共组件：order/（订单表单与各业务弹窗）、dashboard/（甘特图、统计卡）、
+├── components/            公共组件：order/（订单表单与各业务弹窗）、dashboard/（甘特图、调度表、订单详情弹窗）、
 │                          vehicle/（车辆选择器与车务表单弹窗）；另有 *Tab.vue 业务分栏、
 │                          ImagePreviewDialog.vue、DataState.vue
 ├── composables/           useMobile（768px 断点）、useQuerySync（筛选/分页与 URL query 同步）

@@ -22,7 +22,7 @@
       <nav class="nav-menu">
         <router-link to="/dashboard" class="nav-item" :class="{ active: activeMenu === '/dashboard' }" @click="handleMenuSelect">
           <div class="nav-icon"><el-icon :size="20"><DataAnalysis /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">首页</span>
+          <span v-show="!isCollapse || isMobile" class="nav-text">总览</span>
         </router-link>
         <router-link to="/vehicles" class="nav-item" :class="{ active: activeMenu === '/vehicles' }" @click="handleMenuSelect">
           <div class="nav-icon"><el-icon :size="20"><Van /></el-icon></div>
@@ -70,7 +70,7 @@
             size="large"
           />
           <el-breadcrumb separator="/" class="breadcrumb">
-            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/' }">总览</el-breadcrumb-item>
             <el-breadcrumb-item>{{ currentTitle }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>

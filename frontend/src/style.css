@@ -1233,48 +1233,6 @@ html.dark ::-webkit-scrollbar-thumb {
    Dashboard - Apple Style Overrides
    ======================================== */
 
-/* Dashboard 统计卡片 */
-.dashboard .stat-card.el-card {
-  border: none;
-  border-radius: 12px;
-  background-color: var(--bg-color-secondary);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.dashboard .stat-card.el-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--sk-card-shadow);
-}
-
-.dashboard .stat-value {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.14;
-  letter-spacing: -0.1px;
-  color: var(--sk-text-near-black);
-}
-
-html.dark .dashboard .stat-value {
-  color: var(--sk-text-white);
-}
-
-.dashboard .stat-label {
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--sk-text-secondary);
-}
-
-.dashboard .stat-footer {
-  border-top-color: rgba(0, 0, 0, 0.06);
-  color: var(--sk-text-tertiary);
-}
-
-html.dark .dashboard .stat-footer {
-  border-top-color: rgba(255, 255, 255, 0.08);
-}
-
 /* Dashboard Section 卡片 */
 .dashboard .section-card.el-card {
   border: none;
@@ -1401,36 +1359,6 @@ html.dark .dashboard .gantt-cell-plate {
 
 .dashboard .gantt-occupation:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-}
-
-/* 移动端卡片 */
-.dashboard .mobile-card {
-  background-color: var(--sk-bg-light-gray);
-  border-radius: 12px;
-}
-
-html.dark .dashboard .mobile-card {
-  background-color: var(--sk-surface-dark-1);
-}
-
-.dashboard .mobile-card-header {
-  border-bottom-color: rgba(0, 0, 0, 0.06);
-}
-
-html.dark .dashboard .mobile-card-header {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-.dashboard .mobile-card-row .label {
-  color: var(--sk-text-tertiary);
-}
-
-.dashboard .mobile-card-row .value {
-  color: var(--sk-text-near-black);
-}
-
-html.dark .dashboard .mobile-card-row .value {
-  color: var(--sk-text-white);
 }
 
 /* 空状态 */

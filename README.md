@@ -84,7 +84,7 @@ zuche/
     ├── components/
     │   ├── order/                # 订单域：建单表单、延期、支付、司机指派、里程照片、
     │   │                         #   订单详情分节（6 个组件）
-    │   ├── dashboard/            # 仪表盘：统计卡片、甘特图、调度表、订单详情弹窗
+    │   ├── dashboard/            # 仪表盘（总览）：甘特图、调度表、订单详情弹窗
     │   ├── vehicle/              # 车辆域弹窗与选择器：保养/保险/违章表单、车辆选择
     │   ├── finance/              # 财务域：6 个页签（资金流水/车主结算/车辆费用/
     │   │                         #   运营开支/车主合伙人/报表）+ 9 个弹窗
@@ -135,7 +135,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 
 | 模块 | 功能 |
 |---|---|
-| 仪表盘 | 今日取/还车、待处理订单、可用车辆；车辆状态分布、近 30 天订单趋势；调度甘特图与取还车调度表 |
+| 总览（仪表盘） | 库存日历（全部车辆 × 往前 30 天/往后 60 天的订单占用，支持按日期定位）与待收送表 |
 | 订单管理 | 状态分类、服务类型（基础/优享/尊享）、免押与免押到期日、取还车（时间/地点/里程/照片）、延期、支付记录、合同号、司机指派 |
 | 订单批量导入 | 上传携程 / 自有平台导出的 Excel → 预检（逐行校验 + 与客户车辆匹配）→ 提交入库 → 按批次撤销 |
 | 客户管理 | 客户信息、常用客户标记、来源标记、证件与驾照照片、快速查看历史订单 |
@@ -801,7 +801,8 @@ npm i https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
 
 ### 调度管理
 - `GET /api/schedules/recent` - 待办调度列表
-- `GET /api/schedules/gantt` - 甘特图数据
+- `GET /api/schedules/gantt` - 甘特图数据（`vehicles` 为全部车辆、`orders` 按车牌分组）
+  - 可选 `start_date` / `end_date`（`YYYY-MM-DD`）指定窗口，缺省为往前 30 天至往后 60 天；窗口上限 366 天
 
 ### 违章管理
 - `GET /api/violations/stats` - 统计
@@ -826,7 +827,6 @@ npm i https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
 - `GET /api/inspections/stats`、`GET/POST /api/inspections`、`PUT/DELETE /api/inspections/:vehicle_id`
 
 ### 仪表盘 / 设置 / 日志
-- `GET /api/dashboard/stats` - 统计卡片
 - `GET /api/dashboard/income` - 收入报表
 - `GET/PUT /api/settings` - 获取/更新设置（更新需管理员）
 - `GET /api/settings/:key` - 单个设置项
