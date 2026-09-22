@@ -612,47 +612,9 @@ onMounted(() => {
   color: var(--sk-color-info);
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.mobile-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
 .plate, .type {
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
-}
-
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
   color: #303133;
 }
 
@@ -672,22 +634,28 @@ onMounted(() => {
   margin-left: 8px;
 }
 
+/* 卡片最后一行：右侧一组统计标签。
+   横向内边距与数据行一致（卡片外壳的内边距已经归零） */
 .violation-count {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #eee;
+  position: relative;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  padding: 10px 16px;
 }
 
-.mobile-card-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
+/* 与上一行之间一条 0.5px hairline，左缩进 16px（和 cell 分隔线一致） */
+.violation-count::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background-color: var(--m-line);
+  transform: scaleY(0.5);
+  transform-origin: 0 0;
+  pointer-events: none;
 }
 
 .empty-tip {
@@ -808,15 +776,11 @@ onMounted(() => {
 
 /* 暗色模式 */
 html.dark .vehicle-info .plate,
-html.dark .mobile-card-header .plate,
-html.dark .mobile-card-header .type,
-html.dark .mobile-card-row .value,
 html.dark .date-main {
   color: var(--text-color);
 }
 
 html.dark .vehicle-info .brand,
-html.dark .mobile-card-row .label,
 html.dark .empty-tip,
 html.dark .type-sub,
 html.dark .images-preview-mini .more {
@@ -826,15 +790,5 @@ html.dark .images-preview-mini .more {
 html.dark .vehicle-header {
   background: var(--bg-color-secondary);
   box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .violation-count,
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
 }
 </style>

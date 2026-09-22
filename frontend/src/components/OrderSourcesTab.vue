@@ -211,37 +211,13 @@ onMounted(() => loadData())
   margin-bottom: 12px;
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
+/* 卡片的外壳 / 行 / 操作区由 style.css 的「Mobile WeUI Cell 列表」统一提供 */
 
-.mobile-card {
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
+/* 字号与颜色交给 .mobile-card-header（17px / --m-fg-0），这里只管圆点和名字并排 */
 .name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--sk-text-near-black);
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-html.dark .name {
-  color: var(--sk-text-white);
 }
 
 .color-dot {
@@ -264,29 +240,6 @@ html.dark .name {
   font-family: monospace;
 }
 
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
-.mobile-card-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
 .text-warning {
   color: var(--sk-color-warning);
   font-weight: 500;
@@ -300,7 +253,7 @@ html.dark .name {
   .mobile-cards {
     display: none;
   }
-  
+
   .hide-mobile {
     display: table;
   }
@@ -310,24 +263,6 @@ html.dark .name {
   font-size: 12px;
   color: var(--sk-color-info);
   margin-top: 4px;
-}
-
-/* 暗色模式 */
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card-row .label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card-row .value {
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
 }
 
 html.dark .form-tip {

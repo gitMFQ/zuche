@@ -3,9 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover 是移动端底部 tabbar 能用 env(safe-area-inset-bottom)
+         的前提；不加的话安全区恒为 0，iPhone 底部横条会压住 tabbar -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="租车公司管理系统：订单、车辆、客户、违章、保养与保险的一体化管理" />
-    <meta name="theme-color" content="#0071e3" />
+    <!-- 移动端（<768px）走 WeUI 微信绿，桌面端仍是 Apple Blue -->
+    <meta name="theme-color" media="(max-width: 767px)" content="#07c160" />
+    <meta name="theme-color" media="(min-width: 768px)" content="#0071e3" />
     <!-- 路由守卫会按页面覆盖标题，这里给一个正确的首屏标题，避免先闪一下默认值 -->
     <title>租车管理系统</title>
   </head>

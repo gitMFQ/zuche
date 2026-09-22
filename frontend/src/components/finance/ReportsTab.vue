@@ -23,12 +23,14 @@
                 <span :class="moneyClass(row.balance)">{{ formatMoney(row.balance) }}</span>
               </div>
               <div class="mobile-card-row"><span class="label">车主</span><span class="value">{{ row.owner_name || '-' }}</span></div>
-              <div class="mobile-card-row"><span class="label">天数</span><span class="value">{{ row.days }}</span></div>
-              <div class="mobile-card-row"><span class="label">车主结算</span><span class="value">{{ formatMoney(row.owner_amount) }}</span></div>
-              <div class="mobile-card-row"><span class="label">月供</span><span class="value">{{ formatMoney(row.monthly_payment, { dashOnZero: true }) }}</span></div>
-              <div class="mobile-card-row"><span class="label">保养</span><span class="value">{{ formatMoney(row.maintenance, { dashOnZero: true }) }}</span></div>
-              <div class="mobile-card-row"><span class="label">维修</span><span class="value">{{ formatMoney(row.repair, { dashOnZero: true }) }}</span></div>
-              <div class="mobile-card-row"><span class="label">其它费用</span><span class="value">{{ formatMoney(row.other_expense, { dashOnZero: true }) }}</span></div>
+              <div class="mobile-card-grid">
+                <div class="mobile-card-row"><span class="label">天数</span><span class="value num">{{ row.days }}</span></div>
+                <div class="mobile-card-row"><span class="label">车主结算</span><span class="value num">{{ formatMoney(row.owner_amount) }}</span></div>
+                <div class="mobile-card-row"><span class="label">月供</span><span class="value num">{{ formatMoney(row.monthly_payment, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">保养</span><span class="value num">{{ formatMoney(row.maintenance, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">维修</span><span class="value num">{{ formatMoney(row.repair, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">其它费用</span><span class="value num">{{ formatMoney(row.other_expense, { dashOnZero: true }) }}</span></div>
+              </div>
             </div>
           </div>
           <el-card shadow="never" class="table-card">
@@ -66,33 +68,73 @@
       <!-- 车辆收益排行 -->
       <el-tab-pane label="车辆收益" name="ranking">
         <div class="report-toolbar">
-          <el-date-picker v-model="rankRange" type="daterange" value-format="YYYY-MM-DD" start-placeholder="开始" end-placeholder="结束" @change="loadRanking" />
+          <el-date-picker
+            v-if="!isMobile"
+            v-model="rankRange"
+            type="daterange"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            @change="loadRanking"
+          />
+          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <div v-else class="mobile-date-range">
+            <input v-model="rankFrom" type="date" class="native-date-input" @change="loadRanking" />
+            <span class="date-separator">-</span>
+            <input v-model="rankTo" type="date" class="native-date-input" @change="loadRanking" />
+          </div>
           <el-button :loading="loading.ranking" @click="loadRanking">刷新</el-button>
         </div>
         <p class="report-hint">收益 = 车主结算 − 车辆费用 − 该车月供。没出车的车排最后。</p>
-        <el-card shadow="never">
-          <el-table :data="rankRows" stripe v-loading="loading.ranking">
-            <el-table-column type="index" label="#" min-width="55" align="center" />
-            <el-table-column prop="plate_number" label="车牌" min-width="120" />
-            <el-table-column prop="owner_name" label="车主" min-width="120" />
-            <el-table-column prop="days" label="天数" min-width="70" align="center" />
-            <el-table-column label="车主结算" min-width="120" class-name="amount-cell">
-              <template #default="{ row }">{{ formatMoney(row.owner_amount) }}</template>
-            </el-table-column>
-            <el-table-column label="公司管理费" min-width="115" class-name="amount-cell">
-              <template #default="{ row }">{{ formatMoney(row.company_fee, { dashOnZero: true }) }}</template>
-            </el-table-column>
-            <el-table-column label="车辆费用" min-width="115" class-name="amount-cell">
-              <template #default="{ row }">{{ formatMoney(row.expense, { dashOnZero: true }) }}</template>
-            </el-table-column>
-            <el-table-column label="收益" min-width="120" class-name="amount-cell">
-              <template #default="{ row }"><b :class="moneyClass(row.profit)">{{ formatMoney(row.profit) }}</b></template>
-            </el-table-column>
-            <el-table-column label="单数" min-width="70" align="center">
-              <template #default="{ row }">{{ row.line_count }}</template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+        <DataState
+          :loading="loading.ranking"
+          :empty="!loading.ranking && rankRows.length === 0"
+          empty-text="该区间没有出车记录"
+          skeleton
+          @retry="loadRanking"
+        >
+          <div class="mobile-cards">
+            <div v-for="row in rankRows" :key="row.vehicle_id" class="mobile-card">
+              <div class="mobile-card-header">
+                <span>{{ row.plate_number || '-' }}</span>
+                <span :class="moneyClass(row.profit)">{{ formatMoney(row.profit) }}</span>
+              </div>
+              <div class="mobile-card-row"><span class="label">车主</span><span class="value">{{ row.owner_name || '-' }}</span></div>
+              <div class="mobile-card-grid">
+                <div class="mobile-card-row"><span class="label">天数</span><span class="value num">{{ row.days }}</span></div>
+                <div class="mobile-card-row"><span class="label">单数</span><span class="value num">{{ row.line_count }}</span></div>
+                <div class="mobile-card-row"><span class="label">车主结算</span><span class="value num">{{ formatMoney(row.owner_amount) }}</span></div>
+                <div class="mobile-card-row"><span class="label">公司管理费</span><span class="value num">{{ formatMoney(row.company_fee, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">车辆费用</span><span class="value num">{{ formatMoney(row.expense, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">收益</span><span class="value num" :class="moneyClass(row.profit)">{{ formatMoney(row.profit) }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <el-card shadow="never" class="table-card">
+            <el-table :data="rankRows" stripe>
+              <el-table-column type="index" label="#" min-width="55" align="center" />
+              <el-table-column prop="plate_number" label="车牌" min-width="120" />
+              <el-table-column prop="owner_name" label="车主" min-width="120" />
+              <el-table-column prop="days" label="天数" min-width="70" align="center" />
+              <el-table-column label="车主结算" min-width="120" class-name="amount-cell">
+                <template #default="{ row }">{{ formatMoney(row.owner_amount) }}</template>
+              </el-table-column>
+              <el-table-column label="公司管理费" min-width="115" class-name="amount-cell">
+                <template #default="{ row }">{{ formatMoney(row.company_fee, { dashOnZero: true }) }}</template>
+              </el-table-column>
+              <el-table-column label="车辆费用" min-width="115" class-name="amount-cell">
+                <template #default="{ row }">{{ formatMoney(row.expense, { dashOnZero: true }) }}</template>
+              </el-table-column>
+              <el-table-column label="收益" min-width="120" class-name="amount-cell">
+                <template #default="{ row }"><b :class="moneyClass(row.profit)">{{ formatMoney(row.profit) }}</b></template>
+              </el-table-column>
+              <el-table-column label="单数" min-width="70" align="center">
+                <template #default="{ row }">{{ row.line_count }}</template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </DataState>
       </el-tab-pane>
 
       <!-- 公司月报 -->
@@ -141,36 +183,75 @@
       <!-- 资金流水报表 -->
       <el-tab-pane label="资金流水" name="fund-flow">
         <div class="report-toolbar">
-          <el-date-picker v-model="flowRange" type="daterange" value-format="YYYY-MM-DD" start-placeholder="开始" end-placeholder="结束" @change="loadFlow" />
+          <el-date-picker
+            v-if="!isMobile"
+            v-model="flowRange"
+            type="daterange"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            @change="loadFlow"
+          />
+          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <div v-else class="mobile-date-range">
+            <input v-model="flowFrom" type="date" class="native-date-input" @change="loadFlow" />
+            <span class="date-separator">-</span>
+            <input v-model="flowTo" type="date" class="native-date-input" @change="loadFlow" />
+          </div>
           <el-radio-group v-model="flowBy" @change="loadFlow">
             <el-radio-button value="month">按月</el-radio-button>
             <el-radio-button value="day">按日</el-radio-button>
           </el-radio-group>
           <el-button :loading="loading.flow" @click="loadFlow">刷新</el-button>
         </div>
-        <el-card v-if="flow" shadow="never">
+        <DataState
+          v-if="flow"
+          :loading="loading.flow"
+          :empty="!loading.flow && flow.rows.length === 0"
+          empty-text="该区间没有流水"
+          skeleton
+          @retry="loadFlow"
+        >
+          <!-- 摘要挪出卡片：卡片在窄屏整体隐藏，留在卡片里窄屏就看不到了 -->
           <div class="flow-summary">
             <span>期初 <b>{{ formatMoney(flow.opening) }}</b></span>
             <span>收入 <b class="money-positive">{{ formatMoney(flow.summary.income) }}</b></span>
             <span>支出 <b class="money-negative">{{ formatMoney(flow.summary.expense) }}</b></span>
             <span>期末 <b>{{ formatMoney(flow.summary.closing) }}</b></span>
           </div>
-          <el-table :data="flow.rows" size="small" stripe>
-            <el-table-column prop="bucket" label="期间" width="120" />
-            <el-table-column label="收入" class-name="amount-cell" prop="income">
-              <template #default="{ row }">{{ formatMoney(row.income, { dashOnZero: true }) }}</template>
-            </el-table-column>
-            <el-table-column label="支出" class-name="amount-cell" prop="expense">
-              <template #default="{ row }">{{ formatMoney(row.expense, { dashOnZero: true }) }}</template>
-            </el-table-column>
-            <el-table-column label="笔数" width="80" align="center">
-              <template #default="{ row }">{{ row.count }}</template>
-            </el-table-column>
-            <el-table-column label="期末余额" class-name="amount-cell" width="140">
-              <template #default="{ row }"><b>{{ formatMoney(row.balance) }}</b></template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+
+          <div class="mobile-cards">
+            <div v-for="row in flow.rows" :key="row.bucket" class="mobile-card">
+              <div class="mobile-card-header">
+                <span>{{ row.bucket }}</span>
+                <span><span class="label">期末 </span><b>{{ formatMoney(row.balance) }}</b></span>
+              </div>
+              <div class="mobile-card-grid">
+                <div class="mobile-card-row"><span class="label">收入</span><span class="value num money-positive">{{ formatMoney(row.income, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">支出</span><span class="value num money-negative">{{ formatMoney(row.expense, { dashOnZero: true }) }}</span></div>
+                <div class="mobile-card-row"><span class="label">笔数</span><span class="value num">{{ row.count }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <el-card shadow="never" class="table-card">
+            <el-table :data="flow.rows" size="small" stripe>
+              <el-table-column prop="bucket" label="期间" width="120" />
+              <el-table-column label="收入" class-name="amount-cell" prop="income">
+                <template #default="{ row }">{{ formatMoney(row.income, { dashOnZero: true }) }}</template>
+              </el-table-column>
+              <el-table-column label="支出" class-name="amount-cell" prop="expense">
+                <template #default="{ row }">{{ formatMoney(row.expense, { dashOnZero: true }) }}</template>
+              </el-table-column>
+              <el-table-column label="笔数" width="80" align="center">
+                <template #default="{ row }">{{ row.count }}</template>
+              </el-table-column>
+              <el-table-column label="期末余额" class-name="amount-cell" width="140">
+                <template #default="{ row }"><b>{{ formatMoney(row.balance) }}</b></template>
+              </el-table-column>
+            </el-table>
+          </el-card>
+        </DataState>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -197,6 +278,9 @@ import type {
   VehicleRankingRow
 } from '../../api/types'
 import { formatMoney, formatMoneyUnit, moneyClass } from '../../utils/money'
+import { useMobile } from '../../composables/useMobile'
+
+const { isMobile } = useMobile()
 
 function today(): string {
   return new Date(Date.now() + 8 * 3600 * 1000).toISOString().substring(0, 10)
@@ -215,12 +299,17 @@ const monthlyRows = ref<VehicleMonthlyRow[]>([])
 const monthlyTotals = ref<VehicleMonthlyReport['totals'] | null>(null)
 
 const rankRange = ref<[string, string]>([`${today().substring(0, 4)}-01-01`, today()])
+// 移动端日期范围用两个原生 input（isMobile 时 rankRange 不再绑定），取值时二选一
+const rankFrom = ref(rankRange.value[0])
+const rankTo = ref(rankRange.value[1])
 const rankRows = ref<VehicleRankingRow[]>([])
 
 const companyPeriod = ref(today().substring(0, 7))
 const company = ref<CompanyMonthlyReport | null>(null)
 
 const flowRange = ref<[string, string]>([monthStart(), today()])
+const flowFrom = ref(flowRange.value[0])
+const flowTo = ref(flowRange.value[1])
 const flowBy = ref<'month' | 'day'>('month')
 const flow = ref<FundFlowReport | null>(null)
 
@@ -249,9 +338,10 @@ async function loadMonthly(): Promise<void> {
 async function loadRanking(): Promise<void> {
   loading.ranking = true
   try {
+    const [start, end] = isMobile.value ? [rankFrom.value, rankTo.value] : rankRange.value
     const res = await financeReportApi.getVehicleRanking({
-      start_date: rankRange.value?.[0],
-      end_date: rankRange.value?.[1]
+      start_date: start,
+      end_date: end
     })
     if (res.success && res.data) rankRows.value = res.data.rows
   } finally {
@@ -272,9 +362,10 @@ async function loadCompany(): Promise<void> {
 async function loadFlow(): Promise<void> {
   loading.flow = true
   try {
+    const [start, end] = isMobile.value ? [flowFrom.value, flowTo.value] : flowRange.value
     const res = await financeReportApi.getFundFlow({
-      start_date: flowRange.value?.[0],
-      end_date: flowRange.value?.[1],
+      start_date: start,
+      end_date: end,
       by: flowBy.value
     })
     if (res.success && res.data) flow.value = res.data

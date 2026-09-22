@@ -59,15 +59,19 @@
             <span>{{ row.plate_number || '-' }} <el-tag size="small" type="info">{{ row.source_name || '线下' }}</el-tag></span>
             <span>{{ formatMoney(row.owner_amount) }}</span>
           </div>
-          <div class="mobile-card-row"><span class="label">客户</span><span class="value">{{ row.customer_name || '-' }}</span></div>
-          <div class="mobile-card-row"><span class="label">用车时间</span><span class="value">{{ row.line_date }}</span></div>
-          <div class="mobile-card-row"><span class="label">天数 × 单价</span><span class="value">{{ row.days }} × {{ formatMoney(row.unit_price) }}</span></div>
-          <div class="mobile-card-row"><span class="label">合计</span><span class="value">{{ formatMoney(row.total_amount) }}</span></div>
-          <div class="mobile-card-row"><span class="label">平台管理费</span><span class="value">{{ formatMoney(row.platform_fee) }}</span></div>
-          <div class="mobile-card-row"><span class="label">结算金额</span><span class="value">{{ formatMoney(row.settlement_amount) }}</span></div>
-          <div class="mobile-card-row"><span class="label">公司管理费</span><span class="value">{{ formatMoney(row.company_fee) }}</span></div>
-          <div class="mobile-card-row" v-if="row.other_fee"><span class="label">其他费用</span><span class="value">{{ formatMoney(row.other_fee) }}</span></div>
-          <div class="mobile-card-row" v-if="row.remarks"><span class="label">备注</span><span class="value">{{ row.remarks }}</span></div>
+          <div class="mobile-card-grid">
+            <div class="mobile-card-row"><span class="label">客户</span><span class="value">{{ row.customer_name || '-' }}</span></div>
+            <div class="mobile-card-row"><span class="label">用车时间</span><span class="value num">{{ row.line_date }}</span></div>
+          </div>
+          <div class="mobile-card-grid">
+            <div class="mobile-card-row"><span class="label">天数 × 单价</span><span class="value num">{{ row.days }} × {{ formatMoney(row.unit_price) }}</span></div>
+            <div class="mobile-card-row"><span class="label">合计</span><span class="value num">{{ formatMoney(row.total_amount) }}</span></div>
+            <div class="mobile-card-row"><span class="label">平台管理费</span><span class="value num">{{ formatMoney(row.platform_fee) }}</span></div>
+            <div class="mobile-card-row"><span class="label">结算金额</span><span class="value num">{{ formatMoney(row.settlement_amount) }}</span></div>
+            <div class="mobile-card-row"><span class="label">公司管理费</span><span class="value num">{{ formatMoney(row.company_fee) }}</span></div>
+            <div class="mobile-card-row" v-if="row.other_fee"><span class="label">其他费用</span><span class="value num">{{ formatMoney(row.other_fee) }}</span></div>
+          </div>
+          <div class="mobile-card-row is-block" v-if="row.remarks"><span class="label">备注</span><span class="value">{{ row.remarks }}</span></div>
           <div class="mobile-card-row">
             <span class="label">状态</span>
             <span class="value">

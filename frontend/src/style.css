@@ -19,6 +19,12 @@
   --sk-text-secondary: rgba(0, 0, 0, 0.8);
   --sk-text-tertiary: rgba(0, 0, 0, 0.48);
   --sk-focus-color: #0071e3;
+  /* 半透明强调色（禁用态、标签底色、focus ring）需要 rgb 三元组才能拼 rgba()。
+     之前这些地方直接写死了 rgba(var(--sk-focus-color-rgb), …)，移动端换成微信绿后不会跟着变。
+     改主题色时这两个变量一起改，不要再往样式里写死色值。 */
+  --sk-focus-color-rgb: 0, 113, 227;
+  /* 主按钮 hover 用的加深一档的强调色 */
+  --sk-focus-color-hover: #0077ed;
   --sk-link-color: #0066cc;
   --sk-link-color-dark: #2997ff;
 
@@ -269,7 +275,7 @@ body {
 }
 
 .sk-button-primary:hover {
-  background-color: #0077ed;
+  background-color: var(--sk-focus-color-hover);
 }
 
 .sk-button-primary:active {
@@ -336,12 +342,12 @@ a:hover {
 .el-button--primary {
   --el-button-bg-color: var(--sk-focus-color);
   --el-button-border-color: var(--sk-focus-color);
-  --el-button-hover-bg-color: #0077ed;
-  --el-button-hover-border-color: #0077ed;
+  --el-button-hover-bg-color: var(--sk-focus-color-hover);
+  --el-button-hover-border-color: var(--sk-focus-color-hover);
   --el-button-active-bg-color: var(--sk-button-active);
   --el-button-active-border-color: var(--sk-button-active);
-  --el-button-disabled-bg-color: rgba(0, 113, 227, 0.5);
-  --el-button-disabled-border-color: rgba(0, 113, 227, 0.5);
+  --el-button-disabled-bg-color: rgba(var(--sk-focus-color-rgb), 0.5);
+  --el-button-disabled-border-color: rgba(var(--sk-focus-color-rgb), 0.5);
 }
 
 .el-button--primary.is-link,
@@ -461,11 +467,11 @@ a:hover {
 
 /* Tree */
 .el-tree-node__content:hover {
-  background-color: rgba(0, 113, 227, 0.1);
+  background-color: rgba(var(--sk-focus-color-rgb), 0.1);
 }
 
 .el-tree-node.is-current > .el-tree-node__content {
-  background-color: rgba(0, 113, 227, 0.15);
+  background-color: rgba(var(--sk-focus-color-rgb), 0.15);
   color: var(--sk-focus-color);
 }
 
@@ -499,20 +505,20 @@ a:hover {
 
 /* Tags */
 .el-tag--primary {
-  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
-  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-bg-color: rgba(var(--sk-focus-color-rgb), 0.1);
+  --el-tag-border-color: rgba(var(--sk-focus-color-rgb), 0.2);
   --el-tag-text-color: var(--sk-focus-color);
 }
 
 .el-tag.el-tag--primary {
-  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
-  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-bg-color: rgba(var(--sk-focus-color-rgb), 0.1);
+  --el-tag-border-color: rgba(var(--sk-focus-color-rgb), 0.2);
   --el-tag-text-color: var(--sk-focus-color);
 }
 
 .el-tag:not(.el-tag--success):not(.el-tag--warning):not(.el-tag--danger):not(.el-tag--info) {
-  --el-tag-bg-color: rgba(0, 113, 227, 0.1);
-  --el-tag-border-color: rgba(0, 113, 227, 0.2);
+  --el-tag-bg-color: rgba(var(--sk-focus-color-rgb), 0.1);
+  --el-tag-border-color: rgba(var(--sk-focus-color-rgb), 0.2);
   --el-tag-text-color: var(--sk-focus-color);
 }
 
@@ -523,11 +529,11 @@ a:hover {
 
 /* Table Selection */
 .el-table__body tr.current-row > td {
-  background-color: rgba(0, 113, 227, 0.1);
+  background-color: rgba(var(--sk-focus-color-rgb), 0.1);
 }
 
 .el-table__body tr.hover-row > td {
-  background-color: rgba(0, 113, 227, 0.05);
+  background-color: rgba(var(--sk-focus-color-rgb), 0.05);
 }
 
 /* Link Button */
@@ -1109,11 +1115,6 @@ html.dark ::-webkit-scrollbar-thumb {
     border-radius: 8px;
   }
 
-  /* Dialog mobile */
-  .el-dialog {
-    margin: 10px auto !important;
-  }
-
   /* Native date input */
   .native-date-input {
     height: 44px;
@@ -1133,7 +1134,7 @@ html.dark ::-webkit-scrollbar-thumb {
   .native-date-input:focus {
     border-color: var(--sk-focus-color);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+    box-shadow: 0 0 0 2px rgba(var(--sk-focus-color-rgb), 0.2);
   }
 
   /* Date range */
@@ -1214,19 +1215,6 @@ html.dark ::-webkit-scrollbar-thumb {
     display: none;
   }
 
-  /* Dialog footer */
-  .el-dialog__footer {
-    padding: 8px 12px 12px;
-  }
-
-  .el-dialog__footer .el-button {
-    flex: 1;
-  }
-
-  .el-dialog__footer {
-    display: flex;
-    gap: 10px;
-  }
 }
 
 /* ========================================
@@ -1285,7 +1273,7 @@ html.dark .dashboard .schedule-table td {
 }
 
 .dashboard .schedule-type.send {
-  background-color: rgba(0, 113, 227, 0.1);
+  background-color: rgba(var(--sk-focus-color-rgb), 0.1);
   color: var(--sk-focus-color);
 }
 
@@ -1339,7 +1327,7 @@ html.dark .dashboard .gantt-cell {
 }
 
 .dashboard .gantt-cell.is-today {
-  background-color: rgba(0, 113, 227, 0.05);
+  background-color: rgba(var(--sk-focus-color-rgb), 0.05);
 }
 
 .dashboard .gantt-cell-plate {
@@ -1446,11 +1434,11 @@ html.dark .dashboard .row-value-compact {
 }
 
 .dashboard .highlight-compact {
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0.02) 100%);
+  background: linear-gradient(135deg, rgba(var(--sk-focus-color-rgb), 0.05) 0%, rgba(var(--sk-focus-color-rgb), 0.02) 100%);
 }
 
 html.dark .dashboard .highlight-compact {
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 113, 227, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(var(--sk-focus-color-rgb), 0.1) 0%, rgba(var(--sk-focus-color-rgb), 0.05) 100%);
 }
 
 /* 上传组件 */
@@ -1486,7 +1474,7 @@ html.dark .dashboard .native-datetime-input {
 
 .dashboard .native-datetime-input:focus {
   border-color: var(--sk-focus-color);
-  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--sk-focus-color-rgb), 0.1);
 }
 
 /* 来源标签 */
@@ -1673,25 +1661,6 @@ html.dark .page-container .el-dialog__footer {
   border-radius: 8px;
 }
 
-/* 移动端卡片 */
-.page-container .mobile-card {
-  background-color: var(--sk-bg-light-gray);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-html.dark .page-container .mobile-card {
-  background-color: var(--sk-surface-dark-1);
-}
-
-.page-container .mobile-card:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-html.dark .page-container .mobile-card:hover {
-  background-color: var(--sk-surface-dark-2);
-}
-
 /* 空状态 */
 .page-container .el-empty__description {
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -1761,53 +1730,23 @@ html.dark .page-container .el-descriptions__content {
   box-shadow: inset 3px 0 0 0 var(--sk-color-warning);
 }
 
-/* 移动端卡片内部的排版。与 VehiclesTab 等页面各自维护的那套同名，但这里挂
- * .finance-page 前缀，避免影响其他页面的既有样式。 */
-.page-container .finance-page .mobile-card + .mobile-card {
-  margin-top: 10px;
+/* 页签内容区用页面底色（浅灰 / 纯黑）。
+ * border-card 自带的是 --el-bg-color-overlay（亮色纯白），白卡片压在白底上只剩一圈
+ * 阴影、没有底色的层次；换成浅灰后和其它业务页（灰底 + 白卡片）也是一致的。 */
+.finance-page .el-tabs--border-card,
+.finance-page .el-tabs--border-card > .el-tabs__content {
+  background-color: var(--bg-color);
 }
 
-.page-container .finance-page .mobile-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-weight: 600;
-  color: var(--sk-text-near-black);
+/* 内容铺满页签：border-card 自带 15px 内容内边距，底色铺满后这圈空白把内容和
+ * 容器边隔开了一道 */
+.finance-page .el-tabs--border-card > .el-tabs__content {
+  padding: 0;
 }
 
-html.dark .page-container .finance-page .mobile-card-header {
-  color: var(--sk-text-white);
-}
-
-.page-container .finance-page .mobile-card-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 3px 0;
-  font-size: 13px;
-}
-
-.page-container .finance-page .mobile-card-row .label {
-  flex: 0 0 auto;
-  color: var(--sk-text-tertiary);
-}
-
-.page-container .finance-page .mobile-card-row .value {
-  flex: 1 1 auto;
-  text-align: right;
-  color: var(--sk-text-secondary);
-  font-variant-numeric: tabular-nums;
-  word-break: break-all;
-}
-
-.page-container .finance-page .mobile-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+/* 底色铺满后，border-card 那圈 1px 边框就是在页面中间又画了一个框 */
+.finance-page .el-tabs--border-card {
+  border: none;
 }
 
 /* 财务页签的分组小标题（如「收款」「成本」） */
@@ -1820,11 +1759,10 @@ html.dark .page-container .finance-page .mobile-card-header {
 
 /* 财务页签的响应式显隐。
  * 现有的 *Tab 组件各自在 scoped 里重写一遍 .hide-mobile / .table-card，
- * 财务有 6 个页签，重复 6 遍不合适，这里挂在 .finance-page 下统一提供。 */
-.finance-page .mobile-cards {
-  display: block;
-}
-
+ * 财务有 6 个页签，重复 6 遍不合适，这里挂在 .finance-page 下统一提供。
+ *
+ * 窄屏那一侧（.mobile-cards 的 flex 布局）由文件末尾「Mobile WeUI Cell 列表」统一提供，
+ * 这里只负责桌面端把卡片藏掉。 */
 .finance-page .table-card {
   display: none;
 }
@@ -1835,11 +1773,589 @@ html.dark .page-container .finance-page .mobile-card-header {
 }
 
 @media (min-width: 768px) {
-  .finance-page .mobile-cards {
+  .page-container.finance-page .mobile-cards,
+  .page-container .logs-tab .mobile-cards {
     display: none;
   }
 
   .finance-page .table-card {
     display: block;
+  }
+}
+
+/* 窄屏下筛选控件铺满一行：日期换成原生 input 后是全宽，旁边的 select 还停在
+ * 140px 就会参差不齐 */
+@media (max-width: 767px) {
+  .finance-page .search-card .el-card__body {
+    padding: 14px;
+  }
+
+  .finance-page .search-card .el-form-item {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .finance-page .search-card .el-form-item__content,
+  .finance-page .search-card .el-select,
+  .finance-page .search-card .el-input,
+  .finance-page .search-card .el-date-editor {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   Mobile WeUI Theme（仅 <768px）
+   ========================================
+ *
+ * 断点两侧是两套设计语言：
+ *   桌面（≥768px）Apple —— Apple Blue #0071e3、浅灰底、白/深灰圆角卡片
+ *   移动（<768px）WeUI —— 微信绿 #07c160、#ededed 底、无圆角 cell 分组
+ *
+ * 改这块之前先读三条约束：
+ *
+ * 1. 媒体查询不增加特异性。html.dark 是 (0,1,1)、:root 是 (0,1,0)，所以深色分支
+ *    必须写成 @media { html.dark { … } }。写成 :root 会被文件上方的 html.dark 压掉 ——
+ *    亮色是绿的、一切到深色又变回蓝的，而且不报任何错。
+ *
+ * 2. 这些覆盖靠「文件位置更靠后」在同特异性下胜出，所以这一整段必须留在 style.css 末尾。
+ *
+ * 3. 只在这里改色值。移动端规则里不要再写死颜色，否则换主题时又会漏掉一处。
+ *
+ * light-N / dark-2 是按 Element 的混色公式预先算好的具体色值（亮色与白按 N×10% 混合、
+ * 深色与黑混合、dark-2 与黑 20%），不用 color-mix()：旧浏览器上变量失效会让颜色整个丢失。
+ */
+@media (max-width: 767px) {
+  :root {
+    /* 移动端语义 token（WeUI 色板）。--sk-* 是桌面 Apple 那套，两套并存 */
+    --m-brand: #07c160;
+    --m-bg-page: #ededed; /* WeUI BG-0 */
+    --m-bg-cell: #ffffff; /* WeUI BG-2 */
+    --m-bg-sub: #f7f7f7; /* WeUI BG-1，tabbar 底色 */
+    --m-fg-0: rgba(0, 0, 0, 0.9);
+    --m-fg-1: rgba(0, 0, 0, 0.55);
+    --m-fg-2: rgba(0, 0, 0, 0.3);
+    --m-line: rgba(0, 0, 0, 0.1);
+    --m-active: #ececec; /* WeUI BG-COLOR-ACTIVE，点击态 */
+
+    /* 强调色 → 微信绿 */
+    --sk-focus-color: #07c160;
+    --sk-focus-color-rgb: 7, 193, 96;
+    --sk-focus-color-hover: #06ae56;
+    --sk-link-color: #07c160;
+    --sk-link-color-dark: #07c160;
+    --primary-color: #07c160;
+    --primary-color-light: #51d490;
+    --primary-color-dark: #069a4d;
+    --primary-color-rgb: 7, 193, 96;
+
+    --el-color-primary: #07c160;
+    --el-color-primary-light-3: #51d490;
+    --el-color-primary-light-5: #83e0b0;
+    --el-color-primary-light-7: #b5eccf;
+    --el-color-primary-light-8: #cdf3df;
+    --el-color-primary-light-9: #e6f9ef;
+    --el-color-primary-dark-2: #069a4d;
+
+    /* 语义色 → WeUI */
+    --sk-color-success: #06ae56;
+    --el-color-success: #06ae56;
+    --el-color-success-light-3: #51c689;
+    --el-color-success-light-5: #83d7ab;
+    --el-color-success-light-7: #b4e7cc;
+    --el-color-success-light-8: #cdefdd;
+    --el-color-success-light-9: #e6f7ee;
+    --el-color-success-dark-2: #058b45;
+
+    --sk-color-warning: #fa9d3b;
+    --el-color-warning: #fa9d3b;
+    --el-color-warning-light-3: #fcba76;
+    --el-color-warning-light-5: #fdce9d;
+    --el-color-warning-light-7: #fee2c4;
+    --el-color-warning-light-8: #feebd8;
+    --el-color-warning-light-9: #fff5eb;
+    --el-color-warning-dark-2: #c87e2f;
+
+    --sk-color-danger: #fa5151;
+    --el-color-danger: #fa5151;
+    --el-color-danger-light-3: #fc8585;
+    --el-color-danger-light-5: #fda8a8;
+    --el-color-danger-light-7: #fecbcb;
+    --el-color-danger-light-8: #fedcdc;
+    --el-color-danger-light-9: #ffeeee;
+    --el-color-danger-dark-2: #c84141;
+
+    /* info 在本项目里就是「辅助文字色」（.mobile-card-row .label 等），正好对应
+       WeUI 的 FG-1。深色分支必须一起改，否则是黑底黑字 */
+    --sk-color-info: rgba(0, 0, 0, 0.55);
+    --el-color-info: rgba(0, 0, 0, 0.55);
+
+    --sk-text-secondary: rgba(0, 0, 0, 0.55);
+    --sk-text-tertiary: rgba(0, 0, 0, 0.3);
+
+    /* 底色 → WeUI */
+    --bg-color: #ededed;
+    --sk-bg-light-gray: #ededed;
+    --el-bg-color-page: #ededed;
+  }
+
+  /* 深色：必须挂 html.dark（见上方约束第 1 条） */
+  html.dark {
+    --m-bg-page: #111111;
+    --m-bg-cell: #191919;
+    --m-bg-sub: #191919;
+    --m-fg-0: rgba(255, 255, 255, 0.8);
+    --m-fg-1: rgba(255, 255, 255, 0.5);
+    --m-fg-2: rgba(255, 255, 255, 0.3);
+    --m-line: rgba(255, 255, 255, 0.1);
+    --m-active: #2c2c2c;
+
+    /* 深色下 light-N 与黑混合，否则标签/提示的底色会是浅色块，在深色界面上很突兀 */
+    --el-color-primary-light-3: #058743;
+    --el-color-primary-light-5: #046130;
+    --el-color-primary-light-7: #023a1d;
+    --el-color-primary-light-8: #012713;
+    --el-color-primary-light-9: #01130a;
+
+    --el-color-success-light-3: #047a3c;
+    --el-color-success-light-5: #03572b;
+    --el-color-success-light-7: #02341a;
+    --el-color-success-light-8: #012311;
+    --el-color-success-light-9: #011109;
+
+    --el-color-warning-light-3: #af6e29;
+    --el-color-warning-light-5: #7d4f1e;
+    --el-color-warning-light-7: #4b2f12;
+    --el-color-warning-light-8: #321f0c;
+    --el-color-warning-light-9: #191006;
+
+    --el-color-danger-light-3: #af3939;
+    --el-color-danger-light-5: #7d2929;
+    --el-color-danger-light-7: #4b1818;
+    --el-color-danger-light-8: #321010;
+    --el-color-danger-light-9: #190808;
+
+    --sk-color-info: rgba(255, 255, 255, 0.5);
+    --el-color-info: rgba(255, 255, 255, 0.5);
+
+    /* 底色 → WeUI 深色：页面底 #111、卡片面 #191919。
+       只改 surface-dark-1（卡片主面），2-5 是 hover/active 态，一起拉平会让
+       深色下所有悬停与点按反馈消失 */
+    --bg-color: #111111;
+    --sk-bg-pure-black: #111111;
+    --sk-bg-light-gray: #111111;
+    --sk-text-near-black: rgba(255, 255, 255, 0.8);
+    --bg-color-secondary: #191919;
+    --el-bg-color: #111111;
+    --el-bg-color-page: #111111;
+    --el-bg-color-overlay: #191919;
+    --el-fill-color-blank: #191919;
+    --sk-surface-dark-1: #191919;
+  }
+}
+
+/* ========================================
+   Mobile WeUI Cell 列表（仅 <768px）
+   ========================================
+ *
+ * 全站移动端列表共用这一套。.mobile-card 系列 class 名是历史遗留（原本是白底圆角卡片），
+ * 现在承载的是 WeUI 的 cells 模型：
+ *
+ *   .mobile-cards        → cells 容器（分组间距 8px）
+ *   .mobile-card         → .weui-cells（白底、无圆角、无阴影、上下各一条 0.5px hairline）
+ *   .mobile-card-header  → 分组首行（车牌 / 客户名 + 标签）
+ *   .mobile-card-row     → .weui-cell（label 贴左、value 贴右）
+ *   .mobile-card-footer  → 底部汇总行（与数据行同规格）
+ *   .mobile-card-actions → 操作区（上方一条 0.5px hairline）
+ *   .mobile-card-grid    → 两列金额网格
+ *
+ * 行高三档，不要一律套 WeUI 的 56px —— 56px 是「整项可点击的导航 cell」的规格
+ * （设置项、抽屉导航项那种），卡片里的数据行套上会让订单卡片从 ~248px 涨到 ~392px：
+ *
+ *   56px  整项可点击的 cell（见 MobileTabbar / 设置页）
+ *   44px  卡片内的数据行（触控安全下限）。字号同时从 13px 提到 15px，
+ *         订单卡片总高 ~248px → ~312px（+26%），换来的是能看清的字号和点得准的行高
+ *   auto  多行文本行（.is-block）与两列金额网格
+ *
+ * 颜色全部走 --m-* token（定义在上方主题段），所以这里不需要再写 html.dark 分支。
+ * 这些元素在桌面端本来就被各页 scoped 里的 min-width:768px 规则 display:none 掉。
+ */
+@media (max-width: 767px) {
+  .page-container .mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* WeUI 分组间距（原来 10px） */
+    margin-bottom: 12px;
+  }
+
+  .page-container .mobile-card {
+    position: relative;
+    background-color: var(--m-bg-cell);
+    border-radius: 0;
+    padding: 0; /* 内边距下移到每一行，行才能整行变色 */
+    box-shadow: none;
+  }
+
+  /* 分组上下各一条 0.5px hairline：1px 再 scaleY(.5)，WeUI 的 hairline 做法 */
+  .page-container .mobile-card::before,
+  .page-container .mobile-card::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  .page-container .mobile-card::before {
+    top: 0;
+  }
+
+  .page-container .mobile-card::after {
+    bottom: 0;
+    transform-origin: 0 100%;
+  }
+
+  /* 分组首行 */
+  .page-container .mobile-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 44px;
+    padding: 4px 16px;
+    font-size: 17px;
+    font-weight: 600;
+    /* 卡片头放的多半是金额，等宽数字才不会一列数字左右跳 */
+    font-variant-numeric: tabular-nums;
+    color: var(--m-fg-0);
+  }
+
+  /* 数据行 = weui-cell */
+  .page-container .mobile-card-row,
+  .page-container .mobile-card-footer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 44px;
+    padding: 4px 16px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  /* 行间 hairline，左端缩进 16px（WeUI 的分隔线缩进规则）。
+     第一条数据行前面也要有线，所以同时匹配「紧跟 header」的情况 */
+  .page-container .mobile-card-row + .mobile-card-row::before,
+  .page-container .mobile-card-header + .mobile-card-row::before,
+  .page-container .mobile-card-row + .mobile-card-footer::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  /* 触屏点按整行变色。不用 :hover：手指点一下 hover 会一直挂着 */
+  .page-container .mobile-card-row:active {
+    background-color: var(--m-active);
+  }
+
+  .page-container .mobile-card-row .label {
+    flex: 0 0 auto;
+    /* 两列网格里格子只有一百多像素宽，label 被折断就没法读了 */
+    white-space: nowrap;
+    color: var(--m-fg-1);
+  }
+
+  /* 日志的 label 都是 2-3 个字，定宽 56px 让 value 的起点对齐；
+     财务的 label 长短不一（2 到 6 个字都有），那边用上面的自适应宽度 */
+  .page-container .logs-tab .mobile-card-row .label {
+    flex: 0 0 56px;
+  }
+
+  .page-container .mobile-card-row .value {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: right;
+    color: var(--m-fg-0);
+    /* 原来的 break-all 会把中文和数字串逐字断开，长备注断得比断行还碎 */
+    word-break: break-word;
+  }
+
+  /* 摘要 / 备注 / 详情这类能长到几行的：label 单独占一行，value 整行铺开左对齐换行。
+     挤在一行右对齐的话，换行的第二行会贴着右边，读起来是散的 */
+  .page-container .mobile-card-row.is-block {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 2px;
+    min-height: 0;
+    padding: 8px 16px;
+  }
+
+  .page-container .mobile-card-row.is-block .value {
+    text-align: left;
+  }
+
+  /* 操作区：上方一条 hairline，否则一堆按钮像是浮在卡片里 */
+  .page-container .mobile-card-actions {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px;
+  }
+
+  .page-container .mobile-card-actions::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  /* 两列金额网格：结算一行有 6 个金额字段，单列排下来一张卡片要 300 多像素 */
+  .page-container .mobile-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    padding: 4px 16px;
+  }
+
+  /* 网格内的行不套 44px 行高，否则一张结算卡会涨到 400px 以上；
+     也不要行间 hairline，横线会穿过两列格子 */
+  .page-container .mobile-card-grid .mobile-card-row {
+    min-height: 0;
+    padding: 4px 0;
+  }
+
+  .page-container .mobile-card-grid .mobile-card-row::before {
+    content: none;
+  }
+
+  /* 数值类（金额、天数、日期）：等宽数字，纵向扫一眼能对齐 */
+  .page-container .mobile-card-row .value.num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 状态色。这几条必须写在 .mobile-card-row .value 之后：
+     基类选择器是 (0,2,0)，单个 .text-danger 只有 (0,1,0)，不加这一段就会被基类的
+     颜色压掉 —— 而各页 scoped 里的 .text-danger 是给卡片外的元素（统计数字等）用的，
+     不能靠提高它们的权重来迁就卡片 */
+  .page-container .mobile-card-row .value.text-danger,
+  .page-container .mobile-card-row .value.money-negative {
+    color: var(--sk-color-danger);
+  }
+
+  .page-container .mobile-card-row .value.text-warning {
+    color: var(--sk-color-warning);
+  }
+
+  .page-container .mobile-card-row .value.text-success,
+  .page-container .mobile-card-row .value.money-positive {
+    color: var(--sk-color-success);
+  }
+
+  .page-container .mobile-card-row .value.text-primary {
+    color: var(--m-brand);
+  }
+}
+
+/* ========================================
+   Mobile WeUI Sheet 弹窗（仅 <768px）
+   ========================================
+ *
+ * Element Plus 的 el-dialog 会 teleport 到 body，所以这里不能只写
+ * .page-container .el-dialog；裸 .el-dialog / .el-dialog__* 才是移动端所有弹窗
+ * 都能命中的选择器。保留 page-container 前缀的规则在上面继续服务桌面端。
+ *
+ * Element Plus 2.13 的 width/top 通过 --el-dialog-width / --el-dialog-margin-top
+ * CSS 自定义属性传入，真正的 width/margin 仍由样式表声明。因此这里直接覆盖
+ * width/margin；:style="{ maxWidth: '400px' }" 是普通内联声明，则由 max-width: none !important
+ * 压过。全仓库没有 fullscreen、align-center、custom-class 等会打破 sheet 的 dialog 属性。
+ */
+@media (max-width: 767px) {
+  /* 遮罩内的 dialog 贴底，不再按 EP 默认的 15vh margin 居中 */
+  .el-overlay-dialog {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .el-dialog,
+  .page-container .el-dialog {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto;
+    max-height: 75vh;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--m-bg-cell);
+    border-radius: 12px 12px 0 0 !important;
+    box-shadow: none;
+  }
+
+  /* 无论有没有 title，都保留一个可见的下拉手柄；放在 dialog 本身而不是 header，
+     因为没有 title/header 插槽时 Element Plus 不会渲染 .el-dialog__header */
+  .el-dialog::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 40px;
+    height: 4px;
+    margin: 8px auto 0;
+    border-radius: 2px;
+    background-color: var(--m-bg-page);
+  }
+
+  .el-dialog__header,
+  .page-container .el-dialog__header {
+    flex: 0 0 auto;
+    padding: 8px 24px 12px;
+    border-bottom: none;
+  }
+
+  .el-dialog__title {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--m-fg-0);
+  }
+
+  .el-dialog__headerbtn {
+    top: 8px;
+    right: 8px;
+  }
+
+  .el-dialog__body,
+  .page-container .el-dialog__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 24px 16px;
+    color: var(--m-fg-0);
+  }
+
+  /* 关闭按钮只有在 footer 之后才需要额外的底部安全区；
+     footer 没有时 body 自己留 16px，避免内容贴到圆角边 */
+  .el-dialog__footer,
+  .page-container .el-dialog__footer {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 0 env(safe-area-inset-bottom);
+    border-top: none;
+  }
+
+  /* footer 顶部横向 hairline */
+  .el-dialog__footer::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  /* 2 个按钮各占 50%，3 个各占 1/3；4 个起自动换行。
+     这样「取消 / 保存 / 保存并继续」不会在窄屏挤成一条难读的 3 等分长文本。 */
+  .el-dialog__footer .el-button {
+    flex: 1 1 33.3333%;
+    min-width: 0;
+    min-height: 64px;
+    margin: 0;
+    padding: 20px 8px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: normal;
+  }
+
+  /* 同一行按钮之间的竖向 0.5px hairline。换行后的每行首按钮不画左线。 */
+  .el-dialog__footer .el-button + .el-button {
+    border-left: 1px solid var(--m-line);
+  }
+
+  .el-dialog__footer .el-button:nth-child(3n + 1) {
+    border-left: none;
+  }
+
+  /* WeUI 的 footer 操作是文字按钮，不给主按钮整块铺绿；小字在浅底用深一点的绿 */
+  .el-dialog__footer .el-button--primary {
+    color: var(--m-brand);
+  }
+
+  .el-dialog__footer .el-button--danger {
+    color: var(--sk-color-danger);
+  }
+
+  /* OwnersTab 的两处 el-drawer 仍保留右侧抽屉语义（对账单/往来账适合连续滚动），
+     但小屏不要只露 90% 宽，横向表格会被挤到看不全。size 是 EP 写入的内联 width，
+     作者样式表的 !important 可以覆盖它；桌面端不受影响。 */
+  .el-overlay.is-drawer .el-drawer {
+    width: 100% !important;
+    max-width: none;
+  }
+
+  /* EP 默认 dialog-fade 会把整块 overlay 向上移 20px。覆盖它，改成遮罩淡入 +
+     sheet 从底部升起；关闭反向下滑。0.3s / ease 与 WeUI 一致。 */
+  .dialog-fade-enter-active .el-overlay-dialog {
+    animation: m-sheet-overlay-in 0.3s ease both;
+  }
+
+  .dialog-fade-leave-active .el-overlay-dialog {
+    animation: m-sheet-overlay-out 0.3s ease both;
+  }
+
+  .dialog-fade-enter-active .el-dialog {
+    animation: m-sheet-in 0.3s ease both;
+  }
+
+  .dialog-fade-leave-active .el-dialog {
+    animation: m-sheet-out 0.3s ease both;
+  }
+
+  @keyframes m-sheet-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes m-sheet-overlay-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes m-sheet-in {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes m-sheet-out {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
   }
 }

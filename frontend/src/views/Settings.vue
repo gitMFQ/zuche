@@ -278,11 +278,11 @@ html.dark .logo-preview {
 
 .logo-preview:hover {
   border-color: var(--sk-focus-color);
-  background: rgba(0, 113, 227, 0.05);
+  background: rgba(var(--sk-focus-color-rgb), 0.05);
 }
 
 html.dark .logo-preview:hover {
-  background: rgba(0, 113, 227, 0.1);
+  background: rgba(var(--sk-focus-color-rgb), 0.1);
 }
 
 .logo-preview img {
@@ -365,5 +365,160 @@ html.dark .dark-mode-label {
 
 html.dark .card-title {
   color: var(--sk-text-white);
+}
+
+@media (max-width: 767px) {
+  /* 设置页最适合 WeUI navbar + cells：每个设置项是 56px 触控行 */
+  .settings-tabs {
+    margin: 0 -16px;
+    padding: 0;
+    border-radius: 0;
+    background: var(--m-bg-page);
+  }
+
+  .settings-tabs :deep(.el-tabs__header) {
+    height: 56px;
+    margin: 0 0 8px;
+    background: var(--m-bg-cell);
+  }
+
+  .settings-tabs :deep(.el-tabs__nav-wrap) {
+    overflow-x: auto;
+  }
+
+  .settings-tabs :deep(.el-tabs__nav-wrap::after) {
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+  }
+
+  .settings-tabs :deep(.el-tabs__nav) {
+    min-width: max-content;
+  }
+
+  .settings-tabs :deep(.el-tabs__item) {
+    height: 56px;
+    padding: 0 16px;
+    font-size: 17px;
+    color: var(--m-fg-1);
+  }
+
+  .settings-tabs :deep(.el-tabs__item.is-active) {
+    color: var(--m-fg-0);
+    font-weight: 500;
+    background: var(--m-active);
+  }
+
+  .settings-tabs :deep(.el-tabs__active-bar) {
+    display: none;
+  }
+
+  .settings-tabs :deep(.el-tabs__content) {
+    padding: 0;
+  }
+
+  .setting-card {
+    margin: 0 0 8px !important;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--m-bg-cell);
+  }
+
+  .setting-card :deep(.el-card__header) {
+    padding: 16px;
+    border-bottom: 1px solid var(--m-line);
+  }
+
+  .setting-card :deep(.el-card__body) {
+    padding: 0;
+  }
+
+  .setting-card :deep(.card-title) {
+    font-size: 15px;
+    color: var(--m-fg-0);
+  }
+
+  .setting-card :deep(.el-form-item) {
+    position: relative;
+    min-height: 56px;
+    margin: 0;
+    padding: 4px 16px;
+    border-bottom: none;
+    align-items: center;
+  }
+
+  .setting-card :deep(.el-form-item + .el-form-item)::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  .setting-card :deep(.el-form-item__label) {
+    flex: 0 0 88px;
+    color: var(--m-fg-1);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .setting-card :deep(.el-form-item__content) {
+    min-width: 0;
+    line-height: 1.4;
+  }
+
+  .setting-card :deep(.el-input) {
+    width: 100%;
+  }
+
+  /* Logo 预览高于普通 cell，允许内容自然撑开 */
+  .setting-card :deep(.el-form-item:has(.logo-upload)) {
+    align-items: flex-start;
+    min-height: 112px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .setting-card :deep(.logo-upload) {
+    gap: 12px;
+  }
+
+  .setting-card :deep(.logo-preview) {
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
+  }
+
+  .setting-card :deep(.logo-actions) {
+    gap: 4px;
+  }
+
+  .setting-card :deep(.logo-tip) {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  /* 保存按钮是操作区，不画左缩进分隔线 */
+  .setting-card :deep(.el-form-item:last-child) {
+    min-height: 72px;
+    padding: 12px 16px;
+  }
+
+  .setting-card :deep(.el-form-item:last-child)::before {
+    content: none;
+  }
+
+  .setting-card :deep(.el-form-item:last-child .el-button) {
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+  }
 }
 </style>

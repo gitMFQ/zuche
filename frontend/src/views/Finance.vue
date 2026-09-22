@@ -1,6 +1,6 @@
 <template>
   <div class="page-container finance-page">
-    <el-tabs v-model="activeTab" type="border-card" @tab-change="handleTabChange">
+    <el-tabs v-model="activeTab" type="border-card" class="finance-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="资金流水" name="funds" lazy>
         <FundsTab v-if="loaded.funds" />
       </el-tab-pane>
@@ -90,3 +90,51 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+@media (max-width: 767px) {
+  /* WeUI navbar：财务 tab 多，允许横向滚动，不把标签压缩成看不清的 12px */
+  .finance-tabs :deep(.el-tabs__header) {
+    height: 56px;
+    margin: 0 0 8px;
+    overflow-x: auto;
+    background: var(--m-bg-cell);
+  }
+
+  .finance-tabs :deep(.el-tabs__nav-wrap) {
+    overflow-x: auto;
+  }
+
+  .finance-tabs :deep(.el-tabs__nav-wrap::after) {
+    height: 1px;
+    background: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+  }
+
+  .finance-tabs :deep(.el-tabs__nav) {
+    min-width: max-content;
+  }
+
+  .finance-tabs :deep(.el-tabs__item) {
+    height: 56px;
+    padding: 0 16px;
+    font-size: 17px;
+    color: var(--m-fg-1);
+  }
+
+  .finance-tabs :deep(.el-tabs__item.is-active) {
+    color: var(--m-fg-0);
+    font-weight: 500;
+    background: var(--m-active);
+  }
+
+  .finance-tabs :deep(.el-tabs__active-bar) {
+    display: none;
+  }
+
+  .finance-tabs :deep(.el-tabs__content) {
+    padding: 0;
+  }
+}
+</style>

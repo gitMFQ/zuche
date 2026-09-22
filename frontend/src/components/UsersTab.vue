@@ -288,28 +288,6 @@ onMounted(() => loadData())
   margin-bottom: 12px;
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.mobile-card {
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
 .user-info {
   display: flex;
   align-items: center;
@@ -326,33 +304,9 @@ html.dark .user-name {
   color: var(--sk-text-white);
 }
 
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
 .mobile-card-row a {
   color: var(--primary-color);
   text-decoration: none;
-}
-
-.mobile-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-  flex-wrap: wrap;
 }
 
 .hide-mobile {
@@ -378,27 +332,5 @@ html.dark .user-name {
   justify-content: center;
   flex-wrap: wrap;
   row-gap: 8px;
-}
-
-/* 暗色模式 */
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card-header {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .mobile-card-row .label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card-row .value {
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
 }
 </style>

@@ -54,6 +54,8 @@ watch(() => route.query.tab, (tab) => {
 /* 容器不设 max-width：与财务页一致，铺满主内容区（约定见 style.css 的 .page-container） */
 .vehicle-tabs {
   background: transparent;
+  /* 内容已经铺满容器，border-card 那圈 1px 边框就是在页面中间又画了一个框 */
+  border: none;
 }
 
 .vehicle-tabs :deep(.el-tabs__header) {
@@ -66,13 +68,43 @@ watch(() => route.query.tab, (tab) => {
 }
 
 @media (max-width: 767px) {
+  /* WeUI navbar：56px 高、17px 字、选中整项背景高亮，不用 Element 下划线 */
   .vehicle-tabs :deep(.el-tabs__header) {
-    margin-bottom: 12px;
+    height: 56px;
+    margin: 0 0 8px;
+    overflow-x: auto;
   }
-  
+
+  .vehicle-tabs :deep(.el-tabs__nav-wrap) {
+    overflow-x: auto;
+  }
+
+  .vehicle-tabs :deep(.el-tabs__nav-wrap::after) {
+    height: 1px;
+    background: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+  }
+
+  .vehicle-tabs :deep(.el-tabs__nav) {
+    min-width: max-content;
+  }
+
   .vehicle-tabs :deep(.el-tabs__item) {
-    padding: 0 10px;
-    font-size: 12px;
+    height: 56px;
+    padding: 0 16px;
+    font-size: 17px;
+    color: var(--m-fg-1);
+  }
+
+  .vehicle-tabs :deep(.el-tabs__item.is-active) {
+    color: var(--m-fg-0);
+    font-weight: 500;
+    background: var(--m-active);
+  }
+
+  .vehicle-tabs :deep(.el-tabs__active-bar) {
+    display: none;
   }
 }
 

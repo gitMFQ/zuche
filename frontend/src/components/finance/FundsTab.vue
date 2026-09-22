@@ -32,6 +32,7 @@
         </el-form-item>
         <el-form-item>
           <el-date-picker
+            v-if="!isMobile"
             v-model="dateRange"
             type="daterange"
             value-format="YYYY-MM-DD"
@@ -40,6 +41,12 @@
             style="width: 240px"
             @change="reload"
           />
+          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <div v-else class="mobile-date-range">
+            <input v-model="dateFrom" type="date" class="native-date-input" @change="reload" />
+            <span class="date-separator">-</span>
+            <input v-model="dateTo" type="date" class="native-date-input" @change="reload" />
+          </div>
         </el-form-item>
         <el-form-item>
           <el-select v-model="query.direction" placeholder="收支" clearable style="width: 90px" @change="reload">
@@ -83,18 +90,20 @@
               {{ row.direction === 'in' ? '+' : '-' }}{{ formatMoney(row.amount) }}
             </span>
           </div>
-          <div class="mobile-card-row"><span class="label">账户</span><span class="value">{{ row.account_name }}</span></div>
-          <div class="mobile-card-row"><span class="label">摘要</span><span class="value">{{ row.summary }}</span></div>
-          <div class="mobile-card-row" v-if="row.counterparty"><span class="label">对方</span><span class="value">{{ row.counterparty }}</span></div>
-          <div class="mobile-card-row" v-if="row.balance !== undefined">
-            <span class="label">余额</span><span class="value">{{ formatMoney(row.balance) }}</span>
-          </div>
-          <div class="mobile-card-row">
-            <span class="label">来源</span>
-            <span class="value">
-              {{ FUND_SOURCE_TYPE_TEXT_MAP[row.source_type] || row.source_type }}
-              <el-tag v-if="row.status === 'reversed'" size="small" type="info">已冲销</el-tag>
-            </span>
+          <div class="mobile-card-row is-block"><span class="label">摘要</span><span class="value">{{ row.summary }}</span></div>
+          <div class="mobile-card-grid">
+            <div class="mobile-card-row"><span class="label">账户</span><span class="value">{{ row.account_name }}</span></div>
+            <div class="mobile-card-row" v-if="row.balance !== undefined">
+              <span class="label">余额</span><span class="value num">{{ formatMoney(row.balance) }}</span>
+            </div>
+            <div class="mobile-card-row" v-if="row.counterparty"><span class="label">对方</span><span class="value">{{ row.counterparty }}</span></div>
+            <div class="mobile-card-row">
+              <span class="label">来源</span>
+              <span class="value">
+                {{ FUND_SOURCE_TYPE_TEXT_MAP[row.source_type] || row.source_type }}
+                <el-tag v-if="row.status === 'reversed'" size="small" type="info">已冲销</el-tag>
+              </span>
+            </div>
           </div>
           <div class="mobile-card-actions">
             <el-button v-if="canManage" size="small" @click="openReassign(row)">改归属</el-button>
@@ -262,8 +271,10 @@ import {
   FUND_SOURCE_TYPE_TEXT_MAP
 } from '../../utils/constants'
 import { formatMoney, formatMoneyUnit, moneyClass } from '../../utils/money'
+import { useMobile } from '../../composables/useMobile'
 
 const userStore = useUserStore()
+const { isMobile } = useMobile()
 // store 里的 isAdmin 是个函数（不是 computed），模板里直接用会被当成函数引用恒为真
 const canManage = computed(() => userStore.isAdmin())
 
@@ -279,6 +290,9 @@ const hideReversed = ref(false)
 const locks = ref<FinancePeriodLockItem[]>([])
 
 const dateRange = ref<[string, string] | null>(null)
+// 移动端日期范围用两个原生 input（isMobile 时 dateRange 不再绑定），取值时二选一
+const dateFrom = ref('')
+const dateTo = ref('')
 const query = reactive({
   page: 1,
   pageSize: 20,
@@ -311,6 +325,7 @@ async function loadData(): Promise<void> {
   loading.value = true
   error.value = null
   try {
+    const [start, end] = isMobile.value ? [dateFrom.value, dateTo.value] : (dateRange.value ?? [])
     const res = await fundApi.getTransactions({
       page: query.page,
       pageSize: query.pageSize,
@@ -318,8 +333,8 @@ async function loadData(): Promise<void> {
       direction: query.direction || undefined,
       source_type: query.source_type || undefined,
       keyword: query.keyword || undefined,
-      start_date: dateRange.value?.[0] || undefined,
-      end_date: dateRange.value?.[1] || undefined,
+      start_date: start || undefined,
+      end_date: end || undefined,
       hide_reversed: hideReversed.value ? '1' : undefined
     })
     if (res.success && res.data) {

@@ -549,23 +549,10 @@ onMounted(async () => {
     font-size: 17px;
   }
 
-  /* 弹窗标题栏同样收紧：默认上 16px（弹窗内边距）+ 下 16px + 18px 标题 */
-  .el-dialog {
-    padding: 10px 12px;
-  }
-
-  .el-dialog :deep(.el-dialog__header) {
-    padding-bottom: 8px;
-  }
-
-  .el-dialog :deep(.el-dialog__title) {
-    font-size: 16px;
-  }
-
-  /* 关闭按钮默认 48×48，标题栏压矮后会顶到正文里 */
-  .el-dialog :deep(.el-dialog__headerbtn) {
-    width: 32px;
-    height: 32px;
+  /* 底部 sheet 的统一规则在 style.css；这里只压缩甘特图自身的头部控件，
+     不再写 padding 覆盖全局 sheet 的 24px 横向留白 */
+  .el-dialog :deep(.window-picker) {
+    width: 90px;
   }
 }
 
@@ -586,6 +573,13 @@ onMounted(async () => {
   height: 400px;
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 767px) {
+  .schedule-card {
+    height: auto;
+    min-height: 0;
+  }
 }
 
 .schedule-card :deep(.el-card__body) {

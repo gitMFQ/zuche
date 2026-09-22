@@ -837,29 +837,6 @@ watch(
   margin-bottom: 12px;
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.mobile-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
 .customer-name {
   font-size: 16px;
   font-weight: 600;
@@ -873,32 +850,9 @@ watch(
   vertical-align: middle;
 }
 
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
 .mobile-card-row a {
   color: var(--primary-color);
   text-decoration: none;
-}
-
-.mobile-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
 }
 
 /* 黑名单卡片：左侧红条 + 原因用危险色，与「黑名单」标签呼应 */
@@ -1080,27 +1034,6 @@ watch(
 }
 
 /* 暗色模式 */
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card-header {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .mobile-card-row .label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card-row .value {
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
-}
-
 html.dark .image-preview,
 html.dark .view-image-list img {
   border-color: var(--border-color);

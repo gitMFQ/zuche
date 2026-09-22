@@ -17,8 +17,8 @@
         @preview="openPreview"
       />
 
-      <!-- 操作按钮 -->
-      <el-card shadow="never" class="info-card">
+      <!-- 操作按钮：移动端固定在底部 tabbar 上方，桌面端仍是详情末尾的普通卡片 -->
+      <el-card shadow="never" class="info-card mobile-action-card">
         <div class="action-buttons">
           <template v-if="order.status === 'pending'">
             <el-button type="primary" plain block @click="openEditDialog">编辑订单</el-button>
@@ -512,5 +512,132 @@ html.dark .file-item {
 
 html.dark .text-muted {
   color: var(--text-color-secondary);
+}
+
+@media (max-width: 767px) {
+  /* 订单详情仍保持 600px 单列约定，但内容区按 WeUI cells 贴满主内容宽度 */
+  .order-content {
+    gap: 8px;
+    padding-bottom: 220px;
+  }
+
+  .order-content :deep(.info-card) {
+    margin-right: -16px;
+    margin-left: -16px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--m-bg-cell);
+  }
+
+  .order-content :deep(.info-card .el-card__header) {
+    padding: 16px;
+    border-bottom: 1px solid var(--m-line);
+  }
+
+  .order-content :deep(.info-card .el-card__body) {
+    padding: 0;
+  }
+
+  .order-content :deep(.section-title) {
+    font-size: 15px;
+    color: var(--m-fg-0);
+  }
+
+  .order-content :deep(.info-list) {
+    gap: 0;
+  }
+
+  .order-content :deep(.info-row) {
+    position: relative;
+    min-height: 44px;
+    padding: 4px 16px;
+    border-bottom: none;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .order-content :deep(.info-row + .info-row)::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  .order-content :deep(.info-row .label) {
+    color: var(--m-fg-1);
+    font-size: 15px;
+  }
+
+  .order-content :deep(.info-row .row-value) {
+    min-width: 0;
+    color: var(--m-fg-0);
+    word-break: break-word;
+  }
+
+  .order-content :deep(.info-row .row-value.amount) {
+    color: var(--sk-color-danger);
+  }
+
+  .order-content :deep(.info-row.highlight-row) {
+    margin: 0;
+    padding: 4px 16px;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .order-content :deep(.order-detail-header) {
+    margin: 0;
+    padding: 16px;
+    border-radius: 0;
+    background: var(--m-bg-sub);
+  }
+
+  .order-content :deep(.remarks-content),
+  .order-content :deep(.order-images),
+  .order-content :deep(.payment-list),
+  .order-content :deep(.fee-list) {
+    padding: 8px 16px 16px;
+  }
+
+  /* 操作区固定在 tabbar 上方：两列按钮，第三个及以后自动换行 */
+  .order-content > .mobile-action-card {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    z-index: 850;
+    margin: 0 !important;
+    border: none;
+    border-radius: 0;
+    box-shadow: 0 -1px 0 var(--m-line);
+    background: var(--m-bg-cell);
+  }
+
+  .mobile-action-card :deep(.el-card__body) {
+    padding: 8px 16px;
+  }
+
+  .mobile-action-card .action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-action-card .action-buttons .el-button {
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+  }
+
+  .order-content > .info-card:last-child {
+    margin-bottom: 0;
+  }
 }
 </style>

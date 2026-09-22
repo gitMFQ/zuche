@@ -221,14 +221,22 @@ html.dark .detail-row-compact:not(:last-child) {
 }
 
 .highlight-compact {
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--sk-focus-color-rgb), 0.05) 0%,
+    rgba(var(--sk-focus-color-rgb), 0.02) 100%
+  );
   padding: 10px 12px;
   border-radius: 6px;
   margin: 0 -4px;
 }
 
 html.dark .highlight-compact {
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 113, 227, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--sk-focus-color-rgb), 0.1) 0%,
+    rgba(var(--sk-focus-color-rgb), 0.05) 100%
+  );
 }
 
 .row-label-compact {

@@ -41,7 +41,22 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-date-picker v-model="dateRange" type="daterange" value-format="YYYY-MM-DD" start-placeholder="开始" end-placeholder="结束" style="width: 230px" @change="reload" />
+          <el-date-picker
+            v-if="!isMobile"
+            v-model="dateRange"
+            type="daterange"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            style="width: 230px"
+            @change="reload"
+          />
+          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <div v-else class="mobile-date-range">
+            <input v-model="dateFrom" type="date" class="native-date-input" @change="reload" />
+            <span class="date-separator">-</span>
+            <input v-model="dateTo" type="date" class="native-date-input" @change="reload" />
+          </div>
         </el-form-item>
         <el-form-item>
           <el-input v-model="query.keyword" placeholder="车牌/备注" clearable style="width: 140px" @keyup.enter="reload" />
@@ -72,13 +87,15 @@
             <span>{{ row.plate_number || '-' }}</span>
             <el-tag size="small" :type="row.is_paid ? 'success' : 'warning'">{{ row.is_paid ? '已付款' : '未付款' }}</el-tag>
           </div>
-          <div class="mobile-card-row"><span class="label">日期</span><span class="value">{{ row.expense_date }}</span></div>
-          <div class="mobile-card-row"><span class="label">类型</span><span class="value">{{ row.expense_type_name }}</span></div>
-          <div class="mobile-card-row" v-if="row.expense_amount"><span class="label">支出</span><span class="value money-negative">{{ formatMoney(row.expense_amount) }}</span></div>
-          <div class="mobile-card-row" v-if="row.income_amount"><span class="label">收入</span><span class="value money-positive">{{ formatMoney(row.income_amount) }}</span></div>
-          <div class="mobile-card-row"><span class="label">发票</span><span class="value">{{ INVOICE_STATUS_TEXT_MAP[row.invoice_status] || row.invoice_status }}</span></div>
-          <div class="mobile-card-row" v-if="row.amortize_months > 1"><span class="label">分摊</span><span class="value">{{ row.amortize_months }} 个月</span></div>
-          <div class="mobile-card-row" v-if="row.remarks"><span class="label">备注</span><span class="value">{{ row.remarks }}</span></div>
+          <div class="mobile-card-grid">
+            <div class="mobile-card-row"><span class="label">日期</span><span class="value num">{{ row.expense_date }}</span></div>
+            <div class="mobile-card-row"><span class="label">类型</span><span class="value">{{ row.expense_type_name }}</span></div>
+            <div class="mobile-card-row" v-if="row.expense_amount"><span class="label">支出</span><span class="value num money-negative">{{ formatMoney(row.expense_amount) }}</span></div>
+            <div class="mobile-card-row" v-if="row.income_amount"><span class="label">收入</span><span class="value num money-positive">{{ formatMoney(row.income_amount) }}</span></div>
+            <div class="mobile-card-row"><span class="label">发票</span><span class="value">{{ INVOICE_STATUS_TEXT_MAP[row.invoice_status] || row.invoice_status }}</span></div>
+            <div class="mobile-card-row" v-if="row.amortize_months > 1"><span class="label">分摊</span><span class="value num">{{ row.amortize_months }} 个月</span></div>
+          </div>
+          <div class="mobile-card-row is-block" v-if="row.remarks"><span class="label">备注</span><span class="value">{{ row.remarks }}</span></div>
           <div class="mobile-card-actions">
             <template v-if="isAuto(row)">
               <el-tag size="small" type="info">由{{ sourceLabel(row) }}自动生成</el-tag>
@@ -216,9 +233,11 @@ import type {
 import { useUserStore } from '../../stores/user'
 import { INVOICE_STATUS_TEXT_MAP } from '../../utils/constants'
 import { formatMoney, formatMoneyUnit } from '../../utils/money'
+import { useMobile } from '../../composables/useMobile'
 
 const userStore = useUserStore()
 const canManage = computed(() => userStore.isAdmin())
+const { isMobile } = useMobile()
 
 function today(): string {
   return new Date(Date.now() + 8 * 3600 * 1000).toISOString().substring(0, 10)
@@ -243,6 +262,9 @@ const error = ref<string | null>(null)
 const submitting = ref(false)
 
 const dateRange = ref<[string, string] | null>(null)
+// 移动端日期范围用两个原生 input（isMobile 时 dateRange 不再绑定），取值时二选一
+const dateFrom = ref('')
+const dateTo = ref('')
 const query = reactive({
   page: 1,
   pageSize: 20,
@@ -280,8 +302,8 @@ async function loadData(): Promise<void> {
         vehicle_id: query.vehicle_id || undefined,
         expense_type: query.expense_type || undefined,
         is_paid: query.is_paid || undefined,
-        start_date: dateRange.value?.[0] || undefined,
-        end_date: dateRange.value?.[1] || undefined,
+        start_date: (isMobile.value ? dateFrom.value : dateRange.value?.[0]) || undefined,
+        end_date: (isMobile.value ? dateTo.value : dateRange.value?.[1]) || undefined,
         keyword: query.keyword || undefined
       }),
       vehicleExpenseApi.getStats({ period: today().substring(0, 7) })

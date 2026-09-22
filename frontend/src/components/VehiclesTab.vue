@@ -668,53 +668,16 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.mobile-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
 .plate-number {
   font-size: 16px;
 }
 
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
+/* 卡片外壳的内边距已归零，行自己带 16px；这里补上同样的横向内边距 */
 .mobile-card-images {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
+  padding: 8px 16px;
 }
 
 .mobile-card-images .label {
@@ -725,14 +688,6 @@ onMounted(() => {
 .text-primary {
   color: var(--primary-color);
   font-weight: 500;
-}
-
-.mobile-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
 }
 
 .hide-mobile {
@@ -854,30 +809,12 @@ onMounted(() => {
 }
 
 /* 暗色模式 */
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card-header {
-  border-bottom-color: var(--border-color);
-}
-
-html.dark .mobile-card-row .label,
 html.dark .mobile-card-images .label {
   color: var(--text-color-secondary);
 }
 
-html.dark .mobile-card-row .value {
-  color: var(--text-color);
-}
-
 html.dark .text-primary {
   color: var(--primary-color);
-}
-
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
 }
 
 html.dark .image-preview {

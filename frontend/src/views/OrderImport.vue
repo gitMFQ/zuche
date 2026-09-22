@@ -117,6 +117,65 @@
           </el-table-column>
         </el-table>
       </el-card>
+
+      <!-- 移动端：同一批预览数据改成 WeUI cell 分组，保留手机号补全与跳过操作 -->
+      <div class="mobile-cards import-mobile-cards">
+        <div
+          v-for="item in prepared"
+          :key="item.rowIndex"
+          class="mobile-card import-mobile-card"
+          :class="{
+            'is-error': !item.importable,
+            'is-warning': item.importable && item.issues.some((issue) => issue.level === 'warning'),
+            'is-skipped': skipMap[item.rowIndex]
+          }"
+        >
+          <div class="mobile-card-header">
+            <span class="import-row-title">第 {{ item.rowIndex + 1 }} 行 · {{ item.row.external_no || '无平台订单号' }}</span>
+            <el-tag v-if="!item.importable" type="danger" size="small">有错误</el-tag>
+            <el-tag v-else-if="item.issues.length" type="warning" size="small">有提醒</el-tag>
+            <el-tag v-else type="success" size="small">正常</el-tag>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">客户</span>
+            <span class="value">{{ item.row.customer_name || '-' }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">手机号</span>
+            <span class="value import-phone-value">
+              <el-input
+                v-model="item.row.customer_phone"
+                size="small"
+                placeholder="脱敏待补全"
+                @input="onPhoneEdit(item)"
+              />
+            </span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">车辆</span>
+            <span class="value">{{ item.row.plate_number || '-' }} · {{ item.row.vehicle_model || '-' }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">租期</span>
+            <span class="value">{{ item.row.start_date || '-' }} 至 {{ item.row.end_date || '-' }}</span>
+          </div>
+          <div class="mobile-card-row">
+            <span class="label">状态 / 金额</span>
+            <span class="value">{{ statusText(item.row.status) }} · ¥{{ item.row.total_amount }}</span>
+          </div>
+          <div v-if="item.issues.length" class="mobile-card-row is-block import-issues-row">
+            <span class="label">校验提示</span>
+            <span class="value import-issues">
+              <span v-for="issue in item.issues" :key="issue.field + issue.message" :class="issue.level">
+                {{ issue.message }}
+              </span>
+            </span>
+          </div>
+          <div class="mobile-card-actions">
+            <el-checkbox v-model="skipMap[item.rowIndex]">跳过该行</el-checkbox>
+          </div>
+        </div>
+      </div>
     </template>
 
     <!-- 第三步：结果 -->
@@ -383,13 +442,13 @@ onMounted(async () => {
 }
 
 .upload-area:hover {
-  border-color: var(--sk-focus-color, #0071e3);
-  background: rgba(0, 113, 227, 0.04);
+  border-color: var(--sk-focus-color);
+  background: rgba(var(--sk-focus-color-rgb), 0.04);
 }
 
 .upload-icon {
   font-size: 40px;
-  color: var(--sk-focus-color, #0071e3);
+  color: var(--sk-focus-color);
   margin-bottom: 12px;
 }
 
@@ -522,14 +581,157 @@ onMounted(async () => {
   opacity: 0.45;
 }
 
+/* 移动端列表默认藏掉宽表格，预览卡片接管 */
+.import-mobile-cards {
+  display: none;
+}
+
+.import-mobile-card.is-error {
+  border-left: 3px solid var(--sk-color-danger);
+}
+
+.import-mobile-card.is-warning {
+  border-left: 3px solid var(--sk-color-warning);
+}
+
+.import-mobile-card.is-skipped {
+  opacity: 0.5;
+}
+
+.import-row-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-phone-value {
+  flex: 1 1 160px !important;
+}
+
+.import-phone-value :deep(.el-input) {
+  width: 100%;
+}
+
+.import-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.import-issues .error {
+  color: var(--sk-color-danger);
+}
+
+.import-issues .warning {
+  color: var(--sk-color-warning);
+}
+
 @media (max-width: 767px) {
+  /* WeUI 语义色覆盖：桌面端继续保留原 Apple 色值，移动端跟随 --sk-* token */
+  .is-ok .summary-value,
+  .result-icon {
+    color: var(--sk-color-success);
+  }
+
+  .is-error .summary-value,
+  .need-source {
+    color: var(--sk-color-danger);
+  }
+
+  .is-warn .summary-value {
+    color: var(--sk-color-warning);
+  }
+
+  .page-header {
+    margin-bottom: 12px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 8px;
+  }
+
+  .summary-item {
+    min-width: 0;
+    align-items: center;
+  }
+
+  .summary-value {
+    font-size: 22px;
+  }
+
   .summary-actions {
+    grid-column: 1 / -1;
     margin-left: 0;
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .source-select {
     width: 100%;
+  }
+
+  .summary-actions .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .platform-tip {
+    line-height: 1.5;
+  }
+
+  .need-source {
+    display: block;
+    margin: 4px 0 0;
+  }
+
+  .table-card {
+    display: none;
+  }
+
+  .import-mobile-cards {
+    display: flex;
+  }
+
+  .import-mobile-card .mobile-card-header {
+    align-items: flex-start;
+  }
+
+  .import-mobile-card .mobile-card-actions {
+    justify-content: flex-start;
+  }
+
+  .upload-area {
+    min-height: 220px;
+    padding: 32px 16px;
+  }
+
+  .result-box {
+    padding: 32px 16px;
+  }
+
+  .result-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .result-actions .el-button {
+    width: 100%;
+    margin-left: 0;
   }
 }
 </style>

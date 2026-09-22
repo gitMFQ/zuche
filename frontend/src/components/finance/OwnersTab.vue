@@ -29,17 +29,19 @@
             <span>{{ row.name }}</span>
             <el-tag size="small" type="info">{{ OWNER_ROLE_TEXT_MAP[row.role] || row.role }}</el-tag>
           </div>
-          <div class="mobile-card-row"><span class="label">公司费率</span><span class="value">{{ row.company_fee_rate }}%</span></div>
-          <div class="mobile-card-row"><span class="label">车辆</span><span class="value">{{ row.vehicle_count ?? 0 }} 台</span></div>
-          <div class="mobile-card-row">
-            <span class="label">结算应付</span>
-            <span class="value" :class="moneyClass(row.balance)">{{ formatMoney(row.balance) }}</span>
+          <div class="mobile-card-grid">
+            <div class="mobile-card-row"><span class="label">公司费率</span><span class="value num">{{ row.company_fee_rate }}%</span></div>
+            <div class="mobile-card-row"><span class="label">车辆</span><span class="value num">{{ row.vehicle_count ?? 0 }} 台</span></div>
+            <div class="mobile-card-row">
+              <span class="label">结算应付</span>
+              <span class="value num" :class="moneyClass(row.balance)">{{ formatMoney(row.balance) }}</span>
+            </div>
+            <div class="mobile-card-row">
+              <span class="label">往来应付</span>
+              <span class="value num" :class="moneyClass(row.advance_balance)">{{ formatMoney(row.advance_balance) }}</span>
+            </div>
+            <div class="mobile-card-row" v-if="row.phone"><span class="label">手机号</span><span class="value num">{{ row.phone }}</span></div>
           </div>
-          <div class="mobile-card-row">
-            <span class="label">往来应付</span>
-            <span class="value" :class="moneyClass(row.advance_balance)">{{ formatMoney(row.advance_balance) }}</span>
-          </div>
-          <div class="mobile-card-row" v-if="row.phone"><span class="label">手机号</span><span class="value">{{ row.phone }}</span></div>
           <div class="mobile-card-actions">
             <el-button size="small" @click="openStatement(row)">对账单</el-button>
             <el-button size="small" @click="openAdvances(row)">往来账</el-button>

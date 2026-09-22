@@ -1350,30 +1350,15 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
+/* 整张卡片可点（进订单详情）。触屏用不到，窄窗口的桌面浏览器会用到 */
 .mobile-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   cursor: pointer;
 }
 
+/* 点按反馈挂在整卡上：这张卡片整块都是点击区，点 header 或金额行也该有反馈。
+   用 --m-active（WeUI 的点击态 #ececec），深色下由 token 自动切换，不用再写 html.dark */
 .mobile-card:active {
-  background: #f5f5f5;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  background-color: var(--m-active);
 }
 
 .header-tags {
@@ -1388,44 +1373,10 @@ onMounted(() => {
   color: #303133;
 }
 
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
 .mobile-card-row a {
   color: var(--primary-color);
   text-decoration: none;
   margin-left: 8px;
-}
-
-.mobile-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-  font-size: 14px;
-}
-
-.mobile-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
 }
 
 .amount {
@@ -1550,6 +1501,11 @@ onMounted(() => {
 
 /* 移动端搜索筛选优化 */
 @media (max-width: 767px) {
+  .filter-count.has-overdue,
+  html.dark .filter-count.has-overdue {
+    color: var(--sk-color-danger);
+  }
+
   .search-header {
     padding: 8px 12px;
     min-height: 36px;
@@ -1661,33 +1617,8 @@ html.dark .filter-count.has-overdue {
   color: #f56c6c;
 }
 
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card:active {
-  background: var(--hover-bg-color);
-}
-
 html.dark .order-no {
   color: var(--text-color);
-}
-
-html.dark .mobile-card-row .label {
-  color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card-row .value {
-  color: var(--text-color);
-}
-
-html.dark .mobile-card-footer {
-  border-top-color: var(--border-color);
-}
-
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
 }
 
 html.dark .amount {

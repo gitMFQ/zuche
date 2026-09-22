@@ -70,7 +70,7 @@
           <span class="label">对象</span>
           <span class="value">{{ item.entity_type_text || '-' }}</span>
         </div>
-        <div class="mobile-card-row">
+        <div class="mobile-card-row is-block">
           <span class="label">详情</span>
           <span class="value">{{ item.details || '-' }}</span>
         </div>
@@ -291,51 +291,13 @@ onMounted(() => {
   justify-content: flex-end;
 }
 
-/* 移动端卡片列表：桌面端隐藏 */
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.mobile-card {
-  background: var(--bg-color-secondary);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-}
+/* 移动端卡片列表的外观与列表间距由 style.css 的「Mobile WeUI Cell 列表」统一提供，
+   桌面端隐藏也在那里（.page-container .logs-tab .mobile-cards），
+   这里只留日志自己的时间样式。 */
 
 .log-time {
   font-size: 13px;
   color: var(--text-color-secondary);
-}
-
-.mobile-card-row {
-  display: flex;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 14px;
-}
-
-.mobile-card-row .label {
-  flex: 0 0 56px;
-  color: var(--text-color-secondary);
-}
-
-.mobile-card-row .value {
-  flex: 1;
-  min-width: 0;
-  color: var(--text-color);
-  word-break: break-word;
 }
 
 /* 桌面端隐藏卡片、显示表格；移动端反过来 */
@@ -345,9 +307,7 @@ onMounted(() => {
 }
 
 @media (min-width: 768px) {
-  .mobile-cards {
-    display: none;
-  }
+  /* 卡片在桌面端隐藏由 style.css 的 .logs-tab 那条统一管（同权重才压得住 flex） */
 
   .table-card {
     display: block;

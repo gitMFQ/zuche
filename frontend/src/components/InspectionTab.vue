@@ -415,19 +415,8 @@ onMounted(() => {
   }
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.mobile-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+/* 卡片的外壳 / 行 / 操作区由 style.css 的「Mobile WeUI Cell 列表」统一提供，
+   这里只留年检证自己的状态标记与日期颜色 */
 
 .mobile-card.expired {
   border-left: 3px solid var(--sk-color-danger);
@@ -441,34 +430,8 @@ onMounted(() => {
   border-left: 3px solid var(--sk-color-info);
 }
 
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.plate {
-  font-size: 15px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.mobile-card-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 0;
-  font-size: 13px;
-}
-
-.mobile-card-row .label {
-  color: var(--sk-color-info);
-}
-
-.mobile-card-row .value {
-  color: #303133;
-}
-
+/* 基类 .mobile-card-row .value 是 (0,2,0)，单个 .text-danger 只有 (0,1,0)，
+   所以在卡片里必须写成这个组合选择器才压得住 */
 .mobile-card-row .value.text-danger {
   color: var(--sk-color-danger);
   font-weight: 500;
@@ -482,15 +445,6 @@ onMounted(() => {
 .mobile-card-row .value.text-success {
   color: var(--sk-color-success);
   font-weight: 500;
-}
-
-.mobile-card-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
 }
 
 .hide-mobile {
@@ -632,27 +586,15 @@ html.dark .stat-card {
 }
 
 html.dark .stat-value,
-html.dark .mobile-card-header .plate,
-html.dark .mobile-card-row .value,
 html.dark .vehicle-info .plate {
   color: var(--text-color);
 }
 
 html.dark .stat-label,
-html.dark .mobile-card-row .label,
 html.dark .vehicle-info .detail,
 html.dark .upload-icon,
 html.dark .upload-text {
   color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
-}
-
-html.dark .mobile-card-actions {
-  border-top-color: var(--border-color);
 }
 
 html.dark .upload-trigger {

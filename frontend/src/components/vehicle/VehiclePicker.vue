@@ -240,26 +240,11 @@ function onRowClick(row: VehicleRow) {
   }
 }
 
-.mobile-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
-}
+/* 卡片的外壳 / 行 / 操作区由 style.css 的「Mobile WeUI Cell 列表」统一提供 */
 
+/* 整张卡片可点（进车辆详情）。触屏用不到，窄窗口的桌面浏览器会用到 */
 .mobile-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-}
-
-.mobile-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
 }
 
 .hide-mobile {
@@ -307,10 +292,5 @@ html.dark .stats-cards :deep(.stat-value) {
 
 html.dark .stats-cards :deep(.stat-label) {
   color: var(--text-color-secondary);
-}
-
-html.dark .mobile-card {
-  background: var(--bg-color-secondary);
-  box-shadow: 0 1px 3px var(--shadow-color);
 }
 </style>

@@ -23,7 +23,7 @@ npm run verify             # typecheck + lint + test 一条命令跑完（提交
 npm run typecheck          # 前后端都检查
 npm run typecheck:worker   # npx tsc -p tsconfig.worker.json --noEmit
 npm run typecheck:web      # npx vue-tsc -p tsconfig.frontend.json --noEmit
-npm run test               # vitest run（后端纯逻辑单测，test/ 目录）
+npm run test               # vitest run（纯逻辑单测，后端 src/lib + frontend/src/utils，test/ 目录）
 npm run lint               # biome check（只覆盖 src/ 与 test/，见下方说明）
 ```
 
@@ -222,6 +222,12 @@ pending (待取车) → active (已取车) → completed (已还车)
   上传相关的额外两个文件：`utils/image.ts`（压缩）、`utils/upload.ts`（上传前校验）
 - **别在组件里手写上传校验**（MIME / 体积），统一用 `validateUploadFile`
 - **移动端优先**：断点以 `@media (min-width: 768px)` 区分移动端与桌面
+- **移动端 WeUI 规范（<768px）**：移动端是独立的 WeUI 视觉层，桌面端 Apple 风格不变。主色 `#07c160`，success/tag `#06ae56`，warning `#fa9d3b`，danger `#fa5151`；页面底 `#ededed`、列表/卡片底 `#fff`，文字层级 `rgba(0,0,0,.9/.55/.3)`，分割线 `rgba(0,0,0,.1)`。深色页面底 `#111`、列表/卡片底 `#191919`、文字 `rgba(255,255,255,.8/.5/.3)`、分割线 `rgba(255,255,255,.1)`。
+- **移动端导航**：`MobileTabbar.vue` 只在移动端渲染，固定 60px（另加 `env(safe-area-inset-bottom)`），包含总览/订单/车辆/财务/客户 5 项；`utils/nav.ts` 的 `matchTabPath` 用前缀匹配，`/orders/import` 与 `/orders/:id` 都归属订单。设置入口在顶部用户下拉菜单，仅 admin 显示。
+- **移动端列表**：`.mobile-card*` 是历史 class 名，移动端实际承载 WeUI cells：分组间距 8px；外壳无圆角、无阴影；外壳上下与行间使用 0.5px hairline；卡片内数据行 44px / 15px，整项导航 cell 56px；`.is-block` 与两列金额网格使用 auto 高度。新增列表优先复用这些 class，不要再在各组件 scoped 复制卡片外壳样式。
+- **移动端弹窗**：全局 `style.css` 会把 `el-dialog` 转成底部 sheet（顶部 12px 圆角、最高 75vh、40×4px 下拉手柄、0.3s ease）；新增弹窗不需要另外写移动端结构。footer 按钮 64px 高，移动端不使用圆角卡片按钮。`page-container .el-dialog__*` 规则要与全局 sheet 规则保持相同或更高特异性。`OwnersTab` 的两个长表格使用 `el-drawer`，移动端全宽右侧抽屉。
+- **移动端主题变量**：`--m-*` 只在 `style.css` 的 `@media (max-width: 767px)` 中定义；硬编码 rgba 强调色统一用 `rgba(var(--sk-focus-color-rgb), alpha)`，hover 用 `var(--sk-focus-color-hover)`，避免移动端换绿漏色。`index.html` 的 viewport 必须含 `viewport-fit=cover`。
+- **已知样式陷阱**：Finance 根元素同时是 `.page-container.finance-page`，选择器必须写成无空格的 `.page-container.finance-page`；`el-dialog` teleport 到 body，不能只依赖 `.page-container .el-dialog`。全局 `style.css:1377` 的 `.dashboard .order-detail-dialog :deep(.el-dialog)` 位于普通 CSS 文件中，`:deep()` 不会展开，不要仿照此写法。
 - **页面宽度**：业务页容器（`.page-container` / 首页的 `.dashboard`）**不设 `max-width`**，
   一律铺满主内容区；不要在 scoped 里加 `max-width: 1200px; margin: 0 auto`。
   唯一例外是订单详情页（600px 单列，它的按钮是整行 `block` 的）
@@ -233,9 +239,10 @@ pending (待取车) → active (已取车) → completed (已还车)
 - **图片链接**：一律经 `getImageUrl`（`/cdn-cgi/image/width=600,format=auto` 前缀），
   Logo 用 `getLogoUrl`（`width=200`）；直接写 `:src="row.image"` 会绕过 CDN 压缩
 
-## 设计系统（Apple 风格）
+## 设计系统（Apple 风格，桌面端 ≥768px）
 设计 token 全部定义在 `frontend/src/style.css`（`--sk-*` 变量），业务页面用的是 Element Plus 组件，
-主题色已固定为全局 Apple Blue `#0071e3`（`--sk-focus-color`），不支持用户在系统设置里自定义。
+桌面端主题色固定为 Apple Blue `#0071e3`（`--sk-focus-color`），不支持用户在系统设置里自定义。
+移动端的 WeUI 规范见「前端约定」中的移动端 WeUI 条目；不要把移动端绿、`#ededed` 底色、cell hairline 或 sheet 规则扩散到桌面端。
 （早年的 `Sk*.vue` 基础组件已删除，样式一律走 style.css 的 token，不要再建同名组件。）
 
 - **唯一强调色** Apple Blue `#0071e3`，只用在可交互元素上

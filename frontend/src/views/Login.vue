@@ -3,7 +3,7 @@
     <div class="login-section">
       <div class="login-content">
         <div class="login-header">
-          <el-icon :size="48" color="#0071e3"><Van /></el-icon>
+          <el-icon :size="48" color="var(--sk-focus-color)"><Van /></el-icon>
           <h1 class="sk-display-hero">租车管理系统</h1>
           <p class="sk-display-subheading">安全、高效的车辆管理平台</p>
         </div>
@@ -162,7 +162,7 @@ html.dark .login-form .el-input__wrapper {
 }
 
 .login-form .el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(var(--sk-focus-color-rgb), 0.2) !important;
   border-color: var(--sk-focus-color);
 }
 

@@ -1,51 +1,42 @@
 <template>
   <el-container class="layout-container">
-    <!-- 移动端遮罩 -->
-    <div 
-      v-if="isMobile && !isCollapse" 
-      class="mobile-mask"
-      @click="isCollapse = true"
-    />
-
-    <!-- 侧边栏 -->
-    <el-aside 
-      :width="isMobile ? '240px' : (isCollapse ? '72px' : '240px')" 
-      :class="['aside', { 'aside-mobile-hidden': isMobile && isCollapse }]"
-    >
+    <!-- 侧边栏：仅桌面端。移动端改用底部 tabbar（见 MobileTabbar.vue），
+         抽屉与遮罩一并去掉 —— 两套导航同时存在会让人不知道该用哪个 -->
+    <el-aside v-if="!isMobile" :width="isCollapse ? '72px' : '240px'" class="aside">
       <div class="logo">
         <div class="logo-icon">
           <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" class="logo-img" />
           <el-icon v-else :size="26"><Van /></el-icon>
         </div>
-        <span v-show="!isCollapse || isMobile" class="logo-text">{{ systemTitle }}</span>
+        <span v-show="!isCollapse" class="logo-text">{{ systemTitle }}</span>
       </div>
       <nav class="nav-menu">
-        <router-link to="/dashboard" class="nav-item" :class="{ active: activeMenu === '/dashboard' }" @click="handleMenuSelect">
+        <router-link to="/dashboard" class="nav-item" :class="{ active: activeMenu === '/dashboard' }">
           <div class="nav-icon"><el-icon :size="20"><DataAnalysis /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">总览</span>
+          <span v-show="!isCollapse" class="nav-text">总览</span>
         </router-link>
-        <router-link to="/vehicles" class="nav-item" :class="{ active: activeMenu === '/vehicles' }" @click="handleMenuSelect">
+        <router-link to="/vehicles" class="nav-item" :class="{ active: activeMenu === '/vehicles' }">
           <div class="nav-icon"><el-icon :size="20"><Van /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">车辆管理</span>
+          <span v-show="!isCollapse" class="nav-text">车辆管理</span>
         </router-link>
-        <router-link to="/orders" class="nav-item" :class="{ active: activeMenu === '/orders' }" @click="handleMenuSelect">
+        <router-link to="/orders" class="nav-item" :class="{ active: activeMenu === '/orders' }">
           <div class="nav-icon"><el-icon :size="20"><Document /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">订单管理</span>
+          <span v-show="!isCollapse" class="nav-text">订单管理</span>
         </router-link>
-        <router-link to="/finance" class="nav-item" :class="{ active: activeMenu === '/finance' }" @click="handleMenuSelect">
+        <router-link to="/finance" class="nav-item" :class="{ active: activeMenu === '/finance' }">
           <div class="nav-icon"><el-icon :size="20"><Money /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">财务</span>
+          <span v-show="!isCollapse" class="nav-text">财务</span>
         </router-link>
-        <router-link to="/customers" class="nav-item" :class="{ active: activeMenu === '/customers' }" @click="handleMenuSelect">
+        <router-link to="/customers" class="nav-item" :class="{ active: activeMenu === '/customers' }">
           <div class="nav-icon"><el-icon :size="20"><User /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">客户管理</span>
+          <span v-show="!isCollapse" class="nav-text">客户管理</span>
         </router-link>
-        <router-link v-if="isAdmin" to="/settings" class="nav-item" :class="{ active: activeMenu === '/settings' }" @click="handleMenuSelect">
+        <router-link v-if="isAdmin" to="/settings" class="nav-item" :class="{ active: activeMenu === '/settings' }">
           <div class="nav-icon"><el-icon :size="20"><Setting /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">设置</span>
+          <span v-show="!isCollapse" class="nav-text">设置</span>
         </router-link>
       </nav>
-      <div class="sidebar-footer" v-show="!isCollapse || isMobile">
+      <div class="sidebar-footer" v-show="!isCollapse">
         <div class="user-card">
           <el-avatar :size="36" :icon="UserFilled" />
           <div class="user-info">
@@ -61,7 +52,9 @@
       <!-- 顶部栏 -->
       <el-header class="header">
         <div class="header-left">
-          <el-button 
+          <!-- 移动端没有侧栏可收起，汉堡按钮一并隐藏 -->
+          <el-button
+            v-if="!isMobile"
             class="collapse-btn" 
             @click="isCollapse = !isCollapse"
             :icon="isCollapse ? Expand : Fold"
@@ -92,6 +85,8 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
+                <!-- 移动端 tabbar 只有 5 项（已满），设置收进这里 -->
+                <el-dropdown-item v-if="isAdmin" command="settings">系统设置</el-dropdown-item>
                 <el-dropdown-item command="password">修改密码</el-dropdown-item>
                 <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
@@ -145,6 +140,9 @@
         <el-button type="primary" @click="handleChangePassword">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 底部标签栏：移动端唯一的导航入口 -->
+    <MobileTabbar v-if="isMobile" />
   </el-container>
 </template>
 
@@ -170,6 +168,7 @@ import { useUserStore } from '../stores/user'
 import { authApi, settingsApi } from '../api'
 import { getLogoUrl } from '../utils/helpers'
 import { useMobile } from '../composables/useMobile'
+import MobileTabbar from '../components/MobileTabbar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -280,12 +279,6 @@ function handleAutoDarkModeChange(e: CustomEvent) {
   }
 }
 
-function handleMenuSelect() {
-  if (isMobile.value) {
-    isCollapse.value = true
-  }
-}
-
 onMounted(async () => {
   loadSystemTitle()
   window.addEventListener('systemTitleChange', handleTitleChange as EventListener)
@@ -333,6 +326,8 @@ function handleCommand(command: string) {
       userStore.logout()
       router.push('/login')
     })
+  } else if (command === 'settings') {
+    router.push('/settings')
   } else if (command === 'password') {
     passwordForm.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
     passwordDialogVisible.value = true
@@ -390,22 +385,6 @@ html.dark .layout-container {
 
 html.dark .aside {
   background-color: var(--sk-bg-pure-black);
-}
-
-.aside-mobile-hidden {
-  transform: translateX(-100%);
-}
-
-.mobile-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  z-index: 1000;
 }
 
 .logo {
@@ -670,6 +649,17 @@ html.dark .header {
   }
 }
 
+@media (max-width: 767px) {
+  /* WeUI navbar：固定 56px、实色 cell 背景；桌面端保留 Apple 毛玻璃 48px */
+  .header {
+    height: 56px;
+    background-color: var(--m-bg-cell);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom-color: var(--m-line);
+  }
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -809,6 +799,10 @@ html.dark .user-dropdown:hover {
 
 .main {
   padding: 16px;
+  /* 底部给 tabbar 让位：60px 标签栏 + 安全区 + 16px 间距。
+     不给的话滚到最底时最后一张卡片会被 tabbar 压住。
+     桌面端由下面 min-width:768px 的 padding:24px 整体覆盖掉 */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
   overflow-y: auto;
   min-height: calc(100vh - 48px);
   background-color: var(--sk-bg-light-gray);
@@ -821,6 +815,12 @@ html.dark .main {
 @media (min-width: 768px) {
   .main {
     padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .main {
+    min-height: calc(100vh - 56px);
   }
 }
 
