@@ -49,7 +49,7 @@ interface CustomerBody {
 export async function getCustomers(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
-    const { page = '1', pageSize = '10', keyword = '', status = '' } = c.req.query();
+    const { page = '1', pageSize = '10', keyword = '', status = '', is_regular: isRegular = '' } = c.req.query();
 
     let sql = `
       SELECT c.*, s.color as source_color
@@ -68,6 +68,13 @@ export async function getCustomers(c: AppContext): Promise<Response> {
     if (status !== '') {
       sql += ' AND c.status = ?';
       params.push(Number(status));
+    }
+
+    // 解构默认值已把「参数缺失(undefined)」收敛成 ''，空串同样跳过，
+    // 因此这里不可能把缺失参数绑成 NULL 而让列表恒为空
+    if (isRegular !== '') {
+      sql += ' AND c.is_regular = ?';
+      params.push(Number(isRegular));
     }
 
     sql += ' ORDER BY c.created_at DESC';
