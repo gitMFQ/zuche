@@ -54,7 +54,7 @@ src/types.ts               Bindings、AppContext
 scripts/dev-backend.mjs    本机跑不起 workerd 时的本地后端：node:sqlite + 本地目录替代 D1/R2，
                            首次启动自动跑 migrations/ 并灌 scripts/seed-demo.sql
 
-migrations/                D1 迁移 SQL（0001_schema … 0011_brand_color，按文件名顺序 apply）
+migrations/                D1 迁移 SQL（0001_schema … 0017_self_owned_owner，按文件名顺序 apply）
 
 frontend/src/
 ├── api/index.ts           API 封装，baseURL 是相对路径 /api
@@ -157,7 +157,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 - 收车任务：从已取车 (active) 订单提取还车时间和位置
 - 仅显示当前时间及以后的调度，按时间升序排列
 
-## 数据表（17 张）
+## 数据表（30 张）
 | 表名 | 说明 |
 |---|---|
 | users | 用户（username, password, role, phone, email） |
@@ -177,6 +177,43 @@ pending (待取车) → active (已取车) → completed (已还车)
 | system_settings | 系统设置 |
 | operation_logs | 操作日志 |
 | login_attempts | 登录失败计数与锁定时长（限流） |
+| owners | 车主/合伙人档案（role 一表两角色、company_fee_rate 公司费率、往来期初） |
+| fund_accounts | 资金账户（公户/微信/支付宝/现金/虚拟，method_key 映射支付方式，opening_balance 期初） |
+| fund_transactions | 资金流水（**余额不落库**、幂等键 source_type+source_id+source_kind、红字冲销链） |
+| fund_transfers | 账户间划转（一次划转 = out + in 两条流水） |
+| finance_period_locks | 账期锁定（锁住的月份禁止改流水与结算） |
+| settlement_lines | 车主结算行（calc_* 系统口径 + 最终值双列，amount_overridden 保护人工调整） |
+| settlement_openings | 年初结转（唯一键含冗余的 owner_vehicle_key，绕开 SQLite 里 NULL 互不相等） |
+| settlement_payouts | 结算付款（结车款/预付款，每条产生一条 out 流水） |
+| vehicle_expenses | 车辆费用台账（收支双列、发票状态、is_paid 决定是否写流水、业务单据镜像） |
+| vehicle_expense_types | 车辆费用类型字典（12 类，default_direction 指明收支倾向） |
+| operating_expenses | 运营开支台账（27 类项目，微信/公户） |
+| expense_categories | 运营开支项目字典（台账原样的 27 项） |
+| partner_advances | 合伙人往来账（开办费/垫资/工资/下账，direction in/out） |
+
+## 财务模块（改动前必读）
+
+三条口径**不能混着比较**：经营收入（`payments`，排除取消单）/ 结算收入（`settlement_lines`，
+保留台账的 4 位小数）/ 现金余额（账户期初 + 流水净额）。详见 README 的「财务口径」。
+
+- **余额不落库**，一律 `opening_balance + SUM(流水)` 派生（`lib/ledger.ts` 文件头有为什么不落库）。
+  求和**不按 `opening_date` 过滤** —— 过滤会让补录的历史流水静默消失。
+- **余额求和不能按 `status` 过滤**：冲销是「红字 + 原行标 reversed」两步，只算 posted 会让
+  「原行 in 100 + 红字 out 100」变成 −100。
+- **资金流水不物理删除**，删业务单据走红字冲销（`buildReverseStmts`）。
+- **自动流水必须写进业务自己的 `batchExecute`**，绝不用 `logAction` 那种 catch-and-ignore，
+  否则会出现「有收款无流水」且没有任何报错。账户解析不到时会被跳过而不是抛错（`buildFundTxnStmt`）。
+- **结算金额双列**：`calc_*` 是系统口径、其余是最终值。重算一律
+  `CASE WHEN amount_overridden = 1 THEN 原值 ELSE 新值 END`，否则用户手填的「其他费用」会被悄悄改回去。
+- **金额精度用 6 位**（`lib/money.ts` 的 `MONEY_SCALE`），**不要**用 `lib/orderAmount.ts` 的
+  `calcNetAmount`（整元）：台账的「公司管理费」是 4 位小数（`702.95 × 15% = 105.4425`），
+  降到 2 位会让每一行与台账差半分。SQL 里计算金额要套 `ROUND(x, 6)`。
+- **业务单据的车辆费用镜像行是只读的**：改金额去源单据，改付款状态在车辆费用页。
+  已付款的镜像行会拦住源单据的金额修改与删除。
+- 一致性体检分两层，`npm run verify` **都不包含**：
+  `scripts/verify-finance.mjs`（只读数据库，34 项不变量）+ `scripts/verify-finance-api.mjs`
+  （打接口验查询逻辑，需要后端在跑）。后者专盯「余额筛选不得改变余额绝对值」这类
+  数据库层面看不出来的错误，改动 `getFundTransactions` 的 SQL 分层后必须跑。
 
 ## 前端约定
 - **API 调用**：统一走 `frontend/src/api/index.ts` 封装的对象，不要裸写 axios
@@ -185,6 +222,12 @@ pending (待取车) → active (已取车) → completed (已还车)
   上传相关的额外两个文件：`utils/image.ts`（压缩）、`utils/upload.ts`（上传前校验）
 - **别在组件里手写上传校验**（MIME / 体积），统一用 `validateUploadFile`
 - **移动端优先**：断点以 `@media (min-width: 768px)` 区分移动端与桌面
+- **页面宽度**：业务页容器（`.page-container` / 首页的 `.dashboard`）**不设 `max-width`**，
+  一律铺满主内容区；不要在 scoped 里加 `max-width: 1200px; margin: 0 auto`。
+  唯一例外是订单详情页（600px 单列，它的按钮是整行 `block` 的）
+- **表格列宽**：`<el-table-column>` 用 `min-width` 而不是 `width`。全列写死 `width` 时
+  Element Plus 会把表格宽度定死为列宽之和（`table-layout` 里弹性列为空的分支），
+  容器再宽表格也不铺满、右侧留一条空白
 - **图片导出**：调度图导出用 `html2canvas`
 - **同源部署**：前后端同一个域，图片直接用后端返回的 `/uploads/...` 相对路径，不要拼域名
 - **图片链接**：一律经 `getImageUrl`（`/cdn-cgi/image/width=600,format=auto` 前缀），

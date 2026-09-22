@@ -13,7 +13,7 @@
 |---|---|
 | 运行时 | Cloudflare Workers |
 | 后端框架 | Hono 4 + TypeScript |
-| 数据库 | Cloudflare D1（SQLite 兼容），17 张表 |
+| 数据库 | Cloudflare D1（SQLite 兼容），30 张表 |
 | 对象存储 | Cloudflare R2（上传的图片 / PDF，读取一律走签名 URL） |
 | 认证 | JWT（**7 天**有效期，Web Crypto，可按用户吊销） |
 | 定时任务 | Cloudflare Cron Triggers（清理过期日志与登录失败计数） |
@@ -33,22 +33,27 @@ zuche/
 │   ├── controllers/              # 业务控制器（auth/users/customers/vehicles/orders/
 │   │                             #   orderSources/violations/maintenance/insurance/
 │   │                             #   inspection/dashboard/schedules/settings/logs/
-│   │                             #   blacklist/import）
+│   │                             #   blacklist/import；财务：fundAccount/owners/
+│   │                             #   finance/expenses/settlement/reports）
 │   ├── db/
 │   │   ├── helpers.ts            # query/queryOne/execute/queryWithPagination/batchExecute
 │   │   └── rows.ts               # 各表行类型
 │   ├── lib/                      # 纯逻辑，单测就覆盖这一层：
 │   │                             #   auth(jwt 签发/校验) / constants(枚举中文名) / errors
 │   │                             #   ids(单号) / json(历史 JSON 形态兼容) / log(操作日志)
-│   │                             #   orderAmount(金额计算) / request / time(北京时间)
+│   │                             #   orderAmount(整元金额计算) / request / time(北京时间)
 │   │                             #   uploadGuard(文件魔数) / uploadUrl(签名 URL)
 │   │                             #   vehicles(在租状态派生)
+│   │                             #   财务专用：money(6 位精度金额) / settlement(结算计算链
+│   │                             #     +SQL 构造) / ledger(资金流水与红字冲销) /
+│   │                             #     fundAccount(支付方式→账户) / expenseMirror(业务单据
+│   │                             #     →车辆费用镜像)
 │   │   └── import/               # 批量导入：normalize(列映射) / templates(平台模板) /
 │   │                             #            validate(导入预检)
 │   ├── middleware/auth.ts        # authMiddleware、adminOnly
 │   └── types.ts                  # Bindings、AppContext
 │
-├── migrations/                   # D1 迁移 SQL（11 个）
+├── migrations/                   # D1 迁移 SQL（17 个）
 │   ├── 0001_schema.sql           # 13 张基础表
 │   ├── 0002_indexes.sql
 │   ├── 0003_seed.sql             # 管理员账号等种子数据
@@ -60,11 +65,18 @@ zuche/
 │   │                             #            订单车牌快照
 │   ├── 0009_vehicle_status_derive.sql        # 车辆「已出租」改为由订单推导
 │   ├── 0010_missing_indexes.sql
-│   └── 0011_brand_color.sql      # 订单来源默认色归一成品牌蓝
+│   ├── 0011_brand_color.sql      # 订单来源默认色归一成品牌蓝
+│   ├── 0012_finance_owners.sql   # 车主/合伙人档案 + vehicles 档案字段
+│   ├── 0013_fund_accounts.sql    # 资金账户 / 流水 / 划转 / 账期锁定
+│   ├── 0014_settlement.sql       # 车主结算行 / 期初结转 / 结算付款
+│   ├── 0015_expense_ledgers.sql  # 车辆费用 / 运营开支 / 合伙人往来 / 订单开票列
+│   ├── 0016_finance_seed.sql     # 6 个账户 + 27 项开支字典 + 补哈啰来源
+│   └── 0017_self_owned_owner.sql # 「公司自营」受益人 + 自营车回填
 ├── scripts/
 │   ├── seed-demo.sql             # 本地演示数据
-│   └── dev-backend.mjs           # 应急本地后端（Node 版，见「本地开发」）
-├── test/                         # vitest 单测：7 个文件，只测 src/lib 的纯逻辑
+│   ├── dev-backend.mjs           # 应急本地后端（Node 版，见「本地开发」）
+│   └── verify-finance.mjs        # 财务只读体检（外键/幂等键/冲销链/余额重算）
+├── test/                         # vitest 单测：10 个文件，只测 src/lib 的纯逻辑
 └── frontend/src/                 # 前端源码（构建产物 frontend/dist，不入库）
     ├── api/
     │   ├── index.ts              # API 封装，baseURL 为相对路径 /api
@@ -74,6 +86,8 @@ zuche/
     │   │                         #   订单详情分节（6 个组件）
     │   ├── dashboard/            # 仪表盘：统计卡片、甘特图、调度表、订单详情弹窗
     │   ├── vehicle/              # 车辆域弹窗与选择器：保养/保险/违章表单、车辆选择
+    │   ├── finance/              # 财务域：6 个页签（资金流水/车主结算/车辆费用/
+    │   │                         #   运营开支/车主合伙人/报表）+ 9 个弹窗
     │   ├── ImagePreviewDialog.vue、DataState.vue   # 通用展示：图片预览、空/加载/错误态
     │   └── *Tab.vue              # 业务分栏：Vehicles / Maintenance / Insurance /
     │                             #   Inspection / Violations / OrderSources / Users
@@ -82,14 +96,18 @@ zuche/
     ├── router/                   # 路由（createWebHistory）
     ├── stores/                   # Pinia：user（登录态）、dict（来源/品牌等字典）
     ├── utils/                    # constants（枚举与映射）、helpers（格式化与状态映射）、
-    │                             #   image（上传前压缩）、upload（上传前校验）
+    │                             #   image（上传前压缩）、upload（上传前校验）、
+    │                             #   money（金额格式化，保留台账的 4 位小数）
     ├── views/                    # 页面：Login/Dashboard/Orders/OrderDetail/OrderImport/
-    │                             #   Customers/Vehicles/Settings/Logs/NotFound
+    │                             #   Customers/Vehicles/Finance/Settings/Logs/NotFound
     └── style.css                 # 全局样式 + Apple 设计 token（--sk-*）
 ```
 
 > ⚠️ 用户管理、订单来源与违章**没有独立页面**：入口分别是 `Settings.vue` 里的 `<UsersTab />` 与
 > `<OrderSourcesTab />`，以及 `Vehicles.vue` 的 `<ViolationsTab />`。别按菜单入口去找同名页面。
+>
+> 财务的 6 块内容也不各自占一个路由：都挂在 `/finance` 的页签下（`views/Finance.vue` 是薄壳，
+> 组件在 `components/finance/`），支持 `?tab=` 深链。加新页签时记得同步 `VALID_TABS`。
 
 ## 功能模块
 
@@ -131,6 +149,42 @@ pending (待取车) → active (已取车) → completed (已还车)
 | 用户管理 | 用户 CRUD、角色 admin/staff、改密与重置密码（设置页分栏） |
 | 系统设置 | Logo、系统标题 |
 | 操作日志 | 关键操作记录（操作类型、对象、详情、时间、IP） |
+| **财务 · 资金流水** | 多账户（公户/微信/支付宝/现金/平台待结算/待归属）、逐行余额、手工记账、改归属、红字冲销、账户划转、账期锁定 |
+| **财务 · 车主结算** | 按账期生成结算行（合计 → 平台管理费 → 结算金额 → 公司管理费 → 车主结算金额）、人工调整金额、作废/恢复、期初结转、结算付款、对账单导出 |
+| **财务 · 车辆费用** | 收支双列台账（车损赔偿等收入与维修/洗车/过路费等支出同一张表）、发票状态、标记/撤销付款、保养保险违章自动镜像 |
+| **财务 · 运营开支** | 27 类项目字典、微信/公户付款、按项目与月份汇总、应付未付跟踪 |
+| **财务 · 车主/合伙人** | 车主与合伙人档案（一表两角色）、公司费率、结算对账单、合伙人往来账（开办费/垫资/工资/下账） |
+| **财务报表** | 单车月报（月供/保养/维修/结余）、车辆收益排行、公司月度经营报表、资金流水报表 |
+
+### 财务口径（三条线，**不要混着比较**）
+
+| 口径 | 数据来源 | 特点 |
+|---|---|---|
+| 经营收入 | `payments`（排除已取消订单） | 仪表盘的「本月收入」，按收款时刻计 |
+| 结算收入 | `settlement_lines` | 按账期归属、精确到 4 位小数（台账口径），报表以它为准 |
+| 现金余额 | `fund_accounts.opening_balance` + `fund_transactions` 净额 | 现金收付制，余额是派生值、库里不存 |
+
+具体差别：
+
+- **`orders.net_amount` 是整元**（`lib/orderAmount.ts` 的 `Math.round`），而结算行的平台管理费保留 4 位小数
+  （`702.95 × 15% = 105.4425`）。同一张单这两个数字允许差几分，**报表以结算行为准**。
+- **资金流水是现金口径**：订单取消不冲销已收的钱（钱确实收过），退款要单独记一笔；
+  删除订单才写红字冲销（单据不该存在）。
+- **权责发生 vs 现金收付**：车辆费用/运营开支只有「已付款」才写资金流水，未付款的只进费用台账（应付）。
+- **余额不按 `opening_date` 过滤**：`opening_balance` 是「系统里第一条流水之前」的余额，
+  录入的流水都叠加在它之上。按日期过滤会让补录的历史流水静默消失。
+
+### 结算计算链
+
+```
+平台管理费   = 合计 × 平台费率        # order_sources.commission_rate，生成时快照
+结算金额     = 合计 − 平台管理费
+公司管理费   = 结算金额 × 公司费率     # owners.company_fee_rate，按车主配（自营为 0）
+车主结算金额 = 结算金额 − 公司管理费 − 其他费用
+```
+
+费率在生成时**快照进结算行**，之后改配置不影响历史行；人工调整过的行（`amount_overridden = 1`）
+不会被订单改价重算覆盖。
 
 ---
 
@@ -267,7 +321,7 @@ npm run verify             # typecheck + lint + test，一条命令跑完
 npm run typecheck          # 前后端一起检查（worker: tsc / web: vue-tsc）
 npm run typecheck:worker   # 仅 Worker
 npm run typecheck:web      # 仅前端
-npm run test               # vitest run（7 个文件 / 90 个用例）
+npm run test               # vitest run（10 个文件 / 178 个用例）
 npm run test:watch         # vitest 监听模式
 npm run lint               # biome check
 npm run lint:fix           # biome check --write
@@ -275,8 +329,18 @@ npm run lint:fix           # biome check --write
 
 - **单测只覆盖后端纯逻辑**：时区基准（`lib/time.ts`）、金额计算（`lib/orderAmount.ts`）、订单号（`lib/ids.ts`）、
   签名 URL（`lib/uploadUrl.ts`）、上传魔数（`lib/uploadGuard.ts`）、历史 JSON 形态兼容（`lib/json.ts`）、
-  导入列映射（`lib/import/normalize.ts`）。跑在 `node` 环境，不涉及 Vue 组件与 D1。
+  导入列映射（`lib/import/normalize.ts`）、财务金额与结算链（`lib/money.ts`、`lib/settlement.ts`、
+  `lib/ledger.ts`）。跑在 `node` 环境，不涉及 Vue 组件与 D1。
   改这几个模块必须先让 `npm run test` 通过。
+- **财务一致性有两层体检脚本**（`npm run verify` 不含它们，需要单独的数据库/后端）：
+  - `node scripts/verify-finance.mjs` —— 只读本地 SQLite，检查外键完整性、幂等键唯一性、
+    冲销链闭合、结算行 calc/final 漂移、已付款费用是否都有流水等 34 项不变量，
+    并逐账户列出「期初 + 流水净额 = 余额」供人工核对。全程只 SELECT。
+  - `node scripts/verify-finance-api.mjs` —— 打接口，检查**查询逻辑**算得对不对
+    （逐行余额在筛选/翻页/冲销后是否仍正确）。需要后端在跑，会在临时账户上写几笔测试流水再清理。
+  两者退出码非 0 都表示发现不一致。上线后建议每次月结前跑一遍。
+  为什么必须分两层：有些错误（如余额把筛选条件写进了窗口层）在数据库里看不出任何异常，
+  单测也跑不到，只有把请求发出去才暴露 —— 这个坑真实发生过，接口层的两条断言就是为此加的。
 - **lint 只覆盖 `src/**` 与 `test/**`**（`biome.json`，另含两个 vite 配置文件）。
   `.vue` 被排除是**刻意**的：biome 不认 `<script setup>` 的模板用法，会把模板里用到的导入全误报成
   `noUnusedImports`。前端的类型与用法由 `vue-tsc` 把关。
