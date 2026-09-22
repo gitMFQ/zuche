@@ -5,7 +5,30 @@ import { validateUploadFile } from '../utils/upload'
 import type {
   ApiResponse,
   BlacklistItem,
+  CompanyMonthlyReport,
   CustomerItem,
+  FinanceDicts,
+  FinancePeriodLockItem,
+  FundAccountItem,
+  FundFlowReport,
+  FundSummary,
+  FundTransactionItem,
+  FundTransferItem,
+  OperatingExpenseItem,
+  OperatingExpenseTotals,
+  OwnerItem,
+  OwnerOption,
+  OwnerStatement,
+  OwnerStatementReport,
+  PartnerAdvanceItem,
+  SettlementLineItem,
+  SettlementOpeningItem,
+  SettlementPayoutItem,
+  SettlementTotals,
+  VehicleExpenseItem,
+  VehicleExpenseTotals,
+  VehicleMonthlyReport,
+  VehicleRankingRow,
   LoginResult,
   OrderDetail,
   OrderListItem,
@@ -347,3 +370,174 @@ export const uploadApi = {
 }
 
 export default api
+
+// ==================== 车主 / 合伙人 API ====================
+export const ownerApi = {
+  /** 下拉选项：只含 id/name/role/company_fee_rate */
+  getOptions: () => get<OwnerOption[]>('/owners/options'),
+  getList: (params?: PageQuery & { keyword?: string; role?: string; status?: string }) =>
+    get<PageResult<OwnerItem>>('/owners', params),
+  getOne: (id: string) => get<OwnerItem>(`/owners/${id}`),
+  /** 对账单：期初 + 本期结算 − 代垫车辆费用 − 付款 = 期末应付 */
+  getStatement: (id: string, params: { period?: string }) =>
+    get<OwnerStatement>(`/owners/${id}/statement`, params),
+  create: (data: Record<string, unknown>) => post<{ id: string }>('/owners', data),
+  update: (id: string, data: Record<string, unknown>) => put<null>(`/owners/${id}`, data),
+  delete: (id: string) => del<null>(`/owners/${id}`),
+  // 合伙人往来账
+  getAdvances: (id: string, params?: PageQuery & { subject?: string; direction?: string }) =>
+    get<PageResult<PartnerAdvanceItem> & { totals: { in_total: number; out_total: number; count: number } }>(
+      `/owners/${id}/advances`,
+      params
+    ),
+  createAdvance: (id: string, data: Record<string, unknown>) =>
+    post<{ id: string }>(`/owners/${id}/advances`, data),
+  updateAdvance: (id: string, advanceId: string, data: Record<string, unknown>) =>
+    put<null>(`/owners/${id}/advances/${advanceId}`, data),
+  payAdvance: (id: string, advanceId: string, data: { account_id?: string; paid_at?: string }) =>
+    put<null>(`/owners/${id}/advances/${advanceId}/pay`, data),
+  deleteAdvance: (id: string, advanceId: string) => del<null>(`/owners/${id}/advances/${advanceId}`)
+}
+
+// ==================== 资金账户与流水 API ====================
+export const fundApi = {
+  /** 账户列表 + 余额。include_inactive=1 时带上已停用账户 */
+  getAccounts: (params?: { include_inactive?: string }) =>
+    get<FundAccountItem[]>('/finance/accounts', params),
+  getAccount: (id: string) => get<FundAccountItem>(`/finance/accounts/${id}`),
+  createAccount: (data: Record<string, unknown>) => post<{ id: string }>('/finance/accounts', data),
+  updateAccount: (id: string, data: Record<string, unknown>) => put<null>(`/finance/accounts/${id}`, data),
+  deleteAccount: (id: string) => del<null>(`/finance/accounts/${id}`),
+  /**
+   * 流水列表。with_balance 为 true 时每行带 balance（逐行余额），
+   * 只在筛选到单一账户且未隐藏冲销行时才为 true。
+   */
+  getTransactions: (
+    params?: PageQuery & {
+      account_id?: string
+      start_date?: string
+      end_date?: string
+      direction?: string
+      category?: string
+      source_type?: string
+      keyword?: string
+      hide_reversed?: string
+    }
+  ) =>
+    get<PageResult<FundTransactionItem> & { with_balance: boolean }>('/finance/transactions', params),
+  /** 手工记账。source_id 为空，不参与幂等约束，同一天可以记多笔 */
+  createTransaction: (data: Record<string, unknown>) => post<{ id: string }>('/finance/transactions', data),
+  updateTransaction: (id: string, data: Record<string, unknown>) => put<null>(`/finance/transactions/${id}`, data),
+  /** 改归属账户。这是「待归属」里的流水唯一的出路 */
+  reassign: (id: string, accountId: string) => put<null>(`/finance/transactions/${id}/account`, { account_id: accountId }),
+  /** 冲销：写一条反向红字并把原行标记为已冲销，不物理删除 */
+  reverse: (id: string, reason: string) => post<null>(`/finance/transactions/${id}/reverse`, { reason }),
+  getTransfers: (params?: PageQuery & { start_date?: string; end_date?: string }) =>
+    get<PageResult<FundTransferItem>>('/finance/transfers', params),
+  createTransfer: (data: Record<string, unknown>) => post<{ id: string }>('/finance/transfers', data),
+  getSummary: (params?: { period?: string }) => get<FundSummary>('/finance/summary', params),
+  getPeriodLocks: () => get<FinancePeriodLockItem[]>('/finance/period-locks'),
+  lockPeriod: (period: string, remarks?: string) => put<null>(`/finance/period-locks/${period}`, { remarks }),
+  unlockPeriod: (period: string) => del<null>(`/finance/period-locks/${period}`)
+}
+
+// ==================== 车辆费用台账 API ====================
+export const vehicleExpenseApi = {
+  getList: (
+    params?: PageQuery & {
+      vehicle_id?: string
+      expense_type?: string
+      invoice_status?: string
+      is_paid?: string
+      start_date?: string
+      end_date?: string
+      keyword?: string
+    }
+  ) => get<PageResult<VehicleExpenseItem> & { totals: VehicleExpenseTotals }>('/vehicle-expenses', params),
+  getStats: (params?: { period?: string }) =>
+    get<{
+      period: string
+      month: { income: number; expense: number; count: number }
+      by_type: Array<{ expense_type: string; expense_type_name: string; income: number; expense: number; count: number }>
+      by_vehicle: Array<{ vehicle_id: string; plate_number: string | null; income: number; expense: number; count: number }>
+      unpaid: { income: number; expense: number; count: number }
+    }>('/vehicle-expenses/stats', params),
+  create: (data: Record<string, unknown>) => post<{ id: string }>('/vehicle-expenses', data),
+  update: (id: string, data: Record<string, unknown>) => put<null>(`/vehicle-expenses/${id}`, data),
+  /** 标记已付款 → 同批写资金流水 */
+  pay: (id: string, data: { account_id: string; paid_at?: string }) => put<null>(`/vehicle-expenses/${id}/pay`, data),
+  unpay: (id: string) => put<null>(`/vehicle-expenses/${id}/unpay`, {}),
+  delete: (id: string) => del<null>(`/vehicle-expenses/${id}`)
+}
+
+// ==================== 运营开支台账 API ====================
+export const operatingExpenseApi = {
+  getList: (
+    params?: PageQuery & {
+      category?: string
+      is_paid?: string
+      invoice_status?: string
+      start_date?: string
+      end_date?: string
+      keyword?: string
+    }
+  ) => get<PageResult<OperatingExpenseItem> & { totals: OperatingExpenseTotals }>('/operating-expenses', params),
+  getStats: (params?: { period?: string }) =>
+    get<{
+      period: string
+      month_total: number
+      by_category: Array<{ category: string; category_name: string; total: number; count: number }>
+      by_month: Array<{ month: string; total: number; count: number }>
+      unpaid: { total: number; count: number }
+    }>('/operating-expenses/stats', params),
+  create: (data: Record<string, unknown>) => post<{ id: string }>('/operating-expenses', data),
+  update: (id: string, data: Record<string, unknown>) => put<null>(`/operating-expenses/${id}`, data),
+  pay: (id: string, data: { account_id: string; paid_at?: string }) => put<null>(`/operating-expenses/${id}/pay`, data),
+  unpay: (id: string) => put<null>(`/operating-expenses/${id}/unpay`, {}),
+  delete: (id: string) => del<null>(`/operating-expenses/${id}`)
+}
+
+// ==================== 车主结算 API ====================
+export const settlementApi = {
+  getLines: (
+    params?: PageQuery & { period?: string; owner_id?: string; vehicle_id?: string; status?: string; keyword?: string }
+  ) => get<PageResult<SettlementLineItem> & { totals: SettlementTotals }>('/settlements/lines', params),
+  /** 补录：台账里那些没法从订单推出来的行 */
+  createLine: (data: Record<string, unknown>) => post<{ owner_amount: number }>('/settlements/lines', data),
+  /**
+   * 生成本期结算。按 offset 分批，hasMore 为 true 时继续调用下一批。
+   * 幂等，重复调用只是把系统口径刷新一遍。
+   */
+  generate: (data: { period: string; owner_id?: string; vehicle_id?: string; offset?: number }) =>
+    post<{ period: string; inserted: number; updated: number; skipped: number; scanned: number; hasMore: boolean }>(
+      '/settlements/lines/generate',
+      data
+    ),
+  /** 人工调整金额。restore_auto=true 时恢复自动计算 */
+  updateLine: (id: string, data: Record<string, unknown>) => put<{ owner_amount: number }>(`/settlements/lines/${id}`, data),
+  voidLine: (id: string, reason: string) => post<null>(`/settlements/lines/${id}/void`, { reason }),
+  restoreLine: (id: string) => post<null>(`/settlements/lines/${id}/restore`, {}),
+  getOpenings: (params?: { owner_id?: string; fiscal_year?: number }) =>
+    get<SettlementOpeningItem[]>('/settlements/openings', params),
+  upsertOpening: (data: Record<string, unknown>) => post<{ id: string }>('/settlements/openings', data),
+  deleteOpening: (id: string) => del<null>(`/settlements/openings/${id}`),
+  getPayouts: (params?: PageQuery & { owner_id?: string; period?: string }) =>
+    get<PageResult<SettlementPayoutItem> & { totals: { total: number; count: number } }>('/settlements/payouts', params),
+  createPayout: (data: Record<string, unknown>) => post<{ id: string }>('/settlements/payouts', data),
+  deletePayout: (id: string) => del<null>(`/settlements/payouts/${id}`)
+}
+
+// ==================== 财务报表 API ====================
+export const financeReportApi = {
+  /** 财务基础数据（账户 + 开支项目 + 车辆费用类型 + 车主），首屏一次拉完 */
+  getDicts: () => get<FinanceDicts>('/finance/dicts'),
+  getVehicleMonthly: (params: { period?: string; vehicle_id?: string; owner_id?: string }) =>
+    get<VehicleMonthlyReport>('/reports/vehicle-monthly', params),
+  getVehicleRanking: (params?: { start_date?: string; end_date?: string }) =>
+    get<{ start_date: string; end_date: string; rows: VehicleRankingRow[] }>('/reports/vehicle-ranking', params),
+  getCompanyMonthly: (params: { period?: string }) => get<CompanyMonthlyReport>('/reports/company-monthly', params),
+  getFundFlow: (params?: { start_date?: string; end_date?: string; by?: string }) =>
+    get<FundFlowReport>('/reports/fund-flow', params),
+  getOwnerStatementReport: (params: { owner_id: string; start_period?: string; end_period?: string }) =>
+    get<OwnerStatementReport>('/reports/owner-statement', params)
+}

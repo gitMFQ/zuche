@@ -28,6 +28,13 @@ const routes = [
         meta: { title: '车辆管理' }
       },
       {
+        path: 'finance',
+        name: 'Finance',
+        component: () => import('../views/Finance.vue'),
+        // 读权限对所有登录用户开放，写权限由后端 adminOnly 兜底（与车辆/订单同策略）
+        meta: { title: '财务' }
+      },
+      {
         path: 'customers',
         name: 'Customers',
         component: () => import('../views/Customers.vue'),

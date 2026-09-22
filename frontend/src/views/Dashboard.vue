@@ -533,11 +533,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
+/* 容器不设 max-width：与财务页一致，铺满主内容区（约定见 style.css 的 .page-container） */
 .section-card {
   margin-bottom: 12px;
 }

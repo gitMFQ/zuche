@@ -22,6 +22,28 @@
       </el-descriptions-item>
       <el-descriptions-item label="备注" :span="2">{{ vehicleData.remarks || '-' }}</el-descriptions-item>
     </el-descriptions>
+
+    <!-- 档案与车贷：台账「车辆档案」sheet 的字段，也是单车月报的输入 -->
+    <div class="detail-section" v-if="vehicleData.id">
+      <div class="detail-section-title">车辆档案</div>
+      <el-descriptions :column="2" border size="small">
+        <el-descriptions-item label="车辆编号">{{ vehicleData.vehicle_no || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="车型分类">{{ VEHICLE_CATEGORY_TEXT_MAP[vehicleData.category] || vehicleData.category || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="购入日期">{{ vehicleData.purchase_date || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="购入价">{{ vehicleData.purchase_price ? '¥' + formatMoney(vehicleData.purchase_price) : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="初始里程">{{ vehicleData.initial_mileage != null ? vehicleData.initial_mileage + ' km' : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="车辆归属">{{ OWNERSHIP_TYPE_TEXT_MAP[vehicleData.ownership_type] || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="车主" :span="2">{{ vehicleData.owner_name || (vehicleData.owner_id ? '详见车主档案' : '-') }}</el-descriptions-item>
+      </el-descriptions>
+
+      <div class="detail-section-title">车贷</div>
+      <el-descriptions :column="2" border size="small">
+        <el-descriptions-item label="月供">{{ vehicleData.monthly_payment ? '¥' + formatMoney(vehicleData.monthly_payment) : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="贷款总额">{{ vehicleData.loan_total ? '¥' + formatMoney(vehicleData.loan_total) : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="期数">{{ vehicleData.loan_terms ? vehicleData.loan_terms + ' 期' : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="首期还款日">{{ vehicleData.loan_start_date || '-' }}</el-descriptions-item>
+      </el-descriptions>
+    </div>
     <div class="view-images" v-if="vehicleData.license_images?.length || vehicleData.registration_image">
       <div class="view-image-item" v-for="(img, idx) in vehicleData.license_images || []" :key="idx">
         <div class="view-image-label">行驶证{{ (vehicleData.license_images?.length || 0) > 1 ? Number(idx) + 1 : '' }}</div>
@@ -47,6 +69,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { getImageUrl } from '../utils/helpers'
+import { formatMoney } from '../utils/money'
+import { OWNERSHIP_TYPE_TEXT_MAP, VEHICLE_CATEGORY_TEXT_MAP } from '../utils/constants'
 
 const props = defineProps<{
   visible: boolean
@@ -111,6 +135,17 @@ function goToDetail() {
 </script>
 
 <style scoped>
+.detail-section {
+  margin-top: 16px;
+}
+
+.detail-section-title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sk-text-tertiary);
+}
+
 .view-images {
   margin-top: 16px;
   display: grid;

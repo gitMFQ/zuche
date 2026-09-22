@@ -45,6 +45,22 @@
           <span class="label">押金</span>
           <span class="value">¥{{ item.deposit }}</span>
         </div>
+        <div class="mobile-card-row" v-if="item.vehicle_no">
+          <span class="label">编号</span>
+          <span class="value">{{ item.vehicle_no }}</span>
+        </div>
+        <div class="mobile-card-row" v-if="item.category">
+          <span class="label">车型</span>
+          <span class="value">{{ VEHICLE_CATEGORY_TEXT_MAP[item.category] || item.category }}</span>
+        </div>
+        <div class="mobile-card-row" v-if="item.owner_id">
+          <span class="label">车主</span>
+          <span class="value">{{ ownerName(item.owner_id) }}（{{ OWNERSHIP_TYPE_TEXT_MAP[item.ownership_type] || '-' }}）</span>
+        </div>
+        <div class="mobile-card-row" v-if="item.monthly_payment">
+          <span class="label">月供</span>
+          <span class="value">¥{{ item.monthly_payment }}</span>
+        </div>
         <div class="mobile-card-row" v-if="item.vin">
           <span class="label">车架号</span>
           <span class="value">{{ item.vin }}</span>
@@ -75,23 +91,24 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe class="hide-mobile">
-        <el-table-column prop="plate_number" label="车牌号" width="140">
+        <el-table-column prop="plate_number" label="车牌号" min-width="140">
           <template #default="{ row }">
             <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="brand" label="品牌" width="80" />
-        <el-table-column prop="model" label="型号" width="100" />
-        <el-table-column prop="color" label="颜色" width="60" />
-        <el-table-column prop="daily_rate" label="日租金" width="80">
+        <el-table-column prop="vehicle_no" label="编号" min-width="60" align="center" />
+        <el-table-column prop="brand" label="品牌" min-width="80" />
+        <el-table-column prop="model" label="型号" min-width="100" />
+        <el-table-column prop="color" label="颜色" min-width="60" />
+        <el-table-column prop="daily_rate" label="日租金" min-width="80">
           <template #default="{ row }">{{ row.daily_rate ? '¥' + row.daily_rate : '-' }}</template>
         </el-table-column>
-        <el-table-column prop="deposit" label="押金" width="80">
+        <el-table-column prop="deposit" label="押金" min-width="80">
           <template #default="{ row }">¥{{ row.deposit || 0 }}</template>
         </el-table-column>
-        <el-table-column prop="vin" label="车架号" width="120" show-overflow-tooltip />
-        <el-table-column prop="engine_number" label="发动机号" width="100" show-overflow-tooltip />
-        <el-table-column label="证件" width="110">
+        <el-table-column prop="vin" label="车架号" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="engine_number" label="发动机号" min-width="100" show-overflow-tooltip />
+        <el-table-column label="证件" min-width="110">
           <template #default="{ row }">
             <div class="image-thumbs" v-if="row.license_images?.length || row.registration_image">
               <img v-for="(img, idx) in row.license_images || []" :key="idx" :src="getImageUrl(img)" @click="previewImage(img)" title="行驶证"  alt="车辆证件照片，点击可放大查看" />
@@ -100,12 +117,15 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="status" label="状态" min-width="80">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.actual_status || row.status)" size="small">{{ row.status_text }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="180">
+        <el-table-column label="车主" min-width="110" show-overflow-tooltip>
+          <template #default="{ row }">{{ ownerName(row.owner_id) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" min-width="180">
           <template #default="{ row }">
             <el-button type="info" link size="small" @click="openViewDialog(row)">查看</el-button>
             <el-button type="primary" link size="small" @click="openDialog(row)">编辑</el-button>
@@ -249,6 +269,79 @@
             </div>
           </div>
         </el-form-item>
+        <el-divider content-position="left">车辆档案</el-divider>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="车辆编号">
+              <el-input v-model="form.vehicle_no" placeholder="台账里的 01-18，可空" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="车型分类">
+              <el-select v-model="form.category" clearable placeholder="可选" style="width: 100%">
+                <el-option v-for="o in VEHICLE_CATEGORY_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="购入日期">
+              <el-date-picker v-model="form.purchase_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="购入价">
+              <el-input-number v-model="form.purchase_price" :min="0" :precision="2" style="width: 100%" placeholder="可选" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="初始里程">
+              <el-input-number v-model="form.initial_mileage" :min="0" style="width: 100%" placeholder="可选" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="车辆归属">
+              <el-select v-model="form.ownership_type" style="width: 100%">
+                <el-option v-for="o in OWNERSHIP_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="车主 / 合伙人">
+          <el-select v-model="form.owner_id" clearable filterable placeholder="自营车选「公司自营」" style="width: 100%">
+            <el-option v-for="o in ownerOptions" :key="o.id" :label="`${o.name}（费率 ${o.company_fee_rate}%）`" :value="o.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-divider content-position="left">车贷</el-divider>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="月供">
+              <el-input-number v-model="form.monthly_payment" :min="0" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="贷款总额">
+              <el-input-number v-model="form.loan_total" :min="0" :precision="2" style="width: 100%" placeholder="可选" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="期数">
+              <el-input-number v-model="form.loan_terms" :min="0" style="width: 100%" placeholder="可选" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="首期还款日">
+              <el-date-picker v-model="form.loan_start_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-form-item label="状态" v-if="editingId">
           <el-select v-model="form.status" style="width: 100%">
             <el-option label="可用" value="available" />
@@ -284,8 +377,15 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { vehicleApi, uploadApi } from '../api'
+import { ownerApi, vehicleApi, uploadApi } from '../api'
+import type { OwnerOption } from '../api/types'
 import { getImageUrl } from '../utils/helpers'
+import {
+  OWNERSHIP_TYPE_OPTIONS,
+  OWNERSHIP_TYPE_TEXT_MAP,
+  VEHICLE_CATEGORY_OPTIONS,
+  VEHICLE_CATEGORY_TEXT_MAP
+} from '../utils/constants'
 import VehicleDetailDialog from './VehicleDetailDialog.vue'
 
 const loading = ref(false)
@@ -301,7 +401,14 @@ const previewImageUrl = ref('')
 const viewDialogVisible = ref(false)
 const viewData = reactive<any>({})
 
+const ownerOptions = ref<OwnerOption[]>([])
 const searchForm = reactive({ keyword: '', status: '' })
+
+/** 车主下拉已经拉了全量，列表里直接查表显示，不用再发请求 */
+function ownerName(ownerId: string | null | undefined): string {
+  if (!ownerId) return '-'
+  return ownerOptions.value.find((o) => o.id === ownerId)?.name ?? '-'
+}
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
 
 const form = reactive({
@@ -324,7 +431,19 @@ const form = reactive({
   transmission: '',
   fuel_type: '',
   body_type: '',
-  doors: null as number | null
+  doors: null as number | null,
+  // 台账「车辆档案」sheet 的档案字段 + 车贷信息
+  vehicle_no: '',
+  category: '',
+  purchase_date: '',
+  purchase_price: null as number | null,
+  initial_mileage: null as number | null,
+  owner_id: '',
+  ownership_type: 'company',
+  monthly_payment: 0,
+  loan_total: null as number | null,
+  loan_terms: null as number | null,
+  loan_start_date: ''
 })
 
 const rules: FormRules = {
@@ -369,6 +488,11 @@ function openViewDialog(row: any) {
   viewDialogVisible.value = true
 }
 
+async function loadOwnerOptions(): Promise<void> {
+  const res = await ownerApi.getOptions()
+  if (res.success && res.data) ownerOptions.value = res.data
+}
+
 function openDialog(row?: any) {
   editingId.value = row?.id || ''
   if (row) {
@@ -392,7 +516,18 @@ function openDialog(row?: any) {
       transmission: row.transmission || '',
       fuel_type: row.fuel_type || '',
       body_type: row.body_type || '',
-      doors: row.doors ?? null
+      doors: row.doors ?? null,
+      vehicle_no: row.vehicle_no || '',
+      category: row.category || '',
+      purchase_date: row.purchase_date || '',
+      purchase_price: row.purchase_price ?? null,
+      initial_mileage: row.initial_mileage ?? null,
+      owner_id: row.owner_id || '',
+      ownership_type: row.ownership_type || 'company',
+      monthly_payment: row.monthly_payment ?? 0,
+      loan_total: row.loan_total ?? null,
+      loan_terms: row.loan_terms ?? null,
+      loan_start_date: row.loan_start_date || ''
     })
   } else {
     Object.assign(form, {
@@ -415,7 +550,18 @@ function openDialog(row?: any) {
       transmission: '',
       fuel_type: '',
       body_type: '',
-      doors: null
+      doors: null,
+      vehicle_no: '',
+      category: '',
+      purchase_date: '',
+      purchase_price: null,
+      initial_mileage: null,
+      owner_id: '',
+      ownership_type: 'company',
+      monthly_payment: 0,
+      loan_total: null,
+      loan_terms: null,
+      loan_start_date: ''
     })
   }
   dialogVisible.value = true
@@ -489,7 +635,10 @@ async function handleDelete(id: string) {
   }
 }
 
-onMounted(() => loadData())
+onMounted(() => {
+  loadData()
+  loadOwnerOptions()
+})
 </script>
 
 <style scoped>

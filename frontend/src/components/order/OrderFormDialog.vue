@@ -224,6 +224,33 @@
       <el-form-item label="备注">
         <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
       </el-form-item>
+
+      <!-- 应收与开票：台账「租金台账」的两列。只在编辑时出现 —— 新建还没结算 -->
+      <template v-if="!isCreate">
+        <el-divider content-position="left">结算与开票</el-divider>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="开票金额">
+              <el-input-number v-model="form.invoice_amount" :min="0" :precision="2" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="发票状态">
+              <el-select v-model="form.invoice_status" style="width: 100%">
+                <el-option v-for="o in INVOICE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="结算状态">
+          <el-select v-model="form.settle_status" style="width: 100%">
+            <el-option v-for="o in SETTLE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="结算备注">
+          <el-input v-model="form.settle_remarks" placeholder="如：只转利润，未转全部金额" />
+        </el-form-item>
+      </template>
       <el-form-item label="预估">
         <span class="estimate">{{ estimatedDays }} 天，共 ¥{{ estimatedTotal }}</span>
         <span v-if="isCreate && selectedSource" class="net-amount">，到账 ¥{{ netAmount }}</span>
@@ -252,6 +279,7 @@ import {
   STORE_LOCATION_TEXT
 } from '../../utils/constants'
 import { formatDateTimeLocal, getImageUrl, getServiceLabel, getServiceTagType } from '../../utils/helpers'
+import { INVOICE_STATUS_OPTIONS, SETTLE_STATUS_OPTIONS } from '../../utils/constants'
 
 /**
  * 新建 / 编辑订单表单弹窗。
@@ -316,6 +344,10 @@ const form = reactive({
   return_location: '',
   delivery_type: 'delivery',
   remarks: '',
+  invoice_amount: 0,
+  invoice_status: 'none',
+  settle_status: 'unpaid',
+  settle_remarks: '',
   // 预付相关（仅新建）
   has_prepay: false,
   prepay_amount: 0,
@@ -406,6 +438,10 @@ function blankForm() {
     return_location: '',
     delivery_type: 'delivery',
     remarks: '',
+    invoice_amount: 0,
+    invoice_status: 'none',
+    settle_status: 'unpaid',
+    settle_remarks: '',
     has_prepay: false,
     prepay_amount: 0,
     prepay_method: 'wechat',
@@ -442,7 +478,11 @@ function initForm() {
       contract_number: detail.contract_number || '',
       pickup_location: detail.pickup_location || '',
       return_location: detail.return_location || '',
-      remarks: detail.remarks || ''
+      remarks: detail.remarks || '',
+      invoice_amount: detail.invoice_amount ?? 0,
+      invoice_status: detail.invoice_status || 'none',
+      settle_status: detail.settle_status || 'unpaid',
+      settle_remarks: detail.settle_remarks || ''
     })
   }
 
@@ -674,7 +714,16 @@ function buildPayload(): Record<string, unknown> {
     return_location: form.return_location,
     remarks: form.remarks
   }
-  if (!isCreate.value) return base
+  if (!isCreate.value) {
+    // 编辑接口才消费结算/开票字段；新建时还没结算，传了也无意义
+    return {
+      ...base,
+      invoice_amount: form.invoice_amount,
+      invoice_status: form.invoice_status,
+      settle_status: form.settle_status,
+      settle_remarks: form.settle_remarks
+    }
+  }
   // 新建多出预付与取还方式；编辑接口不消费这些字段，保持原来的提交内容不变
   return {
     ...base,

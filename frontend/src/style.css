@@ -1586,7 +1586,10 @@ html.dark .dashboard .native-datetime-input {
    Business Pages - Apple Style Overrides
    ======================================== */
 
-/* 页面容器 */
+/* 页面容器
+ * 不设 max-width：业务页一律铺满主内容区（宽度基准 = 财务页）。
+ * 早年各页面在 scoped 里各写一遍 `max-width: 1200px; margin: 0 auto`，宽屏下两侧空一大块，
+ * 已统一去掉 —— 新页面不要再加回来。唯一例外是订单详情（600px 单列阅读页）。 */
 .page-container {
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -1794,3 +1797,121 @@ html.dark .page-container .el-descriptions__content {
   color: var(--sk-text-white);
 }
 
+
+/* ==================== 财务模块 ====================
+ *
+ * 金额列必须右对齐 + 等宽数字（tabular-nums），否则同一列的「9」和「1」宽度不同，
+ * 数字会左右跳动，几十行的报表看起来像没对齐。
+ *
+ * 小数位不固定：后端保留 4 位精度（台账的「公司管理费」= 结算金额 × 15% 天然是 4 位），
+ * 一刀切成 2 位会让界面数字和台账对不上。展示逻辑在 utils/money.ts。
+ */
+.amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.amount-cell.is-header {
+  text-align: right;
+}
+
+.money-positive {
+  color: var(--sk-color-success);
+}
+
+.money-negative {
+  color: var(--sk-color-danger);
+}
+
+.money-zero {
+  color: var(--sk-text-tertiary);
+}
+
+/* 人工改过的结算行：整行左侧加一条提示条，避免和系统算出来的数混淆 */
+.page-container .settlement-row-overridden > td:first-child {
+  box-shadow: inset 3px 0 0 0 var(--sk-color-warning);
+}
+
+/* 移动端卡片内部的排版。与 VehiclesTab 等页面各自维护的那套同名，但这里挂
+ * .finance-page 前缀，避免影响其他页面的既有样式。 */
+.page-container .finance-page .mobile-card + .mobile-card {
+  margin-top: 10px;
+}
+
+.page-container .finance-page .mobile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--sk-text-near-black);
+}
+
+html.dark .page-container .finance-page .mobile-card-header {
+  color: var(--sk-text-white);
+}
+
+.page-container .finance-page .mobile-card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 13px;
+}
+
+.page-container .finance-page .mobile-card-row .label {
+  flex: 0 0 auto;
+  color: var(--sk-text-tertiary);
+}
+
+.page-container .finance-page .mobile-card-row .value {
+  flex: 1 1 auto;
+  text-align: right;
+  color: var(--sk-text-secondary);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.page-container .finance-page .mobile-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* 财务页签的分组小标题（如「收款」「成本」） */
+.finance-section-title {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sk-text-tertiary);
+}
+
+/* 财务页签的响应式显隐。
+ * 现有的 *Tab 组件各自在 scoped 里重写一遍 .hide-mobile / .table-card，
+ * 财务有 6 个页签，重复 6 遍不合适，这里挂在 .finance-page 下统一提供。 */
+.finance-page .mobile-cards {
+  display: block;
+}
+
+.finance-page .table-card {
+  display: none;
+}
+
+.finance-page .pagination {
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .finance-page .mobile-cards {
+    display: none;
+  }
+
+  .finance-page .table-card {
+    display: block;
+  }
+}

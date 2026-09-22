@@ -213,11 +213,7 @@ async function saveSettings() {
 </script>
 
 <style scoped>
-.page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
+/* 容器不设 max-width：与财务页一致，铺满主内容区（约定见 style.css 的 .page-container） */
 .settings-tabs {
   background: var(--bg-color-secondary);
   border-radius: 12px;

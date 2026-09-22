@@ -314,3 +314,436 @@ export interface UploadResult {
   url: string
   type?: string
 }
+
+// ==================== 财务 / 结算 ====================
+// 与后端 src/db/rows.ts 的行类型对应
+
+/** 车主 / 合伙人 */
+export interface OwnerItem {
+  id: string
+  name: string
+  phone: string | null
+  id_card: string | null
+  /** owner 挂靠车主 / partner 合伙人 / both 两者兼具 */
+  role: string
+  /** 公司管理费率（%）。捷途 15 / 雅阁 10 / 自营 0 */
+  company_fee_rate: number
+  bank_name: string | null
+  bank_account: string | null
+  opening_balance: number
+  opening_date: string | null
+  status: number
+  remarks: string | null
+  created_at: string
+  updated_at: string
+  /** 车辆数（列表接口带出） */
+  vehicle_count?: number
+  /** 车主结算应付余额（正数 = 公司应付车主） */
+  balance?: number
+  /** 合伙人往来应付余额 */
+  advance_balance?: number
+}
+
+export interface OwnerOption {
+  id: string
+  name: string
+  role: string
+  company_fee_rate: number
+}
+
+export interface FundAccountItem {
+  id: string
+  name: string
+  /** bank / wechat / alipay / cash / virtual */
+  account_type: string
+  method_key: string | null
+  opening_balance: number
+  opening_date: string
+  is_active: number
+  sort_order: number
+  remarks: string | null
+  created_at: string
+  updated_at: string
+  /** 余额 = 期初 + 全部流水收支（派生值，库里不存） */
+  balance: number
+}
+
+export interface FundTransactionItem {
+  id: string
+  account_id: string
+  account_name?: string
+  txn_date: string
+  /** in 收入 / out 支出。amount 恒为正 */
+  direction: string
+  amount: number
+  category: string | null
+  source_type: string
+  source_id: string | null
+  source_kind: string
+  counterparty: string | null
+  summary: string
+  /** posted 已入账 / reversed 已冲销 */
+  status: string
+  reverses_id: string | null
+  reversed_by_id: string | null
+  operator_id: string | null
+  operator_name?: string
+  remarks: string | null
+  created_at: string
+  updated_at: string
+  /** 逐行余额。仅当筛选到单一账户且未隐藏冲销行时返回 */
+  balance?: number
+}
+
+export interface FundTransferItem {
+  id: string
+  transfer_date: string
+  from_account_id: string
+  to_account_id: string
+  from_account_name?: string
+  to_account_name?: string
+  amount: number
+  remarks: string | null
+  operator_id: string | null
+  created_at: string
+}
+
+export interface FinancePeriodLockItem {
+  period: string
+  locked_at: string
+  locked_by: string | null
+  remarks: string | null
+}
+
+export interface FundSummary {
+  period: string
+  accounts: FundAccountItem[]
+  total: number
+  period_income: number
+  period_expense: number
+  /** 「待归属」账户。有余额说明有流水没配上账户，需要人工改归属 */
+  holding_account: FundAccountItem | null
+}
+
+export interface SettlementLineItem {
+  id: string
+  owner_id: string
+  owner_name?: string
+  vehicle_id: string | null
+  vehicle_plate?: string | null
+  order_id: string | null
+  period: string
+  line_date: string
+  order_no: string | null
+  plate_number: string | null
+  source_id_ref: string | null
+  source_name: string | null
+  customer_name: string | null
+  start_date: string | null
+  end_date: string | null
+  days: number
+  unit_price: number
+  calc_total_amount: number
+  calc_platform_rate: number
+  calc_platform_fee: number
+  calc_settlement_amount: number
+  calc_company_rate: number
+  calc_company_fee: number
+  calc_owner_amount: number
+  total_amount: number
+  platform_fee: number
+  settlement_amount: number
+  company_fee: number
+  other_fee: number
+  owner_amount: number
+  amount_overridden: number
+  override_note: string | null
+  source_type: string
+  source_id: string | null
+  line_kind: string
+  status: string
+  voided_reason: string | null
+  remarks: string | null
+  operator_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SettlementTotals {
+  total_amount: number
+  platform_fee: number
+  settlement_amount: number
+  company_fee: number
+  other_fee: number
+  owner_amount: number
+  days: number
+  count: number
+}
+
+export interface SettlementOpeningItem {
+  id: string
+  owner_id: string
+  owner_name?: string
+  vehicle_id: string | null
+  plate_number?: string | null
+  owner_vehicle_key: string
+  fiscal_year: number
+  amount: number
+  remarks: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SettlementPayoutItem {
+  id: string
+  owner_id: string
+  owner_name?: string
+  vehicle_id: string | null
+  plate_number?: string | null
+  period: string
+  payout_type: string
+  amount: number
+  account_id: string
+  account_name?: string
+  paid_at: string
+  remarks: string | null
+  operator_id: string | null
+  created_at: string
+}
+
+/** 车主对账单 */
+export interface OwnerStatement {
+  owner: OwnerItem
+  period: string
+  opening: number
+  lines: SettlementLineItem[]
+  voided_lines: SettlementLineItem[]
+  expenses: VehicleExpenseItem[]
+  payouts: SettlementPayoutItem[]
+  by_vehicle: Array<{ vehicle_id: string | null; plate_number: string | null; amount: number; count: number }>
+  summary: {
+    opening: number
+    ownerAmountSum: number
+    ownerExpenseSum: number
+    payoutSum: number
+    closing: number
+  }
+}
+
+export interface VehicleExpenseItem {
+  id: string
+  vehicle_id: string
+  plate_number: string | null
+  owner_id: string | null
+  expense_date: string
+  expense_type: string
+  expense_type_name: string
+  /** 收入侧：车损赔偿 / 停运费 */
+  income_amount: number
+  /** 支出侧：维修 / 保养 / 罚款 / 洗车 / 过路费 */
+  expense_amount: number
+  invoice_status: string
+  invoice_no: string | null
+  is_paid: number
+  paid_at: string | null
+  account_id: string | null
+  /** 年费按 N 个月分摊进单车月报 */
+  amortize_months: number
+  amount_overridden: number
+  /** maintenance / insurance / violation / manual */
+  source_type: string | null
+  source_id: string | null
+  source_kind: string
+  remarks: string | null
+  images: string | null
+  operator_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface VehicleExpenseTotals {
+  income_total: number
+  expense_total: number
+  /** 未付款的收支分列：纯收入行合成净额会出现负的「应付」 */
+  unpaid_income: number
+  unpaid_expense: number
+  count: number
+}
+
+export interface OperatingExpenseItem {
+  id: string
+  expense_date: string
+  category: string
+  category_name: string
+  amount: number
+  account_id: string | null
+  is_paid: number
+  paid_at: string | null
+  invoice_status: string
+  invoice_no: string | null
+  payee: string | null
+  remarks: string | null
+  operator_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OperatingExpenseTotals {
+  total: number
+  paid_total: number
+  unpaid_total: number
+  count: number
+}
+
+export interface PartnerAdvanceItem {
+  id: string
+  owner_id: string
+  advance_date: string
+  subject: string
+  subject_name: string
+  amount: number
+  /** in 公司应付增加 / out 已付合伙人 */
+  direction: string
+  is_paid: number
+  paid_at: string | null
+  account_id: string | null
+  remarks: string | null
+  operator_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ExpenseCategoryItem {
+  id: string
+  name: string
+  sort_order: number
+  is_active: number
+  created_at: string
+}
+
+export interface VehicleExpenseTypeItem {
+  id: string
+  name: string
+  sort_order: number
+  default_direction: string
+  is_active: number
+  created_at: string
+}
+
+export interface AccountOption {
+  id: string
+  name: string
+  account_type: string
+}
+
+/** 财务基础数据，首屏一次拉完 */
+export interface FinanceDicts {
+  accounts: AccountOption[]
+  expense_categories: ExpenseCategoryItem[]
+  vehicle_expense_types: VehicleExpenseTypeItem[]
+  owners: OwnerOption[]
+  invoice_status_text: Record<string, string>
+}
+
+// -------------------- 报表 --------------------
+
+export interface VehicleMonthlyRow {
+  vehicle_id: string
+  plate_number: string
+  vehicle_no: string | null
+  owner_name: string | null
+  monthly_payment: number
+  owner_amount: number
+  settlement_amount: number
+  company_fee: number
+  days: number
+  line_count: number
+  maintenance: number
+  repair: number
+  other_expense: number
+  balance: number
+}
+
+export interface VehicleMonthlyReport {
+  period: string
+  rows: VehicleMonthlyRow[]
+  totals: {
+    owner_amount: number
+    monthly_payment: number
+    maintenance: number
+    repair: number
+    other_expense: number
+    balance: number
+    days: number
+  }
+}
+
+export interface VehicleRankingRow {
+  vehicle_id: string
+  plate_number: string | null
+  vehicle_no: string | null
+  owner_name: string | null
+  owner_amount: number
+  settlement_amount: number
+  company_fee: number
+  days: number
+  line_count: number
+  expense: number
+  profit: number
+}
+
+export interface CompanyMonthlyReport {
+  period: string
+  revenue: {
+    total_amount: number
+    platform_fee: number
+    settlement_amount: number
+    company_income: number
+    company_fee: number
+    other_fee: number
+    owner_amount: number
+    days: number
+    line_count: number
+  }
+  cost: {
+    vehicle_maintenance: number
+    vehicle_repair: number
+    vehicle_other: number
+    vehicle_income: number
+    vehicle_total: number
+    operating: number
+    operating_unpaid: number
+    monthly_loan: number
+    monthly_loan_attached: number
+    settlement_payout: number
+    total: number
+  }
+  profit: number
+  fund_flow: Array<{ month: string; income: number; expense: number }>
+}
+
+export interface FundFlowReport {
+  start_date: string
+  end_date: string
+  granularity: 'day' | 'month'
+  opening: number
+  rows: Array<{ bucket: string; income: number; expense: number; count: number; balance: number }>
+  summary: { income: number; expense: number; closing: number }
+}
+
+export interface OwnerStatementReport {
+  owner: OwnerItem
+  start_period: string
+  end_period: string
+  opening: number
+  lines: SettlementLineItem[]
+  expenses: VehicleExpenseItem[]
+  payouts: SettlementPayoutItem[]
+  summary: {
+    opening: number
+    ownerAmountSum: number
+    ownerExpenseSum: number
+    payoutSum: number
+    closing: number
+  }
+}

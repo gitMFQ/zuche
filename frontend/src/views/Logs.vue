@@ -267,11 +267,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
+/* 容器不设 max-width：与财务页一致，铺满主内容区（约定见 style.css 的 .page-container） */
 .filter-card {
   margin-bottom: 16px;
 }

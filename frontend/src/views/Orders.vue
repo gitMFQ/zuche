@@ -132,6 +132,11 @@
               </el-select>
             </el-form-item>
             <el-form-item label="排序">
+              <el-select v-model="searchForm.settle_status" placeholder="结算状态" clearable style="width: 110px">
+                <el-option v-for="o in SETTLE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
               <el-select v-model="searchForm.order_by" placeholder="默认排序" clearable style="width: 100px">
                 <el-option label="取车时间↑" value="start_date_asc" />
                 <el-option label="取车时间↓" value="start_date_desc" />
@@ -178,7 +183,12 @@
           <span>
             <span v-if="item.source_name" class="source-tag" :style="{ background: item.source_color || '#0071e3' }">{{ item.source_name }}</span>
           </span>
-          <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          <span class="header-tags">
+            <el-tag :type="SETTLE_STATUS_TAG_MAP[item.settle_status] || 'info'" size="small">
+              {{ SETTLE_STATUS_TEXT_MAP[item.settle_status] || '未结清' }}
+            </el-tag>
+            <el-tag :type="getStatusType(item.status)" size="small">{{ item.status_text }}</el-tag>
+          </span>
         </div>
         <div class="mobile-card-row">
           <span class="label">客户</span>
@@ -231,40 +241,49 @@
     <!-- PC端表格 -->
     <el-card shadow="never" class="table-card">
       <el-table :data="tableData" stripe class="hide-mobile" @row-click="handleRowClick">
-        <el-table-column prop="customer_name" label="客户" width="80" show-overflow-tooltip />
-        <el-table-column prop="customer_phone" label="电话" width="110" show-overflow-tooltip />
-        <el-table-column prop="plate_number" label="车牌" width="130" show-overflow-tooltip>
+        <el-table-column prop="customer_name" label="客户" min-width="80" show-overflow-tooltip />
+        <el-table-column prop="customer_phone" label="电话" min-width="110" show-overflow-tooltip />
+        <el-table-column prop="plate_number" label="车牌" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="plate-number" :class="row.is_new_energy ? 'new-energy' : 'fuel'">{{ row.plate_number }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="start_date" label="取车" width="170" show-overflow-tooltip>
+        <el-table-column prop="start_date" label="取车" min-width="170" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.start_date) }}
             <span v-if="row.pickup_location" class="location-text">({{ row.pickup_location }})</span>
           </template>
         </el-table-column>
-        <el-table-column prop="end_date" label="还车" width="170" show-overflow-tooltip>
+        <el-table-column prop="end_date" label="还车" min-width="170" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatDateTime(row.end_date) }}
             <span v-if="row.return_location" class="location-text">({{ row.return_location }})</span>
           </template>
         </el-table-column>
-        <el-table-column prop="total_amount" label="总金额" width="90" show-overflow-tooltip>
+        <el-table-column prop="total_amount" label="总金额" min-width="90" show-overflow-tooltip>
           <template #default="{ row }">¥{{ row.total_amount }}</template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="80" show-overflow-tooltip>
+        <el-table-column prop="status" label="状态" min-width="80" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">{{ row.status_text }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="source_name" label="来源" width="90" show-overflow-tooltip>
+        <el-table-column label="结算" min-width="90">
+          <template #default="{ row }">
+            <el-tooltip :content="row.settle_remarks || SETTLE_STATUS_TEXT_MAP[row.settle_status] || '未结清'">
+              <el-tag size="small" :type="SETTLE_STATUS_TAG_MAP[row.settle_status] || 'info'">
+                {{ SETTLE_STATUS_TEXT_MAP[row.settle_status] || '未结清' }}
+              </el-tag>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column prop="source_name" label="来源" min-width="90" show-overflow-tooltip>
           <template #default="{ row }">
             <span v-if="row.source_name" class="source-tag" :style="{ background: row.source_color || '#0071e3' }">{{ row.source_name }}</span>
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="250">
+        <el-table-column label="操作" fixed="right" min-width="250">
           <template #default="{ row }">
             <template v-if="row.status === 'pending'">
               <el-button type="primary" link size="small" @click.stop="openEditDialog(row)">编辑</el-button>
@@ -388,6 +407,7 @@ import PaymentDialog from '../components/order/PaymentDialog.vue'
 import { useMobile } from '../composables/useMobile'
 import { useQuerySync } from '../composables/useQuerySync'
 import { formatDateTime, getOrderStatusType as getStatusType } from '../utils/helpers'
+import { SETTLE_STATUS_OPTIONS, SETTLE_STATUS_TAG_MAP, SETTLE_STATUS_TEXT_MAP } from '../utils/constants'
 
 const router = useRouter()
 const route = useRoute()
@@ -453,6 +473,7 @@ const searchForm = reactive({
   end_date_from: '',
   end_date_to: '',
   source_id: '',
+  settle_status: '',
   vehicle_model: '',
   plate_number: '',
   order_by: ''
@@ -584,6 +605,7 @@ async function loadData() {
     if (searchForm.end_date_from) params.end_date_from = searchForm.end_date_from
     if (searchForm.end_date_to) params.end_date_to = searchForm.end_date_to
     if (searchForm.source_id) params.source_id = searchForm.source_id
+    if (searchForm.settle_status) params.settle_status = searchForm.settle_status
     if (searchForm.vehicle_model) params.vehicle_model = searchForm.vehicle_model
     if (searchForm.plate_number) params.plate_number = searchForm.plate_number
     if (searchForm.order_by) params.order_by = searchForm.order_by
@@ -973,11 +995,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
+/* 容器不设 max-width：与财务页一致，铺满主内容区（约定见 style.css 的 .page-container） */
 .order-tabs {
   margin-bottom: 12px;
 }
@@ -1356,6 +1374,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.header-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .order-no {

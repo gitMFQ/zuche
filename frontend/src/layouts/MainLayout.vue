@@ -32,6 +32,10 @@
           <div class="nav-icon"><el-icon :size="20"><Document /></el-icon></div>
           <span v-show="!isCollapse || isMobile" class="nav-text">订单管理</span>
         </router-link>
+        <router-link to="/finance" class="nav-item" :class="{ active: activeMenu === '/finance' }" @click="handleMenuSelect">
+          <div class="nav-icon"><el-icon :size="20"><Money /></el-icon></div>
+          <span v-show="!isCollapse || isMobile" class="nav-text">财务</span>
+        </router-link>
         <router-link to="/customers" class="nav-item" :class="{ active: activeMenu === '/customers' }" @click="handleMenuSelect">
           <div class="nav-icon"><el-icon :size="20"><User /></el-icon></div>
           <span v-show="!isCollapse || isMobile" class="nav-text">客户管理</span>
@@ -159,6 +163,7 @@ import {
   Expand,
   Fold,
   List,
+  Money,
   Moon,
   Setting,
   Sunny,

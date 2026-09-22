@@ -200,6 +200,30 @@
         <span class="label">来源平台</span>
         <span class="row-value">{{ platformText(order.platform) }}</span>
       </div>
+      <div class="info-row" v-if="order.invoice_amount">
+        <span class="label">开票金额</span>
+        <span class="row-value">¥{{ formatMoney(order.invoice_amount) }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">发票状态</span>
+        <span class="row-value">
+          <el-tag size="small" :type="order.invoice_status === 'issued' ? 'success' : 'info'">
+            {{ INVOICE_STATUS_TEXT_MAP[order.invoice_status] || '无票' }}
+          </el-tag>
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="label">结算状态</span>
+        <span class="row-value">
+          <el-tag size="small" :type="SETTLE_STATUS_TAG_MAP[order.settle_status] || 'info'">
+            {{ SETTLE_STATUS_TEXT_MAP[order.settle_status] || '未结清' }}
+          </el-tag>
+        </span>
+      </div>
+      <div class="info-row" v-if="order.settle_remarks">
+        <span class="label">结算备注</span>
+        <span class="row-value">{{ order.settle_remarks }}</span>
+      </div>
     </div>
   </el-card>
 
@@ -308,8 +332,12 @@ import { ChatDotRound, Clock, Document, Location, Money, Picture, User, Van } fr
 import {
   DELIVERY_TYPE_TEXT_MAP,
   FEE_CATEGORY_TEXT_MAP,
-  PLATFORM_TEXT_MAP
+  INVOICE_STATUS_TEXT_MAP,
+  PLATFORM_TEXT_MAP,
+  SETTLE_STATUS_TAG_MAP,
+  SETTLE_STATUS_TEXT_MAP
 } from '../../utils/constants'
+import { formatMoney } from '../../utils/money'
 import {
   formatDateTime,
   getImageUrl,
