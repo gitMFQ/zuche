@@ -36,10 +36,6 @@
           <div class="nav-icon"><el-icon :size="20"><User /></el-icon></div>
           <span v-show="!isCollapse || isMobile" class="nav-text">客户管理</span>
         </router-link>
-        <router-link to="/blacklist" class="nav-item" :class="{ active: activeMenu === '/blacklist' }" @click="handleMenuSelect">
-          <div class="nav-icon"><el-icon :size="20"><CircleClose /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">黑名单</span>
-        </router-link>
         <router-link v-if="isAdmin" to="/logs" class="nav-item" :class="{ active: activeMenu === '/logs' }" @click="handleMenuSelect">
           <div class="nav-icon"><el-icon :size="20"><List /></el-icon></div>
           <span v-show="!isCollapse || isMobile" class="nav-text">操作日志</span>
@@ -158,7 +154,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   ArrowDown,
-  CircleClose,
   DataAnalysis,
   Document,
   Expand,

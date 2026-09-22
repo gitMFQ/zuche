@@ -4,6 +4,7 @@ import { compressImage } from '../utils/image'
 import { validateUploadFile } from '../utils/upload'
 import type {
   ApiResponse,
+  BlacklistItem,
   CustomerItem,
   LoginResult,
   OrderDetail,
@@ -204,7 +205,7 @@ export const violationApi = {
 
 // ==================== 黑名单 API ====================
 export const blacklistApi = {
-  getList: (params?: PageQuery) => get<PageResult<Record<string, unknown>>>('/blacklist', params),
+  getList: (params?: PageQuery) => get<PageResult<BlacklistItem>>('/blacklist', params),
   check: (params: { phone?: string; id_card?: string }) =>
     get<{ isBlacklisted: boolean; record: Record<string, unknown> | null }>('/blacklist/check', params),
   add: (data: { customer_id?: string; name: string; phone: string; id_card?: string; reason: string; order_id?: string }) =>

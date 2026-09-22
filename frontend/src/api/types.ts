@@ -188,8 +188,26 @@ export interface CustomerItem {
   is_regular: number
   source_id: string | null
   source_name: string | null
+  /** LEFT JOIN order_sources 带出的标签色 */
+  source_color: string | null
   id_card_images: string[]
   license_images: string[]
+  created_at: string
+  updated_at: string
+}
+
+/** 黑名单记录，与后端 src/db/rows.ts 的 BlacklistRow 对应 */
+export interface BlacklistItem {
+  id: string
+  customer_id: string | null
+  name: string
+  phone: string
+  id_card: string | null
+  reason: string
+  order_id: string | null
+  operator_id: string | null
+  operator_name: string | null
+  status: number
   created_at: string
   updated_at: string
 }

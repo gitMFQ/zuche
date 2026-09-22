@@ -52,12 +52,6 @@ const routes = [
         meta: { title: '订单详情' }
       },
       {
-        path: 'blacklist',
-        name: 'Blacklist',
-        component: () => import('../views/Blacklist.vue'),
-        meta: { title: '黑名单' }
-      },
-      {
         path: 'logs',
         name: 'Logs',
         component: () => import('../views/Logs.vue'),
