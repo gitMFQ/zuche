@@ -40,10 +40,6 @@
           <div class="nav-icon"><el-icon :size="20"><User /></el-icon></div>
           <span v-show="!isCollapse || isMobile" class="nav-text">客户管理</span>
         </router-link>
-        <router-link v-if="isAdmin" to="/logs" class="nav-item" :class="{ active: activeMenu === '/logs' }" @click="handleMenuSelect">
-          <div class="nav-icon"><el-icon :size="20"><List /></el-icon></div>
-          <span v-show="!isCollapse || isMobile" class="nav-text">操作日志</span>
-        </router-link>
         <router-link v-if="isAdmin" to="/settings" class="nav-item" :class="{ active: activeMenu === '/settings' }" @click="handleMenuSelect">
           <div class="nav-icon"><el-icon :size="20"><Setting /></el-icon></div>
           <span v-show="!isCollapse || isMobile" class="nav-text">设置</span>
@@ -162,7 +158,6 @@ import {
   Document,
   Expand,
   Fold,
-  List,
   Money,
   Moon,
   Setting,

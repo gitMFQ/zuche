@@ -59,13 +59,6 @@ const routes = [
         meta: { title: '订单详情' }
       },
       {
-        path: 'logs',
-        name: 'Logs',
-        component: () => import('../views/Logs.vue'),
-        // 后端已用 adminOnly 拦住接口，这里补前端守卫，避免输 URL 进去看到空页面
-        meta: { title: '操作日志', roles: ['admin'] }
-      },
-      {
         path: 'settings',
         name: 'Settings',
         component: () => import('../views/Settings.vue'),

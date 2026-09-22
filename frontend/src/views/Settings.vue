@@ -71,6 +71,9 @@
       <el-tab-pane label="订单来源" name="sources">
         <OrderSourcesTab />
       </el-tab-pane>
+      <el-tab-pane label="操作日志" name="logs">
+        <LogsTab />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -82,6 +85,7 @@ import { ElMessage } from 'element-plus'
 import { Moon, Plus, Sunny } from '@element-plus/icons-vue'
 import UsersTab from '../components/UsersTab.vue'
 import OrderSourcesTab from '../components/OrderSourcesTab.vue'
+import LogsTab from '../components/LogsTab.vue'
 import { settingsApi, uploadApi } from '../api'
 import { useUserStore } from '../stores/user'
 import { getLogoUrl } from '../utils/helpers'
@@ -133,7 +137,7 @@ function handleAutoDarkModeChange(enabled: boolean) {
 // 从路由参数获取当前标签
 onMounted(async () => {
   const tab = route.query.tab as string
-  if (tab && ['system', 'users', 'sources'].includes(tab)) {
+  if (tab && ['system', 'users', 'sources', 'logs'].includes(tab)) {
     activeTab.value = tab
   }
   
