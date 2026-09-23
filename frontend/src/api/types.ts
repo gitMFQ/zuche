@@ -318,7 +318,7 @@ export interface UploadResult {
 // ==================== 财务 / 结算 ====================
 // 与后端 src/db/rows.ts 的行类型对应
 
-/** 车主 / 合伙人 */
+/** 车主 */
 export interface OwnerItem {
   id: string
   name: string

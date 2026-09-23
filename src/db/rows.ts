@@ -72,7 +72,7 @@ export interface VehicleRow {
   purchase_price: number | null;
   /** 购入时表显里程；单车月报算里程差用 mileage − initial_mileage */
   initial_mileage: number | null;
-  /** 车主/合伙人 id（软引用 owners.id，无外键） */
+  /** 车主 id（软引用 owners.id，无外键） */
   owner_id: string | null;
   /** company 自有 / attached 挂靠 */
   ownership_type: string;
@@ -311,7 +311,7 @@ export interface OperationLogRow {
 
 // ==================== 财务 / 结算 ====================
 
-/** 车主 / 合伙人档案。一个实体两种角色：既可能是挂靠车的车主，也可能在公司有往来垫付 */
+/** 车主档案。一个实体两种角色：既可能是挂靠车的车主，也可能在公司有往来垫付 */
 export interface OwnerRow {
   id: string;
   name: string;

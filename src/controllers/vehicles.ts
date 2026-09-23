@@ -227,7 +227,7 @@ interface VehicleBody {
   purchase_date?: string | null;
   purchase_price?: number | null;
   initial_mileage?: number | null;
-  /** 车主/合伙人 id（软引用 owners.id） */
+  /** 车主 id（软引用 owners.id） */
   owner_id?: string | null;
   /** company 自有 / attached 挂靠。挂靠车才有车主公司管理费 */
   ownership_type?: string;

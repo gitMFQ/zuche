@@ -6,7 +6,7 @@
       <div class="logo">
         <div class="logo-icon">
           <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" class="logo-img" />
-          <el-icon v-else :size="26"><Van /></el-icon>
+          <el-icon v-else :size="26"><CarIcon /></el-icon>
         </div>
         <span v-show="!isCollapse" class="logo-text">{{ systemTitle }}</span>
       </div>
@@ -16,7 +16,7 @@
           <span v-show="!isCollapse" class="nav-text">总览</span>
         </router-link>
         <router-link to="/vehicles" class="nav-item" :class="{ active: activeMenu === '/vehicles' }">
-          <div class="nav-icon"><el-icon :size="20"><Van /></el-icon></div>
+          <div class="nav-icon"><el-icon :size="20"><CarIcon /></el-icon></div>
           <span v-show="!isCollapse" class="nav-text">车辆管理</span>
         </router-link>
         <router-link to="/orders" class="nav-item" :class="{ active: activeMenu === '/orders' }">
@@ -66,7 +66,7 @@
           <div v-if="isMobile" class="header-brand">
             <div class="logo-icon">
               <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" class="logo-img" />
-              <el-icon v-else :size="22"><Van /></el-icon>
+              <el-icon v-else :size="22"><CarIcon /></el-icon>
             </div>
             <span class="header-brand__title">{{ systemTitle }}</span>
           </div>
@@ -93,10 +93,15 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
+                <!-- 主题：移动端顶栏没有切换按钮，这里是唯一入口；桌面端与顶栏按钮并存。
+                     单项轮换：自动 → 深色 → 浅色，文案与图标跟着当前模式走 -->
+                <el-dropdown-item @click="cycleTheme">
+                  <el-icon><component :is="themeIcon" /></el-icon>{{ themeLabel }}
+                </el-dropdown-item>
                 <!-- 移动端 tabbar 只有 5 项（已满），设置收进这里 -->
-                <el-dropdown-item v-if="isAdmin" command="settings">系统设置</el-dropdown-item>
-                <el-dropdown-item command="password">修改密码</el-dropdown-item>
-                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                <el-dropdown-item v-if="isAdmin" command="settings" divided><el-icon><i class="weui-icon-outlined-setting" /></el-icon>系统设置</el-dropdown-item>
+                <el-dropdown-item command="password" :divided="!isAdmin"><el-icon><i class="weui-icon-outlined-lock" /></el-icon>修改密码</el-dropdown-item>
+                <el-dropdown-item command="logout" divided><el-icon><SwitchButton /></el-icon>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -155,15 +160,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { DataAnalysis, Expand, Fold, Money, Moon, Sunny, Van } from '@element-plus/icons-vue'
+import { DataAnalysis, Expand, Fold, Money, Moon, Sunny, SwitchButton } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { authApi, settingsApi } from '../api'
 import { getLogoUrl } from '../utils/helpers'
 import { useMobile } from '../composables/useMobile'
 import MobileTabbar from '../components/MobileTabbar.vue'
+import CarIcon from '../components/CarIcon.vue'
+import SunMoonIcon from '../components/SunMoonIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -199,10 +206,45 @@ const passwordForm = ref({
 // 主题设置从 userStore 获取
 const isDarkMode = computed(() => userStore.themeSettings.darkMode)
 
-// Toggle deep/shallow theme
+// Toggle deep/shallow theme（顶栏按钮用）
 const toggleDarkMode = () => {
   userStore.setDarkMode(!isDarkMode.value);
 };
+
+/** 主题三态。auto 即「跟随系统」，与 store 的 autoDarkMode 一一对应 */
+type ThemeMode = 'auto' | 'dark' | 'light'
+
+const themeMode = computed<ThemeMode>(() => {
+  const t = userStore.themeSettings
+  if (t.autoDarkMode) return 'auto'
+  return t.darkMode ? 'dark' : 'light'
+})
+
+const THEME_META: Record<ThemeMode, { label: string; icon: Component; next: ThemeMode }> = {
+  auto: { label: '自动切换', icon: SunMoonIcon, next: 'dark' },
+  dark: { label: '深色模式', icon: Moon, next: 'light' },
+  light: { label: '浅色模式', icon: Sunny, next: 'auto' }
+}
+
+const themeLabel = computed(() => THEME_META[themeMode.value].label)
+const themeIcon = computed(() => THEME_META[themeMode.value].icon)
+
+/**
+ * 菜单里只留一项：点一下按 自动 → 深色 → 浅色 轮换。
+ *
+ * preventDefault 是 EP 的约定（dropdown-item 的 handleClick 是 composeEventHandlers，
+ * 第一个 handler 返回 defaultPrevented 时会跳过关闭逻辑），这样点完菜单不关，
+ * 方便连着切下一档。
+ */
+function cycleTheme(e: MouseEvent) {
+  e.preventDefault()
+  const next = THEME_META[themeMode.value].next
+  if (next === 'auto') {
+    userStore.setAutoDarkMode(true)
+  } else {
+    userStore.setDarkMode(next === 'dark')
+  }
+}
 
 // Global handler for darkModeChange events to sync HTML class
 const onDarkModeChange = (ev: Event) => {
@@ -772,8 +814,9 @@ html.dark .theme-toggle-btn:hover {
 }
 
 @media (max-width: 767px) {
+  /* 移动端顶栏空间紧张：主题切换收进头像菜单（「深色模式 / 自动切换」） */
   .theme-toggle-btn {
-    font-size: 16px;
+    display: none;
   }
 }
 

@@ -291,7 +291,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="车主 / 合伙人">
+        <el-form-item label="车主">
           <AppSelect v-model="form.owner_id" :options="ownerSelectOptions" clearable filterable placeholder="自营车选「公司自营」" style="width: 100%" />
         </el-form-item>
 

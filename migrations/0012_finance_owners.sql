@@ -1,4 +1,4 @@
--- 车主/合伙人档案 + 车辆档案扩展
+-- 车主档案 + 车辆档案扩展
 --
 -- 背景：公司总台账（file-4）的「车辆档案」sheet 有 车辆编号 / 车型分类 / 购入日期 /
 --       初始里程 四列，现有 vehicles 表都没有；三份单车车主结算台账（捷途 / 哈弗H6 /
@@ -16,7 +16,7 @@
 --   （资金流水摘要里反复出现「牛昭平垫付H6贷款1978.78」「报销牛昭平垫付」）。
 --   拆成两张表会让同一个人在界面上出现两次，账也对不齐。用 role 区分身份即可。
 
--- ==================== 车主 / 合伙人档案 ====================
+-- ==================== 车主档案 ====================
 
 CREATE TABLE IF NOT EXISTS owners (
   id TEXT PRIMARY KEY,
@@ -58,7 +58,7 @@ ALTER TABLE vehicles ADD COLUMN purchase_date TEXT;
 ALTER TABLE vehicles ADD COLUMN purchase_price REAL;
 -- 购入时表显里程。单车月报算里程差用 mileage − initial_mileage
 ALTER TABLE vehicles ADD COLUMN initial_mileage INTEGER;
--- 车主/合伙人 id（软引用 owners.id，见文件头外键策略）
+-- 车主 id（软引用 owners.id，见文件头外键策略）
 ALTER TABLE vehicles ADD COLUMN owner_id TEXT;
 -- company 自有 / attached 挂靠。自营车的公司费率取 0，挂靠车取车主配置的费率
 ALTER TABLE vehicles ADD COLUMN ownership_type TEXT NOT NULL DEFAULT 'company';

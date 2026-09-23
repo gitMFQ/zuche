@@ -366,7 +366,7 @@ export const uploadApi = {
 
 export default api
 
-// ==================== 车主 / 合伙人 API ====================
+// ==================== 车主 API ====================
 export const ownerApi = {
   /** 下拉选项：只含 id/name/role/company_fee_rate */
   getOptions: () => get<OwnerOption[]>('/owners/options'),

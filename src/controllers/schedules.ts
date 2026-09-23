@@ -9,6 +9,7 @@ interface ScheduleItem {
   schedule_time: string;
   type: string;
   plate_number: string | null;
+  is_new_energy: number | null;
   platform: string | null;
   platform_color: string | null;
   location: string;
@@ -28,6 +29,7 @@ export async function getRecentSchedules(c: AppContext): Promise<Response> {
            o.start_date as schedule_time,
            '送' as type,
            v.plate_number,
+           v.is_new_energy,
            s.name as platform,
            s.color as platform_color,
            COALESCE(o.pickup_location, '') as location,
@@ -46,6 +48,7 @@ export async function getRecentSchedules(c: AppContext): Promise<Response> {
            o.end_date as schedule_time,
            '收' as type,
            v.plate_number,
+           v.is_new_energy,
            s.name as platform,
            s.color as platform_color,
            COALESCE(o.return_location, '') as location,

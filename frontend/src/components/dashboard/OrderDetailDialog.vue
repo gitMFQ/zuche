@@ -28,7 +28,7 @@
 
       <!-- 车辆信息 -->
       <div class="order-detail-section">
-        <div class="section-title-compact"><el-icon><Van /></el-icon> 车辆</div>
+        <div class="section-title-compact"><el-icon><CarIcon /></el-icon> 车辆</div>
         <div class="detail-row-compact">
           <span class="row-label-compact">车牌</span>
           <span class="row-value-compact">
@@ -94,7 +94,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import dayjs from 'dayjs'
-import { Money, Van } from '@element-plus/icons-vue'
+import { Money } from '@element-plus/icons-vue'
+import CarIcon from '../CarIcon.vue'
 
 const props = defineProps<{
   visible: boolean

@@ -81,7 +81,7 @@ export const VEHICLE_CATEGORY_TEXT: Record<string, string> = {
   other: '其他'
 };
 
-/** 车主 / 合伙人身份 */
+/** 车主身份 */
 export const OWNER_ROLE_TEXT: Record<string, string> = {
   owner: '挂靠车主',
   partner: '合伙人',

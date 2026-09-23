@@ -59,7 +59,7 @@
   <!-- 车辆信息 -->
   <el-card shadow="never" class="info-card">
     <template #header>
-      <span class="section-title"><el-icon><Van /></el-icon> 车辆信息</span>
+      <span class="section-title"><el-icon><CarIcon /></el-icon> 车辆信息</span>
     </template>
 
     <div class="info-list">
@@ -325,7 +325,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Money, Van } from '@element-plus/icons-vue'
+import { Money } from '@element-plus/icons-vue'
+import CarIcon from '../CarIcon.vue'
 import {
   DELIVERY_TYPE_TEXT_MAP,
   FEE_CATEGORY_TEXT_MAP,

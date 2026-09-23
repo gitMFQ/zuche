@@ -441,11 +441,26 @@ async function shareSchedule() {
       throw new Error('找不到表格元素')
     }
 
+    // 导出底色跟随主题：暗色下用卡片底色，否则透明单元格会漏出白底
+    const exportBg = document.documentElement.classList.contains('dark')
+      ? getComputedStyle(document.documentElement).getPropertyValue('--bg-color-secondary').trim() || '#272729'
+      : '#ffffff'
+
     // 创建 canvas
     const canvas = await html2canvas(tableElement, {
-      backgroundColor: '#ffffff',
+      backgroundColor: exportBg,
       scale: 2,
-      useCORS: true
+      useCORS: true,
+      // 克隆体里 html.dark 未必生效，暗色下把行底色直接写死，避免浅色的斑马纹漏出来
+      onclone: (doc) => {
+        if (exportBg === '#ffffff') return
+        const cloned = doc.querySelector<HTMLElement>('.schedule-section .schedule-table')
+        if (!cloned) return
+        cloned.style.backgroundColor = exportBg
+        cloned.querySelectorAll('tr').forEach((tr) => {
+          tr.style.backgroundColor = exportBg
+        })
+      }
     })
 
     // 转换为图片

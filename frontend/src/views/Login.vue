@@ -3,7 +3,7 @@
     <div class="login-section">
       <div class="login-content">
         <div class="login-header">
-          <el-icon :size="48" color="var(--sk-focus-color)"><Van /></el-icon>
+          <el-icon :size="48" color="var(--sk-focus-color)"><CarIcon /></el-icon>
           <h1 class="sk-display-hero">租车管理系统</h1>
           <p class="sk-display-subheading">安全、高效的车辆管理平台</p>
         </div>
@@ -56,7 +56,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Van } from '@element-plus/icons-vue'
+import CarIcon from '../components/CarIcon.vue'
 import { useUserStore } from '../stores/user'
 import { authApi } from '../api'
 

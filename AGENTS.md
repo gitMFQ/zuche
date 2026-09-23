@@ -177,7 +177,7 @@ pending (待取车) → active (已取车) → completed (已还车)
 | system_settings | 系统设置 |
 | operation_logs | 操作日志 |
 | login_attempts | 登录失败计数与锁定时长（限流） |
-| owners | 车主/合伙人档案（role 一表两角色、company_fee_rate 公司费率、往来期初） |
+| owners | 车主档案（role 一表两角色、company_fee_rate 公司费率、往来期初） |
 | fund_accounts | 资金账户（公户/微信/支付宝/现金/虚拟，method_key 映射支付方式，opening_balance 期初） |
 | fund_transactions | 资金流水（**余额不落库**、幂等键 source_type+source_id+source_kind、红字冲销链） |
 | fund_transfers | 账户间划转（一次划转 = out + in 两条流水） |
@@ -230,16 +230,20 @@ pending (待取车) → active (已取车) → completed (已还车)
   `<el-icon><i class="weui-icon-outlined-xxx" /></el-icon>` —— **保留 `el-icon` 包裹**，
   按钮里图标与文字的间距（`.el-button [class*=el-icon]+span`）靠它。
   状态类（信息/警告/成功/星标/头像）用 `filled`，操作与导航类用 `outlined`。
-  **WeUI 没有的语义**：车、钱、明暗、展开折叠、数据图表、日历、上传（WeUI 只有 `share`，
+  **WeUI 没有的语义**：钱、明暗、展开折叠、数据图表、日历、上传（WeUI 只有 `share`，
   语义是分享不是上传）—— 这些继续用 `@element-plus/icons-vue`，侧栏与 tabbar 的混排是既定事实，
-  不是待修的 bug。
-- **移动端导航**：`MobileTabbar.vue` 只在移动端渲染，固定 60px（另加 `env(safe-area-inset-bottom)`），包含总览/订单/车辆/财务/客户 5 项；`utils/nav.ts` 的 `matchTabPath` 用前缀匹配，`/orders/import` 与 `/orders/:id` 都归属订单。设置入口在顶部用户下拉菜单，仅 admin 显示。
+  不是待修的 bug。  **车**例外：两套图标库都没有轿车（EP 只有 `Van` 面包车），统一用
+  `components/CarIcon.vue`（Phosphor 的 `car`，MIT，SVG 内联，零依赖），用法同 EP 图标
+  `<el-icon :size="20"><CarIcon /></el-icon>`。**「半明半暗」**也例外（主题的自动切换项）：
+  用 `components/SunMoonIcon.vue`（Carbon 的 `brightness-contrast`，Apache-2.0，同样内联）。
+- **移动端导航**：`MobileTabbar.vue` 只在移动端渲染，固定 60px（另加 `env(safe-area-inset-bottom)`），包含总览/订单/车辆/财务/客户 5 项；`utils/nav.ts` 的 `matchTabPath` 用前缀匹配，`/orders/import` 与 `/orders/:id` 都归属订单。设置入口在顶部用户下拉菜单，仅 admin 显示。顶栏的深色模式按钮只在桌面端显示（移动端空间不够），主题在头像下拉菜单里是一个**单项轮换**的菜单项：文案与图标跟着当前模式走（自动切换 / 深色模式 / 浅色模式），点一下按 `自动 → 深色 → 浅色` 轮换，桌面端菜单里也有。三态映射到 `stores/user.ts` 的 `setAutoDarkMode(true)` 与 `setDarkMode(bool)`。点完**菜单不关**（方便连着切下一档）：在 click handler 里 `e.preventDefault()` —— EP 的 dropdown-item 关闭逻辑走 `composeEventHandlers`，第一段返回 `defaultPrevented` 时会跳过第二段，比给整个 dropdown 设 `hide-on-click=false` 精准（其他菜单项照常点完即关）。
 - **沉浸式详情页**：路由 `meta.immersive: true`（目前只有订单详情 `/orders/:id`）时，移动端把全局顶栏与
   `MobileTabbar` 一起隐藏、内容区 `.main.is-immersive` 去掉内边距并撑满视口，页面自己把顶部一行 sticky 到顶、
   底部操作行 fixed 到底（见 `views/OrderDetail.vue` 的 `@media (max-width: 767px)`）。桌面端不受影响。
 - **移动端列表**：`.mobile-card*` 是历史 class 名，移动端实际承载 WeUI cells：分组间距 8px；外壳无圆角、无阴影；外壳上下与行间使用 0.5px hairline；卡片内数据行 44px / 15px，整项导航 cell 56px；`.is-block` 与两列金额网格使用 auto 高度。新增列表优先复用这些 class，不要再在各组件 scoped 复制卡片外壳样式。
 - **移动端弹窗**：全局 `style.css` 会把 `el-dialog` 转成底部 sheet（顶部 12px 圆角、最高 75vh、40×4px 下拉手柄、0.3s ease）；新增弹窗不需要另外写移动端结构。footer 按钮 64px 高，移动端不使用圆角卡片按钮。`page-container .el-dialog__*` 规则要与全局 sheet 规则保持相同或更高特异性。`OwnersTab` 的两个长表格使用 `el-drawer`，移动端全宽右侧抽屉。
 - **移动端表单**：`style.css` 末尾的「Mobile WeUI Form」把移动端所有表单统一成 WeUI cells —— 弹窗 sheet、页面筛选栏、设置页走同一套规则：表单项 56px 行 / 17px / 左右 16px / 行间 0.5px hairline（左缩进 16px），label `max-width: 5em` + 8px 间距、值与 placeholder 左对齐，输入框与选择器去盒子（透明底、无描边、24px 行高），开关 52×32 摆行尾，单选/多选是 22px 圆形，`el-divider` 当分组标题（14px 灰字、无横线）。**新增表单不要再写移动端 scoped 样式**，也不要给控件写死宽度（选择器用 `width: 100% !important` 统一拉满）。两条硬约束：label 宽度是 EP 写的**内联 style**，只能 `width: auto !important` 压；弹窗里的表单靠 `.el-dialog__body > .el-form` 的负外边距贴边，只对直接子级生效。登录页（`.login-form`）刻意排除在这套规则外 —— 它落在灰底上没有卡片外壳，去盒子后输入框会隐形。
+- **表单字段长说明**：字段级的长提示一律用 `components/FieldTip.vue`（圆圈感叹号 + tooltip），放进 `el-form-item` 的 `#label` 插槽：`<template #label>往来期初<FieldTip content="..." /></template>`。桌面 hover、移动端点按展开；不要再在控件下面写 `.field-hint` / `.form-tip` 这类小字说明。移动端 label 的 5em 上限由 `style.css` 的 `.el-dialog__body .el-form-item__label:has(.field-tip)` 规则放开 —— 否则「文字 + 图标」超出 85px，文字会溢出压住输入框。
 - **移动端日期选择**：日期/时间选择一律用 `components/AppDatePicker.vue`（桌面端渲染 `el-date-picker`，移动端渲染 WeUI 底部滚轮 sheet；`type` 支持 `date` / `month` / `datetime`，datetime 是年/月/日/时/分五列滚轮）。不要再写 `v-if="isMobile"` + 原生 `input[type=date]` 双轨；`input[type=month]` 在 iOS Safari 上不支持（会退化成手打文本框），月份选择只能走这个组件。滚轮的列数据与闰年/大小月联动在 `utils/wheelPicker.ts`，改它必须让 `test/wheelPicker.test.ts` 通过。日期区间（daterange）的移动端是 `.mobile-date-range` 里并排的两个 `AppDatePicker`（双月面板 646px 宽放不进手机，桌面端仍用 `el-date-picker type="daterange"`）。
 - **移动端下拉选择**：下拉选择一律用 `components/AppSelect.vue`（桌面端渲染 `el-select`，移动端渲染 el-input 触发器 + WeUI **单列滚轮** sheet）。与 `el-select` 的唯一用法差异：选项从 `<el-option>` children 改成 `options` 数组（`{ label, value }`，值统一是字符串），其余属性（`placeholder` / `clearable` / `disabled` / `filterable` / `style` / `class`）照旧。**不要再写 `el-select` + `<el-option>`** —— 移动端会退化成 EP 的 popper 浮层。滚轮行为：`clearable` 的首行是「不限」（等价清空）、`filterable` 或选项数 > 8 时 sheet 里带搜索行、值不在选项里时插原值占位行（避免「确定」被静默改成第一项）。选项拼接、定位与过滤在 `utils/selectPicker.ts`，改它必须让 `test/selectPicker.test.ts` 通过。
 - **移动端主题变量**：`--m-*` 只在 `style.css` 的 `@media (max-width: 767px)` 中定义；硬编码 rgba 强调色统一用 `rgba(var(--sk-focus-color-rgb), alpha)`，hover 用 `var(--sk-focus-color-hover)`，避免移动端换绿漏色。`index.html` 的 viewport 必须含 `viewport-fit=cover`。

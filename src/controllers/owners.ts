@@ -1,5 +1,5 @@
 /**
- * 车主 / 合伙人档案与对账单。
+ * 车主档案与对账单。
  *
  * 一个实体两种角色（owners.role）：挂靠车的车主、以及在公司有往来垫付的合伙人。
  * 台账 file-5 里的牛昭平、马跃两种身份都有，所以合成一张表。
@@ -65,7 +65,7 @@ const ADVANCE_BALANCE_EXPR = `ROUND(
 
 // ==================== 档案 ====================
 
-/** 车主/合伙人列表，带车辆数、结算应付、往来应付 */
+/** 车主列表，带车辆数、结算应付、往来应付 */
 export async function getOwners(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {

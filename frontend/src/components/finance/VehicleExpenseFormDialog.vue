@@ -14,20 +14,20 @@
       <el-form-item label="支出金额">
         <el-input-number v-model="form.expense_amount" :min="0" :precision="2" style="width: 100%" />
       </el-form-item>
-      <el-form-item label="收入金额">
+      <el-form-item>
+        <template #label>收入金额<FieldTip content="车损赔偿、停运费填这里。同一行可以既有收入又有支出（台账的违章行就是）" /></template>
         <el-input-number v-model="form.income_amount" :min="0" :precision="2" style="width: 100%" />
-        <div class="field-hint">车损赔偿、停运费填这里。同一行可以既有收入又有支出（台账的违章行就是）</div>
       </el-form-item>
       <el-form-item label="发票">
         <AppSelect v-model="form.invoice_status" :options="INVOICE_STATUS_OPTIONS" style="width: 100%" />
       </el-form-item>
-      <el-form-item label="分摊月数">
+      <el-form-item>
+        <template #label>分摊月数<FieldTip content="保险这类年费填 12，否则续保那个月的单车结余会是一条巨大的负数" /></template>
         <el-input-number v-model="form.amortize_months" :min="1" :max="60" style="width: 100%" />
-        <div class="field-hint">保险这类年费填 12，否则续保那个月的单车结余会是一条巨大的负数</div>
       </el-form-item>
-      <el-form-item v-if="!isEdit" label="是否已付款">
+      <el-form-item v-if="!isEdit">
+        <template #label>是否已付款<FieldTip content="只有已付款才会写资金流水；未付款只进费用台账（应付）" /></template>
         <el-switch v-model="form.is_paid" />
-        <div class="field-hint">只有已付款才会写资金流水；未付款只进费用台账（应付）</div>
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款账户" prop="account_id">
         <AppSelect v-model="form.account_id" :options="accountOptions" placeholder="从哪个账户付的" style="width: 100%" />
@@ -57,6 +57,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
 import AppSelect from '../AppSelect.vue'
+import FieldTip from '../FieldTip.vue'
 import type { AccountOption, VehicleExpenseItem, VehicleExpenseTypeItem, VehicleItem } from '../../api/types'
 import { INVOICE_STATUS_OPTIONS } from '../../utils/constants'
 
@@ -167,12 +168,3 @@ async function handleSubmit(): Promise<void> {
   })
 }
 </script>
-
-<style scoped>
-.field-hint {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--sk-text-tertiary);
-}
-</style>

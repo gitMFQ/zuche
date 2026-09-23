@@ -156,7 +156,7 @@ apiRoutes.get('/logs/:id', authMiddleware, adminOnly, logsController.getLog);
 apiRoutes.get('/schedules/recent', authMiddleware, schedulesController.getRecentSchedules);
 apiRoutes.get('/schedules/gantt', authMiddleware, schedulesController.getGanttData);
 
-// ==================== 车主 / 合伙人 ====================
+// ==================== 车主 ====================
 // 静态段（/options）必须排在同级 /:id 之前，否则会被参数路由捕获
 apiRoutes.get('/owners/options', authMiddleware, ownersController.getOwnerOptions);
 apiRoutes.get('/owners', authMiddleware, ownersController.getOwners);

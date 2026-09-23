@@ -7,15 +7,12 @@
       <el-form-item label="科目" prop="subject">
         <AppSelect v-model="form.subject" :options="ADVANCE_SUBJECT_OPTIONS" style="width: 100%" />
       </el-form-item>
-      <el-form-item label="方向" prop="direction">
+      <el-form-item prop="direction">
+        <template #label>方向<FieldTip content="「公司应付增加」用于合伙人替公司垫钱（开办费、垫资、借款）；「已付合伙人」用于还款、报销、发工资 —— 这类记录保存后还要单独标记付款才会出流水。" /></template>
         <el-radio-group v-model="form.direction">
           <el-radio-button value="in">公司应付增加</el-radio-button>
           <el-radio-button value="out">已付合伙人</el-radio-button>
         </el-radio-group>
-        <div class="field-hint">
-          「公司应付增加」用于合伙人替公司垫钱（开办费、垫资、借款）；
-          「已付合伙人」用于还款、报销、发工资 —— 这类记录保存后还要单独标记付款才会出流水。
-        </div>
       </el-form-item>
       <el-form-item label="金额" prop="amount">
         <el-input-number v-model="form.amount" :min="0.01" :precision="2" style="width: 100%" />
@@ -37,6 +34,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
 import AppSelect from '../AppSelect.vue'
+import FieldTip from '../FieldTip.vue'
 import type { PartnerAdvanceItem } from '../../api/types'
 import { ADVANCE_SUBJECT_OPTIONS } from '../../utils/constants'
 
@@ -92,12 +90,3 @@ async function handleSubmit(): Promise<void> {
   emit('submit', { ...form, remarks: form.remarks || null })
 }
 </script>
-
-<style scoped>
-.field-hint {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--sk-text-tertiary);
-}
-</style>

@@ -760,6 +760,12 @@ html.dark .el-popper {
   border-color: var(--border-color);
 }
 
+/* 菜单项里的图标间距：EP 的 `.el-dropdown-menu__item i { margin-right: 5px }` 会同时命中
+   el-icon 和它内部的 WeUI 图标（也是 <i>），内层那份要去掉，否则间距变成 10px */
+.el-dropdown-menu__item .el-icon i {
+  margin-right: 0;
+}
+
 html.dark .el-dropdown-menu {
   --el-dropdown-menu-bg-color: var(--bg-color-secondary);
   background-color: var(--bg-color-secondary);
@@ -2499,6 +2505,13 @@ html.dark .page-container .el-descriptions__content {
     font-size: 17px;
     line-height: 1.4117647;
     color: var(--m-fg-0);
+  }
+
+  /* 带叹号说明（FieldTip）的 label 放开 5em 上限：17px 字号下 85px 装不下
+     「文字 + 图标」，超出部分会溢出压住输入框。放开后 label 自适应内容，
+     content 仍有 200px 以上余量。 */
+  .el-dialog__body .el-form-item__label:has(.field-tip) {
+    max-width: none;
   }
 
   .page-container .el-form-item__content,

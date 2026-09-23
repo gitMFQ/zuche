@@ -76,11 +76,11 @@
             <span class="color-value">{{ form.color }}</span>
           </div>
         </el-form-item>
-        <el-form-item label="服务费" prop="commission_rate">
+        <el-form-item prop="commission_rate">
+          <template #label>服务费<FieldTip content="平台服务费百分比，如 10 表示收取10%服务费" /></template>
           <el-input v-model.number="form.commission_rate" type="number" :min="0" :max="100" placeholder="服务费比例">
             <template #append>%</template>
           </el-input>
-          <div class="form-tip">平台服务费百分比，如 10 表示收取10%服务费</div>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
@@ -97,6 +97,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import FieldTip from './FieldTip.vue'
 import { orderSourceApi } from '../api'
 import { useDictStore } from '../stores/dict'
 
@@ -258,13 +259,4 @@ onMounted(() => loadData())
   }
 }
 
-.form-tip {
-  font-size: 12px;
-  color: var(--sk-color-info);
-  margin-top: 4px;
-}
-
-html.dark .form-tip {
-  color: var(--text-color-secondary);
-}
 </style>

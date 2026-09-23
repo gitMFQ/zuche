@@ -15,7 +15,7 @@
         <tr v-for="item in schedules" :key="item.id" @click="emit('row-click', item.id)" class="schedule-row">
           <td class="time-cell">{{ formatScheduleTime(item.schedule_time) }}</td>
           <td class="type-cell"><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
-          <td class="plate-cell schedule-plate">{{ item.plate_number }}</td>
+          <td class="plate-cell schedule-plate" :class="item.is_new_energy ? 'is-new-energy' : 'is-fuel'">{{ item.plate_number }}</td>
           <td class="schedule-platform-cell"><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
           <td class="location-cell">{{ item.location || '-' }}</td>
         </tr>
@@ -174,8 +174,16 @@ function formatScheduleTime(date: string) {
 }
 
 .schedule-plate {
-  color: #007bff;
   font-weight: 500;
+}
+
+/* 车牌配色与全站一致：新能源绿 / 燃油蓝（同 style.css 的 .plate-number） */
+.schedule-plate.is-new-energy {
+  color: #00a870;
+}
+
+.schedule-plate.is-fuel {
+  color: #0066cc;
 }
 
 .schedule-platform-cell {
@@ -277,6 +285,8 @@ function formatScheduleTime(date: string) {
 /* 调度表格暗色模式 */
 html.dark .schedule-table {
   border-color: var(--border-color);
+  /* 表格自带底色：导出图片时卡片底不会被一起截取，否则奇数行会漏出白底 */
+  background-color: var(--bg-color-secondary);
 }
 
 html.dark .schedule-table th {
@@ -295,9 +305,5 @@ html.dark .schedule-table tr:nth-child(even) {
 
 html.dark .schedule-table tr:hover {
   background-color: var(--hover-bg-color);
-}
-
-html.dark .schedule-plate {
-  color: var(--primary-color);
 }
 </style>

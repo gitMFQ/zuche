@@ -44,20 +44,20 @@
       <el-form-item label="平台管理费">
         <el-input-number v-model="form.platform_fee" :min="0" :precision="2" style="width: 100%" />
       </el-form-item>
-      <el-form-item label="结算金额">
+      <el-form-item>
+        <template #label>结算金额<FieldTip content="默认 = 合计 − 平台管理费，可直接改" /></template>
         <el-input-number v-model="form.settlement_amount" :min="0" :precision="2" style="width: 100%" />
-        <div class="field-hint">默认 = 合计 − 平台管理费，可直接改</div>
       </el-form-item>
       <el-form-item label="公司管理费">
         <el-input-number v-model="form.company_fee" :min="0" :precision="2" style="width: 100%" />
       </el-form-item>
-      <el-form-item label="其他费用">
+      <el-form-item>
+        <template #label>其他费用<FieldTip content="正数 = 车主承担（过路费/洗车/补气），负数 = 反向补贴" /></template>
         <el-input-number v-model="form.other_fee" :precision="2" style="width: 100%" />
-        <div class="field-hint">正数 = 车主承担（过路费/洗车/补气），负数 = 反向补贴</div>
       </el-form-item>
-      <el-form-item label="车主结算金额">
+      <el-form-item>
+        <template #label>车主结算金额<FieldTip content="默认 = 结算金额 − 公司管理费 − 其他费用" /></template>
         <el-input-number v-model="form.owner_amount" :precision="2" style="width: 100%" />
-        <div class="field-hint">默认 = 结算金额 − 公司管理费 − 其他费用</div>
       </el-form-item>
       <el-form-item label="调整原因">
         <el-input v-model="form.override_note" placeholder="如：机场过路费7元+补气5元" />
@@ -88,6 +88,7 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
+import FieldTip from '../FieldTip.vue'
 import type { SettlementLineItem } from '../../api/types'
 import { formatMoney, moneyClass } from '../../utils/money'
 
@@ -196,13 +197,6 @@ function handleRestoreAuto(): void {
 }
 
 .meta-row .label {
-  color: var(--sk-text-tertiary);
-}
-
-.field-hint {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.4;
   color: var(--sk-text-tertiary);
 }
 </style>

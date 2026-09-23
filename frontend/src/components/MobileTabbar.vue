@@ -20,7 +20,8 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
-import { DataAnalysis, Money, Van } from '@element-plus/icons-vue'
+import { DataAnalysis, Money } from '@element-plus/icons-vue'
+import CarIcon from './CarIcon.vue'
 import { matchTabPath, type TabPath } from '../utils/nav'
 
 /**
@@ -31,13 +32,13 @@ import { matchTabPath, type TabPath } from '../utils/nav'
  */
 /**
  * 图标有两种来源：WeUI 图标集里有对应的用 class（见 AGENTS.md「移动端图标」），
- * 没有对应的（总览/车辆/财务）继续用 Element Plus 图标组件 —— 混搭是 WeUI 图标集
- * 覆盖不到这些语义导致的，不是遗漏。
+ * 没有对应的（总览/财务）继续用 Element Plus 图标组件，车辆用 CarIcon（两套图标库
+ * 都没有轿车）—— 混搭是 WeUI 图标集覆盖不到这些语义导致的，不是遗漏。
  */
 const TABS: { path: TabPath; label: string; icon?: Component; weuiIcon?: string }[] = [
   { path: '/dashboard', label: '总览', icon: DataAnalysis },
   { path: '/orders', label: '订单', weuiIcon: 'weui-icon-outlined-note' },
-  { path: '/vehicles', label: '车辆', icon: Van },
+  { path: '/vehicles', label: '车辆', icon: CarIcon },
   { path: '/finance', label: '财务', icon: Money },
   { path: '/customers', label: '客户', weuiIcon: 'weui-icon-outlined-contacts' }
 ]

@@ -18,9 +18,9 @@
       <el-form-item label="年份" prop="fiscal_year">
         <el-input-number v-model="form.fiscal_year" :min="2000" :max="2100" style="width: 100%" />
       </el-form-item>
-      <el-form-item label="结转金额" prop="amount">
+      <el-form-item prop="amount">
+        <template #label>结转金额<FieldTip content="正数 = 公司应付车主；负数 = 车主欠公司" /></template>
         <el-input-number v-model="form.amount" :precision="2" style="width: 100%" />
-        <div class="field-hint">正数 = 公司应付车主；负数 = 车主欠公司</div>
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" placeholder="如：2024年余额" />
@@ -39,6 +39,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { OwnerOption, VehicleItem } from '../../api/types'
 import AppSelect from '../AppSelect.vue'
+import FieldTip from '../FieldTip.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -89,12 +90,3 @@ async function handleSubmit(): Promise<void> {
   emit('submit', { ...form, vehicle_id: form.vehicle_id || null, remarks: form.remarks || null })
 }
 </script>
-
-<style scoped>
-.field-hint {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--sk-text-tertiary);
-}
-</style>

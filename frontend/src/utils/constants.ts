@@ -133,7 +133,7 @@ export const VEHICLE_CATEGORY_OPTIONS = [
   { label: '其他', value: 'other' }
 ]
 
-// 车主 / 合伙人身份
+// 车主身份
 export const OWNER_ROLE_TEXT_MAP: Record<string, string> = {
   owner: '挂靠车主',
   partner: '合伙人',

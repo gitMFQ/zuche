@@ -13,7 +13,7 @@
       <el-tab-pane label="运营开支" name="operating-expenses" lazy>
         <OperatingExpensesTab v-if="loaded['operating-expenses']" />
       </el-tab-pane>
-      <el-tab-pane label="车主 / 合伙人" name="owners" lazy>
+      <el-tab-pane label="车主" name="owners" lazy>
         <OwnersTab v-if="loaded.owners" />
       </el-tab-pane>
       <el-tab-pane label="报表" name="reports" lazy>
