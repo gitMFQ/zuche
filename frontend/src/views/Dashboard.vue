@@ -66,12 +66,12 @@
     </el-row>
 
     <!-- 调度完整视图对话框 -->
-    <el-dialog v-model="scheduleDialogVisible" title="待收送 - 完整视图" width="90%" :style="{ maxWidth: '600px' }">
+    <el-dialog v-model="scheduleDialogVisible" class="full-view-dialog" title="待收送 - 完整视图" width="90%" :style="{ maxWidth: '600px' }">
       <ScheduleTable :schedules="schedules" full-view @row-click="showScheduleOrderDetail" />
     </el-dialog>
 
     <!-- 甘特图完整视图对话框 -->
-    <el-dialog v-model="ganttDialogVisible" title="库存日历 - 完整视图" width="95%" :style="{ maxWidth: '1400px' }">
+    <el-dialog v-model="ganttDialogVisible" class="full-view-dialog" title="库存日历 - 完整视图" width="95%" :style="{ maxWidth: '1400px' }">
       <template #header>
         <div class="card-header dialog-header">
           <span class="dialog-title">库存日历 - 完整视图</span>
@@ -536,6 +536,34 @@ onMounted(async () => {
 
 /* 窄屏：标题让位给日期选择器 */
 @media (max-width: 767px) {
+  /* 移动端把「待收送」挪到「库存日历」前面：日历是 91 天 × 全车辆的宽表，
+     在手机上要滑很久才看到今天的收送，而待收送才是进来最先要看的东西。
+     桌面端保持「日历在上」—— 那里是两列并排、日历本来就是主视图 */
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard > .schedule-section {
+    order: 1;
+  }
+
+  .dashboard > .gantt-card {
+    order: 2;
+  }
+
+  /* 两个「完整视图」弹窗：调度表列多、甘特图是 91 天 × 全车辆的宽表，
+     全局 sheet 给 body / header 的左右 24px 会把它们挤在中间。
+     内容（表格 / 日历）整行铺开，头部保留 16px —— 标题和日期选择器不至于贴着屏幕边。
+     弹窗会 teleport 到 body，所以这里用不带祖先的 :deep() */
+  :deep(.full-view-dialog .el-dialog__header) {
+    padding: 8px 16px 12px;
+  }
+
+  :deep(.full-view-dialog .el-dialog__body) {
+    padding: 8px 0 16px;
+  }
+
   .dialog-title {
     display: none;
   }

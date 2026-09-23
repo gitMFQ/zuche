@@ -27,9 +27,7 @@
           <el-input-number v-model="form.payment_amount" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item label="支付方式">
-          <el-select v-model="form.payment_method" placeholder="选择支付方式" style="width: 100%">
-            <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+          <AppSelect v-model="form.payment_method" :options="PAYMENT_METHOD_OPTIONS" placeholder="选择支付方式" style="width: 100%" />
         </el-form-item>
       </template>
     </el-form>
@@ -45,6 +43,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PAYMENT_METHOD_OPTIONS } from '../../utils/constants'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { formatDateTime } from '../../utils/helpers'
 
 /**

@@ -2,14 +2,10 @@
   <el-dialog v-model="dialogVisible" title="账户划转" width="90%" :style="{ maxWidth: '440px' }">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
       <el-form-item label="转出" prop="from_account_id">
-        <el-select v-model="form.from_account_id" placeholder="选择转出账户" style="width: 100%">
-          <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-        </el-select>
+        <AppSelect v-model="form.from_account_id" :options="accountOptions" placeholder="选择转出账户" style="width: 100%" />
       </el-form-item>
       <el-form-item label="转入" prop="to_account_id">
-        <el-select v-model="form.to_account_id" placeholder="选择转入账户" style="width: 100%">
-          <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-        </el-select>
+        <AppSelect v-model="form.to_account_id" :options="accountOptions" placeholder="选择转入账户" style="width: 100%" />
       </el-form-item>
       <el-form-item label="金额" prop="amount">
         <el-input-number v-model="form.amount" :min="0.01" :precision="2" :step="1000" style="width: 100%" />
@@ -36,6 +32,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { AccountOption } from '../../api/types'
 
 const props = defineProps<{
@@ -58,6 +55,9 @@ const dialogVisible = computed({
 
 const formRef = ref<FormInstance>()
 const form = reactive({ from_account_id: '', to_account_id: '', amount: 0, transfer_date: '', remarks: '' })
+
+// AppSelect 的选项
+const accountOptions = computed(() => props.accounts.map((a) => ({ label: a.name, value: a.id })))
 
 const rules: FormRules = {
   from_account_id: [{ required: true, message: '请选择转出账户', trigger: 'change' }],

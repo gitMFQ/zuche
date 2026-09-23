@@ -234,18 +234,30 @@ pending (待取车) → active (已取车) → completed (已还车)
   语义是分享不是上传）—— 这些继续用 `@element-plus/icons-vue`，侧栏与 tabbar 的混排是既定事实，
   不是待修的 bug。
 - **移动端导航**：`MobileTabbar.vue` 只在移动端渲染，固定 60px（另加 `env(safe-area-inset-bottom)`），包含总览/订单/车辆/财务/客户 5 项；`utils/nav.ts` 的 `matchTabPath` 用前缀匹配，`/orders/import` 与 `/orders/:id` 都归属订单。设置入口在顶部用户下拉菜单，仅 admin 显示。
+- **沉浸式详情页**：路由 `meta.immersive: true`（目前只有订单详情 `/orders/:id`）时，移动端把全局顶栏与
+  `MobileTabbar` 一起隐藏、内容区 `.main.is-immersive` 去掉内边距并撑满视口，页面自己把顶部一行 sticky 到顶、
+  底部操作行 fixed 到底（见 `views/OrderDetail.vue` 的 `@media (max-width: 767px)`）。桌面端不受影响。
 - **移动端列表**：`.mobile-card*` 是历史 class 名，移动端实际承载 WeUI cells：分组间距 8px；外壳无圆角、无阴影；外壳上下与行间使用 0.5px hairline；卡片内数据行 44px / 15px，整项导航 cell 56px；`.is-block` 与两列金额网格使用 auto 高度。新增列表优先复用这些 class，不要再在各组件 scoped 复制卡片外壳样式。
 - **移动端弹窗**：全局 `style.css` 会把 `el-dialog` 转成底部 sheet（顶部 12px 圆角、最高 75vh、40×4px 下拉手柄、0.3s ease）；新增弹窗不需要另外写移动端结构。footer 按钮 64px 高，移动端不使用圆角卡片按钮。`page-container .el-dialog__*` 规则要与全局 sheet 规则保持相同或更高特异性。`OwnersTab` 的两个长表格使用 `el-drawer`，移动端全宽右侧抽屉。
 - **移动端表单**：`style.css` 末尾的「Mobile WeUI Form」把移动端所有表单统一成 WeUI cells —— 弹窗 sheet、页面筛选栏、设置页走同一套规则：表单项 56px 行 / 17px / 左右 16px / 行间 0.5px hairline（左缩进 16px），label `max-width: 5em` + 8px 间距、值与 placeholder 左对齐，输入框与选择器去盒子（透明底、无描边、24px 行高），开关 52×32 摆行尾，单选/多选是 22px 圆形，`el-divider` 当分组标题（14px 灰字、无横线）。**新增表单不要再写移动端 scoped 样式**，也不要给控件写死宽度（选择器用 `width: 100% !important` 统一拉满）。两条硬约束：label 宽度是 EP 写的**内联 style**，只能 `width: auto !important` 压；弹窗里的表单靠 `.el-dialog__body > .el-form` 的负外边距贴边，只对直接子级生效。登录页（`.login-form`）刻意排除在这套规则外 —— 它落在灰底上没有卡片外壳，去盒子后输入框会隐形。
 - **移动端日期选择**：日期/时间选择一律用 `components/AppDatePicker.vue`（桌面端渲染 `el-date-picker`，移动端渲染 WeUI 底部滚轮 sheet；`type` 支持 `date` / `month` / `datetime`，datetime 是年/月/日/时/分五列滚轮）。不要再写 `v-if="isMobile"` + 原生 `input[type=date]` 双轨；`input[type=month]` 在 iOS Safari 上不支持（会退化成手打文本框），月份选择只能走这个组件。滚轮的列数据与闰年/大小月联动在 `utils/wheelPicker.ts`，改它必须让 `test/wheelPicker.test.ts` 通过。日期区间（daterange）的移动端是 `.mobile-date-range` 里并排的两个 `AppDatePicker`（双月面板 646px 宽放不进手机，桌面端仍用 `el-date-picker type="daterange"`）。
+- **移动端下拉选择**：下拉选择一律用 `components/AppSelect.vue`（桌面端渲染 `el-select`，移动端渲染 el-input 触发器 + WeUI **单列滚轮** sheet）。与 `el-select` 的唯一用法差异：选项从 `<el-option>` children 改成 `options` 数组（`{ label, value }`，值统一是字符串），其余属性（`placeholder` / `clearable` / `disabled` / `filterable` / `style` / `class`）照旧。**不要再写 `el-select` + `<el-option>`** —— 移动端会退化成 EP 的 popper 浮层。滚轮行为：`clearable` 的首行是「不限」（等价清空）、`filterable` 或选项数 > 8 时 sheet 里带搜索行、值不在选项里时插原值占位行（避免「确定」被静默改成第一项）。选项拼接、定位与过滤在 `utils/selectPicker.ts`，改它必须让 `test/selectPicker.test.ts` 通过。
 - **移动端主题变量**：`--m-*` 只在 `style.css` 的 `@media (max-width: 767px)` 中定义；硬编码 rgba 强调色统一用 `rgba(var(--sk-focus-color-rgb), alpha)`，hover 用 `var(--sk-focus-color-hover)`，避免移动端换绿漏色。`index.html` 的 viewport 必须含 `viewport-fit=cover`。
 - **已知样式陷阱**：Finance 根元素同时是 `.page-container.finance-page`，选择器必须写成无空格的 `.page-container.finance-page`；`el-dialog` teleport 到 body，不能只依赖 `.page-container .el-dialog`。全局 `style.css:1377` 的 `.dashboard .order-detail-dialog :deep(.el-dialog)` 位于普通 CSS 文件中，`:deep()` 不会展开，不要仿照此写法。
 - **页面宽度**：业务页容器（`.page-container` / 首页的 `.dashboard`）**不设 `max-width`**，
   一律铺满主内容区；不要在 scoped 里加 `max-width: 1200px; margin: 0 auto`。
-  唯一例外是订单详情页（600px 单列，它的按钮是整行 `block` 的）
+  唯一例外是订单详情页（600px 单列；它的动作卡在桌面端是一个按钮一整行，移动端是页面末尾一行
+  等分的两个字按钮 —— 见 `views/OrderDetail.vue` 的 `@media (max-width: 767px)`）
+- **`<el-button block>` 是无效属性**：Element Plus 2.14 里没有 `.el-button.is-block`（只有
+  `el-segmented` 有），写了不报错也不生效。要整行宽自己写 `width: 100%`（或 flex 等分）
 - **表格列宽**：`<el-table-column>` 用 `min-width` 而不是 `width`。全列写死 `width` 时
   Element Plus 会把表格宽度定死为列宽之和（`table-layout` 里弹性列为空的分支），
   容器再宽表格也不铺满、右侧留一条空白
+- **分页**：全站一套，样式收在 `style.css` 的 `.page-container .el-pagination`（右对齐 + 12px 上间距，
+  `flex-wrap` + `row-gap` 防溢出），组件 props 也统一成 `layout="total, sizes, prev, pager, next"` +
+  `:page-sizes="[10, 20, 50, 100]"` + `background`。**不要再在页面 scoped 里写 `.pagination`** ——
+  原先 6 个页面各写一份「16px + 移动端居中」，与财务页不一致。移动端会自动隐藏 sizes 下拉与 jumper、
+  页码按钮 28px（见「Mobile Responsive」段）
 - **图片导出**：调度图导出用 `html2canvas`
 - **同源部署**：前后端同一个域，图片直接用后端返回的 `/uploads/...` 相对路径，不要拼域名
 - **图片链接**：一律经 `getImageUrl`（`/cdn-cgi/image/width=600,format=auto` 前缀），

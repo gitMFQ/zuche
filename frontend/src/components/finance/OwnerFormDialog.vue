@@ -5,9 +5,7 @@
         <el-input v-model="form.name" placeholder="车主 / 合伙人姓名" />
       </el-form-item>
       <el-form-item label="身份" prop="role">
-        <el-select v-model="form.role" style="width: 100%">
-          <el-option v-for="o in OWNER_ROLE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
+        <AppSelect v-model="form.role" :options="OWNER_ROLE_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item label="公司费率(%)" prop="company_fee_rate">
         <el-input-number v-model="form.company_fee_rate" :min="0" :max="100" :precision="2" style="width: 100%" />
@@ -51,6 +49,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { OwnerItem } from '../../api/types'
 import { OWNER_ROLE_OPTIONS } from '../../utils/constants'
 

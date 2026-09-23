@@ -93,44 +93,24 @@ watch(
 
 <style scoped>
 @media (max-width: 767px) {
-  /* WeUI navbar：财务 tab 多，允许横向滚动，不把标签压缩成看不清的 12px */
+  /* 移动端页签统一成客户管理那套：Element 默认的透明底 + 下划线，不再做 56px 白底条。
+     财务有 6 个页签，保留横向滚动（不压缩成看不清的小字），并把 border-card 的边框
+     与内容 15px 内边距去掉 —— 客户管理 / 车辆那两处移动端也是通栏无框的 */
+  .finance-tabs {
+    border: none;
+  }
+
   .finance-tabs :deep(.el-tabs__header) {
-    height: 56px;
-    margin: 0 0 8px;
-    overflow-x: auto;
-    background: var(--m-bg-cell);
+    margin: 0 0 12px;
+    background: transparent;
   }
 
   .finance-tabs :deep(.el-tabs__nav-wrap) {
     overflow-x: auto;
   }
 
-  .finance-tabs :deep(.el-tabs__nav-wrap::after) {
-    height: 1px;
-    background: var(--m-line);
-    transform: scaleY(0.5);
-    transform-origin: 0 0;
-  }
-
   .finance-tabs :deep(.el-tabs__nav) {
     min-width: max-content;
-  }
-
-  .finance-tabs :deep(.el-tabs__item) {
-    height: 56px;
-    padding: 0 16px;
-    font-size: 17px;
-    color: var(--m-fg-1);
-  }
-
-  .finance-tabs :deep(.el-tabs__item.is-active) {
-    color: var(--m-fg-0);
-    font-weight: 500;
-    background: var(--m-active);
-  }
-
-  .finance-tabs :deep(.el-tabs__active-bar) {
-    display: none;
   }
 
   .finance-tabs :deep(.el-tabs__content) {

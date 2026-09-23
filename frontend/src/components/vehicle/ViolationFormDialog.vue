@@ -16,21 +16,15 @@
       </el-form-item>
       <el-form-item label="关联订单" v-if="form.violation_date">
         <div class="order-select-wrapper">
-          <el-select
+          <AppSelect
             v-model="form.order_id"
+            :options="orderOptions"
             :placeholder="recommendedOrders.length ? '推荐订单' : '无匹配订单'"
             clearable
             filterable
             style="width: 100%"
             @change="onOrderChange"
-          >
-            <el-option
-              v-for="o in recommendedOrders"
-              :key="o.id"
-              :label="`${o.order_no} - ${o.customer_name} (${o.plate_number}) ${o.start_date}~${o.end_date}`"
-              :value="o.id"
-            />
-          </el-select>
+          />
           <div class="form-tip" v-if="recommendedOrders.length">
             <el-icon><i class="weui-icon-filled-info" /></el-icon>
             找到 {{ recommendedOrders.length }} 个该时段的租车订单
@@ -118,9 +112,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { violationApi, orderApi, uploadApi, type OrderListItem } from '../../api'
 import { getImageUrl } from '../../utils/helpers'
 
@@ -149,6 +144,14 @@ const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const fileInput = ref<HTMLInputElement>()
 const recommendedOrders = ref<OrderListItem[]>([])
+// AppSelect 的选项。这个是全项目最长的 label（订单号-客户-车牌-起止），
+// 手机上滚轮居中一行放不下，会截断尾部，前缀的订单号与客户名可见
+const orderOptions = computed(() =>
+  recommendedOrders.value.map((o) => ({
+    label: `${o.order_no} - ${o.customer_name} (${o.plate_number}) ${o.start_date}~${o.end_date}`,
+    value: o.id
+  }))
+)
 
 const visible = ref(props.modelValue)
 watch(

@@ -236,11 +236,24 @@ export const INVOICE_STATUS_OPTIONS = [
   { label: '已开', value: 'issued' }
 ]
 
+// 付款状态（车辆费用 / 运营开支台账的 is_paid 筛选）。
+// 值是字符串 '1'/'0'：后端按 `is_paid === '0' || is_paid === '1'` 判定，
+// 改成数字会让 `query.is_paid || undefined` 这类判空写法的行为变掉
+export const PAID_STATUS_OPTIONS = [
+  { label: '已付款', value: '1' },
+  { label: '未付款', value: '0' }
+]
+
 // 结算行状态
 export const SETTLEMENT_LINE_STATUS_TEXT_MAP: Record<string, string> = {
   posted: '正常',
   void: '已作废'
 }
+
+export const SETTLEMENT_LINE_STATUS_OPTIONS = [
+  { label: '正常', value: 'posted' },
+  { label: '已作废', value: 'void' }
+]
 
 // 结算行来源
 export const SETTLEMENT_SOURCE_TYPE_TEXT_MAP: Record<string, string> = {
@@ -289,4 +302,64 @@ export const PAYOUT_TYPE_OPTIONS = [
   { label: '结车款', value: 'settlement' },
   { label: '预付款', value: 'advance' },
   { label: '调整', value: 'adjust' }
+]
+
+// ==================== 列表与表单下拉选项 ====================
+// 下面这些原本是各组件模板里写死的 <el-option>；改成 AppSelect 后统一收在这里 ——
+// 桌面端 el-select、移动端滚轮渲染的都是同一份数据。
+
+// 车辆状态。表单是 4 项；车辆列表的筛选历史上只给前 3 项（筛不了「不可用」）——
+// 这是既有口径，两个常量各自独立，别合并
+export const VEHICLE_STATUS_OPTIONS = [
+  { label: '可用', value: 'available' },
+  { label: '已出租', value: 'rented' },
+  { label: '维修中', value: 'maintenance' },
+  { label: '不可用', value: 'unavailable' }
+]
+
+export const VEHICLE_STATUS_FILTER_OPTIONS = [
+  { label: '可用', value: 'available' },
+  { label: '已出租', value: 'rented' },
+  { label: '维修中', value: 'maintenance' }
+]
+
+// 变速箱 / 动力类型 / 车身类型：这几个字段存的就是中文原文，label 与 value 相同
+export const VEHICLE_TRANSMISSION_OPTIONS = [
+  { label: '自动', value: '自动' },
+  { label: '手动', value: '手动' }
+]
+
+export const VEHICLE_FUEL_TYPE_OPTIONS = [
+  { label: '汽油', value: '汽油' },
+  { label: '柴油', value: '柴油' },
+  { label: '混动', value: '混动' },
+  { label: '纯电', value: '纯电' }
+]
+
+export const VEHICLE_BODY_TYPE_OPTIONS = [
+  { label: '轿车', value: '轿车' },
+  { label: 'SUV', value: 'SUV' },
+  { label: 'MPV', value: 'MPV' },
+  { label: '皮卡', value: '皮卡' }
+]
+
+// 年检列表的筛选状态
+export const INSPECTION_STATUS_OPTIONS = [
+  { label: '有效', value: 'valid' },
+  { label: '已过期', value: 'expired' },
+  { label: '未登记', value: 'none' }
+]
+
+// 用户角色
+export const USER_ROLE_OPTIONS = [
+  { label: '管理员', value: 'admin' },
+  { label: '员工', value: 'staff' }
+]
+
+// 订单列表排序（值会经 useQuerySync 写进 URL，不能改）
+export const ORDER_SORT_OPTIONS = [
+  { label: '取车时间↑', value: 'start_date_asc' },
+  { label: '取车时间↓', value: 'start_date_desc' },
+  { label: '还车时间↑', value: 'end_date_asc' },
+  { label: '还车时间↓', value: 'end_date_desc' }
 ]

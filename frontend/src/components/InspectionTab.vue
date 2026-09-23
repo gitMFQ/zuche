@@ -8,11 +8,7 @@
           <el-input v-model="searchForm.keyword" placeholder="车牌/品牌" clearable @keyup.enter="loadData" style="width: 140px" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="searchForm.status" placeholder="年检状态" clearable style="width: 100px">
-            <el-option label="有效" value="valid" />
-            <el-option label="已过期" value="expired" />
-            <el-option label="未登记" value="none" />
-          </el-select>
+          <AppSelect v-model="searchForm.status" :options="INSPECTION_STATUS_OPTIONS" placeholder="年检状态" clearable style="width: 100px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="loadData">搜索</el-button>
@@ -123,8 +119,8 @@
       v-model:current-page="pagination.page"
       v-model:page-size="pagination.pageSize"
       :total="pagination.total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, prev, pager, next"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
       background
       class="pagination"
       @size-change="loadData"
@@ -200,8 +196,10 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { inspectionApi, uploadApi } from '../api'
 import AppDatePicker from './AppDatePicker.vue'
+import AppSelect from './AppSelect.vue'
 import MobileFilterPanel from './MobileFilterPanel.vue'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
+import { INSPECTION_STATUS_OPTIONS } from '../utils/constants'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -472,17 +470,6 @@ onMounted(() => {
   .hide-mobile {
     display: table;
   }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-.pagination {
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 
 .vehicle-info {

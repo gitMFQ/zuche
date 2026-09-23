@@ -1115,6 +1115,24 @@ html.dark ::-webkit-scrollbar-thumb {
   background-color: transparent;
 }
 
+/* 移动端不显示容器滚动条：触屏本来就靠手势滚动，6px 的条子只会占宽度、压住内容
+   （调度表那种横向滚动的表格最明显）。scrollbar-width / ::-webkit-scrollbar 只改外观，
+   滚动本身不受影响；桌面端保留上面那套 Apple 细条 */
+@media (max-width: 767px) {
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Element Plus 自带的滚动条组件（表格 body、下拉弹层等会包一层）的拇指条 */
+  .el-scrollbar__bar {
+    display: none;
+  }
+}
+
 /* ========================================
    Mobile Responsive
    ======================================== */
@@ -1132,9 +1150,12 @@ html.dark ::-webkit-scrollbar-thumb {
     font-size: 1.75rem; /* 28px on mobile */
   }
 
-  /* Larger touch targets */
+  /* Larger touch targets + WeUI 按钮圆角（8px；EP 默认是 4px）。
+     弹窗 footer 的文字按钮是 WeUI 的另一套（radius 0 + 竖 hairline），
+     选择器特异性更高，不受这条影响 */
   .el-button {
     min-height: 44px;
+    border-radius: 8px;
   }
 
   /* Form item spacing */
@@ -1621,9 +1642,16 @@ html.dark .page-container .el-dialog__footer {
   border-top-color: rgba(255, 255, 255, 0.08);
 }
 
-/* 分页组件 */
+/* 分页组件：全站一套（右对齐 + 12px 上间距）。
+ * 原先只有财务页这么写（`.finance-page .pagination`），其它 6 个页面各自在 scoped 里
+ * 写了一份「16px + 移动端居中」，所以各页分页长得不一样 —— 现在统一收在这里，
+ * 那里重复的规则已删。flex-wrap + row-gap 保证分页项多时贴右下换行、不横向溢出。 */
 .page-container .el-pagination {
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  margin-top: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 /* 表单输入框 */
@@ -1746,11 +1774,6 @@ html.dark .page-container .el-descriptions__content {
   display: none;
 }
 
-.finance-page .pagination {
-  margin-top: 12px;
-  justify-content: flex-end;
-}
-
 @media (min-width: 768px) {
   .page-container.finance-page .mobile-cards,
   .page-container .logs-tab .mobile-cards {
@@ -1775,7 +1798,6 @@ html.dark .page-container .el-descriptions__content {
   }
 
   .finance-page .search-card .el-form-item__content,
-  .finance-page .search-card .el-select,
   .finance-page .search-card .el-input,
   .finance-page .search-card .el-date-editor {
     width: 100%;
@@ -1815,6 +1837,10 @@ html.dark .page-container .el-descriptions__content {
     --m-fg-2: rgba(0, 0, 0, 0.3);
     --m-line: rgba(0, 0, 0, 0.1);
     --m-active: #ececec; /* WeUI BG-COLOR-ACTIVE，点击态 */
+
+    /* WeUI 的 12×24 右箭头（weui-select.less 的原图）。只做 mask 用，
+       颜色一律由 background-color 给（--m-fg-2），所以深色分支不需要另配 */
+    --m-select-chevron: url("data:image/svg+xml,%3Csvg width='12' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.454 6.58l1.06-1.06 5.78 5.779a.996.996 0 010 1.413l-5.78 5.779-1.06-1.061 5.425-5.425-5.425-5.424z' fill='%23B2B2B2' fill-rule='evenodd'/%3E%3C/svg%3E");
 
     /* 强调色 → 微信绿 */
     --sk-focus-color: #07c160;
@@ -2085,13 +2111,23 @@ html.dark .page-container .el-descriptions__content {
     text-align: left;
   }
 
-  /* 操作区：上方一条 hairline，否则一堆按钮像是浮在卡片里 */
+  /* 操作区：上方一条 hairline，否则一堆按钮像是浮在卡片里。
+     按钮与操作栏同一套：一行铺满、不许折行（原来是 flex-wrap: wrap + 按钮自然宽） */
   .page-container .mobile-card-actions {
     position: relative;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
     padding: 10px 16px;
+  }
+
+  /* 默认等分整行（两个按钮时就是一样长）。字号跟卡片数据行一致（15px）——
+     按钮 stretch 到整行后，size="small" 的 12px 字会显得空 */
+  .page-container .mobile-card-actions > .el-button {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    font-size: 15px;
   }
 
   .page-container .mobile-card-actions::before {
@@ -2272,6 +2308,9 @@ html.dark .page-container .el-descriptions__content {
     font-weight: 500;
     line-height: 1.4;
     white-space: normal;
+    /* 背景统一透明后，EP 的彩色按钮还留着自己的白字（success / warning / info），
+       在白底 sheet 上等于隐形 —— 默认给正文色，各类型在下面按语义指定 */
+    color: var(--m-fg-0);
   }
 
   /* 同一行按钮之间的竖向 0.5px hairline。换行后的每行首按钮不画左线。 */
@@ -2288,8 +2327,26 @@ html.dark .page-container .el-descriptions__content {
     color: var(--m-brand);
   }
 
+  /* 其余语义色同样按类型给文字色（透明底之下只剩文字） */
+  .el-dialog__footer .el-button--success {
+    color: var(--sk-color-success);
+  }
+
+  .el-dialog__footer .el-button--warning {
+    color: var(--sk-color-warning);
+  }
+
+  .el-dialog__footer .el-button--info {
+    color: var(--m-fg-1);
+  }
+
   .el-dialog__footer .el-button--danger {
     color: var(--sk-color-danger);
+  }
+
+  /* 禁用态：上面那条默认色会盖掉 EP 自己的 is-disabled 规则（特异性相同、它在前面） */
+  .el-dialog__footer .el-button.is-disabled {
+    color: var(--m-fg-2);
   }
 
   /* OwnersTab 的两处 el-drawer 仍保留右侧抽屉语义（对账单/往来账适合连续滚动），
@@ -2348,7 +2405,8 @@ html.dark .page-container .el-descriptions__content {
  *
  *   .el-form-item        → .weui-cell    56px 行 / 17px / 左右 16px / 顶部 0.5px hairline
  *   .el-form-item__label → .weui-label   max-width 5em + 8px 间距，值与 placeholder 左对齐
- *   el-input / el-select → 去盒子（透明底、无描边），17px、24px 行高
+ *   el-input             → 去盒子（透明底、无描边），17px、24px 行高
+ *                          （下拉也是 el-input：AppSelect 在移动端渲染成触发器）
  *   el-switch            → 52×32 微信开关（WeUI 官方尺寸）
  *   el-radio / checkbox  → 22px 圆形，选中微信绿
  *   el-divider           → .weui-cells__title：14px 灰字分组标题，去掉横线
@@ -2527,48 +2585,9 @@ html.dark .page-container .el-descriptions__content {
 
   /* ---------------- 选择器：值左对齐 + WeUI 右箭头 ---------------- */
 
-  .page-container .el-form-item .el-select__wrapper,
-  .el-dialog__body .el-form-item .el-select__wrapper {
-    min-height: 26px;
-    padding: 0;
-    gap: 4px;
-    box-shadow: none;
-    background-color: transparent;
-    font-size: 17px;
-    line-height: 1.4117647;
-  }
-
-  .page-container .el-form-item .el-select__wrapper.is-focused,
-  .el-dialog__body .el-form-item .el-select__wrapper.is-focused {
-    box-shadow: none;
-  }
-
-  .page-container .el-form-item .el-select__placeholder.is-transparent,
-  .el-dialog__body .el-form-item .el-select__placeholder.is-transparent {
-    color: var(--m-fg-2);
-  }
-
-  /* 箭头换成 WeUI 的 12×24 chevron（weui-select.less 的原图），EP 的 ArrowDown 隐藏 */
-  .page-container .el-form-item .el-select__caret,
-  .el-dialog__body .el-form-item .el-select__caret {
-    --m-select-chevron: url("data:image/svg+xml,%3Csvg width='12' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.454 6.58l1.06-1.06 5.78 5.779a.996.996 0 010 1.413l-5.78 5.779-1.06-1.061 5.425-5.425-5.425-5.424z' fill='%23B2B2B2' fill-rule='evenodd'/%3E%3C/svg%3E");
-    width: 12px;
-    height: 24px;
-    background-color: var(--m-fg-2);
-    -webkit-mask: var(--m-select-chevron) center / contain no-repeat;
-    mask: var(--m-select-chevron) center / contain no-repeat;
-  }
-
-  .page-container .el-form-item .el-select__caret svg,
-  .el-dialog__body .el-form-item .el-select__caret svg {
-    display: none;
-  }
-
-  /* 展开时 EP 会把箭头翻转，WeUI 的箭头方向不变 */
-  .page-container .el-form-item .el-select__caret.is-reverse,
-  .el-dialog__body .el-form-item .el-select__caret.is-reverse {
-    transform: none;
-  }
+  /* 移动端已经没有 el-select 了：下拉统一由 AppSelect 渲染成 el-input 触发器，
+     外壳走上面那条 el-input 规则，WeUI 的 12×24 右箭头见文件末尾的
+     「AppSelect 移动端触发器」区块 */
 
   /* ---------------- 开关：52×32（轨道 FG-3、滑块 28px 白圆） ---------------- */
 
@@ -2777,23 +2796,35 @@ html.dark .page-container .el-descriptions__content {
     padding-right: 0 !important;
   }
 
-  /* ---------------- 只放按钮的行（筛选栏的「搜索」） ---------------- */
+  /* ---------------- 只放按钮的行（筛选栏的「搜索」/「重置」） ---------------- */
 
+  /* 单个按钮铺满整行；两个按钮各占一半（flex-basis 0 保证等宽，不受文字长度影响）。
+     间距用 gap 给：下面那条 margin: 0 是为了消掉 EP 自带的按钮外边距（否则行高会被撑），
+     副作用是「搜索 + 重置」会贴成一块，看不出是两个操作 */
   .page-container .el-form-item__content > .el-button,
   .el-dialog__body .el-form-item__content > .el-button {
     flex: 1 1 auto;
     margin: 0;
   }
 
+  .page-container .el-form-item__content:has(> .el-button + .el-button),
+  .el-dialog__body .el-form-item__content:has(> .el-button + .el-button) {
+    /* WeUI 按钮组的横向间距 */
+    gap: 16px;
+  }
+
+  .page-container .el-form-item__content:has(> .el-button + .el-button) > .el-button,
+  .el-dialog__body .el-form-item__content:has(> .el-button + .el-button) > .el-button {
+    flex: 1 1 0;
+  }
+
   /* 控件铺满整行：搜索栏里的输入框/选择器带着 100-180px 的内联宽度（给桌面布局用的），
      窄屏不拉满的话下拉箭头会停在行中间。内联声明只能靠 !important 压 */
   .page-container .el-form-item .el-input,
   .page-container .el-form-item .el-input-number,
-  .page-container .el-form-item .el-select,
   .page-container .el-form-item .el-date-editor,
   .el-dialog__body .el-form-item .el-input,
   .el-dialog__body .el-form-item .el-input-number,
-  .el-dialog__body .el-form-item .el-select,
   .el-dialog__body .el-form-item .el-date-editor {
     width: 100% !important;
   }
@@ -2913,8 +2944,341 @@ html.dark .page-container .el-descriptions__content {
 
   .mobile-filter-panel__content > .report-toolbar > .el-date-editor,
   .mobile-filter-panel__content > .report-toolbar > .app-date-trigger,
-  .mobile-filter-panel__content > .report-toolbar > .el-select,
+  .mobile-filter-panel__content > .report-toolbar > .app-select-trigger,
   .mobile-filter-panel__content > .report-toolbar > .el-radio-group {
     width: 100% !important;
   }
+}
+
+/* ========================================
+   Mobile Action Bar（仅 <768px）
+   ========================================
+ * 列表上方的操作栏（新建 / 导入 / 导出那一排，全站 13 处）：移动端所有按钮挤在
+ * 一行里铺满整行、不许折行；按钮本身按 WeUI 规格（高 48px、圆角 8px、字 17px）。
+ *
+ * 两个特例：资金流水 / 结算有 4 个按钮，17px 下「生成本期结算」6 个字放不进
+ * 1/4 行宽（375px 屏每格约 80px，6 个字要 102px），这两处降到 15px + 左右内边距 4px。
+ *
+ * 各页 scoped 里的 .action-bar 带 [data-v] 属性选择器，特异性与本条相同且更靠后，
+ * 它们写了 flex-wrap: wrap —— 只能靠 !important 压掉（它们的 gap: 8px 与本条一致，
+ * 不用压）。
+ */
+@media (max-width: 767px) {
+  .page-container .action-bar {
+    display: flex;
+    flex-wrap: nowrap !important;
+    gap: 8px;
+  }
+
+  .page-container .action-bar > .el-button {
+    /* 等分整行：两个按钮时就是一样长（单个按钮同样铺满） */
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    min-height: 48px;
+    border-radius: 8px;
+    font-size: 17px;
+  }
+
+  /* 4 个按钮的页（资金流水 / 结算）：15px 字 + 左右内边距 4px，
+     并且 basis 要改回 auto 按内容分配 —— 写 0 时「生成本期结算」6 个字
+     塞进 1/4 行宽（375px 屏约 80px）会溢出 */
+  .page-container .action-bar:has(> .el-button:nth-child(4)) > .el-button {
+    flex: 1 1 auto;
+    padding: 0 4px;
+    font-size: 15px;
+  }
+}
+
+/* ========================================
+   Mobile WeUI Wheel Sheet（仅移动端渲染）
+   ========================================
+ * AppDatePicker（日期）与 AppSelect（下拉）共用的底部滚轮样式。
+ *
+ * 两个组件都是「桌面端渲染 EP 组件、移动端渲染 el-input 触发器 + teleport 到 body 的
+ * sheet」，sheet 的 DOM 不在组件所在页面里，所以这套样式必须放全局（不能再放各自的
+ * scoped 里各写一份，两份会漂移）。
+ *
+ * 滚轮用 CSS scroll-snap 做吸附（不写惯性模拟），JS 只读滚动位置、不改写；
+ * 单项高 34px 由 utils/wheelPicker.ts 的 WHEEL_ITEM_HEIGHT 单点定义，
+ * 组件注入成 CSS 变量 --m-wheel-item-h。
+ */
+
+.m-wheel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* Element Plus 的弹层 z-index 从 2000 起每次打开 +1，取一个远高于它的值 */
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.m-wheel__mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.m-wheel__sheet {
+  position: relative;
+  background-color: var(--m-bg-cell);
+  border-radius: 12px 12px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 顶部下拉手柄，与全局 sheet 弹窗一致 */
+.m-wheel__sheet::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 2px;
+  background-color: var(--m-bg-page);
+}
+
+.m-wheel__hd {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 8px;
+}
+
+.m-wheel__hd::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: var(--m-line);
+  transform: scaleY(0.5);
+  transform-origin: 0 0;
+}
+
+.m-wheel__btn {
+  min-width: 64px;
+  height: 44px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  font-size: 17px;
+  color: var(--m-fg-1);
+}
+
+.m-wheel__btn--primary {
+  color: var(--m-brand);
+}
+
+.m-wheel__btn:disabled {
+  color: var(--m-fg-2);
+}
+
+.m-wheel__btn:active {
+  background-color: var(--m-active);
+}
+
+.m-wheel__title {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--m-fg-0);
+}
+
+/* AppSelect 的搜索行（filterable 或选项很多时才有）：沿用表格行的写法 ——
+   无盒子、图标 + 输入、行底 0.5px hairline */
+.m-wheel__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  font-size: 17px;
+  color: var(--m-fg-2);
+}
+
+.m-wheel__search::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: var(--m-line);
+  transform: scaleY(0.5);
+  transform-origin: 0 0;
+}
+
+.m-wheel__search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 17px;
+  line-height: 1.4117647;
+  color: var(--m-fg-0);
+  outline: none;
+}
+
+.m-wheel__search-input::placeholder {
+  color: var(--m-fg-2);
+}
+
+.m-wheel__bd {
+  position: relative;
+  display: flex;
+}
+
+.m-wheel__col {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* 可视区固定 7 项高，首尾各留 3 项空白（伪元素撑开，不占容器高度），
+   这样第一项和最后一项也能滚到正中间 */
+.m-wheel__scroll {
+  height: calc(var(--m-wheel-item-h) * 7);
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.m-wheel__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.m-wheel__scroll::before,
+.m-wheel__scroll::after {
+  content: '';
+  display: block;
+  height: calc(var(--m-wheel-item-h) * 3);
+}
+
+.m-wheel__item {
+  height: var(--m-wheel-item-h);
+  line-height: var(--m-wheel-item-h);
+  padding: 0 4px;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: 17px;
+  color: var(--m-fg-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  scroll-snap-align: center;
+}
+
+/* 滚到中间的那一项加重，与上下两条 hairline 一起表示当前选中 */
+.m-wheel__item.is-active {
+  color: var(--m-fg-0);
+  font-weight: 500;
+}
+
+/* 中间选中行的上下 hairline */
+.m-wheel__indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: var(--m-wheel-item-h);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.m-wheel__indicator::before,
+.m-wheel__indicator::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--m-line);
+}
+
+.m-wheel__indicator::before {
+  top: 0;
+  transform: scaleY(0.5);
+  transform-origin: 0 0;
+}
+
+.m-wheel__indicator::after {
+  bottom: 0;
+  transform: scaleY(0.5);
+  transform-origin: 0 100%;
+}
+
+/* 没有可选项 / 搜索无匹配：占住滚轮那块高度，sheet 不会突然变矮 */
+.m-wheel__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(var(--m-wheel-item-h) * 7);
+  font-size: 17px;
+  color: var(--m-fg-2);
+}
+
+/* ---------------- 进出场：遮罩淡入 + sheet 从底部升起 ---------------- */
+
+.m-wheel-enter-active,
+.m-wheel-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.m-wheel-enter-active .m-wheel__sheet,
+.m-wheel-leave-active .m-wheel__sheet {
+  transition: transform 0.3s ease;
+}
+
+.m-wheel-enter-from,
+.m-wheel-leave-to {
+  opacity: 0;
+}
+
+.m-wheel-enter-from .m-wheel__sheet,
+.m-wheel-leave-to .m-wheel__sheet {
+  transform: translateY(100%);
+}
+
+/* ========================================
+   AppSelect 移动端触发器（仅移动端渲染）
+   ========================================
+ * 触发器本身是 el-input，外壳、字号、placeholder 色都走「Mobile WeUI Form」那套
+ * el-input 规则（去盒子 / 17px / 24px 行高）；这里只补 WeUI 的右箭头与清除按钮。
+ * 不放进 <768px 媒体查询里：这个元素由 JS 的 isMobile 决定要不要渲染，
+ * 与 .m-wheel 同一情形。
+ */
+
+.app-select-trigger {
+  cursor: pointer;
+}
+
+.app-select-trigger .el-input__suffix {
+  gap: 4px;
+}
+
+/* WeUI select 的 12×24 chevron，与桌面端 el-select 用的是同一份 data URI */
+.app-select-trigger__chevron {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 12px;
+  height: 24px;
+  background-color: var(--m-fg-2);
+  -webkit-mask: var(--m-select-chevron) center / contain no-repeat;
+  mask: var(--m-select-chevron) center / contain no-repeat;
+}
+
+.app-select-trigger__clear {
+  cursor: pointer;
 }

@@ -5,9 +5,7 @@
         <AppDatePicker v-model="form.expense_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="项目" prop="category">
-        <el-select v-model="form.category" filterable style="width: 100%">
-          <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-        </el-select>
+        <AppSelect v-model="form.category" :options="categoryOptions" filterable style="width: 100%" />
       </el-form-item>
       <el-form-item label="金额" prop="amount">
         <el-input-number v-model="form.amount" :min="0.01" :precision="2" :step="10" style="width: 100%" />
@@ -16,17 +14,13 @@
         <el-input v-model="form.payee" placeholder="可选，如：加油站 / 电信 / 员工姓名" />
       </el-form-item>
       <el-form-item label="发票">
-        <el-select v-model="form.invoice_status" style="width: 100%">
-          <el-option v-for="o in INVOICE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
+        <AppSelect v-model="form.invoice_status" :options="INVOICE_STATUS_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item v-if="!isEdit" label="是否已付款">
         <el-switch v-model="form.is_paid" />
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款账户" prop="account_id">
-        <el-select v-model="form.account_id" placeholder="微信 / 公户" style="width: 100%">
-          <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-        </el-select>
+        <AppSelect v-model="form.account_id" :options="accountOptions" placeholder="微信 / 公户" style="width: 100%" />
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款日期">
         <AppDatePicker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -47,6 +41,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { AccountOption, ExpenseCategoryItem, OperatingExpenseItem } from '../../api/types'
 import { INVOICE_STATUS_OPTIONS } from '../../utils/constants'
 
@@ -70,6 +65,10 @@ const dialogVisible = computed({
 })
 
 const isEdit = computed(() => Boolean(props.expense?.id))
+
+// AppSelect 的选项
+const categoryOptions = computed(() => props.categories.map((c) => ({ label: c.name, value: c.id })))
+const accountOptions = computed(() => props.accounts.map((a) => ({ label: a.name, value: a.id })))
 
 function today(): string {
   return new Date(Date.now() + 8 * 3600 * 1000).toISOString().substring(0, 10)

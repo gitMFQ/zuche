@@ -93,8 +93,8 @@
       v-model:current-page="pagination.page"
       v-model:page-size="pagination.pageSize"
       :total="pagination.total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, prev, pager, next"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
       background
       class="pagination"
       @size-change="loadData"
@@ -114,10 +114,7 @@
           <el-input v-model="form.name" placeholder="请输入姓名" />
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role" style="width: 100%">
-            <el-option label="管理员" value="admin" />
-            <el-option label="员工" value="staff" />
-          </el-select>
+          <AppSelect v-model="form.role" :options="USER_ROLE_OPTIONS" style="width: 100%" />
         </el-form-item>
         <el-form-item label="手机号">
           <el-input v-model="form.phone" placeholder="请输入手机号" type="tel" />
@@ -144,7 +141,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { userApi } from '../api'
+import AppSelect from './AppSelect.vue'
 import MobileFilterPanel from './MobileFilterPanel.vue'
+import { USER_ROLE_OPTIONS } from '../utils/constants'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -323,16 +322,5 @@ html.dark .user-name {
   .hide-mobile {
     display: table;
   }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-.pagination {
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 </style>

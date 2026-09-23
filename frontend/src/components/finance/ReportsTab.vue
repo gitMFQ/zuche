@@ -6,9 +6,7 @@
         <MobileFilterPanel title="单车月报筛选">
           <div class="report-toolbar">
             <AppDatePicker v-model="monthlyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadMonthly" />
-            <el-select v-model="monthlyOwnerId" placeholder="全部车主" clearable style="width: 150px" @change="loadMonthly">
-              <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
-            </el-select>
+            <AppSelect v-model="monthlyOwnerId" :options="ownerOptions" placeholder="全部车主" clearable style="width: 150px" @change="loadMonthly" />
             <el-button :loading="loading.monthly" @click="loadMonthly">刷新</el-button>
             <el-button @click="exportMonthly">导出</el-button>
           </div>
@@ -273,11 +271,12 @@
  * 口径说明见后端 src/controllers/reports.ts 的文件头 —— 三条口径
  * （经营收入 / 结算收入 / 现金余额）不能混着比较。
  */
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import DataState from '../DataState.vue'
 import MobileFilterPanel from '../MobileFilterPanel.vue'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { financeReportApi, ownerApi } from '../../api'
 import type {
   CompanyMonthlyReport,
@@ -302,6 +301,8 @@ function monthStart(): string {
 
 const activeReport = ref('vehicle-monthly')
 const owners = ref<OwnerOption[]>([])
+// AppSelect 的选项
+const ownerOptions = computed(() => owners.value.map((o) => ({ label: o.name, value: o.id })))
 
 const monthlyPeriod = ref(today().substring(0, 7))
 const monthlyOwnerId = ref('')

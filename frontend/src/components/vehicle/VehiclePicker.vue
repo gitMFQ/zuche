@@ -70,8 +70,8 @@
       :current-page="page"
       :page-size="pageSize"
       :total="total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, prev, pager, next"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
       background
       class="pagination"
       @update:current-page="emit('update:page', $event)"
@@ -269,17 +269,6 @@ function onRowClick(row: VehicleRow) {
   .hide-mobile {
     display: table;
   }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-.pagination {
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 
 /* 暗色模式 */

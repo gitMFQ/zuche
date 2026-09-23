@@ -5,19 +5,13 @@
       <el-card shadow="never" class="filter-card">
         <el-form :inline="true" :model="filterForm" class="filter-form">
         <el-form-item label="操作类型">
-          <el-select v-model="filterForm.action" placeholder="全部" clearable style="width: 140px">
-            <el-option v-for="(label, value) in actionTypes" :key="value" :label="label" :value="value" />
-          </el-select>
+          <AppSelect v-model="filterForm.action" :options="actionOptions" placeholder="全部" clearable style="width: 140px" />
         </el-form-item>
         <el-form-item label="实体类型">
-          <el-select v-model="filterForm.entityType" placeholder="全部" clearable style="width: 120px">
-            <el-option v-for="(label, value) in entityTypes" :key="value" :label="label" :value="value" />
-          </el-select>
+          <AppSelect v-model="filterForm.entityType" :options="entityOptions" placeholder="全部" clearable style="width: 120px" />
         </el-form-item>
         <el-form-item label="操作人">
-          <el-select v-model="filterForm.userId" placeholder="全部" clearable filterable style="width: 140px">
-            <el-option v-for="user in users" :key="user.id" :label="user.name" :value="user.id" />
-          </el-select>
+          <AppSelect v-model="filterForm.userId" :options="userOptions" placeholder="全部" clearable filterable style="width: 140px" />
         </el-form-item>
         <el-form-item label="日期范围">
           <el-date-picker
@@ -112,25 +106,26 @@
       </el-table>
     </el-card>
 
-    <!-- 分页放在卡片外：卡片在移动端整体隐藏，分页需要一直可见 -->
-    <div class="pagination-container">
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[20, 50, 100]"
-        :total="pagination.total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchLogs"
-        @current-change="fetchLogs"
-      />
-    </div>
+    <!-- 分页放在卡片外：卡片在移动端整体隐藏，分页需要一直可见。
+         样式（右对齐 + 12px 上间距）由 style.css 的 `.page-container .el-pagination` 统一给 -->
+    <el-pagination
+      v-model:current-page="pagination.page"
+      v-model:page-size="pagination.pageSize"
+      :page-sizes="[10, 20, 50, 100]"
+      :total="pagination.total"
+      layout="total, sizes, prev, pager, next"
+      background
+      @size-change="fetchLogs"
+      @current-change="fetchLogs"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { logApi } from '../api'
 import AppDatePicker from './AppDatePicker.vue'
+import AppSelect from './AppSelect.vue'
 import MobileFilterPanel from './MobileFilterPanel.vue'
 import { useDictStore } from '../stores/dict'
 import { useMobile } from '../composables/useMobile'
@@ -144,6 +139,11 @@ const logs = ref<any[]>([])
 const actionTypes = ref<Record<string, string>>({})
 const entityTypes = ref<Record<string, string>>({})
 const users = ref<any[]>([])
+
+// AppSelect 的选项。接口返回的是「值 → 中文」的 Record，转数组时别把 key/value 写反
+const actionOptions = computed(() => Object.entries(actionTypes.value).map(([value, label]) => ({ label, value })))
+const entityOptions = computed(() => Object.entries(entityTypes.value).map(([value, label]) => ({ label, value })))
+const userOptions = computed(() => users.value.map((u) => ({ label: u.name, value: u.id })))
 const dateRange = ref<string[]>([])
 
 const filterForm = reactive({
@@ -281,12 +281,6 @@ onMounted(() => {
   background: #fff;
 }
 
-.pagination-container {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* 移动端卡片列表的外观与列表间距由 style.css 的「Mobile WeUI Cell 列表」统一提供，
    桌面端隐藏也在那里（.page-container .logs-tab .mobile-cards），
    这里只留日志自己的时间样式。 */
@@ -320,7 +314,6 @@ onMounted(() => {
     margin-right: 0;
   }
   
-  .filter-form :deep(.el-select),
   .filter-form :deep(.el-input),
   .filter-form :deep(.el-date-editor) {
     width: 100% !important;

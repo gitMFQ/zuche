@@ -204,8 +204,8 @@
       v-model:current-page="pagination.page"
       v-model:page-size="pagination.pageSize"
       :total="pagination.total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, prev, pager, next"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
       background
       class="pagination"
       @size-change="loadData"
@@ -276,14 +276,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="客户来源">
-          <el-select v-model="form.source_id" placeholder="选择客户来源（可选）" style="width: 100%" clearable>
-            <el-option 
-              v-for="s in orderSources" 
-              :key="s.id" 
-              :label="s.name" 
-              :value="s.id" 
-            />
-          </el-select>
+          <AppSelect v-model="form.source_id" :options="sourceOptions" placeholder="选择客户来源（可选）" style="width: 100%" clearable />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
@@ -390,6 +383,7 @@ import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'
 import MobileFilterPanel from '../components/MobileFilterPanel.vue'
 import AppDatePicker from '../components/AppDatePicker.vue'
+import AppSelect from '../components/AppSelect.vue'
 import { getImageUrl } from '../utils/helpers'
 
 const route = useRoute()
@@ -411,6 +405,8 @@ const viewData = reactive<any>({})
 // 订单来源走字典缓存：多个页面共用，避免每个页面各请求一次
 const dictStore = useDictStore()
 const orderSources = computed(() => dictStore.orderSources)
+// AppSelect 的选项（桌面端 el-select 与移动端滚轮共用同一份数据）
+const sourceOptions = computed(() => orderSources.value.map((s) => ({ label: s.name, value: s.id })))
 
 const searchForm = reactive({ keyword: '', status: '' })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
@@ -887,17 +883,6 @@ watch(
   .hide-mobile {
     display: table;
   }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-.pagination {
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 
 /* 多图上传 */

@@ -8,11 +8,7 @@
           <el-input v-model="searchForm.keyword" placeholder="车牌/品牌/型号" clearable @keyup.enter="loadData" style="width: 150px" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="searchForm.status" placeholder="状态" clearable style="width: 90px">
-            <el-option label="可用" value="available" />
-            <el-option label="已出租" value="rented" />
-            <el-option label="维修中" value="maintenance" />
-          </el-select>
+          <AppSelect v-model="searchForm.status" :options="VEHICLE_STATUS_FILTER_OPTIONS" placeholder="状态" clearable style="width: 90px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="loadData">搜索</el-button>
@@ -145,8 +141,8 @@
       v-model:current-page="pagination.page"
       v-model:page-size="pagination.pageSize"
       :total="pagination.total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, prev, pager, next"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
       background
       class="pagination"
       @size-change="loadData"
@@ -207,32 +203,19 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="变速箱">
-              <el-select v-model="form.transmission" clearable placeholder="可选" style="width: 100%">
-                <el-option label="自动" value="自动" />
-                <el-option label="手动" value="手动" />
-              </el-select>
+              <AppSelect v-model="form.transmission" :options="VEHICLE_TRANSMISSION_OPTIONS" clearable placeholder="可选" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="动力类型">
-              <el-select v-model="form.fuel_type" clearable placeholder="可选" style="width: 100%">
-                <el-option label="汽油" value="汽油" />
-                <el-option label="柴油" value="柴油" />
-                <el-option label="混动" value="混动" />
-                <el-option label="纯电" value="纯电" />
-              </el-select>
+              <AppSelect v-model="form.fuel_type" :options="VEHICLE_FUEL_TYPE_OPTIONS" clearable placeholder="可选" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="车身类型">
-              <el-select v-model="form.body_type" clearable placeholder="可选" style="width: 100%">
-                <el-option label="轿车" value="轿车" />
-                <el-option label="SUV" value="SUV" />
-                <el-option label="MPV" value="MPV" />
-                <el-option label="皮卡" value="皮卡" />
-              </el-select>
+              <AppSelect v-model="form.body_type" :options="VEHICLE_BODY_TYPE_OPTIONS" clearable placeholder="可选" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -280,9 +263,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="车型分类">
-              <el-select v-model="form.category" clearable placeholder="可选" style="width: 100%">
-                <el-option v-for="o in VEHICLE_CATEGORY_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-              </el-select>
+              <AppSelect v-model="form.category" :options="VEHICLE_CATEGORY_OPTIONS" clearable placeholder="可选" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -306,16 +287,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="车辆归属">
-              <el-select v-model="form.ownership_type" style="width: 100%">
-                <el-option v-for="o in OWNERSHIP_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-              </el-select>
+              <AppSelect v-model="form.ownership_type" :options="OWNERSHIP_TYPE_OPTIONS" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="车主 / 合伙人">
-          <el-select v-model="form.owner_id" clearable filterable placeholder="自营车选「公司自营」" style="width: 100%">
-            <el-option v-for="o in ownerOptions" :key="o.id" :label="`${o.name}（费率 ${o.company_fee_rate}%）`" :value="o.id" />
-          </el-select>
+          <AppSelect v-model="form.owner_id" :options="ownerSelectOptions" clearable filterable placeholder="自营车选「公司自营」" style="width: 100%" />
         </el-form-item>
 
         <el-divider content-position="left">车贷</el-divider>
@@ -345,12 +322,7 @@
         </el-row>
 
         <el-form-item label="状态" v-if="editingId">
-          <el-select v-model="form.status" style="width: 100%">
-            <el-option label="可用" value="available" />
-            <el-option label="已出租" value="rented" />
-            <el-option label="维修中" value="maintenance" />
-            <el-option label="不可用" value="unavailable" />
-          </el-select>
+          <AppSelect v-model="form.status" :options="VEHICLE_STATUS_OPTIONS" style="width: 100%" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="备注信息" />
@@ -376,7 +348,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { ownerApi, vehicleApi, uploadApi } from '../api'
 import type { OwnerOption } from '../api/types'
@@ -384,11 +356,17 @@ import { getImageUrl } from '../utils/helpers'
 import {
   OWNERSHIP_TYPE_OPTIONS,
   OWNERSHIP_TYPE_TEXT_MAP,
+  VEHICLE_BODY_TYPE_OPTIONS,
   VEHICLE_CATEGORY_OPTIONS,
-  VEHICLE_CATEGORY_TEXT_MAP
+  VEHICLE_CATEGORY_TEXT_MAP,
+  VEHICLE_FUEL_TYPE_OPTIONS,
+  VEHICLE_STATUS_FILTER_OPTIONS,
+  VEHICLE_STATUS_OPTIONS,
+  VEHICLE_TRANSMISSION_OPTIONS
 } from '../utils/constants'
 import VehicleDetailDialog from './VehicleDetailDialog.vue'
 import AppDatePicker from './AppDatePicker.vue'
+import AppSelect from './AppSelect.vue'
 import MobileFilterPanel from './MobileFilterPanel.vue'
 
 const loading = ref(false)
@@ -405,6 +383,10 @@ const viewDialogVisible = ref(false)
 const viewData = reactive<any>({})
 
 const ownerOptions = ref<OwnerOption[]>([])
+// 车主下拉的选项（带费率后缀）。表格里查表显示的还是 ownerOptions，两者别混
+const ownerSelectOptions = computed(() =>
+  ownerOptions.value.map((o) => ({ label: `${o.name}（费率 ${o.company_fee_rate}%）`, value: o.id }))
+)
 const searchForm = reactive({ keyword: '', status: '' })
 
 /** 车主下拉已经拉了全量，列表里直接查表显示，不用再发请求 */
@@ -713,17 +695,6 @@ onMounted(() => {
   .hide-mobile {
     display: table;
   }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-.pagination {
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 
 /* 图片缩略图 */

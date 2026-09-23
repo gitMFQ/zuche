@@ -16,8 +16,9 @@
       <el-tab-pane label="已取消" name="cancelled" />
     </el-tabs>
 
-    <!-- 时间筛选按钮（仅待取车和待还车显示，不放入移动端折叠面板） -->
-    <div v-if="activeTab === 'pending' || activeTab === 'active'" class="time-filter-bar">
+    <!-- 时间筛选按钮（仅待取车和待还车显示，不放入移动端折叠面板）：
+         条件直接用 template，不套容器 —— 四个按钮就是 .page-container 的直接子级 -->
+    <template v-if="activeTab === 'pending' || activeTab === 'active'">
       <button 
         class="filter-btn"
         :class="{ active: timeFilter === 'overdue' }"
@@ -46,7 +47,7 @@
       >
         后天 <span class="filter-count">({{ timeFilterCounts.dayAfter }})</span>
       </button>
-    </div>
+    </template>
 
     <!-- 搜索栏 -->
     <MobileFilterPanel title="搜索筛选">
@@ -93,32 +94,19 @@
               </div>
             </el-form-item>
             <el-form-item label="订单来源">
-              <el-select v-model="searchForm.source_id" placeholder="全部来源" clearable style="width: 100px">
-                <el-option v-for="item in orderSources" :key="item.id" :label="item.name" :value="item.id" />
-              </el-select>
+              <AppSelect v-model="searchForm.source_id" :options="sourceOptions" placeholder="全部来源" clearable style="width: 100px" />
             </el-form-item>
             <el-form-item label="车牌号">
-              <el-select v-model="searchForm.plate_number" placeholder="全部车牌" clearable filterable style="width: 140px">
-                <el-option v-for="item in plateNumberOptions" :key="item.value" :label="item.value" :value="item.value" />
-              </el-select>
+              <AppSelect v-model="searchForm.plate_number" :options="plateNumberOptions" placeholder="全部车牌" clearable filterable style="width: 140px" />
             </el-form-item>
             <el-form-item label="车型">
-              <el-select v-model="searchForm.vehicle_model" placeholder="全部车型" clearable filterable style="width: 160px">
-                <el-option v-for="item in vehicleModelOptions" :key="item.value" :label="item.value" :value="item.value" />
-              </el-select>
+              <AppSelect v-model="searchForm.vehicle_model" :options="vehicleModelOptions" placeholder="全部车型" clearable filterable style="width: 160px" />
+            </el-form-item>
+            <el-form-item label="结算状态">
+              <AppSelect v-model="searchForm.settle_status" :options="SETTLE_STATUS_OPTIONS" placeholder="结算状态" clearable style="width: 110px" />
             </el-form-item>
             <el-form-item label="排序">
-              <el-select v-model="searchForm.settle_status" placeholder="结算状态" clearable style="width: 110px">
-                <el-option v-for="o in SETTLE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-select v-model="searchForm.order_by" placeholder="默认排序" clearable style="width: 100px">
-                <el-option label="取车时间↑" value="start_date_asc" />
-                <el-option label="取车时间↓" value="start_date_desc" />
-                <el-option label="还车时间↑" value="end_date_asc" />
-                <el-option label="还车时间↓" value="end_date_desc" />
-              </el-select>
+              <AppSelect v-model="searchForm.order_by" :options="ORDER_SORT_OPTIONS" placeholder="默认排序" clearable style="width: 100px" />
             </el-form-item>
             <el-form-item label="关键词">
               <el-input v-model="searchForm.keyword" placeholder="订单号/客户/电话" clearable @keyup.enter="loadData" style="width: 140px" />
@@ -289,8 +277,8 @@
       v-model:current-page="pagination.page"
       v-model:page-size="pagination.pageSize"
       :total="pagination.total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, prev, pager, next"
+      :page-sizes="[10, 20, 50, 100]"
+      layout="total, sizes, prev, pager, next"
       background
       class="pagination"
       @size-change="loadData"
@@ -376,6 +364,7 @@ import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'
 import MobileFilterPanel from '../components/MobileFilterPanel.vue'
 import AppDatePicker from '../components/AppDatePicker.vue'
+import AppSelect from '../components/AppSelect.vue'
 import ImagePreviewDialog from '../components/ImagePreviewDialog.vue'
 import ExtendDialog from '../components/order/ExtendDialog.vue'
 import MileagePhotoDialog from '../components/order/MileagePhotoDialog.vue'
@@ -384,7 +373,7 @@ import PaymentDialog from '../components/order/PaymentDialog.vue'
 import { useMobile } from '../composables/useMobile'
 import { useQuerySync } from '../composables/useQuerySync'
 import { formatDateTime, getOrderStatusType as getStatusType } from '../utils/helpers'
-import { SETTLE_STATUS_OPTIONS, SETTLE_STATUS_TAG_MAP, SETTLE_STATUS_TEXT_MAP } from '../utils/constants'
+import { ORDER_SORT_OPTIONS, SETTLE_STATUS_OPTIONS, SETTLE_STATUS_TAG_MAP, SETTLE_STATUS_TEXT_MAP } from '../utils/constants'
 
 const router = useRouter()
 const route = useRoute()
@@ -495,6 +484,9 @@ const plateNumberOptions = computed(() => {
 const vehicleModelOptions = computed(() => {
   return filterOptions.models.map(m => ({ label: m, value: m }))
 })
+
+// AppSelect 的选项（桌面端 el-select 与移动端滚轮共用同一份数据）
+const sourceOptions = computed(() => orderSources.value.map((s) => ({ label: s.name, value: s.id })))
 
 // 日期范围（用于 el-date-picker）
 const pickupDateRange = computed({
@@ -977,22 +969,12 @@ onMounted(() => {
   transform: scale(0.8);
 }
 
-.time-filter-bar {
-  margin-bottom: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  width: 100%;
-}
-
-.time-filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
 .filter-btn {
   display: inline-block;
   flex-shrink: 0;
   margin-right: 6px;
+  /* 行距原先由 .time-filter-bar 容器给（已删除），挪到按钮自己身上 */
+  margin-bottom: 8px;
   padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid #dcdfe6;
@@ -1006,10 +988,6 @@ onMounted(() => {
   user-select: none;
   outline: none;
   font-family: inherit;
-}
-
-.filter-btn:last-child {
-  margin-right: 0;
 }
 
 .filter-btn.active {
@@ -1034,53 +1012,6 @@ onMounted(() => {
 .filter-count.has-overdue {
   color: #f56c6c;
   font-weight: 600;
-}
-
-.time-filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.time-filter-bar :deep(.el-radio-group) {
-  display: inline-flex !important;
-  flex-wrap: nowrap !important;
-  gap: 6px;
-}
-
-.time-filter-bar :deep(.el-radio-button) {
-  display: inline-block !important;
-  margin: 0;
-  flex-shrink: 0;
-}
-
-.time-filter-bar :deep(.el-radio-button__inner) {
-  border-radius: 20px;
-  border-left: 1px solid #dcdfe6;
-  box-shadow: none !important;
-  padding: 6px 14px;
-  font-size: 13px;
-  white-space: nowrap;
-  min-width: auto;
-  height: auto;
-}
-
-.time-filter-bar :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background-color: var(--el-color-primary);
-  border-color: var(--el-color-primary);
-  box-shadow: none !important;
-  transform: none !important;
-}
-
-.time-filter-bar :deep(.el-radio-button:first-child .el-radio-button__inner) {
-  border-radius: 20px;
-}
-
-.time-filter-bar :deep(.el-radio-button:last-child .el-radio-button__inner) {
-  border-radius: 20px;
-}
-
-.time-filter-bar :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background-color: var(--el-color-primary);
-  border-color: var(--el-color-primary);
 }
 
 .filter-count {
@@ -1110,30 +1041,16 @@ onMounted(() => {
   {
     min-width: 150px;
   }
-  
-  .search-form .el-form-item:nth-child(3) .el-select,
-  .search-form .el-form-item:nth-child(6) .el-select {
-    width: 150px;
-  }
 }
 
 /* 移动端样式 */
 @media (max-width: 767px) {
-  .time-filter-bar {
-    margin-bottom: 12px;
-    padding: 8px 16px 12px;
-    background: var(--m-bg-cell);
-  }
-
   /* 表单项的移动端外观（56px cell、label 左、值左、去盒子的输入框、日期区间两端等分）
-     由 style.css 的「Mobile WeUI Form」统一提供，这里只留订单搜索栏自己的按钮行 */
-  .search-form :deep(.form-actions) {
-    display: flex;
-    gap: 10px;
-  }
-
-  .search-form :deep(.form-actions .el-button) {
-    flex: 1;
+     和按钮行（搜索 / 重置 各占一半、间距 16px）都由 style.css 的「Mobile WeUI Form」
+     统一提供；时间筛选的四个胶囊按钮是 .page-container 的直接子级（原来那层白底容器已删，
+     间距落在 .filter-btn 自己身上） */
+  .filter-btn {
+    margin-bottom: 12px;
   }
 }
 
@@ -1246,17 +1163,6 @@ onMounted(() => {
   :deep(.el-table__row) {
     cursor: pointer;
   }
-
-  .pagination {
-    justify-content: flex-end;
-  }
-}
-
-.pagination {
-  margin-top: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 8px;
 }
 
 /* 来源标签 */

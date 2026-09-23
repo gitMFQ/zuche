@@ -5,9 +5,7 @@
         <AppDatePicker v-model="form.advance_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="科目" prop="subject">
-        <el-select v-model="form.subject" style="width: 100%">
-          <el-option v-for="o in ADVANCE_SUBJECT_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
+        <AppSelect v-model="form.subject" :options="ADVANCE_SUBJECT_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item label="方向" prop="direction">
         <el-radio-group v-model="form.direction">
@@ -38,6 +36,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { PartnerAdvanceItem } from '../../api/types'
 import { ADVANCE_SUBJECT_OPTIONS } from '../../utils/constants'
 

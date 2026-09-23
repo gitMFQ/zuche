@@ -56,7 +56,9 @@ const routes = [
         path: 'orders/:id',
         name: 'OrderDetail',
         component: () => import('../views/OrderDetail.vue'),
-        meta: { title: '订单详情' }
+        // immersive：移动端进入详情后隐藏全局顶栏与 tabbar，页面自己把「返回」那行 sticky 到顶、
+        // 操作行 fixed 到底（见 MainLayout 的 .main.is-immersive 与 OrderDetail 的移动端样式）
+        meta: { title: '订单详情', immersive: true }
       },
       {
         path: 'settings',

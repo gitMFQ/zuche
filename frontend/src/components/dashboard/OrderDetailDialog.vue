@@ -286,6 +286,28 @@ html.dark .row-value-compact {
   }
 }
 
+/* 移动端这个弹窗就是 WeUI 底部 sheet：footer 交给全局那套「文字按钮 + 竖 hairline」，
+   桌面端「右对齐小按钮簇」（flex-end + gap + max-width 90px / ≤480px 的 70px）不要生效。
+   display: contents 让按钮直接成为 .el-dialog__footer 的 flex item，才能吃上全局规则 */
+@media (max-width: 767px) {
+  .dialog-footer-compact {
+    display: contents;
+  }
+
+  .dialog-footer-compact .el-button {
+    flex: 1 1 25%;
+    min-width: 0;
+    max-width: none;
+    padding: 20px 8px;
+    font-size: 17px;
+  }
+
+  /* 4 个按钮一行时，全局那条 :nth-child(3n + 1)（为换行准备的）会把第 4 个的左线去掉 */
+  .dialog-footer-compact .el-button:nth-child(4) {
+    border-left: 1px solid var(--m-line);
+  }
+}
+
 /* 车牌样式 - 紧凑版 */
 .plate-number-compact {
   padding: 2px 6px;

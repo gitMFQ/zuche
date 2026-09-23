@@ -26,20 +26,13 @@
       <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
-          <el-select v-model="query.vehicle_id" placeholder="全部车辆" clearable filterable style="width: 150px" @change="reload">
-            <el-option v-for="v in vehicles" :key="v.id" :label="v.plate_number" :value="v.id" />
-          </el-select>
+          <AppSelect v-model="query.vehicle_id" :options="vehicleOptions" placeholder="全部车辆" clearable filterable style="width: 150px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.expense_type" placeholder="费用类型" clearable style="width: 120px" @change="reload">
-            <el-option v-for="t in types" :key="t.id" :label="t.name" :value="t.id" />
-          </el-select>
+          <AppSelect v-model="query.expense_type" :options="typeOptions" placeholder="费用类型" clearable style="width: 120px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.is_paid" placeholder="付款状态" clearable style="width: 110px" @change="reload">
-            <el-option label="已付款" value="1" />
-            <el-option label="未付款" value="0" />
-          </el-select>
+          <AppSelect v-model="query.is_paid" :options="PAID_STATUS_OPTIONS" placeholder="付款状态" clearable style="width: 110px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-date-picker
@@ -192,9 +185,7 @@
       </p>
       <el-form label-width="80px">
         <el-form-item label="付款账户">
-          <el-select v-model="payAccountId" placeholder="选择账户" style="width: 100%">
-            <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-          </el-select>
+          <AppSelect v-model="payAccountId" :options="accountOptions" placeholder="选择账户" style="width: 100%" />
         </el-form-item>
         <el-form-item label="付款日期">
           <AppDatePicker v-model="payDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -225,6 +216,7 @@ import DataState from '../DataState.vue'
 import MobileFilterPanel from '../MobileFilterPanel.vue'
 import VehicleExpenseFormDialog from './VehicleExpenseFormDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { financeReportApi, vehicleApi, vehicleExpenseApi } from '../../api'
 import type {
   AccountOption,
@@ -234,7 +226,7 @@ import type {
   VehicleItem
 } from '../../api/types'
 import { useUserStore } from '../../stores/user'
-import { INVOICE_STATUS_TEXT_MAP } from '../../utils/constants'
+import { INVOICE_STATUS_TEXT_MAP, PAID_STATUS_OPTIONS } from '../../utils/constants'
 import { formatMoney, formatMoneyUnit } from '../../utils/money'
 import { useMobile } from '../../composables/useMobile'
 
@@ -259,6 +251,10 @@ const stats = ref({
 const vehicles = ref<VehicleItem[]>([])
 const types = ref<VehicleExpenseTypeItem[]>([])
 const accounts = ref<AccountOption[]>([])
+// AppSelect 的选项
+const vehicleOptions = computed(() => vehicles.value.map((v) => ({ label: v.plate_number, value: v.id })))
+const typeOptions = computed(() => types.value.map((t) => ({ label: t.name, value: t.id })))
+const accountOptions = computed(() => accounts.value.map((a) => ({ label: a.name, value: a.id })))
 
 const loading = ref(false)
 const error = ref<string | null>(null)

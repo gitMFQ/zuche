@@ -5,14 +5,10 @@
         <el-input-number v-model="form.amount" :min="0" :precision="0" style="width: 100%" />
       </el-form-item>
       <el-form-item label="方式" prop="payment_method">
-        <el-select v-model="form.payment_method" style="width: 100%">
-          <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
+        <AppSelect v-model="form.payment_method" :options="PAYMENT_METHOD_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item label="类型" prop="payment_type">
-        <el-select v-model="form.payment_type" style="width: 100%">
-          <el-option v-for="item in PAYMENT_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
+        <AppSelect v-model="form.payment_type" :options="PAYMENT_TYPE_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" placeholder="备注信息" />
@@ -29,6 +25,7 @@
 import { reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_TYPE_OPTIONS } from '../../utils/constants'
+import AppSelect from '../AppSelect.vue'
 
 /**
  * 添加支付记录弹窗。Orders 列表页与 OrderDetail 详情页原先各有一份逐行相同的实现。

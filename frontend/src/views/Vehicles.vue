@@ -68,43 +68,24 @@ watch(() => route.query.tab, (tab) => {
 }
 
 @media (max-width: 767px) {
-  /* WeUI navbar：56px 高、17px 字、选中整项背景高亮，不用 Element 下划线 */
+  /* 移动端页签统一成客户管理那套：Element 默认的透明底 + 下划线，不再做 56px 白底条
+     和「选中整项背景高亮」。只保留横向滚动 —— 5 个页签不能压缩成看不清的小字 */
   .vehicle-tabs :deep(.el-tabs__header) {
-    height: 56px;
-    margin: 0 0 8px;
-    overflow-x: auto;
+    margin: 0 0 12px;
+    background: transparent;
+  }
+
+  /* 文件末尾那条 html.dark 规则特异性更高，暗色下也要压回透明 */
+  html.dark .vehicle-tabs :deep(.el-tabs__header) {
+    background: transparent;
   }
 
   .vehicle-tabs :deep(.el-tabs__nav-wrap) {
     overflow-x: auto;
   }
 
-  .vehicle-tabs :deep(.el-tabs__nav-wrap::after) {
-    height: 1px;
-    background: var(--m-line);
-    transform: scaleY(0.5);
-    transform-origin: 0 0;
-  }
-
   .vehicle-tabs :deep(.el-tabs__nav) {
     min-width: max-content;
-  }
-
-  .vehicle-tabs :deep(.el-tabs__item) {
-    height: 56px;
-    padding: 0 16px;
-    font-size: 17px;
-    color: var(--m-fg-1);
-  }
-
-  .vehicle-tabs :deep(.el-tabs__item.is-active) {
-    color: var(--m-fg-0);
-    font-weight: 500;
-    background: var(--m-active);
-  }
-
-  .vehicle-tabs :deep(.el-tabs__active-bar) {
-    display: none;
   }
 }
 

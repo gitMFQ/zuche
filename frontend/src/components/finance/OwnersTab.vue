@@ -7,9 +7,7 @@
           <el-input v-model="query.keyword" placeholder="姓名/手机号" clearable style="width: 150px" @keyup.enter="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.role" placeholder="全部身份" clearable style="width: 130px" @change="reload">
-            <el-option v-for="o in OWNER_ROLE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-          </el-select>
+          <AppSelect v-model="query.role" :options="OWNER_ROLE_OPTIONS" placeholder="全部身份" clearable style="width: 130px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="reload">搜索</el-button>
@@ -92,7 +90,7 @@
         v-model:current-page="query.page"
         v-model:page-size="query.pageSize"
         :total="total"
-        :page-sizes="[10, 20, 50]"
+        :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next"
         background
         class="pagination"
@@ -229,9 +227,7 @@
       <p class="pay-tip">{{ advancePayTarget?.advance_date }} {{ advancePayTarget?.subject_name }}：{{ formatMoney(advancePayTarget?.amount ?? 0) }}</p>
       <el-form label-width="80px">
         <el-form-item label="付款账户">
-          <el-select v-model="advancePayAccountId" placeholder="选择账户" style="width: 100%">
-            <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-          </el-select>
+          <AppSelect v-model="advancePayAccountId" :options="accountOptions" placeholder="选择账户" style="width: 100%" />
         </el-form-item>
         <el-form-item label="付款日期">
           <AppDatePicker v-model="advancePayDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -260,6 +256,7 @@ import MobileFilterPanel from '../MobileFilterPanel.vue'
 import OwnerFormDialog from './OwnerFormDialog.vue'
 import PartnerAdvanceDialog from './PartnerAdvanceDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { financeReportApi, ownerApi } from '../../api'
 import type { AccountOption, OwnerItem, OwnerStatement, PartnerAdvanceItem } from '../../api/types'
 import { useUserStore } from '../../stores/user'
@@ -276,6 +273,8 @@ function today(): string {
 const rows = ref<OwnerItem[]>([])
 const total = ref(0)
 const accounts = ref<AccountOption[]>([])
+// AppSelect 的选项
+const accountOptions = computed(() => accounts.value.map((a) => ({ label: a.name, value: a.id })))
 const loading = ref(false)
 const error = ref<string | null>(null)
 const submitting = ref(false)

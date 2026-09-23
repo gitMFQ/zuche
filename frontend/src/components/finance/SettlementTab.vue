@@ -8,20 +8,13 @@
           <AppDatePicker v-model="query.period" type="month" value-format="YYYY-MM" placeholder="结算期" style="width: 130px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.owner_id" placeholder="全部车主" clearable style="width: 140px" @change="reload">
-            <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
-          </el-select>
+          <AppSelect v-model="query.owner_id" :options="ownerOptions" placeholder="全部车主" clearable style="width: 140px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.vehicle_id" placeholder="全部车辆" clearable filterable style="width: 150px" @change="reload">
-            <el-option v-for="v in vehicles" :key="v.id" :label="v.plate_number" :value="v.id" />
-          </el-select>
+          <AppSelect v-model="query.vehicle_id" :options="vehicleOptions" placeholder="全部车辆" clearable filterable style="width: 150px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.status" placeholder="状态" clearable style="width: 110px" @change="reload">
-            <el-option label="正常" value="posted" />
-            <el-option label="已作废" value="void" />
-          </el-select>
+          <AppSelect v-model="query.status" :options="SETTLEMENT_LINE_STATUS_OPTIONS" placeholder="状态" clearable style="width: 110px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-input v-model="query.keyword" placeholder="客户/订单号/车牌/备注" clearable style="width: 180px" @keyup.enter="reload" />
@@ -199,10 +192,12 @@ import SettlementLineDialog from './SettlementLineDialog.vue'
 import SettlementPayoutDialog from './SettlementPayoutDialog.vue'
 import SettlementOpeningDialog from './SettlementOpeningDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { financeReportApi, ownerApi, settlementApi, vehicleApi } from '../../api'
 import type { AccountOption, OwnerOption, SettlementLineItem, SettlementTotals, VehicleItem } from '../../api/types'
 import { useUserStore } from '../../stores/user'
 import { formatMoney } from '../../utils/money'
+import { SETTLEMENT_LINE_STATUS_OPTIONS } from '../../utils/constants'
 
 const userStore = useUserStore()
 const canManage = computed(() => userStore.isAdmin())
@@ -226,6 +221,9 @@ const totals = ref<SettlementTotals>({
 const owners = ref<OwnerOption[]>([])
 const vehicles = ref<VehicleItem[]>([])
 const accounts = ref<AccountOption[]>([])
+// AppSelect 的选项
+const ownerOptions = computed(() => owners.value.map((o) => ({ label: o.name, value: o.id })))
+const vehicleOptions = computed(() => vehicles.value.map((v) => ({ label: v.plate_number, value: v.id })))
 
 const loading = ref(false)
 const error = ref<string | null>(null)

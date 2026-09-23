@@ -36,15 +36,10 @@
       <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
-          <el-select v-model="query.category" placeholder="全部项目" clearable filterable style="width: 150px" @change="reload">
-            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-          </el-select>
+          <AppSelect v-model="query.category" :options="categoryOptions" placeholder="全部项目" clearable filterable style="width: 150px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.is_paid" placeholder="付款状态" clearable style="width: 110px" @change="reload">
-            <el-option label="已付款" value="1" />
-            <el-option label="未付款" value="0" />
-          </el-select>
+          <AppSelect v-model="query.is_paid" :options="PAID_STATUS_OPTIONS" placeholder="付款状态" clearable style="width: 110px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-date-picker
@@ -169,9 +164,7 @@
       <p class="pay-tip">{{ payTarget?.expense_date }} {{ payTarget?.category_name }}：{{ formatMoney(payTarget?.amount ?? 0) }}</p>
       <el-form label-width="80px">
         <el-form-item label="付款账户">
-          <el-select v-model="payAccountId" placeholder="选择账户" style="width: 100%">
-            <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-          </el-select>
+          <AppSelect v-model="payAccountId" :options="accountOptions" placeholder="选择账户" style="width: 100%" />
         </el-form-item>
         <el-form-item label="付款日期">
           <AppDatePicker v-model="payDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -198,10 +191,11 @@ import DataState from '../DataState.vue'
 import MobileFilterPanel from '../MobileFilterPanel.vue'
 import OperatingExpenseFormDialog from './OperatingExpenseFormDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { financeReportApi, operatingExpenseApi } from '../../api'
 import type { AccountOption, ExpenseCategoryItem, OperatingExpenseItem, OperatingExpenseTotals } from '../../api/types'
 import { useUserStore } from '../../stores/user'
-import { INVOICE_STATUS_TEXT_MAP } from '../../utils/constants'
+import { INVOICE_STATUS_TEXT_MAP, PAID_STATUS_OPTIONS } from '../../utils/constants'
 import { formatMoney, formatMoneyUnit } from '../../utils/money'
 import { useMobile } from '../../composables/useMobile'
 
@@ -225,6 +219,9 @@ const stats = ref({
 })
 const categories = ref<ExpenseCategoryItem[]>([])
 const accounts = ref<AccountOption[]>([])
+// AppSelect 的选项
+const categoryOptions = computed(() => categories.value.map((c) => ({ label: c.name, value: c.id })))
+const accountOptions = computed(() => accounts.value.map((a) => ({ label: a.name, value: a.id })))
 
 const loading = ref(false)
 const error = ref<string | null>(null)

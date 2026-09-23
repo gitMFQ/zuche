@@ -2,14 +2,10 @@
   <el-dialog v-model="dialogVisible" title="指派司机" width="90%" :style="{ maxWidth: '400px' }">
     <el-form :model="form" label-width="80px">
       <el-form-item label="取车司机">
-        <el-select v-model="form.pickup_driver_id" clearable placeholder="未指派" style="width: 100%">
-          <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
-        </el-select>
+        <AppSelect v-model="form.pickup_driver_id" :options="userOptions" clearable placeholder="未指派" style="width: 100%" />
       </el-form-item>
       <el-form-item label="还车司机">
-        <el-select v-model="form.return_driver_id" clearable placeholder="未指派" style="width: 100%">
-          <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
-        </el-select>
+        <AppSelect v-model="form.return_driver_id" :options="userOptions" clearable placeholder="未指派" style="width: 100%" />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -20,8 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useDictStore } from '../../stores/dict'
+import AppSelect from '../AppSelect.vue'
 
 /**
  * 指派司机弹窗。司机名单走字典缓存的 /users/options（只含 id/name），
@@ -42,9 +39,13 @@ const dictStore = useDictStore()
 const dialogVisible = ref(false)
 const users = ref<any[]>([])
 
-const form = reactive<{ pickup_driver_id: string | null; return_driver_id: string | null }>({
-  pickup_driver_id: null,
-  return_driver_id: null
+// AppSelect 的选项（司机名单来自字典缓存，只有 id/name）
+const userOptions = computed(() => users.value.map((u) => ({ label: u.name, value: u.id })))
+
+// 值用字符串（AppSelect / el-select 清空都回空串），提交时再落成 null
+const form = reactive<{ pickup_driver_id: string; return_driver_id: string }>({
+  pickup_driver_id: '',
+  return_driver_id: ''
 })
 
 watch(
@@ -53,8 +54,8 @@ watch(
     dialogVisible.value = val
     if (!val) return
     users.value = await dictStore.ensureUserOptions()
-    form.pickup_driver_id = props.order?.pickup_driver_id ?? null
-    form.return_driver_id = props.order?.return_driver_id ?? null
+    form.pickup_driver_id = props.order?.pickup_driver_id ?? ''
+    form.return_driver_id = props.order?.return_driver_id ?? ''
   }
 )
 
@@ -64,8 +65,8 @@ watch(dialogVisible, (val) => {
 
 function handleSubmit() {
   emit('submit', {
-    pickup_driver_id: form.pickup_driver_id,
-    return_driver_id: form.return_driver_id
+    pickup_driver_id: form.pickup_driver_id || null,
+    return_driver_id: form.return_driver_id || null
   })
 }
 </script>

@@ -14,31 +14,28 @@
         :order="order"
         @assign-driver="driverDialogVisible = true"
         @add-payment="paymentDialogVisible = true"
+        @add-to-blacklist="handleAddToBlacklist"
         @preview="openPreview"
       />
 
-      <!-- 操作按钮：移动端固定在底部 tabbar 上方，桌面端仍是详情末尾的普通卡片 -->
-      <el-card shadow="never" class="info-card mobile-action-card">
+      <!-- 操作按钮 + 删除订单：同一条操作行。移动端一行铺满（按钮文案都是两个字），
+           桌面端仍是每个按钮一整行（600px 单列页面） -->
+      <el-card shadow="never" class="info-card action-card">
         <div class="action-buttons">
           <template v-if="order.status === 'pending'">
-            <el-button type="primary" plain block @click="openEditDialog">编辑订单</el-button>
-            <el-button type="success" block @click="pickupDialogVisible = true">已取车</el-button>
-            <el-button type="danger" block @click="handleCancel">取消订单</el-button>
+            <el-button type="primary" plain @click="openEditDialog">编辑</el-button>
+            <el-button type="success" @click="pickupDialogVisible = true">取车</el-button>
+            <el-button type="danger" @click="handleCancel">取消</el-button>
           </template>
           <template v-else-if="order.status === 'active'">
-            <el-button type="primary" plain block @click="openEditDialog">编辑订单</el-button>
-            <el-button type="warning" block @click="openExtendDialog">续租</el-button>
-            <el-button type="success" block @click="completeDialogVisible = true">已还车</el-button>
-            <el-button type="danger" block @click="handleCancel">取消订单</el-button>
+            <el-button type="primary" plain @click="openEditDialog">编辑</el-button>
+            <el-button type="warning" @click="openExtendDialog">续租</el-button>
+            <el-button type="success" @click="completeDialogVisible = true">还车</el-button>
+            <el-button type="danger" @click="handleCancel">取消</el-button>
           </template>
-          <el-button v-else disabled block>订单已结束</el-button>
-          <el-button type="danger" plain block @click="handleAddToBlacklist">拉黑客户</el-button>
+          <el-button v-else disabled>已结束</el-button>
+          <el-button type="danger" plain :loading="deleting" @click="handleDelete">删除</el-button>
         </div>
-      </el-card>
-
-      <!-- 危险操作 -->
-      <el-card shadow="never" class="info-card">
-        <el-button type="danger" plain block :loading="deleting" @click="handleDelete">删除订单</el-button>
       </el-card>
     </div>
 
@@ -515,15 +512,32 @@ html.dark .text-muted {
 }
 
 @media (max-width: 767px) {
-  /* 订单详情仍保持 600px 单列约定，但内容区按 WeUI cells 贴满主内容宽度 */
+  /* 沉浸式页面（路由 meta.immersive）：MainLayout 收起了全局顶栏与 tabbar，
+     `.main` 不再自带 16px 内边距 —— 所以这里的卡片也不再靠负边距出血，
+     顶部「返回」那行 sticky 到顶、底部操作行 fixed 到底，页面自己管上下留白 */
+  .page-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    /* 16 + 24（el-page-header 内部行高）+ 16 = 56px，与全局 WeUI navbar 同高。
+       不要在这里写 display: flex —— el-page-header 内部的 __header 才是
+       space-between 的 flex 行，外层变成 flex 会让它缩成内容宽度 */
+    min-height: 56px;
+    padding: 16px;
+    margin-bottom: 0;
+    background: var(--m-bg-cell);
+    border-bottom: 1px solid var(--m-line);
+  }
+
   .order-content {
     gap: 8px;
-    padding-bottom: 220px;
+    /* 给固定在底部的操作行让位：8px 上内边距 + 44px 按钮 + 8px + 安全区 */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 
   .order-content :deep(.info-card) {
-    margin-right: -16px;
-    margin-left: -16px;
+    margin-right: 0;
+    margin-left: 0;
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -606,36 +620,43 @@ html.dark .text-muted {
     padding: 8px 16px 16px;
   }
 
-  /* 操作区固定在 tabbar 上方：两列按钮，第三个及以后自动换行 */
-  .order-content > .mobile-action-card {
+  /* 操作行（含删除）：固定在页面底部（沉浸式页面没有 tabbar，所以贴到 0）。
+     一行铺满、不许折行、按钮等分 —— 与列表页卡片操作区同一套；
+     内容区底部留白由上面 .order-content 的 padding-bottom 负责 */
+  .order-content > .action-card {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(60px + env(safe-area-inset-bottom));
-    z-index: 850;
+    bottom: 0;
+    z-index: 20;
     margin: 0 !important;
     border: none;
     border-radius: 0;
     box-shadow: 0 -1px 0 var(--m-line);
     background: var(--m-bg-cell);
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .mobile-action-card :deep(.el-card__body) {
+  .order-content > .action-card :deep(.el-card__body) {
     padding: 8px 16px;
   }
 
-  .mobile-action-card .action-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .order-content > .action-card .action-buttons {
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 8px;
   }
 
-  .mobile-action-card .action-buttons .el-button {
-    width: 100%;
-    min-height: 44px;
+  .order-content > .action-card .action-buttons .el-button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
     margin: 0;
+    /* 5 个按钮一行时每个约 62px（375px 屏），默认 15px 左右内边距下两个字刚好卡住，
+       压到 8px 留出余量（窄屏 360px 时 59px 也放得下） */
+    padding: 0 8px;
+    font-size: 15px;
   }
-
   .order-content > .info-card:last-child {
     margin-bottom: 0;
   }

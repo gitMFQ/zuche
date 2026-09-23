@@ -2,9 +2,7 @@
   <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑记账' : '手工记账'" width="90%" :style="{ maxWidth: '480px' }">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
       <el-form-item label="账户" prop="account_id">
-        <el-select v-model="form.account_id" placeholder="选择账户" style="width: 100%">
-          <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-        </el-select>
+        <AppSelect v-model="form.account_id" :options="accountOptions" placeholder="选择账户" style="width: 100%" />
       </el-form-item>
       <el-form-item label="日期" prop="txn_date">
         <AppDatePicker v-model="form.txn_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -19,9 +17,7 @@
         <el-input-number v-model="form.amount" :min="0.01" :precision="2" :step="100" style="width: 100%" />
       </el-form-item>
       <el-form-item label="分类">
-        <el-select v-model="form.category" clearable placeholder="可选" style="width: 100%">
-          <el-option v-for="(label, value) in FUND_CATEGORY_TEXT_MAP" :key="value" :label="label" :value="value" />
-        </el-select>
+        <AppSelect v-model="form.category" :options="categoryOptions" clearable placeholder="可选" style="width: 100%" />
       </el-form-item>
       <el-form-item label="对方">
         <el-input v-model="form.counterparty" placeholder="客户 / 车牌 / 供应商" />
@@ -50,6 +46,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { AccountOption, FundTransactionItem } from '../../api/types'
 import { FUND_CATEGORY_TEXT_MAP, FUND_DIRECTION_OPTIONS } from '../../utils/constants'
 
@@ -73,6 +70,10 @@ const dialogVisible = computed({
 
 const isEdit = computed(() => Boolean(props.transaction?.id))
 const formRef = ref<FormInstance>()
+
+// AppSelect 的选项。分类是「值 → 中文」的 Record，转数组时别把 key/value 写反
+const accountOptions = computed(() => props.accounts.map((a) => ({ label: a.name, value: a.id })))
+const categoryOptions = Object.entries(FUND_CATEGORY_TEXT_MAP).map(([value, label]) => ({ label, value }))
 const form = reactive({
   account_id: '',
   txn_date: '',

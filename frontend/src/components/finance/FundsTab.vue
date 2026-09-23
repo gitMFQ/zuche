@@ -29,9 +29,7 @@
       <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
-          <el-select v-model="query.account_id" placeholder="全部账户" clearable style="width: 140px" @change="reload">
-            <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-          </el-select>
+          <AppSelect v-model="query.account_id" :options="accountOptions" placeholder="全部账户" clearable style="width: 140px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-date-picker
@@ -52,14 +50,10 @@
           </div>
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.direction" placeholder="收支" clearable style="width: 90px" @change="reload">
-            <el-option v-for="o in FUND_DIRECTION_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-          </el-select>
+          <AppSelect v-model="query.direction" :options="FUND_DIRECTION_OPTIONS" placeholder="收支" clearable style="width: 90px" @change="reload" />
         </el-form-item>
         <el-form-item>
-          <el-select v-model="query.source_type" placeholder="来源" clearable style="width: 130px" @change="reload">
-            <el-option v-for="(label, value) in FUND_SOURCE_TYPE_TEXT_MAP" :key="value" :label="label" :value="value" />
-          </el-select>
+          <AppSelect v-model="query.source_type" :options="sourceTypeOptions" placeholder="来源" clearable style="width: 130px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-input v-model="query.keyword" placeholder="摘要/对方/备注" clearable style="width: 160px" @keyup.enter="reload" />
@@ -217,9 +211,7 @@
     <!-- 改归属 -->
     <el-dialog v-model="reassignVisible" title="调整归属账户" width="90%" :style="{ maxWidth: '400px' }">
       <p class="reassign-tip">把「{{ reassignTarget?.summary }}」从 {{ reassignTarget?.account_name }} 挪到：</p>
-      <el-select v-model="reassignAccountId" placeholder="选择账户" style="width: 100%">
-        <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-      </el-select>
+      <AppSelect v-model="reassignAccountId" :options="accountOptions" placeholder="选择账户" style="width: 100%" />
       <template #footer>
         <el-button @click="reassignVisible = false">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="handleReassign">确定</el-button>
@@ -266,6 +258,7 @@ import MobileFilterPanel from '../MobileFilterPanel.vue'
 import FundTxnDialog from './FundTxnDialog.vue'
 import TransferDialog from './TransferDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import { fundApi } from '../../api'
 import type { FinancePeriodLockItem, FundAccountItem, FundTransactionItem } from '../../api/types'
 import { useUserStore } from '../../stores/user'
@@ -284,6 +277,9 @@ const { isMobile } = useMobile()
 const canManage = computed(() => userStore.isAdmin())
 
 const accounts = ref<FundAccountItem[]>([])
+// AppSelect 的选项。来源类型是「值 → 中文」的 Record，转数组时别把 key/value 写反
+const accountOptions = computed(() => accounts.value.map((a) => ({ label: a.name, value: a.id })))
+const sourceTypeOptions = Object.entries(FUND_SOURCE_TYPE_TEXT_MAP).map(([value, label]) => ({ label, value }))
 const rows = ref<FundTransactionItem[]>([])
 const total = ref(0)
 const withBalance = ref(false)

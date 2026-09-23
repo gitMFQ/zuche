@@ -4,6 +4,229 @@
 
 ## 2026-09-23
 
+### 移动端总览页两个「完整视图」弹窗去掉两侧留白
+
+这两个弹窗（待收送 / 库存日历的「完整视图」）在移动端套的是全局 sheet 的
+`.el-dialog__body { padding: 8px 24px 16px }` 与 `.el-dialog__header { padding: 8px 24px 12px }`
+—— 左右各 24px；调度表列多、甘特图是 91 天 × 全车辆的宽表，被挤在中间很浪费宽度。
+现在给这两个弹窗加 `class="full-view-dialog"`，移动端：
+
+- `body`：`padding: 8px 0 16px` —— 表格 / 日历整行铺开
+- `header`：`padding: 8px 16px 12px` —— 标题、日期选择器、按钮不至于贴着屏幕边
+
+弹窗会 teleport 到 body（不在 `.dashboard` 里），所以规则写成不带祖先的
+`:deep(.full-view-dialog .el-dialog__*)`。桌面端不变。
+
+### 移动端总览页：待收送挪到库存日历前面
+
+移动端原来顺序是「库存日历 → 待收送」。日历是 91 天 × 全车辆的宽表，在手机上要滑很久才看到
+今天的收送，而待收送才是进来最先要看的东西。现在移动端用 `order` 把「待收送」那段排到前面
+（`.dashboard` 在 `<768px` 下变成 flex 列 + `schedule-section` order 1 / `gantt-card` order 2）；
+桌面端保持「日历在上」不变 —— 那里是两列并排，日历本来就是主视图。
+
+### 移动端页签统一成客户管理那套
+
+客户管理 / 订单的页签用的是 Element Plus 默认样式（透明底 + 下划线选中），而车辆 / 财务 / 设置
+三处在移动端各写了一套自研的 WeUI 白底条（56px 高、17px 字、选中整项背景高亮、隐藏下划线），
+四个页面的切换栏因此长得不一样。现在移动端统一到客户管理那套：
+
+- 去掉 56px 白底条 / 17px 字 / 选中整项背景 / 隐藏的下划线（选中态改回 EP 默认的下划线）
+- 保留横向滚动：车辆 5 个、财务 6 个、设置 4 个页签不能压缩成看不清的小字 —— `.el-tabs__nav-wrap`
+  允许 `overflow-x`、`.el-tabs__nav` 用 `min-width: max-content`
+- 车辆：暗色模式下 `html.dark .vehicle-tabs .el-tabs__header` 那条灰底规则特异性更高，
+  移动端补了一条压回透明
+- 财务：`border-card` 的 1px 边框与内容 15px 内边距在移动端去掉（客户管理 / 车辆也是通栏无框）
+- 设置：桌面端的 12px 圆角与浅灰底在移动端去掉
+
+桌面端（≥768px）三处页签照旧。
+
+### 移动端设置页补回 16px 边距
+
+设置页是全站唯一把容器通栏到屏幕边的页面：`.settings-tabs { margin: 0 -16px }` 把 `.main` 的
+16px 内边距抵消掉了，页签条和卡片都贴着屏幕左右边（订单页的 `.order-tabs`、财务页的 `.finance-tabs`
+都没有这个负边距，都留边）。去掉这个负边距 —— 页签条 + 卡片 + 4 个页签（系统设置 / 用户管理 /
+订单来源 / 操作日志）的内容一律跟随 `.main` 的 16px 内缩。
+
+### 分页样式全站统一（按财务页那套）
+
+各页分页原本是三套：财务页 `margin-top: 12px` + 右对齐；订单 / 客户 / 车辆 / 用户 / 车辆子页
+（年检·保养·保险共用的 `VehiclePicker`）6 处各自在 scoped 里写了一份「16px + 移动端居中」；
+日志页又多一层 `.pagination-container` 包装且少了 `background`（所以它的页码不是填充方块）。
+现在统一到财务那套：
+
+- `style.css` 的 `.page-container .el-pagination` 收口：`margin-top: 12px; justify-content: flex-end;
+  flex-wrap: wrap; row-gap: 8px` —— 原先只写在 `.finance-page .pagination` 里（已删）
+- 删掉 6 处 scoped `.pagination` 规则，以及日志页的 `.pagination-container` 包装层与规则
+- 组件 props 也统一：`layout="total, sizes, prev, pager, next"` +
+  `:page-sizes="[10, 20, 50, 100]"` + `background`（日志页原来多一个 `jumper`，已去掉；
+  桌面端现在各页都有「每页条数」下拉）
+
+移动端的 28px 页码按钮、隐藏 sizes/jumper 两条规则不变（原本就在 style.css 的「Mobile Responsive」
+里、全站生效）。
+
+### 移动端隐藏所有容器滚动条
+
+移动端容器（页面滚动区、弹窗 sheet 的 body、横向滚动的表格与调度表等）一直沿用桌面那套 6px
+半透明细条（`style.css` 顶部全局 `::-webkit-scrollbar`），触屏上只会占宽度、压住内容。
+现在 `<768px` 下统一隐藏：
+
+```css
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+.el-scrollbar__bar { display: none; }   /* Element Plus 自带滚动条组件的拇指条 */
+```
+
+只改外观 —— 手势 / 滚轮滚动、`scroll-snap` 吸附、`scrollTop` 定位都不受影响（`::-webkit-scrollbar`
+的 `display: none` 不影响滚动盒，只有 `overflow: hidden` 才会）。桌面端仍保留 Apple 细条。
+
+`.m-wheel__scroll` 原先就自己隐藏过（滚轮必须无条），被这条覆盖后那两行成了冗余，保留无妨。
+
+### 移动端顶栏补上 Logo 与系统标题
+
+移动端没有侧栏，而面包屑本来就是 `display: none`（≥768px 才显示），所以顶栏左侧一直是空的。
+现在顶栏左侧放品牌区：Logo 方块（复用侧栏的 `.logo-icon` / `.logo-img`，移动端 `--sk-focus-color`
+已切成微信绿）+ 系统标题（17px / 600，与 WeUI navbar 一致，长了省略号）。桌面端不变，仍是汉堡按钮 + 面包屑。
+
+### 订单页时间筛选按钮去掉那层容器
+
+「已逾期 / 今天 / 明天 / 后天」四个胶囊按钮原先套在 `<div class="time-filter-bar">` 里，现在去掉这层、
+条件改用 `<template v-if>`，四个按钮直接是 `.page-container` 的子级。容器提供的行距（桌面 8px /
+移动端 12px）挪到 `.filter-btn` 自己身上，所以桌面端布局不变；**移动端那条白底横条没有了**，
+四个胶囊直接落在页面灰底上（要恢复白底说一声）。
+
+顺带清掉两处死代码：`.time-filter-bar :deep(.el-radio-*)` 那一大段（早期用 `el-radio-group` 实现时
+的遗留，现在按钮是原生 `<button class="filter-btn">`）和重复两次的 `::-webkit-scrollbar` 规则。
+
+### 移动端弹窗 footer 的彩色文字按钮看不见
+
+移动端把 `el-dialog` 转成底部 sheet 时，footer 按钮统一改成「透明底 + 文字按钮」，但只给
+`type="primary"`（微信绿）和 `type="danger"`（红）指定了文字色 —— `success` / `warning` / `info`
+还留着 Element Plus 的**白字**，落在白色 sheet 上等于隐形。全站 footer 里带这两个类型的正好两处，
+也就是反馈里的两个弹窗：总览页订单详情弹窗的「取车」(success)、「还车」(warning)，
+客户管理查看弹窗的「拉黑」「取消常用」(warning)。
+
+修法：footer 按钮默认色改成 `--m-fg-0`（跟随明暗主题），再按类型补
+`--success`（`--sk-color-success`）/ `--warning`（`--sk-color-warning`）/ `--info`（`--m-fg-1`），
+另外补一条 `is-disabled`（EP 自己的禁用规则特异性相同、在 style.css 之前，会被默认色盖掉）。
+
+顺带理顺总览页订单详情弹窗 footer 的移动端样式：桌面端那套「右对齐小按钮簇」（`flex-end` + `gap`
++ `max-width: 90px`，≤480px 时还降到 70px / 12px 字）在 sheet 里会让按钮缩成一小簇、竖 hairline
+悬在 gap 中间，第 4 个按钮还因为全局的 `:nth-child(3n + 1)` 丢了左边线。现在移动端用
+`display: contents` 去掉那层包装，让按钮直接吃全局的 sheet footer 规则：编辑 / 取车（或还车）/
+详情 / 关闭 四个等分一行、竖线贴着。
+
+### 订单详情：费用明细在暗色模式下漏了覆盖
+
+暗色下「费用明细」的每一项还是白底黑字：这组样式（`.fee-item` 的 `#fafafa` 底、`.fee-name` 的
+`#303133`、`.fee-category` / `.fee-meta` 的 `rgba(0,0,0,.48)`）漏了 `html.dark` 覆盖 ——
+同文件的 `.payment-item` / `.payment-type` / `.payment-method` 那组是有的，照它补上四处：
+`.fee-item` 底色、`.fee-name`、`.fee-category` / `.fee-meta` 文字色（用 `--bg-color-secondary` /
+`--text-color` / `--text-color-secondary`），以及照片区上方那条写死 `#ebeef5` 的 1px 分隔线
+（暗色下会亮一条）。「续租历史」用的是同一组 `.fee-*` 类，一并修好。
+
+### 订单详情页改版：沉浸式外壳 + 操作行并成一行
+
+- **沉浸式**：进入订单详情后移动端隐藏全局顶栏与 tabbar（路由 `meta.immersive` → `MainLayout` 的
+  `.main.is-immersive` 去掉内边距、`min-height: 100vh`；顶栏与 `MobileTabbar` 一起 `v-if` 掉）。
+  页面自己把「返回」那行 sticky 到顶部（56px、与全局 WeUI navbar 同高、带底线），把操作行
+  `position: fixed` 到页面底部（`bottom: 0`，因为已经没有 tabbar），内容区底部留 72px + 安全区。
+  桌面端不受影响：顶栏照旧、操作卡片仍在页面末尾。
+- **操作行并成一行**：原来操作按钮是一张卡（移动端两列网格、最多 3 行 ≈144px，会盖住页面末尾的
+  「删除订单」卡）、删除订单是另一张卡 → 合成一条操作行，移动端一行铺满、按钮等分、不折行
+  （与列表页卡片操作区同一套），桌面端仍是每个按钮一整行。
+- **按钮文案两个字**：编辑订单→编辑、已取车→取车、已还车→还车、取消订单→取消、删除订单→删除
+  （续租本来就是两字，结束态显示「已结束」）。5 个按钮一行时每个约 62px（375px 屏），
+  内边距从 15px 压到 8px 留余量。
+- **删掉重复的两行**：页面顶部 `el-page-header` 已经有「订单详情 + 状态」，「订单信息」卡片原先
+  又挂了一行标题和同款状态标签 → 整行删掉（`getStatusType` 在这个组件里没有别的用处，导入一并清掉），
+  状态只在页面顶部显示一次。
+- **「拉黑客户」移到「客户信息」卡的标题栏**（与「指派司机 / 添加」同一个位置），
+  `OrderInfoSections` 新增 `add-to-blacklist` 事件。
+- **卡片标题栏的按钮缩小**：移动端的全局 `min-height: 44px` 把标题栏按钮拉到 44px，标题栏被撑到 76px
+  （16+44+16）。现在标题栏里的 `.el-button` 是 `min-height: auto`（小号按钮本来的 24px），
+  高度回到由标题决定。
+
+另外记一笔：`<el-button block>` 在 Element Plus 2.14 里是**无效属性**（没有 `.el-button.is-block`），
+详情页原先靠它撑满其实一直是靠 scoped 的 `width: 100%` 生效，这次顺手把无效属性删了。
+
+### 移动端卡片里的操作按钮也铺满整行
+
+列表卡片下方的操作区（`.mobile-card-actions`，全站 15 处：查看 / 编辑 / 删除 / 标记付款 这类）
+原来是 `flex-wrap: wrap` + 按钮自然宽，现在与操作栏同一套：一行铺满、不许折行、默认等分
+（两个按钮时就是一样长）。字号从 `size="small"` 的 12px 提到 15px —— 按钮被 stretch 到整行后
+12px 会显得空，15px 与卡片数据行的字号一致（`style.css` 里卡片行本身就是 15px）。
+
+375px 屏各档宽度：2 个按钮各 167.5px / 3 个各 109px / 4 个各 79.75px / 5 个各 62px（订单卡片按
+状态最多 5 个），最长的标签「重置密码」82px，都放得下。
+
+没动的三处（都是刻意的）：卡片**头部**里的按钮（订单详情的「指派司机 / 添加支付」在标题旁边，
+拉满会怪）、订单详情页的操作卡（本来就是 `block` 整行按钮）、订单导入预览卡里的「跳过该行」行
+（是 `el-checkbox` 不是按钮）。
+
+### 移动端按钮圆角统一到 WeUI 的 8px
+
+操作栏按钮上一版已经改成 WeUI 规格（圆角 8px），其余按钮还是 Element Plus 默认的 4px。这次在移动端
+全局加 `.el-button { border-radius: 8px }`（`style.css` 的「Mobile Responsive」段，与 44px 触摸高度
+同一条规则），筛选栏的「搜索 / 重置」、卡片与表格里的按钮、消息框按钮一起对上。
+
+弹窗 footer 的文字按钮是 WeUI 的另一套（radius 0 + 竖 hairline），选择器特异性更高，不受这条影响。
+桌面端（≥768px）不变，仍是 EP 的 4px。
+
+### 移动端操作栏按钮：一行铺满、不折行
+
+列表上方的操作栏（全站 13 处：订单 / 客户 / 车辆 / 用户 / 来源 / 年检 / 保养 / 保险 / 违章 /
+财务 5 个 tab）在移动端改成**所有按钮挤在一行里铺满整行、不许折行**。做法：`.action-bar`
+强制 `flex-wrap: nowrap` —— 各页 scoped 里写的是 `wrap`，带 `[data-v]` 属性选择器、特异性与本条
+相同且更靠后，只能靠 `!important` 压掉；按钮默认 `flex: 1 1 0` 等分整行（两个按钮时就是一样长）。
+按钮本身按 WeUI 规格：高 48px、圆角 8px、字 17px。
+
+资金流水与结算有 4 个按钮，「生成本期结算」6 个字在 17px 下要 102px、放不进 1/4 行宽，这两处降到
+15px + 左右内边距 4px，并且 basis 改回 `auto` 按内容分配（375px 屏 4 个按钮合计 317px < 可用
+343px，最长的那个拿到 ~125px）。这两页原先会折成两行，现在一行解决。
+
+筛选栏的「搜索 / 重置」这次没动，仍是「等宽两半 + 16px 间距」那一版（44px / 4px 圆角 / 14px 字）——
+所以同一页上筛选栏与操作栏的按钮外观暂时不是一套，要统一另说。
+
+### 移动端筛选栏的「搜索 / 重置」按钮行：各占一半 + 16px 间距
+
+移动端「只放按钮的表单项」原本是两个按钮各 `flex: 1` 且 `margin: 0`（那条 `margin: 0` 是为了
+消掉 EP 自带的按钮外边距，否则行高会被撑开），副作用是「搜索 + 重置」贴成一块、各占半行 ——
+订单筛选与操作日志筛选都是这个样子。现在给 `.el-form-item__content` 在「同一个表单项里有两个
+按钮」时加 16px 的 `gap`（WeUI 按钮组的横向间距），按钮改 `flex: 1 1 0` 保证等宽（不受文字长短
+影响）；只有一个按钮的筛选栏（年检 / 用户 / 车辆 / 客户 / 财务 5 个 tab，共 10 处）保持整行铺满
+不变。375px 屏上按钮从「各 171px 且贴着」变成「各 163.5px、间距 16px」。
+
+顺带删掉 `Orders.vue` 里那组失效的移动端 `.form-actions` 规则 —— 它把 `gap` 加在 `el-form-item`
+上，而按钮实际在 `.el-form-item__content` 里，那 10px 一直是空转。
+
+### 移动端下拉选择统一为 WeUI 单列滚轮（69 处 el-select / 26 个文件）
+
+移动端的 `el-select` 之前只是外壳被 WeUI 表单规则改过，点开的仍是 Element Plus 的 popper 浮层。
+这次新增 `components/AppSelect.vue`：桌面端渲染 `el-select`（视觉与行为一字未改），移动端渲染
+el-input 触发器 + teleport 到底部的**单列滚轮 sheet**，与 `AppDatePicker` 共用一套 `.m-wheel` 样式
+（原在 AppDatePicker 的 scoped 里，这次提到 `style.css` 的「Mobile WeUI Wheel Sheet」段，两个组件共用一份）。
+
+**滚轮规格**：可视区 7 项（34px/项，由 `wheelPicker.ts` 的 `WHEEL_ITEM_HEIGHT` 单点定义）、
+中间项加粗 + 上下 0.5px hairline、取消｜标题｜确定三段工具栏（标题取自最近的表单项 label）。
+`clearable` 的滚轮首行是「不限」（等价于清空 —— 手机上点 24px 的 × 太费劲）；`filterable` 或选项数
+超过 8 项时 sheet 里带搜索行（订单表单的车辆、常用客户这类长列表本来没写 `filterable`，靠这条兜住）；
+值不在选项里（选项未加载 / URL 里的旧 id）时插一条原值占位行，避免用户直接点「确定」被静默改成第一项；
+列表为空显示「暂无可选项 / 无匹配项」并禁用确定。
+
+**调用点改造**：选项从 `<el-option>` children 改成 `options` 数组（`{ label, value }`，值统一字符串）。
+新增 `PAID_STATUS_OPTIONS`、`SETTLEMENT_LINE_STATUS_OPTIONS`，以及车辆状态、变速箱、动力/车身类型、
+年检状态、用户角色、订单排序这些原本写死在模板里的选项常量；车辆状态的筛选 3 项与表单 4 项保持两套，未合并。
+`AssignDriverDialog` 的空值改在提交时落成 `null`（原来是 EP 清空给 `undefined`，键会被 JSON 丢掉）。
+
+**顺带清掉**：移动端的 `.el-select__wrapper` / `.el-select__caret` 规则（触发器是 el-input，走 el-input 那套，
+WeUI 的 12×24 chevron 改成 `--m-select-chevron` 变量给触发器复用）、`Orders.vue` 与 `LogsTab.vue` 里
+已经失效的 scoped 宽度规则；`OrderImport.vue` 的 `.source-select` 改成 `:deep()` —— AppSelect 与 AppDatePicker
+一样是多根组件，父组件的 scoped id 贴不到它内部的元素上，不改的话桌面端宽度会静默掉成 100%。
+
+**校验**：`npm run verify`（226 项，含新增的 `test/selectPicker.test.ts` 13 项）、`npm run build:web` +
+产物静态核验、`scripts/verify-finance-api.mjs`（8 项全过）。滚轮的滚动手感与「搜索框聚焦后键盘顶起 sheet」
+本机没有浏览器，验证不了，留给真机。
+
 ### 移动端表单统一成 WeUI cells（33 个表单 / 约 290 个表单项）
 
 列表、弹窗、日期选择、图标改完之后，移动端剩下的最后一块是表单 —— 表单项还是

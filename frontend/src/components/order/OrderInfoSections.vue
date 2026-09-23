@@ -1,13 +1,7 @@
 <template>
-  <!-- 订单信息 -->
+  <!-- 订单信息：不设卡片标题栏 —— 页面顶部已有「订单详情 + 状态」，再挂一行「订单信息」
+       是重复（用户反馈的两行重复）；状态也只在 el-page-header 的 extra 里显示一次 -->
   <el-card shadow="never" class="info-card">
-    <template #header>
-      <div class="card-header-row">
-        <span class="section-title"><el-icon><i class="weui-icon-outlined-note" /></el-icon> 订单信息</span>
-        <el-tag :type="getStatusType(order.status)" size="large">{{ order.status_text }}</el-tag>
-      </div>
-    </template>
-
     <!-- 订单来源和状态 -->
     <div class="order-detail-header" v-if="order.source_name">
       <span class="source-tag" :style="{ background: order.source_color || '#0071e3' }">
@@ -126,7 +120,10 @@
   <!-- 客户信息 -->
   <el-card shadow="never" class="info-card">
     <template #header>
-      <span class="section-title"><el-icon><i class="weui-icon-outlined-me" /></el-icon> 客户信息</span>
+      <div class="card-header-row">
+        <span class="section-title"><el-icon><i class="weui-icon-outlined-me" /></el-icon> 客户信息</span>
+        <el-button type="danger" plain size="small" @click="emit('add-to-blacklist')">拉黑客户</el-button>
+      </div>
     </template>
 
     <div class="info-list">
@@ -341,7 +338,6 @@ import { formatMoney } from '../../utils/money'
 import {
   formatDateTime,
   getImageUrl,
-  getOrderStatusType as getStatusType,
   getPaymentMethodText,
   getPaymentTypeText,
   getServiceLabel,
@@ -356,6 +352,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'assign-driver'): void
   (e: 'add-payment'): void
+  (e: 'add-to-blacklist'): void
   (e: 'preview', images: string[], index: number): void
 }>()
 
@@ -399,6 +396,14 @@ function feeCategoryText(category: string): string {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* 标题栏里的按钮（指派司机 / 添加 / 拉黑客户）：移动端的全局规则会把按钮拉到 44px，
+   标题栏跟着高出一截。标题栏的高度该由标题决定，这里让小号按钮回到本来的 24px */
+@media (max-width: 767px) {
+  .card-header-row .el-button {
+    min-height: auto;
+  }
 }
 
 /* 订单头部 */
@@ -710,12 +715,32 @@ html.dark .payment-time {
   color: var(--text-color-secondary);
 }
 
+/* 费用明细 / 续租历史：这两个列表原来漏了暗色覆盖（.fee-item 一直是 #fafafa 白底、
+   .fee-name 是 #303133 黑字），与上面 .payment-item 那组保持一致 */
+html.dark .fee-item {
+  background: var(--bg-color-secondary);
+}
+
+html.dark .fee-name {
+  color: var(--text-color);
+}
+
+html.dark .fee-category,
+html.dark .fee-meta {
+  color: var(--text-color-secondary);
+}
+
 html.dark .image-label {
   color: var(--text-color-secondary);
 }
 
 html.dark .order-image {
   border-color: var(--border-color);
+}
+
+/* 照片区上方那条 1px 分隔线同样是写死的浅色，暗色下会亮一条 */
+html.dark .order-images {
+  border-top-color: var(--border-color);
 }
 
 html.dark .section-title {

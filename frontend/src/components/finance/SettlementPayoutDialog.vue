@@ -2,25 +2,19 @@
   <el-dialog v-model="dialogVisible" title="结算付款" width="90%" :style="{ maxWidth: '460px' }">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
       <el-form-item label="车主" prop="owner_id">
-        <el-select v-model="form.owner_id" placeholder="选择车主" style="width: 100%">
-          <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
-        </el-select>
+        <AppSelect v-model="form.owner_id" :options="ownerOptions" placeholder="选择车主" style="width: 100%" />
       </el-form-item>
       <el-form-item label="结算期" prop="period">
         <AppDatePicker v-model="form.period" type="month" value-format="YYYY-MM" placeholder="归属月份" style="width: 100%" />
       </el-form-item>
       <el-form-item label="类型">
-        <el-select v-model="form.payout_type" style="width: 100%">
-          <el-option v-for="o in PAYOUT_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
+        <AppSelect v-model="form.payout_type" :options="PAYOUT_TYPE_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item label="金额" prop="amount">
         <el-input-number v-model="form.amount" :min="0.01" :precision="2" :step="1000" style="width: 100%" />
       </el-form-item>
       <el-form-item label="付款账户" prop="account_id">
-        <el-select v-model="form.account_id" placeholder="从哪个账户付的" style="width: 100%">
-          <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-        </el-select>
+        <AppSelect v-model="form.account_id" :options="accountOptions" placeholder="从哪个账户付的" style="width: 100%" />
       </el-form-item>
       <el-form-item label="付款日期" prop="paid_at">
         <AppDatePicker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -44,6 +38,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { AccountOption, OwnerOption } from '../../api/types'
 import { PAYOUT_TYPE_OPTIONS } from '../../utils/constants'
 
@@ -68,6 +63,10 @@ const dialogVisible = computed({
 function today(): string {
   return new Date(Date.now() + 8 * 3600 * 1000).toISOString().substring(0, 10)
 }
+
+// 下拉选项（AppSelect 走数据数组，桌面端仍由内部 el-select 渲染）
+const ownerOptions = computed(() => props.owners.map((o) => ({ label: o.name, value: o.id })))
+const accountOptions = computed(() => props.accounts.map((a) => ({ label: a.name, value: a.id })))
 
 const formRef = ref<FormInstance>()
 const form = reactive({

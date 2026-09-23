@@ -8,14 +8,14 @@
     <el-form ref="formRef" :model="form" :rules="rules" label-width="70px" size="default">
       <el-divider content-position="left">客户信息</el-divider>
       <el-form-item v-if="isCreate" label="常用客户">
-        <el-select v-model="selectedRegularCustomer" placeholder="选择常用客户（可选）" style="width: 100%" clearable @change="onRegularCustomerChange">
-          <el-option
-            v-for="c in regularCustomers"
-            :key="c.id"
-            :label="`${c.name} (${c.phone})`"
-            :value="c.id"
-          />
-        </el-select>
+        <AppSelect
+          v-model="selectedRegularCustomer"
+          :options="regularCustomerOptions"
+          placeholder="选择常用客户（可选）"
+          style="width: 100%"
+          clearable
+          @change="onRegularCustomerChange"
+        />
       </el-form-item>
       <el-form-item label="姓名" prop="customer_name">
         <el-input v-model="form.customer_name" placeholder="客户姓名" />
@@ -73,20 +73,14 @@
 
       <el-divider content-position="left">车辆信息</el-divider>
       <el-form-item label="车辆" prop="vehicle_id">
-        <el-select
+        <AppSelect
           v-model="form.vehicle_id"
+          :options="vehicleOptions"
           placeholder="选择车辆"
           style="width: 100%"
           :disabled="props.order?.status === 'active'"
           @change="onVehicleChange"
-        >
-          <el-option
-            v-for="v in vehicles"
-            :key="v.id"
-            :label="`${v.plate_number} - ${v.brand} ${v.model} (¥${v.daily_rate}/天)`"
-            :value="v.id"
-          />
-        </el-select>
+        />
       </el-form-item>
 
       <el-divider content-position="left">租期信息</el-divider>
@@ -131,14 +125,10 @@
             <el-input-number v-model="form.prepay_amount" :min="0" style="width: 100%" />
           </el-form-item>
           <el-form-item label="支付方式">
-            <el-select v-model="form.prepay_method" placeholder="选择支付方式" style="width: 100%">
-              <el-option v-for="item in PAYMENT_METHOD_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <AppSelect v-model="form.prepay_method" :options="PAYMENT_METHOD_OPTIONS" placeholder="选择支付方式" style="width: 100%" />
           </el-form-item>
           <el-form-item label="支付类型">
-            <el-select v-model="form.prepay_type" placeholder="选择支付类型" style="width: 100%">
-              <el-option v-for="item in PAYMENT_TYPE_OPTIONS" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
+            <AppSelect v-model="form.prepay_type" :options="PAYMENT_TYPE_OPTIONS" placeholder="选择支付类型" style="width: 100%" />
           </el-form-item>
         </template>
       </template>
@@ -168,14 +158,7 @@
       <template v-if="isCreate">
         <el-divider content-position="left">订单来源</el-divider>
         <el-form-item label="来源" prop="source_id">
-          <el-select v-model="form.source_id" placeholder="选择订单来源" style="width: 100%">
-            <el-option
-              v-for="s in orderSources"
-              :key="s.id"
-              :label="`${s.name} (${s.commission_rate}%服务费)`"
-              :value="s.id"
-            />
-          </el-select>
+          <AppSelect v-model="form.source_id" :options="sourceOptions" placeholder="选择订单来源" style="width: 100%" />
         </el-form-item>
         <el-form-item label="合同号">
           <el-input v-model="form.contract_number" placeholder="合同号（选填）" />
@@ -196,14 +179,7 @@
       </template>
       <template v-else>
         <el-form-item label="订单来源">
-          <el-select v-model="form.source_id" placeholder="选择订单来源（可选）" style="width: 100%" clearable>
-            <el-option
-              v-for="s in orderSources"
-              :key="s.id"
-              :label="`${s.name} (${s.commission_rate}%服务费)`"
-              :value="s.id"
-            />
-          </el-select>
+          <AppSelect v-model="form.source_id" :options="sourceOptions" placeholder="选择订单来源（可选）" style="width: 100%" clearable />
         </el-form-item>
         <el-form-item label="合同号">
           <el-input v-model="form.contract_number" placeholder="合同号（选填）" />
@@ -232,16 +208,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="发票状态">
-              <el-select v-model="form.invoice_status" style="width: 100%">
-                <el-option v-for="o in INVOICE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-              </el-select>
+              <AppSelect v-model="form.invoice_status" :options="INVOICE_STATUS_OPTIONS" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="结算状态">
-          <el-select v-model="form.settle_status" style="width: 100%">
-            <el-option v-for="o in SETTLE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-          </el-select>
+          <AppSelect v-model="form.settle_status" :options="SETTLE_STATUS_OPTIONS" style="width: 100%" />
         </el-form-item>
         <el-form-item label="结算备注">
           <el-input v-model="form.settle_remarks" placeholder="如：只转利润，未转全部金额" />
@@ -267,6 +239,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { blacklistApi, uploadApi } from '../../api'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import {
   DELIVERY_TYPE_OPTIONS,
   PAYMENT_METHOD_OPTIONS,
@@ -315,6 +288,20 @@ const blacklistReason = ref('')
 const isCreate = computed(() => !props.order)
 // 原来的两处编辑视图手机号占位文案不同，跟着必填开关走
 const phonePlaceholder = computed(() => (props.phoneRequired ? '手机号' : '选填'))
+
+// AppSelect 的选项（桌面端 el-select 与移动端滚轮共用同一份数据）
+const regularCustomerOptions = computed(() =>
+  (props.regularCustomers ?? []).map((c) => ({ label: `${c.name} (${c.phone})`, value: c.id }))
+)
+const vehicleOptions = computed(() =>
+  (props.vehicles ?? []).map((v) => ({
+    label: `${v.plate_number} - ${v.brand} ${v.model} (¥${v.daily_rate}/天)`,
+    value: v.id
+  }))
+)
+const sourceOptions = computed(() =>
+  (props.orderSources ?? []).map((s) => ({ label: `${s.name} (${s.commission_rate}%服务费)`, value: s.id }))
+)
 
 const form = reactive({
   customer_name: '',

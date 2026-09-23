@@ -368,54 +368,22 @@ html.dark .card-title {
 }
 
 @media (max-width: 767px) {
-  /* 设置页最适合 WeUI navbar + cells：每个设置项是 56px 触控行 */
+  /* 移动端页签统一成客户管理那套：Element 默认的透明底 + 下划线，
+     不再做 56px 白底条 / 17px 字 / 选中整项背景。4 个页签，保留横向滚动。
+     桌面端那条 .settings-tabs 给了圆角和浅灰底，移动端也要一起去掉 */
   .settings-tabs {
-    margin: 0 -16px;
+    margin: 0;
     padding: 0;
     border-radius: 0;
-    background: var(--m-bg-page);
-  }
-
-  .settings-tabs :deep(.el-tabs__header) {
-    height: 56px;
-    margin: 0 0 8px;
-    background: var(--m-bg-cell);
+    background: transparent;
   }
 
   .settings-tabs :deep(.el-tabs__nav-wrap) {
     overflow-x: auto;
   }
 
-  .settings-tabs :deep(.el-tabs__nav-wrap::after) {
-    height: 1px;
-    background-color: var(--m-line);
-    transform: scaleY(0.5);
-    transform-origin: 0 0;
-  }
-
   .settings-tabs :deep(.el-tabs__nav) {
     min-width: max-content;
-  }
-
-  .settings-tabs :deep(.el-tabs__item) {
-    height: 56px;
-    padding: 0 16px;
-    font-size: 17px;
-    color: var(--m-fg-1);
-  }
-
-  .settings-tabs :deep(.el-tabs__item.is-active) {
-    color: var(--m-fg-0);
-    font-weight: 500;
-    background: var(--m-active);
-  }
-
-  .settings-tabs :deep(.el-tabs__active-bar) {
-    display: none;
-  }
-
-  .settings-tabs :deep(.el-tabs__content) {
-    padding: 0;
   }
 
   /* cell 行（56px、label 5em、hairline、去盒子的输入框）由 style.css 的

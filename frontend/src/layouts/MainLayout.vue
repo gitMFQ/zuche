@@ -49,8 +49,8 @@
 
     <!-- 主内容区 -->
     <el-container class="main-container">
-      <!-- 顶部栏 -->
-      <el-header class="header">
+      <!-- 顶部栏。沉浸式页面（订单详情，仅移动端）把它和 tabbar 一起收起来 -->
+      <el-header v-if="!immersive" class="header">
         <div class="header-left">
           <!-- 移动端没有侧栏可收起，汉堡按钮一并隐藏 -->
           <el-button
@@ -62,6 +62,14 @@
             circle
             size="large"
           />
+          <!-- 移动端没有侧栏，Logo 与系统标题放顶栏（面包屑在移动端是 display: none） -->
+          <div v-if="isMobile" class="header-brand">
+            <div class="logo-icon">
+              <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" class="logo-img" />
+              <el-icon v-else :size="22"><Van /></el-icon>
+            </div>
+            <span class="header-brand__title">{{ systemTitle }}</span>
+          </div>
           <el-breadcrumb separator="/" class="breadcrumb">
             <el-breadcrumb-item :to="{ path: '/' }">总览</el-breadcrumb-item>
             <el-breadcrumb-item>{{ currentTitle }}</el-breadcrumb-item>
@@ -96,7 +104,7 @@
       </el-header>
 
       <!-- 内容区 -->
-      <el-main class="main">
+      <el-main class="main" :class="{ 'is-immersive': immersive }">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :is-mobile="isMobile" />
@@ -141,8 +149,8 @@
       </template>
     </el-dialog>
 
-    <!-- 底部标签栏：移动端唯一的导航入口 -->
-    <MobileTabbar v-if="isMobile" />
+    <!-- 底部标签栏：移动端唯一的导航入口（沉浸式页面收起来） -->
+    <MobileTabbar v-if="isMobile && !immersive" />
   </el-container>
 </template>
 
@@ -165,6 +173,13 @@ const mustChangePassword = computed(() => userStore.mustChangePassword)
 
 const { isMobile } = useMobile()
 const isCollapse = ref(true)
+
+/**
+ * 沉浸式页面：移动端隐藏全局顶栏与 tabbar，内容区不再自带内边距 ——
+ * 由页面自己把顶部一行 sticky 到顶、底部操作行 fixed 到底（目前只有订单详情，
+ * 路由 meta.immersive）。桌面端不受影响，顶栏照旧。
+ */
+const immersive = computed(() => isMobile.value && route.meta.immersive === true)
 
 // 移动端自动收起侧栏，桌面端展开（immediate 保证首屏就是正确状态）
 watch(isMobile, (mobile) => {
@@ -645,6 +660,24 @@ html.dark .header {
     -webkit-backdrop-filter: none;
     border-bottom-color: var(--m-line);
   }
+
+  /* 顶栏左侧的品牌区：Logo 方块复用侧栏的 .logo-icon / .logo-img（移动端 --sk-focus-color
+     已切成微信绿），标题按 WeUI navbar 的字号 */
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .header-brand__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--m-fg-0);
+  }
 }
 
 .header-left {
@@ -793,6 +826,13 @@ html.dark .user-dropdown:hover {
   overflow-y: auto;
   min-height: calc(100vh - 48px);
   background-color: var(--sk-bg-light-gray);
+}
+
+/* 沉浸式页面（订单详情）：顶栏与 tabbar 都没了，内边距全部交给页面自己
+   （页面的卡片靠 .main 的 16px 内边距做负边距出血，这里归零后页面自己也不出血了） */
+.main.is-immersive {
+  padding: 0;
+  min-height: 100vh;
 }
 
 html.dark .main {

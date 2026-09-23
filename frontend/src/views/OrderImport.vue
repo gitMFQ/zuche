@@ -45,14 +45,13 @@
           </div>
 
           <div class="summary-actions">
-            <el-select
+            <AppSelect
               v-model="defaultSourceId"
+              :options="sourceOptions"
               placeholder="选择订单来源"
               size="default"
               class="source-select"
-            >
-              <el-option v-for="s in sources" :key="s.id" :label="s.name" :value="s.id" />
-            </el-select>
+            />
             <el-button type="primary" :loading="committing" :disabled="!canCommit" @click="runCommit">
               确认导入 {{ importableCount }} 条
             </el-button>
@@ -203,6 +202,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Upload } from '@element-plus/icons-vue'
 import { importApi } from '../api'
 import { useDictStore } from '../stores/dict'
+import AppSelect from '../components/AppSelect.vue'
 import { ORDER_STATUS_TEXT_MAP, PLATFORM_TEXT_MAP } from '../utils/constants'
 
 interface RowIssue {
@@ -243,6 +243,8 @@ const prepared = ref<PreviewRow[]>([])
 const summary = ref<Record<string, number> | null>(null)
 const skipMap = ref<Record<number, boolean>>({})
 const sources = ref<{ id: string; name: string }[]>([])
+// AppSelect 的选项（桌面端 el-select 与移动端滚轮共用同一份数据）
+const sourceOptions = computed(() => sources.value.map((s) => ({ label: s.name, value: s.id })))
 const defaultSourceId = ref('')
 const loading = ref(false)
 const committing = ref(false)
@@ -513,7 +515,9 @@ onMounted(async () => {
   margin-left: auto;
 }
 
-.source-select {
+/* AppSelect / AppDatePicker 这类多根组件不会把父组件的 scoped id 贴到内部元素上，
+   所以点名的类必须走 :deep()，否则宽度规则会静默失效（桌面端会被 EP 默认 100% 撑开） */
+.summary-actions :deep(.source-select) {
   width: 220px;
 }
 
@@ -681,7 +685,7 @@ onMounted(async () => {
     gap: 8px;
   }
 
-  .source-select {
+  .summary-actions :deep(.source-select) {
     width: 100%;
   }
 

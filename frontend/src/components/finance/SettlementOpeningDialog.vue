@@ -10,14 +10,10 @@
     />
     <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
       <el-form-item label="车主" prop="owner_id">
-        <el-select v-model="form.owner_id" placeholder="选择车主" style="width: 100%">
-          <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
-        </el-select>
+        <AppSelect v-model="form.owner_id" :options="ownerOptions" placeholder="选择车主" style="width: 100%" />
       </el-form-item>
       <el-form-item label="车辆">
-        <el-select v-model="form.vehicle_id" clearable placeholder="留空 = 按车主汇总" style="width: 100%">
-          <el-option v-for="v in vehicles" :key="v.id" :label="v.plate_number" :value="v.id" />
-        </el-select>
+        <AppSelect v-model="form.vehicle_id" :options="vehicleOptions" clearable placeholder="留空 = 按车主汇总" style="width: 100%" />
       </el-form-item>
       <el-form-item label="年份" prop="fiscal_year">
         <el-input-number v-model="form.fiscal_year" :min="2000" :max="2100" style="width: 100%" />
@@ -42,6 +38,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { OwnerOption, VehicleItem } from '../../api/types'
+import AppSelect from '../AppSelect.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -63,6 +60,10 @@ const dialogVisible = computed({
 
 const formRef = ref<FormInstance>()
 const form = reactive({ owner_id: '', vehicle_id: '', fiscal_year: new Date().getFullYear(), amount: 0, remarks: '' })
+
+// AppSelect 的选项
+const ownerOptions = computed(() => props.owners.map((o) => ({ label: o.name, value: o.id })))
+const vehicleOptions = computed(() => props.vehicles.map((v) => ({ label: v.plate_number, value: v.id })))
 
 const rules: FormRules = {
   owner_id: [{ required: true, message: '请选择车主', trigger: 'change' }],

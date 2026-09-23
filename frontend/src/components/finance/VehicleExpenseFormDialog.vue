@@ -3,17 +3,13 @@
     <el-form ref="formRef" :model="form" :rules="rules" label-width="96px">
       <el-form-item label="车辆" prop="vehicle_id">
         <!-- 车辆只有十几台，一次拉全用可搜索下拉比套一个页面级选择器合适得多 -->
-        <el-select v-model="form.vehicle_id" filterable placeholder="搜索车牌" style="width: 100%">
-          <el-option v-for="v in vehicles" :key="v.id" :label="`${v.plate_number} ${v.brand} ${v.model}`" :value="v.id" />
-        </el-select>
+        <AppSelect v-model="form.vehicle_id" :options="vehicleOptions" filterable placeholder="搜索车牌" style="width: 100%" />
       </el-form-item>
       <el-form-item label="日期" prop="expense_date">
         <AppDatePicker v-model="form.expense_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="费用类型" prop="expense_type">
-        <el-select v-model="form.expense_type" style="width: 100%">
-          <el-option v-for="t in types" :key="t.id" :label="t.name" :value="t.id" />
-        </el-select>
+        <AppSelect v-model="form.expense_type" :options="typeOptions" style="width: 100%" />
       </el-form-item>
       <el-form-item label="支出金额">
         <el-input-number v-model="form.expense_amount" :min="0" :precision="2" style="width: 100%" />
@@ -23,9 +19,7 @@
         <div class="field-hint">车损赔偿、停运费填这里。同一行可以既有收入又有支出（台账的违章行就是）</div>
       </el-form-item>
       <el-form-item label="发票">
-        <el-select v-model="form.invoice_status" style="width: 100%">
-          <el-option v-for="o in INVOICE_STATUS_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-        </el-select>
+        <AppSelect v-model="form.invoice_status" :options="INVOICE_STATUS_OPTIONS" style="width: 100%" />
       </el-form-item>
       <el-form-item label="分摊月数">
         <el-input-number v-model="form.amortize_months" :min="1" :max="60" style="width: 100%" />
@@ -36,9 +30,7 @@
         <div class="field-hint">只有已付款才会写资金流水；未付款只进费用台账（应付）</div>
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款账户" prop="account_id">
-        <el-select v-model="form.account_id" placeholder="从哪个账户付的" style="width: 100%">
-          <el-option v-for="a in accounts" :key="a.id" :label="a.name" :value="a.id" />
-        </el-select>
+        <AppSelect v-model="form.account_id" :options="accountOptions" placeholder="从哪个账户付的" style="width: 100%" />
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款日期">
         <AppDatePicker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
@@ -64,6 +56,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import AppDatePicker from '../AppDatePicker.vue'
+import AppSelect from '../AppSelect.vue'
 import type { AccountOption, VehicleExpenseItem, VehicleExpenseTypeItem, VehicleItem } from '../../api/types'
 import { INVOICE_STATUS_OPTIONS } from '../../utils/constants'
 
@@ -90,6 +83,13 @@ const dialogVisible = computed({
 })
 
 const isEdit = computed(() => Boolean(props.expense?.id))
+
+// AppSelect 的选项
+const vehicleOptions = computed(() =>
+  props.vehicles.map((v) => ({ label: `${v.plate_number} ${v.brand} ${v.model}`, value: v.id }))
+)
+const typeOptions = computed(() => props.types.map((t) => ({ label: t.name, value: t.id })))
+const accountOptions = computed(() => props.accounts.map((a) => ({ label: a.name, value: a.id })))
 
 function today(): string {
   return new Date(Date.now() + 8 * 3600 * 1000).toISOString().substring(0, 10)
