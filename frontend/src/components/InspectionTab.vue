@@ -140,20 +140,12 @@
         </el-form-item>
         
         <el-form-item label="到期日期" prop="expiry_date">
-          <input 
-            v-if="isMobile"
-            type="date" 
-            v-model="form.expiry_date" 
-            class="native-date-input"
+          <AppDatePicker
+            v-model="form.expiry_date"
+            type="date"
+            placeholder="选择到期日期"
+            value-format="YYYY-MM-DD"
             style="width: 100%"
-          />
-          <el-date-picker 
-            v-else
-            v-model="form.expiry_date" 
-            type="date" 
-            placeholder="选择到期日期" 
-            value-format="YYYY-MM-DD" 
-            style="width: 100%" 
           />
         </el-form-item>
 
@@ -206,12 +198,11 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { Camera } from '@element-plus/icons-vue'
 import { inspectionApi, uploadApi } from '../api'
+import AppDatePicker from './AppDatePicker.vue'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
-import { useMobile } from '../composables/useMobile'
 
 const loading = ref(false)
 const submitting = ref(false)
-const { isMobile } = useMobile()
 const tableData = ref<any[]>([])
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()

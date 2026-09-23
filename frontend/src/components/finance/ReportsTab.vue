@@ -4,7 +4,7 @@
       <!-- 单车月报 -->
       <el-tab-pane label="单车月报" name="vehicle-monthly">
         <div class="report-toolbar">
-          <el-date-picker v-model="monthlyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadMonthly" />
+          <AppDatePicker v-model="monthlyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadMonthly" />
           <el-select v-model="monthlyOwnerId" placeholder="全部车主" clearable style="width: 150px" @change="loadMonthly">
             <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
           </el-select>
@@ -77,11 +77,11 @@
             end-placeholder="结束"
             @change="loadRanking"
           />
-          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
           <div v-else class="mobile-date-range">
-            <input v-model="rankFrom" type="date" class="native-date-input" @change="loadRanking" />
+            <AppDatePicker v-model="rankFrom" type="date" value-format="YYYY-MM-DD" @change="loadRanking" />
             <span class="date-separator">-</span>
-            <input v-model="rankTo" type="date" class="native-date-input" @change="loadRanking" />
+            <AppDatePicker v-model="rankTo" type="date" value-format="YYYY-MM-DD" @change="loadRanking" />
           </div>
           <el-button :loading="loading.ranking" @click="loadRanking">刷新</el-button>
         </div>
@@ -140,7 +140,7 @@
       <!-- 公司月报 -->
       <el-tab-pane label="公司月报" name="company">
         <div class="report-toolbar">
-          <el-date-picker v-model="companyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadCompany" />
+          <AppDatePicker v-model="companyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadCompany" />
           <el-button :loading="loading.company" @click="loadCompany">刷新</el-button>
         </div>
         <p class="report-hint">
@@ -192,11 +192,11 @@
             end-placeholder="结束"
             @change="loadFlow"
           />
-          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
           <div v-else class="mobile-date-range">
-            <input v-model="flowFrom" type="date" class="native-date-input" @change="loadFlow" />
+            <AppDatePicker v-model="flowFrom" type="date" value-format="YYYY-MM-DD" @change="loadFlow" />
             <span class="date-separator">-</span>
-            <input v-model="flowTo" type="date" class="native-date-input" @change="loadFlow" />
+            <AppDatePicker v-model="flowTo" type="date" value-format="YYYY-MM-DD" @change="loadFlow" />
           </div>
           <el-radio-group v-model="flowBy" @change="loadFlow">
             <el-radio-button value="month">按月</el-radio-button>
@@ -268,6 +268,7 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import DataState from '../DataState.vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, ownerApi } from '../../api'
 import type {
   CompanyMonthlyReport,

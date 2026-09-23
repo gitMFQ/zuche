@@ -33,7 +33,7 @@
         <div class="field-hint">正数 = 公司应付此人。只填开始用系统时的余额，不要填历史累计</div>
       </el-form-item>
       <el-form-item label="期初日期">
-        <el-date-picker v-model="form.opening_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
+        <AppDatePicker v-model="form.opening_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" type="textarea" :rows="2" />
@@ -50,6 +50,7 @@
 /** 车主 / 合伙人档案。一个实体两种角色（台账里牛昭平、马跃两种身份都有） */
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { OwnerItem } from '../../api/types'
 import { OWNER_ROLE_OPTIONS } from '../../utils/constants'
 

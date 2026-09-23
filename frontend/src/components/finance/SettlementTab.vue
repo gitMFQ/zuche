@@ -4,7 +4,7 @@
     <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
-          <el-date-picker v-model="query.period" type="month" value-format="YYYY-MM" placeholder="结算期" style="width: 130px" @change="reload" />
+          <AppDatePicker v-model="query.period" type="month" value-format="YYYY-MM" placeholder="结算期" style="width: 130px" @change="reload" />
         </el-form-item>
         <el-form-item>
           <el-select v-model="query.owner_id" placeholder="全部车主" clearable style="width: 140px" @change="reload">
@@ -196,6 +196,7 @@ import DataState from '../DataState.vue'
 import SettlementLineDialog from './SettlementLineDialog.vue'
 import SettlementPayoutDialog from './SettlementPayoutDialog.vue'
 import SettlementOpeningDialog from './SettlementOpeningDialog.vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, ownerApi, settlementApi, vehicleApi } from '../../api'
 import type { AccountOption, OwnerOption, SettlementLineItem, SettlementTotals, VehicleItem } from '../../api/types'
 import { useUserStore } from '../../stores/user'

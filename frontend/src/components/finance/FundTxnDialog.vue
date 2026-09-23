@@ -7,7 +7,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="日期" prop="txn_date">
-        <el-date-picker v-model="form.txn_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.txn_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="方向" prop="direction">
         <el-radio-group v-model="form.direction">
@@ -49,6 +49,7 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { AccountOption, FundTransactionItem } from '../../api/types'
 import { FUND_CATEGORY_TEXT_MAP, FUND_DIRECTION_OPTIONS } from '../../utils/constants'
 

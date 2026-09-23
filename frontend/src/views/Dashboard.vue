@@ -76,7 +76,7 @@
         <div class="card-header dialog-header">
           <span class="dialog-title">库存日历 - 完整视图</span>
           <div class="header-actions">
-            <el-date-picker
+            <AppDatePicker
               v-model="centerDate"
               type="date"
               size="small"
@@ -149,6 +149,7 @@ import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import { Calendar, Download, FullScreen, Grid, RefreshLeft } from '@element-plus/icons-vue'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
+import AppDatePicker from '../components/AppDatePicker.vue'
 import GanttChart from '../components/dashboard/GanttChart.vue'
 import ScheduleTable from '../components/dashboard/ScheduleTable.vue'
 import OrderDetailDialog from '../components/dashboard/OrderDetailDialog.vue'

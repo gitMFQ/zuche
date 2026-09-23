@@ -2,7 +2,7 @@
   <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑开支' : '新增开支'" width="90%" :style="{ maxWidth: '460px' }">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="88px">
       <el-form-item label="日期" prop="expense_date">
-        <el-date-picker v-model="form.expense_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.expense_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="项目" prop="category">
         <el-select v-model="form.category" filterable style="width: 100%">
@@ -29,7 +29,7 @@
         </el-select>
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款日期">
-        <el-date-picker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="如：三桶水 / 还雅阁车贷" />
@@ -46,6 +46,7 @@
 /** 运营开支录入。项目字典来自后端（台账的 27 项），付款状态只在新建时可设，后续走「标记付款」 */
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { AccountOption, ExpenseCategoryItem, OperatingExpenseItem } from '../../api/types'
 import { INVOICE_STATUS_OPTIONS } from '../../utils/constants'
 

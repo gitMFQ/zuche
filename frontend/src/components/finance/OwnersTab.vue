@@ -104,7 +104,7 @@
     <!-- 对账单 -->
     <el-drawer v-model="statementVisible" :title="`${statementOwner?.name || ''} 对账单`" size="90%">
       <div class="drawer-toolbar">
-        <el-date-picker v-model="statementPeriod" type="month" value-format="YYYY-MM" placeholder="结算期" @change="loadStatement" />
+        <AppDatePicker v-model="statementPeriod" type="month" value-format="YYYY-MM" placeholder="结算期" @change="loadStatement" />
         <el-button :loading="statementLoading" @click="exportStatement">导出对账单</el-button>
       </div>
       <div v-if="statement" class="statement-summary">
@@ -232,7 +232,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="付款日期">
-          <el-date-picker v-model="advancePayDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <AppDatePicker v-model="advancePayDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -257,6 +257,7 @@ import { Plus } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import OwnerFormDialog from './OwnerFormDialog.vue'
 import PartnerAdvanceDialog from './PartnerAdvanceDialog.vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, ownerApi } from '../../api'
 import type { AccountOption, OwnerItem, OwnerStatement, PartnerAdvanceItem } from '../../api/types'
 import { useUserStore } from '../../stores/user'

@@ -91,22 +91,26 @@
 
       <el-divider content-position="left">租期信息</el-divider>
       <el-form-item label="取车" prop="start_date">
-        <input
-          type="datetime-local"
-          :value="formatDateTimeLocal(form.start_date)"
-          class="native-datetime-input"
-          @change="onStartDateTimeChange"
+        <AppDatePicker
+          v-model="form.start_date"
+          type="datetime"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          style="width: 100%"
+          @change="emitDatesIfReady"
         />
       </el-form-item>
       <el-form-item v-if="inlineLocations" label="取车地点">
         <el-input v-model="form.pickup_location" placeholder="取车地点（选填）" />
       </el-form-item>
       <el-form-item label="还车" prop="end_date">
-        <input
-          type="datetime-local"
-          :value="formatDateTimeLocal(form.end_date)"
-          class="native-datetime-input"
-          @change="onEndDateTimeChange"
+        <AppDatePicker
+          v-model="form.end_date"
+          type="datetime"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          style="width: 100%"
+          @change="emitDatesIfReady"
         />
       </el-form-item>
       <el-form-item v-if="inlineLocations" label="还车地点">
@@ -145,15 +149,7 @@
         <el-input-number v-model="form.deposit" :min="0" style="width: 100%" />
       </el-form-item>
       <el-form-item v-if="form.deposit_waived" label="免押到期">
-        <input
-          v-if="isMobile"
-          v-model="form.deposit_waived_expiry"
-          type="date"
-          class="native-date-input"
-          style="width: 100%"
-        />
-        <el-date-picker
-          v-else
+        <AppDatePicker
           v-model="form.deposit_waived_expiry"
           type="date"
           placeholder="免押到期日期"
@@ -271,14 +267,14 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { blacklistApi, uploadApi } from '../../api'
-import { useMobile } from '../../composables/useMobile'
+import AppDatePicker from '../AppDatePicker.vue'
 import {
   DELIVERY_TYPE_OPTIONS,
   PAYMENT_METHOD_OPTIONS,
   PAYMENT_TYPE_OPTIONS,
   STORE_LOCATION_TEXT
 } from '../../utils/constants'
-import { formatDateTimeLocal, getImageUrl, getServiceLabel, getServiceTagType } from '../../utils/helpers'
+import { getImageUrl, getServiceLabel, getServiceTagType } from '../../utils/helpers'
 import { INVOICE_STATUS_OPTIONS, SETTLE_STATUS_OPTIONS } from '../../utils/constants'
 
 /**
@@ -309,7 +305,6 @@ const emit = defineEmits<{
   (e: 'preview', images: string[], index: number): void
 }>()
 
-const { isMobile } = useMobile()
 const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const idCardInput = ref<HTMLInputElement>()
@@ -648,24 +643,6 @@ function onVehicleChange(id: string) {
   }
 }
 
-// 处理原生日期时间输入
-function onStartDateTimeChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  if (target.value) {
-    // datetime-local 格式: YYYY-MM-DDTHH:mm -> YYYY-MM-DD HH:mm:ss
-    form.start_date = target.value.replace('T', ' ') + ':00'
-  }
-  emitDatesIfReady()
-}
-
-function onEndDateTimeChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  if (target.value) {
-    form.end_date = target.value.replace('T', ' ') + ':00'
-  }
-  emitDatesIfReady()
-}
-
 // 到店取车/还车都在门店完成，地址默认填「门店」；切回送车上门时把门店清掉
 function onDeliveryTypeChange(type: string) {
   if (type === 'store') {
@@ -818,40 +795,6 @@ async function handleSubmit() {
 .mini-upload .upload-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
-}
-
-/* 原生日期时间输入框样式 */
-.native-datetime-input {
-  width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #606266;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
-}
-
-.native-datetime-input:focus {
-  border-color: var(--primary-color);
-}
-
-.native-datetime-input::-webkit-datetime-edit {
-  padding: 0;
-}
-
-.native-datetime-input::-webkit-calendar-picker-indicator {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.native-datetime-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
 }
 
 /* 服务类型单选按钮 */

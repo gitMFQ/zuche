@@ -18,11 +18,12 @@
         </div>
       </el-form-item>
       <el-form-item :label="timeLabel || defaultTimeLabel">
-        <input
-          type="datetime-local"
-          :value="formatDateTimeLocal(form.datetime)"
-          class="native-datetime-input"
-          @change="onDateTimeChange"
+        <AppDatePicker
+          v-model="form.datetime"
+          type="datetime"
+          format="YYYY-MM-DD HH:mm"
+          :value-format="isPickup ? 'YYYY-MM-DDTHH:mm' : 'YYYY-MM-DD HH:mm:ss'"
+          style="width: 100%"
         />
       </el-form-item>
       <el-form-item label="备注">
@@ -41,7 +42,8 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { uploadApi } from '../../api'
-import { formatDateTimeLocal, getImageUrl } from '../../utils/helpers'
+import AppDatePicker from '../AppDatePicker.vue'
+import { getImageUrl } from '../../utils/helpers'
 import dayjs from 'dayjs'
 
 /**
@@ -99,7 +101,8 @@ watch(
       Object.assign(form, {
         mileage: props.defaultMileage ?? undefined,
         image: '',
-        // 取车侧沿用 datetime-local 的原生格式（含 T），还车侧用后端落库的 YYYY-MM-DD HH:mm:ss
+        // 取车侧沿用带 T 的 16 位格式（Orders/OrderDetail/Dashboard 的提交逻辑依赖它，
+        // 那边会做 replace('T',' ') + ':00'），还车侧用后端落库的 YYYY-MM-DD HH:mm:ss
         datetime: isPickup.value
           ? dayjs().format('YYYY-MM-DDTHH:mm')
           : `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:00`,
@@ -144,13 +147,6 @@ async function handleUpload(e: Event) {
     ElMessage.error('上传失败')
   }
   target.value = ''
-}
-
-function onDateTimeChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  if (target.value) {
-    form.datetime = target.value
-  }
 }
 
 function handleSubmit() {
@@ -224,47 +220,7 @@ function handleSubmit() {
   margin-bottom: 4px;
 }
 
-/* 原生日期时间输入框样式 */
-.native-datetime-input {
-  width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #606266;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
-}
-
-.native-datetime-input:focus {
-  border-color: var(--primary-color);
-}
-
-.native-datetime-input::-webkit-datetime-edit {
-  padding: 0;
-}
-
-.native-datetime-input::-webkit-calendar-picker-indicator {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.native-datetime-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-}
-
 /* 暗色模式 */
-html.dark .native-datetime-input {
-  background-color: var(--sk-surface-dark-1);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: var(--sk-text-white);
-}
-
 html.dark .single-upload .upload-btn {
   border-color: var(--border-color);
   color: var(--text-color-secondary);

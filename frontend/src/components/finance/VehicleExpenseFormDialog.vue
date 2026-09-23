@@ -8,7 +8,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="日期" prop="expense_date">
-        <el-date-picker v-model="form.expense_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.expense_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="费用类型" prop="expense_type">
         <el-select v-model="form.expense_type" style="width: 100%">
@@ -41,7 +41,7 @@
         </el-select>
       </el-form-item>
       <el-form-item v-if="!isEdit && form.is_paid" label="付款日期">
-        <el-date-picker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" type="textarea" :rows="2" placeholder="如：贺兰补胎、换轮胎" />
@@ -63,6 +63,7 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { AccountOption, VehicleExpenseItem, VehicleExpenseTypeItem, VehicleItem } from '../../api/types'
 import { INVOICE_STATUS_OPTIONS } from '../../utils/constants'
 

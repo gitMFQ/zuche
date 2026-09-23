@@ -20,15 +20,7 @@
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="生效日期" prop="start_date">
-            <input
-              v-if="isMobile"
-              type="date"
-              v-model="form.start_date"
-              class="native-date-input"
-              style="width: 100%"
-            />
-            <el-date-picker
-              v-else
+            <AppDatePicker
               v-model="form.start_date"
               type="date"
               placeholder="生效日期"
@@ -39,15 +31,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="到期日期" prop="end_date">
-            <input
-              v-if="isMobile"
-              type="date"
-              v-model="form.end_date"
-              class="native-date-input"
-              style="width: 100%"
-            />
-            <el-date-picker
-              v-else
+            <AppDatePicker
               v-model="form.end_date"
               type="date"
               placeholder="到期日期"
@@ -124,9 +108,9 @@
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Document, Plus } from '@element-plus/icons-vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { insuranceApi, uploadApi } from '../../api'
 import { getImageUrl } from '../../utils/helpers'
-import { useMobile } from '../../composables/useMobile'
 
 interface InsuranceDocument {
   url: string
@@ -154,7 +138,6 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
-const { isMobile } = useMobile()
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const fileInput = ref<HTMLInputElement>()

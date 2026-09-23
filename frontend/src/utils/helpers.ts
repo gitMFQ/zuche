@@ -47,14 +47,6 @@ export function formatDateTime(dateStr: string): string {
 }
 
 /**
- * 格式化为 datetime-local 输入格式
- */
-export function formatDateTimeLocal(dateStr: string): string {
-  if (!dateStr) return ''
-  return dateStr.replace(' ', 'T').slice(0, 16)
-}
-
-/**
  * 获取订单状态标签类型
  */
 export function getOrderStatusType(status: string): string {

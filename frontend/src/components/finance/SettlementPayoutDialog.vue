@@ -7,7 +7,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="结算期" prop="period">
-        <el-date-picker v-model="form.period" type="month" value-format="YYYY-MM" placeholder="归属月份" style="width: 100%" />
+        <AppDatePicker v-model="form.period" type="month" value-format="YYYY-MM" placeholder="归属月份" style="width: 100%" />
       </el-form-item>
       <el-form-item label="类型">
         <el-select v-model="form.payout_type" style="width: 100%">
@@ -23,7 +23,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="付款日期" prop="paid_at">
-        <el-date-picker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.paid_at" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" placeholder="如：结车款 / 微信转" />
@@ -43,6 +43,7 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { AccountOption, OwnerOption } from '../../api/types'
 import { PAYOUT_TYPE_OPTIONS } from '../../utils/constants'
 

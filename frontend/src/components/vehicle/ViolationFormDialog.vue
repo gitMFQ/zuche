@@ -5,16 +5,7 @@
         <el-input :value="vehicleLabel" disabled />
       </el-form-item>
       <el-form-item label="时间" prop="violation_date">
-        <input
-          v-if="isMobile"
-          type="date"
-          v-model="form.violation_date"
-          class="native-date-input"
-          style="width: 100%"
-          @change="onViolationDateChange"
-        />
-        <el-date-picker
-          v-else
+        <AppDatePicker
           v-model="form.violation_date"
           type="date"
           placeholder="违章日期"
@@ -130,9 +121,9 @@
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { InfoFilled, Plus, WarningFilled } from '@element-plus/icons-vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { violationApi, orderApi, uploadApi, type OrderListItem } from '../../api'
 import { getImageUrl } from '../../utils/helpers'
-import { useMobile } from '../../composables/useMobile'
 
 /** 违章表单弹窗：新增与编辑共用，编辑时由外部把整条记录塞进来 */
 const props = defineProps<{
@@ -155,7 +146,6 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
-const { isMobile } = useMobile()
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const fileInput = ref<HTMLInputElement>()
@@ -214,14 +204,12 @@ function resetForm(item: Record<string, any> | null) {
 }
 
 // 根据违章日期查找匹配的订单
-// el-date-picker 的 change 传日期字符串，原生 input 的 change 传 Event，这里统一取成字符串
-function onViolationDateChange(value: string | Event | null) {
-  const date = typeof value === 'string' ? value : ((value?.target as HTMLInputElement | null)?.value ?? '')
-  if (!date) {
+function onViolationDateChange(value: string) {
+  if (!value) {
     recommendedOrders.value = []
     return
   }
-  void loadRecommendedOrders(date)
+  void loadRecommendedOrders(value)
 }
 
 async function loadRecommendedOrders(date: string) {

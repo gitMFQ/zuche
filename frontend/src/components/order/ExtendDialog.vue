@@ -5,11 +5,12 @@
         <span>{{ formatDateTime(order?.end_date || '') }}</span>
       </el-form-item>
       <el-form-item label="新时间">
-        <input
-          type="datetime-local"
-          :value="formatDateTimeLocal(form.new_end_date)"
-          class="native-datetime-input"
-          @change="onDateTimeChange"
+        <AppDatePicker
+          v-model="form.new_end_date"
+          type="datetime"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          style="width: 100%"
         />
       </el-form-item>
       <el-form-item label="续租时长">
@@ -43,7 +44,8 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PAYMENT_METHOD_OPTIONS } from '../../utils/constants'
-import { formatDateTime, formatDateTimeLocal } from '../../utils/helpers'
+import AppDatePicker from '../AppDatePicker.vue'
+import { formatDateTime } from '../../utils/helpers'
 
 /**
  * 续租弹窗。新还车时间默认在原还车时间上加一天，续租金额默认带出日租金，
@@ -133,13 +135,6 @@ const durationText = computed(() => {
   }
 })
 
-function onDateTimeChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  if (target.value) {
-    form.new_end_date = target.value.replace('T', ' ') + ':00'
-  }
-}
-
 function handleSubmit() {
   if (!form.new_end_date) {
     ElMessage.warning('请选择新的还车时间')
@@ -154,39 +149,3 @@ function handleSubmit() {
   })
 }
 </script>
-
-<style scoped>
-/* 原生日期时间输入框样式 */
-.native-datetime-input {
-  width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #606266;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
-}
-
-.native-datetime-input:focus {
-  border-color: var(--primary-color);
-}
-
-.native-datetime-input::-webkit-datetime-edit {
-  padding: 0;
-}
-
-.native-datetime-input::-webkit-calendar-picker-indicator {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.native-datetime-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-}
-</style>

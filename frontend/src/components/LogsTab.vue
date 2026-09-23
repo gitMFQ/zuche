@@ -30,17 +30,9 @@
             style="width: 240px"
           />
           <div v-else class="mobile-date-range">
-            <input 
-              type="date" 
-              v-model="filterForm.date_from" 
-              class="native-date-input"
-            />
+            <AppDatePicker v-model="filterForm.date_from" type="date" value-format="YYYY-MM-DD" />
             <span class="date-separator">-</span>
-            <input 
-              type="date" 
-              v-model="filterForm.date_to" 
-              class="native-date-input"
-            />
+            <AppDatePicker v-model="filterForm.date_to" type="date" value-format="YYYY-MM-DD" />
           </div>
         </el-form-item>
         <el-form-item label="关键词">
@@ -136,6 +128,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { logApi } from '../api'
+import AppDatePicker from './AppDatePicker.vue'
 import { useDictStore } from '../stores/dict'
 import { useMobile } from '../composables/useMobile'
 import dayjs from 'dayjs'

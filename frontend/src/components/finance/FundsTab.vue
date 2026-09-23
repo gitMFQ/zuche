@@ -41,11 +41,11 @@
             style="width: 240px"
             @change="reload"
           />
-          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
           <div v-else class="mobile-date-range">
-            <input v-model="dateFrom" type="date" class="native-date-input" @change="reload" />
+            <AppDatePicker v-model="dateFrom" type="date" value-format="YYYY-MM-DD" @change="reload" />
             <span class="date-separator">-</span>
-            <input v-model="dateTo" type="date" class="native-date-input" @change="reload" />
+            <AppDatePicker v-model="dateTo" type="date" value-format="YYYY-MM-DD" @change="reload" />
           </div>
         </el-form-item>
         <el-form-item>
@@ -233,7 +233,7 @@
         style="margin-bottom: 12px"
       />
       <div class="lock-row">
-        <el-date-picker v-model="lockPeriod" type="month" value-format="YYYY-MM" placeholder="选择月份" />
+        <AppDatePicker v-model="lockPeriod" type="month" value-format="YYYY-MM" placeholder="选择月份" />
         <el-button type="primary" :loading="submitting" @click="handleLock">锁定</el-button>
       </div>
       <el-divider />
@@ -261,6 +261,7 @@ import { Plus } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import FundTxnDialog from './FundTxnDialog.vue'
 import TransferDialog from './TransferDialog.vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { fundApi } from '../../api'
 import type { FinancePeriodLockItem, FundAccountItem, FundTransactionItem } from '../../api/types'
 import { useUserStore } from '../../stores/user'

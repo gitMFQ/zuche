@@ -256,20 +256,12 @@
           </div>
         </el-form-item>
         <el-form-item label="驾照到期">
-          <input 
-            v-if="isMobile"
-            type="date" 
-            v-model="form.license_expiry" 
-            class="native-date-input"
+          <AppDatePicker
+            v-model="form.license_expiry"
+            type="date"
+            placeholder="选择日期"
+            value-format="YYYY-MM-DD"
             style="width: 100%"
-          />
-          <el-date-picker 
-            v-else
-            v-model="form.license_expiry" 
-            type="date" 
-            placeholder="选择日期" 
-            value-format="YYYY-MM-DD" 
-            style="width: 100%" 
           />
         </el-form-item>
         <el-form-item label="地址">
@@ -395,7 +387,7 @@ import { customerApi, blacklistApi, uploadApi } from '../api'
 import type { BlacklistItem, CustomerItem, PageQuery } from '../api'
 import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'
-import { useMobile } from '../composables/useMobile'
+import AppDatePicker from '../components/AppDatePicker.vue'
 import { getImageUrl } from '../utils/helpers'
 
 const route = useRoute()
@@ -403,7 +395,6 @@ const router = useRouter()
 const loading = ref(false)
 const loadError = ref<string | null>(null)
 const submitting = ref(false)
-const { isMobile } = useMobile()
 const tableData = ref<CustomerItem[]>([])
 const dialogVisible = ref(false)
 const editingId = ref('')

@@ -73,19 +73,11 @@
                 unlink-panels
                 class="date-range-picker"
               />
-              <!-- 移动端使用原生日期输入 -->
+              <!-- 移动端用 WeUI 滚轮 -->
               <div v-else class="mobile-date-range">
-                <input 
-                  type="date" 
-                  v-model="searchForm.start_date_from" 
-                  class="native-date-input"
-                />
+                <AppDatePicker v-model="searchForm.start_date_from" type="date" value-format="YYYY-MM-DD" />
                 <span class="date-separator">-</span>
-                <input 
-                  type="date" 
-                  v-model="searchForm.start_date_to" 
-                  class="native-date-input"
-                />
+                <AppDatePicker v-model="searchForm.start_date_to" type="date" value-format="YYYY-MM-DD" />
               </div>
             </el-form-item>
             <el-form-item label="还车时间" class="date-form-item">
@@ -101,19 +93,11 @@
                 unlink-panels
                 class="date-range-picker"
               />
-              <!-- 移动端使用原生日期输入 -->
+              <!-- 移动端用 WeUI 滚轮 -->
               <div v-else class="mobile-date-range">
-                <input 
-                  type="date" 
-                  v-model="searchForm.end_date_from" 
-                  class="native-date-input"
-                />
+                <AppDatePicker v-model="searchForm.end_date_from" type="date" value-format="YYYY-MM-DD" />
                 <span class="date-separator">-</span>
-                <input 
-                  type="date" 
-                  v-model="searchForm.end_date_to" 
-                  class="native-date-input"
-                />
+                <AppDatePicker v-model="searchForm.end_date_to" type="date" value-format="YYYY-MM-DD" />
               </div>
             </el-form-item>
             <el-form-item label="订单来源">
@@ -399,6 +383,7 @@ import { ArrowUp, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { orderApi, vehicleApi, customerApi } from '../api'
 import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'
+import AppDatePicker from '../components/AppDatePicker.vue'
 import ImagePreviewDialog from '../components/ImagePreviewDialog.vue'
 import ExtendDialog from '../components/order/ExtendDialog.vue'
 import MileagePhotoDialog from '../components/order/MileagePhotoDialog.vue'
@@ -1291,20 +1276,9 @@ onMounted(() => {
     width: 100%;
   }
 
-  .search-form :deep(.native-date-input) {
+  .search-form :deep(.mobile-date-range .app-date-trigger) {
     flex: 1;
     min-width: 0;
-    height: 32px;
-    padding: 0 8px;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
-    font-size: 14px;
-    background: #fff;
-  }
-
-  .search-form :deep(.native-date-input:focus) {
-    border-color: var(--primary-color);
-    outline: none;
   }
 }
 
@@ -1573,13 +1547,9 @@ onMounted(() => {
     gap: 6px;
   }
 
-  .search-card .mobile-date-range .native-date-input {
+  .search-card .mobile-date-range .app-date-trigger {
     flex: 1;
-    height: 30px;
-    padding: 2px 8px;
-    font-size: 13px;
-    border: 1px solid #dcdfe6;
-    border-radius: 4px;
+    min-width: 0;
   }
 
   .search-card .date-separator {

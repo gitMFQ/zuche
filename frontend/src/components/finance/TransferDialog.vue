@@ -15,7 +15,7 @@
         <el-input-number v-model="form.amount" :min="0.01" :precision="2" :step="1000" style="width: 100%" />
       </el-form-item>
       <el-form-item label="日期" prop="transfer_date">
-        <el-date-picker v-model="form.transfer_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.transfer_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="备注">
         <el-input v-model="form.remarks" placeholder="如：微信提现到公户 / 平台打款入公户" />
@@ -35,6 +35,7 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { AccountOption } from '../../api/types'
 
 const props = defineProps<{

@@ -2,7 +2,7 @@
   <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑往来记录' : '新增往来记录'" width="90%" :style="{ maxWidth: '480px' }">
     <el-form ref="formRef" :model="form" :rules="rules" label-width="88px">
       <el-form-item label="日期" prop="advance_date">
-        <el-date-picker v-model="form.advance_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+        <AppDatePicker v-model="form.advance_date" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
       </el-form-item>
       <el-form-item label="科目" prop="subject">
         <el-select v-model="form.subject" style="width: 100%">
@@ -37,6 +37,7 @@
 /** 合伙人往来账（台账 file-5 的「科目/金额/备注」）。direction=out 的记录才需要标记付款 */
 import { computed, reactive, ref, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import AppDatePicker from '../AppDatePicker.vue'
 import type { PartnerAdvanceItem } from '../../api/types'
 import { ADVANCE_SUBJECT_OPTIONS } from '../../utils/constants'
 

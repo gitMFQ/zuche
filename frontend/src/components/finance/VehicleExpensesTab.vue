@@ -51,11 +51,11 @@
             style="width: 230px"
             @change="reload"
           />
-          <!-- 窄屏用原生 date：el-date-picker 的面板有 600 多像素宽，手机上会顶出屏幕 -->
+          <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
           <div v-else class="mobile-date-range">
-            <input v-model="dateFrom" type="date" class="native-date-input" @change="reload" />
+            <AppDatePicker v-model="dateFrom" type="date" value-format="YYYY-MM-DD" @change="reload" />
             <span class="date-separator">-</span>
-            <input v-model="dateTo" type="date" class="native-date-input" @change="reload" />
+            <AppDatePicker v-model="dateTo" type="date" value-format="YYYY-MM-DD" @change="reload" />
           </div>
         </el-form-item>
         <el-form-item>
@@ -195,7 +195,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="付款日期">
-          <el-date-picker v-model="payDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <AppDatePicker v-model="payDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
         </el-form-item>
       </el-form>
       <el-alert type="info" :closable="false" show-icon title="确认后会在资金流水里记一笔（收入支出各一条）" />
@@ -222,6 +222,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import VehicleExpenseFormDialog from './VehicleExpenseFormDialog.vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, vehicleApi, vehicleExpenseApi } from '../../api'
 import type {
   AccountOption,

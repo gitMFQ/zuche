@@ -12,15 +12,7 @@
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="保养日期" prop="maintenance_date">
-            <input
-              v-if="isMobile"
-              type="date"
-              v-model="form.maintenance_date"
-              class="native-date-input"
-              style="width: 100%"
-            />
-            <el-date-picker
-              v-else
+            <AppDatePicker
               v-model="form.maintenance_date"
               type="date"
               placeholder="选择日期"
@@ -44,15 +36,7 @@
       <el-row :gutter="12">
         <el-col :span="12">
           <el-form-item label="下次日期">
-            <input
-              v-if="isMobile"
-              type="date"
-              v-model="form.next_maintenance_date"
-              class="native-date-input"
-              style="width: 100%"
-            />
-            <el-date-picker
-              v-else
+            <AppDatePicker
               v-model="form.next_maintenance_date"
               type="date"
               placeholder="下次保养日期"
@@ -120,9 +104,9 @@
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import AppDatePicker from '../AppDatePicker.vue'
 import { maintenanceApi, uploadApi } from '../../api'
 import { getImageUrl } from '../../utils/helpers'
-import { useMobile } from '../../composables/useMobile'
 
 /** 保养表单弹窗：车辆由外部锁定，这里只负责单条保养记录的字段 */
 const props = defineProps<{
@@ -145,7 +129,6 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
-const { isMobile } = useMobile()
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const fileInput = ref<HTMLInputElement>()

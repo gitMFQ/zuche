@@ -287,7 +287,7 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="购入日期">
-              <el-date-picker v-model="form.purchase_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
+              <AppDatePicker v-model="form.purchase_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -337,7 +337,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="首期还款日">
-              <el-date-picker v-model="form.loan_start_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
+              <AppDatePicker v-model="form.loan_start_date" type="date" value-format="YYYY-MM-DD" placeholder="可选" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -387,6 +387,7 @@ import {
   VEHICLE_CATEGORY_TEXT_MAP
 } from '../utils/constants'
 import VehicleDetailDialog from './VehicleDetailDialog.vue'
+import AppDatePicker from './AppDatePicker.vue'
 
 const loading = ref(false)
 const submitting = ref(false)
