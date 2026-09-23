@@ -44,7 +44,7 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button v-if="canManage" type="primary" :loading="generating" @click="openGenerate">
-        <el-icon><Refresh /></el-icon> 生成本期结算
+        <el-icon><i class="weui-icon-outlined-refresh" /></el-icon> 生成本期结算
       </el-button>
       <el-button v-if="canManage" @click="openPayout">结算付款</el-button>
       <el-button v-if="canManage" @click="openOpening">期初结转</el-button>
@@ -191,7 +191,6 @@
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import SettlementLineDialog from './SettlementLineDialog.vue'
 import SettlementPayoutDialog from './SettlementPayoutDialog.vue'

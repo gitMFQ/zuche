@@ -51,8 +51,8 @@
     <!-- 搜索栏 -->
     <el-card shadow="never" class="search-card">
       <div class="search-header" @click="toggleSearchExpand">
-        <span class="search-title"><el-icon><Search /></el-icon> 搜索筛选</span>
-        <el-icon class="expand-icon" :class="{ 'expanded': searchExpanded }"><ArrowUp /></el-icon>
+        <span class="search-title"><el-icon><i class="weui-icon-outlined-search" /></el-icon> 搜索筛选</span>
+        <el-icon class="expand-icon" :class="{ 'expanded': searchExpanded }"><i class="weui-icon-outlined-arrow weui-icon-arrow--up" /></el-icon>
       </div>
       <!-- 使用 CSS 过渡动画替代 el-collapse-transition -->
       <div 
@@ -133,10 +133,10 @@
             </el-form-item>
             <el-form-item class="form-actions">
               <el-button type="primary" @click="loadData">
-                <el-icon><Search /></el-icon> 搜索
+                <el-icon><i class="weui-icon-outlined-search" /></el-icon> 搜索
               </el-button>
               <el-button @click="resetSearch">
-                <el-icon><Refresh /></el-icon> 重置
+                <el-icon><i class="weui-icon-outlined-refresh" /></el-icon> 重置
               </el-button>
             </el-form-item>
           </el-form>
@@ -146,7 +146,7 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 新建订单
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 新建订单
       </el-button>
       <el-button @click="goImport">批量导入订单</el-button>
     </div>
@@ -379,7 +379,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowUp, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { orderApi, vehicleApi, customerApi } from '../api'
 import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'

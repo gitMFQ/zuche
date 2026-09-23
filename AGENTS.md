@@ -223,6 +223,16 @@ pending (待取车) → active (已取车) → completed (已还车)
 - **别在组件里手写上传校验**（MIME / 体积），统一用 `validateUploadFile`
 - **移动端优先**：断点以 `@media (min-width: 768px)` 区分移动端与桌面
 - **移动端 WeUI 规范（<768px）**：移动端是独立的 WeUI 视觉层，桌面端 Apple 风格不变。主色 `#07c160`，success/tag `#06ae56`，warning `#fa9d3b`，danger `#fa5151`；页面底 `#ededed`、列表/卡片底 `#fff`，文字层级 `rgba(0,0,0,.9/.55/.3)`，分割线 `rgba(0,0,0,.1)`。深色页面底 `#111`、列表/卡片底 `#191919`、文字 `rgba(255,255,255,.8/.5/.3)`、分割线 `rgba(255,255,255,.1)`。
+- **图标**：新引入的图标优先用 WeUI 图标集。项目引入的是独立配套库 **`weui-icon`**
+  （不是 `weui` 主包里的那 27 个图标），class 形如 `weui-icon-{filled|outlined}-{name}`，
+  共 81 个图标（清单见 `node_modules/weui-icon/dist/`）。已在 `main.ts` 引入、
+  `style.css` 把官方「固定 24px」改成 `1em` 跟随容器字号，用法是
+  `<el-icon><i class="weui-icon-outlined-xxx" /></el-icon>` —— **保留 `el-icon` 包裹**，
+  按钮里图标与文字的间距（`.el-button [class*=el-icon]+span`）靠它。
+  状态类（信息/警告/成功/星标/头像）用 `filled`，操作与导航类用 `outlined`。
+  **WeUI 没有的语义**：车、钱、明暗、展开折叠、数据图表、日历、上传（WeUI 只有 `share`，
+  语义是分享不是上传）—— 这些继续用 `@element-plus/icons-vue`，侧栏与 tabbar 的混排是既定事实，
+  不是待修的 bug。
 - **移动端导航**：`MobileTabbar.vue` 只在移动端渲染，固定 60px（另加 `env(safe-area-inset-bottom)`），包含总览/订单/车辆/财务/客户 5 项；`utils/nav.ts` 的 `matchTabPath` 用前缀匹配，`/orders/import` 与 `/orders/:id` 都归属订单。设置入口在顶部用户下拉菜单，仅 admin 显示。
 - **移动端列表**：`.mobile-card*` 是历史 class 名，移动端实际承载 WeUI cells：分组间距 8px；外壳无圆角、无阴影；外壳上下与行间使用 0.5px hairline；卡片内数据行 44px / 15px，整项导航 cell 56px；`.is-block` 与两列金额网格使用 auto 高度。新增列表优先复用这些 class，不要再在各组件 scoped 复制卡片外壳样式。
 - **移动端弹窗**：全局 `style.css` 会把 `el-dialog` 转成底部 sheet（顶部 12px 圆角、最高 75vh、40×4px 下拉手柄、0.3s ease）；新增弹窗不需要另外写移动端结构。footer 按钮 64px 高，移动端不使用圆角卡片按钮。`page-container .el-dialog__*` 规则要与全局 sheet 规则保持相同或更高特异性。`OwnersTab` 的两个长表格使用 `el-drawer`，移动端全宽右侧抽屉。

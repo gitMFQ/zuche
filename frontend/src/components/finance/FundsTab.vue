@@ -73,7 +73,7 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button type="primary" @click="openCreate">
-        <el-icon><Plus /></el-icon> 记账
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 记账
       </el-button>
       <el-button v-if="canManage" @click="transferVisible = true">账户划转</el-button>
       <el-button v-if="canManage" @click="openLockDialog">账期锁定</el-button>
@@ -257,7 +257,6 @@
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import FundTxnDialog from './FundTxnDialog.vue'
 import TransferDialog from './TransferDialog.vue'

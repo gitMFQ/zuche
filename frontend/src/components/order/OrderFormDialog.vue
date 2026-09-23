@@ -47,7 +47,7 @@
               <div class="image-remove" @click="removeIdCardImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeIdCardImage(idx)" @keydown.space.prevent="removeIdCardImage(idx)">×</div>
             </div>
             <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('id_card')" @keydown.space.prevent="triggerUpload('id_card')">
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
             </div>
           </div>
           <input ref="idCardInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'id_card')" />
@@ -64,7 +64,7 @@
               <div class="image-remove" @click="removeLicenseImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeLicenseImage(idx)" @keydown.space.prevent="removeLicenseImage(idx)">×</div>
             </div>
             <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
             </div>
           </div>
           <input ref="licenseInput" type="file" accept="image/*" style="display: none" @change="handleUpload($event, 'license')" />
@@ -265,7 +265,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import { blacklistApi, uploadApi } from '../../api'
 import AppDatePicker from '../AppDatePicker.vue'
 import {

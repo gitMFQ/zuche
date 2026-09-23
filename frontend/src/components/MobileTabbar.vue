@@ -8,7 +8,10 @@
       :class="{ 'is-active': activeTab === tab.path }"
       :aria-current="activeTab === tab.path ? 'page' : undefined"
     >
-      <el-icon class="m-tabbar__icon" :size="24"><component :is="tab.icon" /></el-icon>
+      <el-icon class="m-tabbar__icon" :size="24">
+        <component :is="tab.icon" v-if="tab.icon" />
+        <i v-else :class="tab.weuiIcon" />
+      </el-icon>
       <span class="m-tabbar__text">{{ tab.label }}</span>
     </router-link>
   </nav>
@@ -17,7 +20,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
-import { DataAnalysis, Document, Money, User, Van } from '@element-plus/icons-vue'
+import { DataAnalysis, Money, Van } from '@element-plus/icons-vue'
 import { matchTabPath, type TabPath } from '../utils/nav'
 
 /**
@@ -26,12 +29,17 @@ import { matchTabPath, type TabPath } from '../utils/nav'
  * 只在 <768px 渲染，由 MainLayout 用 v-if="isMobile" 控制；桌面端仍然是左侧栏。
  * 「设置」不在这里 —— tabbar 放 5 项已经是上限，设置收进了顶部用户下拉菜单。
  */
-const TABS: { path: TabPath; label: string; icon: Component }[] = [
+/**
+ * 图标有两种来源：WeUI 图标集里有对应的用 class（见 AGENTS.md「移动端图标」），
+ * 没有对应的（总览/车辆/财务）继续用 Element Plus 图标组件 —— 混搭是 WeUI 图标集
+ * 覆盖不到这些语义导致的，不是遗漏。
+ */
+const TABS: { path: TabPath; label: string; icon?: Component; weuiIcon?: string }[] = [
   { path: '/dashboard', label: '总览', icon: DataAnalysis },
-  { path: '/orders', label: '订单', icon: Document },
+  { path: '/orders', label: '订单', weuiIcon: 'weui-icon-outlined-note' },
   { path: '/vehicles', label: '车辆', icon: Van },
   { path: '/finance', label: '财务', icon: Money },
-  { path: '/customers', label: '客户', icon: User }
+  { path: '/customers', label: '客户', weuiIcon: 'weui-icon-outlined-contacts' }
 ]
 
 const route = useRoute()

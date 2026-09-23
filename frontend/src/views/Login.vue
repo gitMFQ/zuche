@@ -13,18 +13,24 @@
             <el-input
               v-model="form.username"
               placeholder="用户名"
-              :prefix-icon="User"
-            />
+            >
+              <template #prefix>
+                <el-icon><i class="weui-icon-outlined-me" /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           <el-form-item prop="password">
             <el-input
               v-model="form.password"
               type="password"
               placeholder="密码"
-              :prefix-icon="Lock"
               show-password
               @keyup.enter="handleLogin"
-            />
+            >
+              <template #prefix>
+                <el-icon><i class="weui-icon-outlined-lock" /></el-icon>
+              </template>
+            </el-input>
           </el-form-item>
           <el-form-item>
             <button
@@ -50,7 +56,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { User, Lock, Van } from '@element-plus/icons-vue'
+import { Van } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { authApi } from '../api'
 

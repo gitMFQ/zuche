@@ -15,7 +15,7 @@
                 <div class="logo-preview" @click="triggerLogoUpload">
                   <img v-if="systemLogo" :src="getLogoUrl(systemLogo)" alt="Logo" />
                   <div v-else class="logo-placeholder">
-                    <el-icon :size="32"><Plus /></el-icon>
+                    <el-icon :size="32"><i class="weui-icon-outlined-add" /></el-icon>
                     <span>上传Logo</span>
                   </div>
                 </div>
@@ -82,7 +82,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Moon, Plus, Sunny } from '@element-plus/icons-vue'
+import { Moon, Sunny } from '@element-plus/icons-vue'
 import UsersTab from '../components/UsersTab.vue'
 import OrderSourcesTab from '../components/OrderSourcesTab.vue'
 import LogsTab from '../components/LogsTab.vue'

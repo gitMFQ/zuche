@@ -2,6 +2,27 @@
 
 > 本文件从 `README.md` 拆出，最新记录在最前。
 
+## 2026-09-23
+
+### 图标统一到 WeUI 图标集（27 个图标 / 71 处）
+
+移动端 WeUI 重构后图标仍是 Element Plus 的，与微信原生观感不一致。这次把语义能对上的图标
+全部换成 WeUI 图标集，两端共用一套（桌面端与移动端一起变）。
+
+**引入**：新增依赖 `weui-icon` —— WeUI 的**独立配套图标库**，不是 `weui` 主包里那 27 个状态图标。
+共 81 个图标 × filled/outlined 两套样式，全量 CSS gzip 17.2KB，基础规则用 `mask-size: contain`
+（窄画布的方向图标不会被拉伸）。在 `main.ts` 于 `style.css` 之前引入；`style.css` 把官方
+「font-size:10px + width/height:2.4em（固定 24px）」改成 `1em` 跟随容器字号，于是各处原有的
+字号链（按钮 14px、上传占位 32/40px、导入结果 48px、`el-avatar` 18px）全部自动生效，
+组件 CSS 一行未改。
+
+**替换 27 个图标、71 处**：状态类用 `filled`（信息/警告/成功/星标/头像），操作与导航类用
+`outlined`。三处非标准写法一并改结构：登录页 `:prefix-icon` 改 `#prefix` 插槽、
+侧栏头像 `el-avatar :icon` 改默认插槽、`MobileTabbar` 的动态组件改成支持 class。
+
+**保留 EP 的 9 个图标**：车、钱、月亮/太阳、展开/折叠、数据图表、日历、上传（WeUI 只有 `share`，
+语义是分享）—— WeUI 图标集确实没有，侧栏与底部 tabbar 因此是 EP/WeUI 混排（有意为之，不是遗漏）。
+
 ## 2026-09-22
 
 ### 操作日志收进设置页

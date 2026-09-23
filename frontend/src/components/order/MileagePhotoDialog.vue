@@ -11,7 +11,7 @@
             <div class="image-remove" @click="form.image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="form.image = ''" @keydown.space.prevent="form.image = ''">×</div>
           </div>
           <div v-else class="upload-btn" @click="triggerUpload" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload" @keydown.space.prevent="triggerUpload">
-            <el-icon><Plus /></el-icon>
+            <el-icon><i class="weui-icon-outlined-add" /></el-icon>
             <span>上传照片</span>
           </div>
           <input ref="imageInput" type="file" accept="image/*" style="display: none" @change="handleUpload" />
@@ -40,7 +40,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import { uploadApi } from '../../api'
 import AppDatePicker from '../AppDatePicker.vue'
 import { getImageUrl } from '../../utils/helpers'

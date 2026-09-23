@@ -13,7 +13,7 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加
       </el-button>
     </div>
 
@@ -141,7 +141,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import { userApi } from '../api'
 
 const loading = ref(false)

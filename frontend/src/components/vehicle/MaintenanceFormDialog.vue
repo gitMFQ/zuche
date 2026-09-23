@@ -76,7 +76,7 @@
               @keydown.enter.prevent="triggerUpload"
               @keydown.space.prevent="triggerUpload"
             >
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
               <span>{{ form.images.length }}/5</span>
             </div>
           </div>
@@ -103,7 +103,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import { maintenanceApi, uploadApi } from '../../api'
 import { getImageUrl } from '../../utils/helpers'

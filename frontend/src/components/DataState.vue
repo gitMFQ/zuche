@@ -4,7 +4,7 @@
     <div v-if="loading" class="data-state-loading">
       <el-skeleton v-if="skeleton" :rows="skeletonRows" animated />
       <div v-else class="data-state-spinner">
-        <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+        <el-icon class="is-loading" :size="24"><i class="weui-icon-outlined-refresh" /></el-icon>
         <span>{{ loadingText }}</span>
       </div>
     </div>
@@ -27,7 +27,6 @@
 </template>
 
 <script setup lang="ts">
-import { Loading } from '@element-plus/icons-vue'
 
 /**
  * 列表页的统一三态：加载中 / 加载失败（带重试）/ 空数据（带主操作）。

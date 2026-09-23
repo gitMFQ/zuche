@@ -181,7 +181,7 @@
     <!-- 第三步：结果 -->
     <el-card v-if="step === 'done'" shadow="never" class="sk-card">
       <div class="result-box">
-        <el-icon class="result-icon"><CircleCheck /></el-icon>
+        <el-icon class="result-icon"><i class="weui-icon-filled-done2" /></el-icon>
         <p class="result-text">成功导入 {{ result?.imported ?? 0 }} 条订单</p>
         <p class="result-detail">
           新建客户 {{ result?.new_customers ?? 0 }} · 新建车辆 {{ result?.new_vehicles ?? 0 }} · 跳过
@@ -200,7 +200,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Upload, CircleCheck } from '@element-plus/icons-vue'
+import { Upload } from '@element-plus/icons-vue'
 import { importApi } from '../api'
 import { useDictStore } from '../stores/dict'
 import { ORDER_STATUS_TEXT_MAP, PLATFORM_TEXT_MAP } from '../utils/constants'

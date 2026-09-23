@@ -7,10 +7,10 @@
           <span><el-icon><Calendar /></el-icon> 库存日历</span>
           <div class="header-actions">
             <el-button type="primary" link @click="backToToday">
-              <el-icon><RefreshLeft /></el-icon> 回到今天
+              <el-icon><i class="weui-icon-outlined-previous" /></el-icon> 回到今天
             </el-button>
             <el-button type="primary" link @click="ganttDialogVisible = true">
-              <el-icon><FullScreen /></el-icon> 完整视图
+              <el-icon><i class="weui-icon-outlined-max-window" /></el-icon> 完整视图
             </el-button>
           </div>
         </div>
@@ -35,10 +35,10 @@
               <span><el-icon><Calendar /></el-icon> 待收送</span>
               <div class="header-actions">
                 <el-button type="primary" link @click="scheduleDialogVisible = true">
-                  <el-icon><FullScreen /></el-icon> 完整视图
+                  <el-icon><i class="weui-icon-outlined-max-window" /></el-icon> 完整视图
                 </el-button>
                 <el-button type="primary" link @click="shareSchedule" :loading="shareLoading">
-                  <el-icon><Download /></el-icon> 下载
+                  <el-icon><i class="weui-icon-outlined-download" /></el-icon> 下载
                 </el-button>
               </div>
             </div>
@@ -54,7 +54,7 @@
         <el-card class="section-card placeholder-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span><el-icon><Grid /></el-icon> 快捷操作</span>
+              <span><el-icon><i class="weui-icon-outlined-mosaic" /></el-icon> 快捷操作</span>
             </div>
           </template>
           <div class="placeholder-content">
@@ -87,7 +87,7 @@
               class="window-picker"
             />
             <el-button type="primary" link @click="backToToday">
-              <el-icon><RefreshLeft /></el-icon> 回到今天
+              <el-icon><i class="weui-icon-outlined-previous" /></el-icon> 回到今天
             </el-button>
           </div>
         </div>
@@ -147,7 +147,7 @@ import { useRouter } from 'vue-router'
 import { scheduleApi, orderApi } from '../api'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
-import { Calendar, Download, FullScreen, Grid, RefreshLeft } from '@element-plus/icons-vue'
+import { Calendar } from '@element-plus/icons-vue'
 import VehicleDetailDialog from '../components/VehicleDetailDialog.vue'
 import AppDatePicker from '../components/AppDatePicker.vue'
 import GanttChart from '../components/dashboard/GanttChart.vue'

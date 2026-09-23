@@ -167,7 +167,7 @@
                 </div>
               </div>
               <div v-else class="upload-trigger">
-                <el-icon class="upload-icon"><Camera /></el-icon>
+                <el-icon class="upload-icon"><i class="weui-icon-outlined-camera" /></el-icon>
                 <div class="upload-text">
                   <span>点击拍照或上传年检证</span>
                 </div>
@@ -196,7 +196,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
-import { Camera } from '@element-plus/icons-vue'
 import { inspectionApi, uploadApi } from '../api'
 import AppDatePicker from './AppDatePicker.vue'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'

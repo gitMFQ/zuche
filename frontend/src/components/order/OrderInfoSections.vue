@@ -3,7 +3,7 @@
   <el-card shadow="never" class="info-card">
     <template #header>
       <div class="card-header-row">
-        <span class="section-title"><el-icon><Document /></el-icon> 订单信息</span>
+        <span class="section-title"><el-icon><i class="weui-icon-outlined-note" /></el-icon> 订单信息</span>
         <el-tag :type="getStatusType(order.status)" size="large">{{ order.status_text }}</el-tag>
       </div>
     </template>
@@ -39,7 +39,7 @@
   <!-- 租期时间 -->
   <el-card shadow="never" class="info-card">
     <template #header>
-      <span class="section-title"><el-icon><Clock /></el-icon> 租期时间</span>
+      <span class="section-title"><el-icon><i class="weui-icon-outlined-time" /></el-icon> 租期时间</span>
     </template>
 
     <div class="info-list">
@@ -86,7 +86,7 @@
   <el-card shadow="never" class="info-card">
     <template #header>
       <div class="card-header-row">
-        <span class="section-title"><el-icon><Location /></el-icon> 取还地点</span>
+        <span class="section-title"><el-icon><i class="weui-icon-outlined-location" /></el-icon> 取还地点</span>
         <el-button type="primary" size="small" @click="emit('assign-driver')">指派司机</el-button>
       </div>
     </template>
@@ -126,7 +126,7 @@
   <!-- 客户信息 -->
   <el-card shadow="never" class="info-card">
     <template #header>
-      <span class="section-title"><el-icon><User /></el-icon> 客户信息</span>
+      <span class="section-title"><el-icon><i class="weui-icon-outlined-me" /></el-icon> 客户信息</span>
     </template>
 
     <div class="info-list">
@@ -230,7 +230,7 @@
   <!-- 备注信息 -->
   <el-card shadow="never" class="info-card" v-if="order.remarks">
     <template #header>
-      <span class="section-title"><el-icon><ChatDotRound /></el-icon> 备注信息</span>
+      <span class="section-title"><el-icon><i class="weui-icon-outlined-comment" /></el-icon> 备注信息</span>
     </template>
     <div class="remarks-content">{{ order.remarks }}</div>
   </el-card>
@@ -238,7 +238,7 @@
   <!-- 取还照片 -->
   <el-card shadow="never" class="info-card" v-if="order.pickup_image || order.return_image">
     <template #header>
-      <span class="section-title"><el-icon><Picture /></el-icon> 取还照片</span>
+      <span class="section-title"><el-icon><i class="weui-icon-outlined-photo-wall" /></el-icon> 取还照片</span>
     </template>
 
     <div class="order-images">
@@ -328,7 +328,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChatDotRound, Clock, Document, Location, Money, Picture, User, Van } from '@element-plus/icons-vue'
+import { Money, Van } from '@element-plus/icons-vue'
 import {
   DELIVERY_TYPE_TEXT_MAP,
   FEE_CATEGORY_TEXT_MAP,

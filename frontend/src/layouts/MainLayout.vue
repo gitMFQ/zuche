@@ -20,7 +20,7 @@
           <span v-show="!isCollapse" class="nav-text">车辆管理</span>
         </router-link>
         <router-link to="/orders" class="nav-item" :class="{ active: activeMenu === '/orders' }">
-          <div class="nav-icon"><el-icon :size="20"><Document /></el-icon></div>
+          <div class="nav-icon"><el-icon :size="20"><i class="weui-icon-outlined-note" /></el-icon></div>
           <span v-show="!isCollapse" class="nav-text">订单管理</span>
         </router-link>
         <router-link to="/finance" class="nav-item" :class="{ active: activeMenu === '/finance' }">
@@ -28,17 +28,17 @@
           <span v-show="!isCollapse" class="nav-text">财务</span>
         </router-link>
         <router-link to="/customers" class="nav-item" :class="{ active: activeMenu === '/customers' }">
-          <div class="nav-icon"><el-icon :size="20"><User /></el-icon></div>
+          <div class="nav-icon"><el-icon :size="20"><i class="weui-icon-outlined-contacts" /></el-icon></div>
           <span v-show="!isCollapse" class="nav-text">客户管理</span>
         </router-link>
         <router-link v-if="isAdmin" to="/settings" class="nav-item" :class="{ active: activeMenu === '/settings' }">
-          <div class="nav-icon"><el-icon :size="20"><Setting /></el-icon></div>
+          <div class="nav-icon"><el-icon :size="20"><i class="weui-icon-outlined-setting" /></el-icon></div>
           <span v-show="!isCollapse" class="nav-text">设置</span>
         </router-link>
       </nav>
       <div class="sidebar-footer" v-show="!isCollapse">
         <div class="user-card">
-          <el-avatar :size="36" :icon="UserFilled" />
+          <el-avatar :size="36"><i class="weui-icon-filled-me" /></el-avatar>
           <div class="user-info">
             <span class="user-name">{{ userStore.user?.name }}</span>
             <span class="user-role">{{ userStore.isAdmin() ? '管理员' : '员工' }}</span>
@@ -79,9 +79,9 @@
           />
           <el-dropdown @command="handleCommand" trigger="click">
             <span class="user-dropdown">
-              <el-avatar :size="32" :icon="UserFilled" />
+              <el-avatar :size="32"><i class="weui-icon-filled-me" /></el-avatar>
               <span class="user-name hide-mobile">{{ userStore.user?.name }}</span>
-              <el-icon class="hide-mobile"><ArrowDown /></el-icon>
+              <el-icon class="hide-mobile"><i class="weui-icon-outlined-arrow weui-icon-arrow--down" /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -150,20 +150,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import {
-  ArrowDown,
-  DataAnalysis,
-  Document,
-  Expand,
-  Fold,
-  Money,
-  Moon,
-  Setting,
-  Sunny,
-  User,
-  UserFilled,
-  Van
-} from '@element-plus/icons-vue'
+import { DataAnalysis, Expand, Fold, Money, Moon, Sunny, Van } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { authApi, settingsApi } from '../api'
 import { getLogoUrl } from '../utils/helpers'

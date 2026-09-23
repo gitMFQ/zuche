@@ -22,7 +22,7 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加
       </el-button>
     </div>
 
@@ -252,7 +252,7 @@
               <div class="image-remove" @click="form.license_images.splice(idx, 1)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="form.license_images.splice(idx, 1)" @keydown.space.prevent="form.license_images.splice(idx, 1)">×</div>
             </div>
             <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
               <span>{{ form.license_images.length }}/2</span>
             </div>
           </div>
@@ -264,7 +264,7 @@
               <div class="image-remove" @click="form.registration_image = ''" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="form.registration_image = ''" @keydown.space.prevent="form.registration_image = ''">×</div>
             </div>
             <div v-else class="upload-btn" @click="triggerUpload('registration')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('registration')" @keydown.space.prevent="triggerUpload('registration')">
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
               <span>上传</span>
             </div>
           </div>
@@ -376,7 +376,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import { ownerApi, vehicleApi, uploadApi } from '../api'
 import type { OwnerOption } from '../api/types'
 import { getImageUrl } from '../utils/helpers'

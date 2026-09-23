@@ -24,10 +24,10 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button v-if="activeTab !== 'blacklist'" type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加
       </el-button>
       <el-button v-else type="danger" @click="openBlacklistDialog()">
-        <el-icon><Plus /></el-icon> 添加黑名单
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加黑名单
       </el-button>
     </div>
 
@@ -46,7 +46,7 @@
       <div v-for="item in tableData" :key="item.id" class="mobile-card">
         <div class="mobile-card-header">
           <span class="customer-name">
-            <el-icon v-if="item.is_regular" class="regular-star" @click="toggleRegular(item)"><Star /></el-icon>
+            <el-icon v-if="item.is_regular" class="regular-star" @click="toggleRegular(item)"><i class="weui-icon-filled-star" /></el-icon>
             {{ item.name }}
           </span>
           <el-tag :type="item.status === 1 ? 'success' : 'danger'" size="small">
@@ -90,7 +90,7 @@
         <el-table-column prop="name" label="姓名" min-width="100">
           <template #default="{ row }">
             <span>
-              <el-icon v-if="row.is_regular" class="regular-star" @click="toggleRegular(row)"><Star /></el-icon>
+              <el-icon v-if="row.is_regular" class="regular-star" @click="toggleRegular(row)"><i class="weui-icon-filled-star" /></el-icon>
               {{ row.name }}
             </span>
           </template>
@@ -230,7 +230,7 @@
                 <div class="image-remove" @click="removeIdCardImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeIdCardImage(idx)" @keydown.space.prevent="removeIdCardImage(idx)">×</div>
               </div>
               <div v-if="form.id_card_images.length < 2" class="upload-btn" @click="triggerUpload('id_card')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('id_card')" @keydown.space.prevent="triggerUpload('id_card')">
-                <el-icon><Plus /></el-icon>
+                <el-icon><i class="weui-icon-outlined-add" /></el-icon>
                 <span>{{ form.id_card_images.length }}/2</span>
               </div>
             </div>
@@ -248,7 +248,7 @@
                 <div class="image-remove" @click="removeLicenseImage(idx)" role="button" tabindex="0" aria-label="删除这张照片" @keydown.enter.prevent="removeLicenseImage(idx)" @keydown.space.prevent="removeLicenseImage(idx)">×</div>
               </div>
               <div v-if="form.license_images.length < 2" class="upload-btn" @click="triggerUpload('license')" role="button" tabindex="0" aria-label="上传照片" @keydown.enter.prevent="triggerUpload('license')" @keydown.space.prevent="triggerUpload('license')">
-                <el-icon><Plus /></el-icon>
+                <el-icon><i class="weui-icon-outlined-add" /></el-icon>
                 <span>{{ form.license_images.length }}/2</span>
               </div>
             </div>
@@ -329,7 +329,7 @@
       <el-descriptions :column="1" border size="default">
         <el-descriptions-item label="姓名">
           <span class="view-value highlight">{{ viewData.name }}</span>
-          <el-icon v-if="viewData.is_regular" class="regular-star"><Star /></el-icon>
+          <el-icon v-if="viewData.is_regular" class="regular-star"><i class="weui-icon-filled-star" /></el-icon>
         </el-descriptions-item>
         <el-descriptions-item label="手机号">
           <a :href="'tel:' + viewData.phone">{{ viewData.phone }}</a>
@@ -382,7 +382,6 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Plus, Star } from '@element-plus/icons-vue'
 import { customerApi, blacklistApi, uploadApi } from '../api'
 import type { BlacklistItem, CustomerItem, PageQuery } from '../api'
 import { useDictStore } from '../stores/dict'

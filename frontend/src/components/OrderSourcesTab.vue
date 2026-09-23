@@ -3,7 +3,7 @@
     <!-- 操作栏 -->
     <div class="action-bar">
       <el-button type="primary" @click="openDialog()">
-        <el-icon><Plus /></el-icon> 添加来源
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加来源
       </el-button>
     </div>
 
@@ -97,7 +97,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import { orderSourceApi } from '../api'
 import { useDictStore } from '../stores/dict'
 

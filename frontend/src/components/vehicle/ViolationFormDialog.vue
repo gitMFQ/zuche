@@ -32,11 +32,11 @@
             />
           </el-select>
           <div class="form-tip" v-if="recommendedOrders.length">
-            <el-icon><InfoFilled /></el-icon>
+            <el-icon><i class="weui-icon-filled-info" /></el-icon>
             找到 {{ recommendedOrders.length }} 个该时段的租车订单
           </div>
           <div class="form-tip warning" v-else>
-            <el-icon><WarningFilled /></el-icon>
+            <el-icon><i class="weui-icon-filled-report-problem" /></el-icon>
             该日期无租车记录，请手动填写信息
           </div>
         </div>
@@ -99,7 +99,7 @@
               @keydown.enter.prevent="triggerUpload"
               @keydown.space.prevent="triggerUpload"
             >
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
               <span>{{ form.images.length }}/5</span>
             </div>
           </div>
@@ -120,7 +120,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { InfoFilled, Plus, WarningFilled } from '@element-plus/icons-vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import { violationApi, orderApi, uploadApi, type OrderListItem } from '../../api'
 import { getImageUrl } from '../../utils/helpers'

@@ -79,7 +79,7 @@
 
     <div class="action-bar">
       <el-button type="primary" @click="openCreate">
-        <el-icon><Plus /></el-icon> 新增开支
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 新增开支
       </el-button>
       <el-button @click="exportExcel">导出</el-button>
     </div>
@@ -190,7 +190,6 @@
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import OperatingExpenseFormDialog from './OperatingExpenseFormDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'

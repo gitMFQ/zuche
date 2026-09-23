@@ -15,7 +15,7 @@
 
       <!-- 时间信息 -->
       <div class="order-detail-section">
-        <div class="section-title-compact"><el-icon><Clock /></el-icon> 租期时间</div>
+        <div class="section-title-compact"><el-icon><i class="weui-icon-outlined-time" /></el-icon> 租期时间</div>
         <div class="detail-row-compact">
           <span class="row-label-compact">取车</span>
           <span class="row-value-compact">{{ dayjs(orderData.startDateTime).format('MM-DD HH:mm') }}</span>
@@ -45,7 +45,7 @@
 
       <!-- 取还地点 -->
       <div class="order-detail-section" v-if="orderData.pickLocation || orderData.returnLocation">
-        <div class="section-title-compact"><el-icon><Location /></el-icon> 取还地点</div>
+        <div class="section-title-compact"><el-icon><i class="weui-icon-outlined-location" /></el-icon> 取还地点</div>
         <div class="detail-row-compact">
           <span class="row-label-compact">取车</span>
           <span class="row-value-compact">{{ orderData.pickLocation || '-' }}</span>
@@ -58,7 +58,7 @@
 
       <!-- 客户信息 -->
       <div class="order-detail-section">
-        <div class="section-title-compact"><el-icon><User /></el-icon> 客户</div>
+        <div class="section-title-compact"><el-icon><i class="weui-icon-outlined-me" /></el-icon> 客户</div>
         <div class="detail-row-compact">
           <span class="row-label-compact">姓名</span>
           <span class="row-value-compact">{{ orderData.name }}</span>
@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import dayjs from 'dayjs'
-import { Clock, Location, Money, User, Van } from '@element-plus/icons-vue'
+import { Money, Van } from '@element-plus/icons-vue'
 
 const props = defineProps<{
   visible: boolean

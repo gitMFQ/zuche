@@ -84,7 +84,7 @@
       <!-- 返回按钮和车辆信息 -->
       <div class="vehicle-header">
         <el-button @click="selectedVehicle = null" class="back-btn">
-          <el-icon><ArrowLeft /></el-icon> 返回
+          <el-icon><i class="weui-icon-outlined-back" /></el-icon> 返回
         </el-button>
         <div class="vehicle-info">
           <span class="plate-number" :class="selectedVehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ selectedVehicle.plate_number }}</span>
@@ -95,7 +95,7 @@
       <!-- 操作栏 -->
       <div class="action-bar">
         <el-button type="primary" @click="openDialog()">
-          <el-icon><Plus /></el-icon> 添加保险
+          <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加保险
         </el-button>
       </div>
 
@@ -128,7 +128,7 @@
               <template v-for="(doc, idx) in item.documents.slice(0, 3)" :key="idx">
                 <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(item.documents || [], Number(idx))"  alt="保险附件，点击可放大查看" />
                 <div v-else class="pdf-icon" @click="openPdf(doc.url)" role="button" tabindex="0" aria-label="打开 PDF 附件" @keydown.enter.prevent="openPdf(doc.url)" @keydown.space.prevent="openPdf(doc.url)">
-                  <el-icon><Document /></el-icon>
+                  <el-icon><i class="weui-icon-outlined-note" /></el-icon>
                 </div>
               </template>
               <span v-if="item.documents.length > 3" class="more">+{{ item.documents.length - 3 }}</span>
@@ -171,7 +171,7 @@
                 <template v-for="(doc, idx) in row.documents.slice(0, 2)" :key="idx">
                   <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" @click="previewDoc(row.documents, idx)"  alt="保险附件，点击可放大查看" />
                   <div v-else class="pdf-icon" @click="openPdf(doc.url)" role="button" tabindex="0" aria-label="打开 PDF 附件" @keydown.enter.prevent="openPdf(doc.url)" @keydown.space.prevent="openPdf(doc.url)">
-                    <el-icon><Document /></el-icon>
+                    <el-icon><i class="weui-icon-outlined-note" /></el-icon>
                   </div>
                 </template>
                 <span v-if="row.documents.length > 2" class="badge">{{ row.documents.length }}</span>
@@ -214,7 +214,7 @@
         <el-carousel-item v-for="(doc, idx) in previewDocs" :key="idx">
           <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" style="width: 100%; height: 100%; object-fit: contain"  alt="保险附件" />
           <div v-else class="pdf-preview">
-            <el-icon :size="60"><Document /></el-icon>
+            <el-icon :size="60"><i class="weui-icon-outlined-note" /></el-icon>
             <p>PDF 文件</p>
             <el-button type="primary" @click="openPdf(doc.url)">打开文件</el-button>
           </div>
@@ -227,7 +227,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Document, Plus } from '@element-plus/icons-vue'
 import { insuranceApi, vehicleApi } from '../api'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
 import VehiclePicker from './vehicle/VehiclePicker.vue'

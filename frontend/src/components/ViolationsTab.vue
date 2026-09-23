@@ -96,7 +96,7 @@
       <!-- 返回按钮和车辆信息 -->
       <div class="vehicle-header">
         <el-button @click="selectedVehicle = null" class="back-btn">
-          <el-icon><ArrowLeft /></el-icon> 返回
+          <el-icon><i class="weui-icon-outlined-back" /></el-icon> 返回
         </el-button>
         <div class="vehicle-info">
           <span class="plate-number" :class="selectedVehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ selectedVehicle.plate_number }}</span>
@@ -107,7 +107,7 @@
       <!-- 操作栏 -->
       <div class="action-bar">
         <el-button type="primary" @click="openDialog()">
-          <el-icon><Plus /></el-icon> 添加违章
+          <el-icon><i class="weui-icon-outlined-add" /></el-icon> 添加违章
         </el-button>
       </div>
 
@@ -341,7 +341,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Plus } from '@element-plus/icons-vue'
 import { violationApi, vehicleApi } from '../api'
 import { getImageUrl } from '../utils/helpers'
 import VehiclePicker from './vehicle/VehiclePicker.vue'

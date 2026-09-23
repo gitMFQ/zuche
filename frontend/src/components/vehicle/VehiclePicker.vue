@@ -33,7 +33,7 @@
       <div v-for="vehicle in vehicles" :key="vehicle.id" class="mobile-card" @click="emit('select', vehicle)">
         <div class="mobile-card-header">
           <span class="plate-number" :class="vehicle.is_new_energy ? 'new-energy' : 'fuel'">{{ vehicle.plate_number }}</span>
-          <el-icon><ArrowRight /></el-icon>
+          <el-icon><i class="weui-icon-outlined-arrow" /></el-icon>
         </div>
         <slot name="card" :vehicle="vehicle" />
       </div>
@@ -82,7 +82,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ArrowRight } from '@element-plus/icons-vue'
 
 /**
  * 车辆列表（带搜索 / 统计卡 / 分页）的公共骨架。

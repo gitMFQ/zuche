@@ -552,6 +552,38 @@ a:hover {
 }
 
 /* ========================================
+   WeUI Icons - 尺寸适配
+   ========================================
+   weui-icon 是 mask-image 图标（非字体），来自 weui-icon 包，在 main.ts 引入。
+   官方基础规则是 font-size: 10px + width/height: 2.4em（= 固定 24px），
+   与项目里 EP 图标「1em 跟随容器字号」的习惯不一致。这里改成 1em，
+   让 <el-icon class="..."> 里的 weui-icon 自动跟随 el-icon 的 font-size
+   （按钮 14px、上传占位 32/40px、结果图标 48px 等各处字号都已由组件 CSS 定义好）。
+   双写属性选择器是为了确保压过官方基础规则的特异性。 */
+[class^='weui-icon-'][class^='weui-icon-'],
+[class*=' weui-icon-'][class*=' weui-icon-'] {
+  width: 1em;
+  height: 1em;
+  font-size: inherit;
+}
+
+/* weui-icon-arrow 原生朝右；旋转得到上/下箭头 */
+.weui-icon-arrow--up {
+  transform: rotate(-90deg);
+}
+
+.weui-icon-arrow--down {
+  transform: rotate(90deg);
+}
+
+/* el-avatar 用默认插槽放 weui-icon 时，对齐 EP :icon 的 18px 图标尺寸
+   （--el-avatar-icon-size 原本只在 EP 自己的 .el-avatar--icon 类上生效） */
+.el-avatar [class^='weui-icon-'],
+.el-avatar [class*=' weui-icon-'] {
+  font-size: var(--el-avatar-icon-size);
+}
+
+/* ========================================
    Plate Number Styles
    ======================================== */
 

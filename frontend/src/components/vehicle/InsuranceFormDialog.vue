@@ -62,7 +62,7 @@
             <div v-for="(doc, idx) in form.documents" :key="idx" class="file-item">
               <img v-if="doc.type !== 'pdf'" :src="getFileUrl(doc.url)" alt="保险附件" />
               <div v-else class="pdf-thumb">
-                <el-icon><Document /></el-icon>
+                <el-icon><i class="weui-icon-outlined-note" /></el-icon>
                 <span>PDF</span>
               </div>
               <div
@@ -85,7 +85,7 @@
               @keydown.enter.prevent="triggerUpload"
               @keydown.space.prevent="triggerUpload"
             >
-              <el-icon><Plus /></el-icon>
+              <el-icon><i class="weui-icon-outlined-add" /></el-icon>
               <span>{{ form.documents.length }}/5</span>
             </div>
           </div>
@@ -107,7 +107,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Document, Plus } from '@element-plus/icons-vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import { insuranceApi, uploadApi } from '../../api'
 import { getImageUrl } from '../../utils/helpers'

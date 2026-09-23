@@ -18,7 +18,7 @@
 
     <div class="action-bar">
       <el-button v-if="canManage" type="primary" @click="openCreate">
-        <el-icon><Plus /></el-icon> 新增车主
+        <el-icon><i class="weui-icon-outlined-add" /></el-icon> 新增车主
       </el-button>
     </div>
 
@@ -253,7 +253,6 @@
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
 import DataState from '../DataState.vue'
 import OwnerFormDialog from './OwnerFormDialog.vue'
 import PartnerAdvanceDialog from './PartnerAdvanceDialog.vue'

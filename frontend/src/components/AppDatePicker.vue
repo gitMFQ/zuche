@@ -30,7 +30,7 @@
     </template>
     <template #suffix>
       <el-icon v-if="showClear" class="app-date-trigger__clear" @click.stop="onClear">
-        <CircleClose />
+        <i class="weui-icon-outlined-close2" />
       </el-icon>
     </template>
   </el-input>
@@ -91,7 +91,7 @@
  * 其余属性（style/class/size/format 等）在桌面端原样透传。
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import { Calendar, CircleClose } from '@element-plus/icons-vue'
+import { Calendar } from '@element-plus/icons-vue'
 import { useMobile } from '../composables/useMobile'
 import {
   type DateParts,
