@@ -57,6 +57,16 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     strictPort: true,
+    // 轮询监听文件变化（容器/挂载目录里 inotify 事件有丢失风险）。2026-09-23 出过一次
+    // 「服务端产物陈旧」：dev 服务器一直供着 InsuranceFormDialog.vue 的一次中间保存产物
+    // （到期日期已换成 AppDatePicker、生效日期还是原生 input），磁盘和 git 里两处早已都是
+    // AppDatePicker；/tmp/vite.log 显示那次改动其实收到过 hmr update，所以成因没定论
+    // （疑似同一 mtime tick 内两次写入的边界情况）。刷新页面救不了（旧的是服务端），
+    // 恢复手段是 touch 文件或重启 dev。轮询消除的是「事件丢失」这一类成因，代价是
+    // 少量 CPU（监听树只有 frontend/，node_modules 默认被忽略）。
+    watch: {
+      usePolling: true
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8787',
