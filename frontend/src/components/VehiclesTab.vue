@@ -1,8 +1,9 @@
 <template>
   <div class="vehicles-tab">
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="searchForm" size="default">
+    <MobileFilterPanel title="搜索筛选">
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="searchForm" size="default">
         <el-form-item>
           <el-input v-model="searchForm.keyword" placeholder="车牌/品牌/型号" clearable @keyup.enter="loadData" style="width: 150px" />
         </el-form-item>
@@ -16,8 +17,9 @@
         <el-form-item>
           <el-button type="primary" @click="loadData">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 操作栏 -->
     <div class="action-bar">
@@ -387,6 +389,7 @@ import {
 } from '../utils/constants'
 import VehicleDetailDialog from './VehicleDetailDialog.vue'
 import AppDatePicker from './AppDatePicker.vue'
+import MobileFilterPanel from './MobileFilterPanel.vue'
 
 const loading = ref(false)
 const submitting = ref(false)

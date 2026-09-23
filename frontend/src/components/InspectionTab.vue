@@ -1,8 +1,9 @@
 <template>
   <div class="inspection-tab">
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="searchForm" size="default">
+    <MobileFilterPanel title="筛选条件">
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="searchForm" size="default">
         <el-form-item>
           <el-input v-model="searchForm.keyword" placeholder="车牌/品牌" clearable @keyup.enter="loadData" style="width: 140px" />
         </el-form-item>
@@ -16,8 +17,9 @@
         <el-form-item>
           <el-button type="primary" @click="loadData">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 统计卡片 -->
     <div class="stats-cards">
@@ -198,6 +200,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import { inspectionApi, uploadApi } from '../api'
 import AppDatePicker from './AppDatePicker.vue'
+import MobileFilterPanel from './MobileFilterPanel.vue'
 import { getImageUrl, isExpired, isExpiringSoon } from '../utils/helpers'
 
 const loading = ref(false)

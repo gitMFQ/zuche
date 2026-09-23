@@ -22,7 +22,8 @@
     </div>
 
     <!-- 筛选 -->
-    <el-card shadow="never" class="search-card">
+    <MobileFilterPanel title="车辆费用筛选">
+      <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
           <el-select v-model="query.vehicle_id" placeholder="全部车辆" clearable filterable style="width: 150px" @change="reload">
@@ -64,8 +65,9 @@
         <el-form-item>
           <el-button type="primary" @click="reload">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <div class="totals-bar">
       <span>支出 <b class="amount-cell money-negative">{{ formatMoney(totals.expense_total) }}</b></span>
@@ -220,6 +222,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DataState from '../DataState.vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 import VehicleExpenseFormDialog from './VehicleExpenseFormDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, vehicleApi, vehicleExpenseApi } from '../../api'

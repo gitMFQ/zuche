@@ -1,8 +1,9 @@
 <template>
   <div class="vehicle-picker">
     <!-- 搜索栏：只提供关键字输入，回车与按钮都抛 search 事件 -->
-    <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="formModel" size="default">
+    <MobileFilterPanel title="车辆筛选">
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="formModel" size="default">
         <el-form-item>
           <el-input
             :model-value="keyword"
@@ -16,8 +17,9 @@
         <el-form-item>
           <el-button type="primary" @click="emit('search')">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 统计卡片：内容由使用方提供，这里只给栅格容器 -->
     <div
@@ -82,6 +84,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 
 /**
  * 车辆列表（带搜索 / 统计卡 / 分页）的公共骨架。

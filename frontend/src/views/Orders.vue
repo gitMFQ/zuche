@@ -16,7 +16,7 @@
       <el-tab-pane label="已取消" name="cancelled" />
     </el-tabs>
 
-    <!-- 时间筛选按钮（仅待取车和待还车显示） -->
+    <!-- 时间筛选按钮（仅待取车和待还车显示，不放入移动端折叠面板） -->
     <div v-if="activeTab === 'pending' || activeTab === 'active'" class="time-filter-bar">
       <button 
         class="filter-btn"
@@ -49,16 +49,8 @@
     </div>
 
     <!-- 搜索栏 -->
-    <el-card shadow="never" class="search-card">
-      <div class="search-header" @click="toggleSearchExpand">
-        <span class="search-title"><el-icon><i class="weui-icon-outlined-search" /></el-icon> 搜索筛选</span>
-        <el-icon class="expand-icon" :class="{ 'expanded': searchExpanded }"><i class="weui-icon-outlined-arrow weui-icon-arrow--up" /></el-icon>
-      </div>
-      <!-- 使用 CSS 过渡动画替代 el-collapse-transition -->
-      <div 
-        class="search-content" 
-        :class="{ 'is-expanded': searchExpanded }"
-      >
+    <MobileFilterPanel title="搜索筛选">
+      <el-card shadow="never" class="search-card">
         <el-form :model="searchForm" size="default" class="search-form">
             <el-form-item label="取车时间" class="date-form-item">
               <!-- PC端使用框架组件 -->
@@ -139,9 +131,9 @@
                 <el-icon><i class="weui-icon-outlined-refresh" /></el-icon> 重置
               </el-button>
             </el-form-item>
-          </el-form>
-        </div>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 操作栏 -->
     <div class="action-bar">
@@ -382,6 +374,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { orderApi, vehicleApi, customerApi } from '../api'
 import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'
+import MobileFilterPanel from '../components/MobileFilterPanel.vue'
 import AppDatePicker from '../components/AppDatePicker.vue'
 import ImagePreviewDialog from '../components/ImagePreviewDialog.vue'
 import ExtendDialog from '../components/order/ExtendDialog.vue'
@@ -449,7 +442,6 @@ const TIME_FILTER_PARAM: Record<string, string> = {
 }
 
 const { isMobile } = useMobile()
-const searchExpanded = ref(false)
 const searchForm = reactive({
   keyword: '',
   start_date_from: '',
@@ -642,11 +634,6 @@ function toggleTimeFilter(filter: string) {
 function applyTimeFilter() {
   pagination.page = 1
   loadData()
-}
-
-// 切换搜索栏展开/折叠
-function toggleSearchExpand() {
-  searchExpanded.value = !searchExpanded.value
 }
 
 async function loadVehicles(startDate?: string, endDate?: string, excludeOrderId?: string) {
@@ -969,8 +956,6 @@ onMounted(() => {
   }
   // 恢复 URL 里的筛选与 tab（没有则回退到 sessionStorage）
   restoreFromUrl()
-  // 移动端默认折叠搜索栏
-  searchExpanded.value = !isMobile.value
   loadData()
   loadTabCounts()
   loadOrderSources()
@@ -1107,62 +1092,6 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-/* Collapse state for mobile: keep header visible and content hidden, limit height */
-.search-card.collapsed {
-  height: 48px;
-  overflow: hidden;
-  padding: 0;
-}
-.search-card.collapsed > .search-header {
-  height: 48px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.search-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  cursor: pointer;
-  user-select: none;
-}
-
-.search-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #303133;
-}
-
-.expand-icon {
-  font-size: 16px;
-  color: var(--sk-color-info);
-  transition: transform 0.3s;
-}
-
-.expand-icon.expanded {
-  transform: rotate(180deg);
-}
-
-.search-content {
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
-}
-
-.search-content.is-expanded {
-  max-height: 800px;
-  opacity: 1;
-  padding-top: 8px;
-}
-
 .search-form {
   display: flex;
   flex-wrap: wrap;
@@ -1190,58 +1119,15 @@ onMounted(() => {
 
 /* 移动端样式 */
 @media (max-width: 767px) {
-  .search-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    padding: 12px;
+  .time-filter-bar {
+    margin-bottom: 12px;
+    padding: 8px 16px 12px;
+    background: var(--m-bg-cell);
   }
 
-  .search-form :deep(.el-form-item) {
-    display: block;
-  }
-
-  .search-form :deep(.el-form-item__label) {
-    float: none;
-    display: block;
-    text-align: left;
-    padding: 0 0 4px;
-    font-size: 13px;
-    color: #606266;
-    line-height: 20px;
-  }
-
-  .search-form :deep(.el-form-item__content) {
-    display: block;
-    margin-left: 0 !important;
-  }
-
-  .search-form .el-form-item__label {
-    width: 100%;
-    text-align: left;
-    padding: 0 0 4px;
-    font-size: 13px;
-    color: #606266;
-  }
-
-  .search-form :deep(.el-form-item__content) {
-    width: 100%;
-    margin-left: 0 !important;
-  }
-
-  .search-form :deep(.el-form-item__content .el-select),
-  .search-form :deep(.el-form-item__content .el-input) {
-    width: 100% !important;
-  }
-
-  /* 时间筛选单独占一行 */
-  .search-form :deep(.el-form-item.date-form-item) {
-    grid-column: 1 / -1;
-  }
-
-  /* 操作按钮单独占一行 */
+  /* 表单项的移动端外观（56px cell、label 左、值左、去盒子的输入框、日期区间两端等分）
+     由 style.css 的「Mobile WeUI Form」统一提供，这里只留订单搜索栏自己的按钮行 */
   .search-form :deep(.form-actions) {
-    grid-column: 1 / -1;
     display: flex;
     gap: 10px;
   }
@@ -1249,49 +1135,10 @@ onMounted(() => {
   .search-form :deep(.form-actions .el-button) {
     flex: 1;
   }
-
-  .search-form :deep(.date-range) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .search-form :deep(.date-range .el-input) {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .search-form :deep(.date-separator) {
-    color: var(--sk-color-info);
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-
-  .search-form :deep(.mobile-date-range) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .search-form :deep(.mobile-date-range .app-date-trigger) {
-    flex: 1;
-    min-width: 0;
-  }
 }
 
 /* PC 端样式 */
 @media (min-width: 768px) {
-  .search-header {
-    display: none;
-  }
-
-  .search-content {
-    padding-top: 0;
-    border-top: none;
-  }
-
   .search-form {
     display: flex;
     flex-wrap: wrap;
@@ -1432,140 +1279,10 @@ onMounted(() => {
   padding: 0;
 }
 
-/* 折叠状态 */
-.search-card.collapsed :deep(.el-card__body) {
-  padding: 0;
-}
-
-.search-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 40px;
-}
-
-.search-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #303133;
-}
-
-.search-title .el-icon {
-  font-size: 15px;
-  color: #606266;
-}
-
-.expand-icon {
-  font-size: 14px;
-  color: var(--sk-color-info);
-  transition: transform 0.25s ease;
-}
-
-.expand-icon.expanded {
-  transform: rotate(180deg);
-}
-
-/* 移动端搜索筛选优化 */
 @media (max-width: 767px) {
   .filter-count.has-overdue,
   html.dark .filter-count.has-overdue {
     color: var(--sk-color-danger);
-  }
-
-  .search-header {
-    padding: 8px 12px;
-    min-height: 36px;
-  }
-
-  .search-title {
-    font-size: 13px;
-  }
-
-  .search-title .el-icon {
-    font-size: 14px;
-  }
-
-  .expand-icon {
-    font-size: 12px;
-  }
-
-  .search-content {
-    padding: 0 12px 0;
-    max-height: 0;
-    opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
-  }
-
-  .search-content.is-expanded {
-    max-height: 600px;
-    opacity: 1;
-    padding: 0 12px 12px;
-  }
-
-  .search-card .search-form :deep(.el-form-item) {
-    margin-bottom: 10px;
-  }
-
-  .search-card .search-form :deep(.el-form-item__label) {
-    font-size: 12px;
-    padding: 0 0 4px;
-    line-height: 1.4;
-  }
-
-  .search-card .search-form :deep(.el-input__wrapper) {
-    padding: 2px 8px;
-    min-height: 30px;
-  }
-
-  .search-card .search-form :deep(.el-input__inner) {
-    font-size: 13px;
-  }
-
-  .search-card .search-form :deep(.el-select) {
-    width: 100%;
-  }
-
-  .search-card .search-form :deep(.el-date-editor) {
-    width: 100% !important;
-  }
-
-  .search-card .date-form-item {
-    margin-right: 0;
-  }
-
-  .search-card .mobile-date-range {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .search-card .mobile-date-range .app-date-trigger {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .search-card .date-separator {
-    color: var(--sk-color-info);
-    font-size: 12px;
-  }
-
-  .search-card .form-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-  }
-
-  .search-card .form-actions .el-button {
-    flex: 1;
-    min-height: 32px;
-    font-size: 13px;
   }
 }
 

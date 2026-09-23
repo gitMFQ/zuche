@@ -1,14 +1,16 @@
 <template>
   <div class="users-tab">
     <!-- 搜索栏 -->
-    <el-form :inline="true" :model="searchForm" size="default" class="search-form">
-      <el-form-item>
-        <el-input v-model="searchForm.keyword" placeholder="用户名/姓名/手机" clearable @keyup.enter="loadData" style="width: 150px" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="loadData">搜索</el-button>
-      </el-form-item>
-    </el-form>
+    <MobileFilterPanel title="搜索筛选">
+      <el-form :inline="true" :model="searchForm" size="default" class="search-form">
+        <el-form-item>
+          <el-input v-model="searchForm.keyword" placeholder="用户名/姓名/手机" clearable @keyup.enter="loadData" style="width: 150px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="loadData">搜索</el-button>
+        </el-form-item>
+      </el-form>
+    </MobileFilterPanel>
 
     <!-- 操作栏 -->
     <div class="action-bar">
@@ -142,6 +144,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { userApi } from '../api'
+import MobileFilterPanel from './MobileFilterPanel.vue'
 
 const loading = ref(false)
 const submitting = ref(false)

@@ -418,12 +418,10 @@ html.dark .card-title {
     padding: 0;
   }
 
+  /* cell 行（56px、label 5em、hairline、去盒子的输入框）由 style.css 的
+     「Mobile WeUI Form」统一提供，这里只留设置页自己的卡片头与 Logo 行 */
   .setting-card {
     margin: 0 0 8px !important;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    background: var(--m-bg-cell);
   }
 
   .setting-card :deep(.el-card__header) {
@@ -431,47 +429,9 @@ html.dark .card-title {
     border-bottom: 1px solid var(--m-line);
   }
 
-  .setting-card :deep(.el-card__body) {
-    padding: 0;
-  }
-
   .setting-card :deep(.card-title) {
     font-size: 15px;
     color: var(--m-fg-0);
-  }
-
-  .setting-card :deep(.el-form-item) {
-    position: relative;
-    min-height: 56px;
-    margin: 0;
-    padding: 4px 16px;
-    border-bottom: none;
-    align-items: center;
-  }
-
-  .setting-card :deep(.el-form-item + .el-form-item)::before {
-    content: '';
-    position: absolute;
-    left: 16px;
-    right: 0;
-    top: 0;
-    height: 1px;
-    background-color: var(--m-line);
-    transform: scaleY(0.5);
-    transform-origin: 0 0;
-    pointer-events: none;
-  }
-
-  .setting-card :deep(.el-form-item__label) {
-    flex: 0 0 88px;
-    color: var(--m-fg-1);
-    font-size: 15px;
-    line-height: 1.4;
-  }
-
-  .setting-card :deep(.el-form-item__content) {
-    min-width: 0;
-    line-height: 1.4;
   }
 
   .setting-card :deep(.el-input) {

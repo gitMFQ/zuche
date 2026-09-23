@@ -1,7 +1,8 @@
 <template>
   <div class="funds-tab">
     <!-- 账户余额卡片 -->
-    <div class="stats-cards">
+    <MobileFilterPanel title="账户快捷筛选">
+      <div class="stats-cards">
       <el-card v-for="a in accounts" :key="a.id" shadow="hover" class="account-card" @click="filterByAccount(a.id)">
         <div class="account-name">
           {{ a.name }}
@@ -10,7 +11,8 @@
         <div class="account-balance" :class="moneyClass(a.balance)">{{ formatMoneyUnit(a.balance) }}</div>
         <div class="account-foot">期初 {{ formatMoney(a.opening_balance) }}（{{ a.opening_date }}）</div>
       </el-card>
-    </div>
+      </div>
+    </MobileFilterPanel>
 
     <el-alert
       v-if="holdingBalance !== 0"
@@ -23,7 +25,8 @@
     />
 
     <!-- 筛选 -->
-    <el-card shadow="never" class="search-card">
+    <MobileFilterPanel title="流水筛选">
+      <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
           <el-select v-model="query.account_id" placeholder="全部账户" clearable style="width: 140px" @change="reload">
@@ -67,8 +70,9 @@
         <el-form-item>
           <el-button type="primary" @click="reload">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 操作栏 -->
     <div class="action-bar">
@@ -258,6 +262,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DataState from '../DataState.vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 import FundTxnDialog from './FundTxnDialog.vue'
 import TransferDialog from './TransferDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'

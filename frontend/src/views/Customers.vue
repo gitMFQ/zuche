@@ -10,16 +10,18 @@
     </el-tabs>
 
     <!-- 搜索栏（三栏共用） -->
-    <el-card shadow="never" class="search-card">
-      <el-form :inline="true" :model="searchForm" size="default">
-        <el-form-item>
-          <el-input v-model="searchForm.keyword" placeholder="姓名/手机/身份证" clearable @keyup.enter="loadData" style="width: 150px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="loadData">搜索</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <MobileFilterPanel title="搜索筛选">
+      <el-card shadow="never" class="search-card">
+        <el-form :inline="true" :model="searchForm" size="default">
+          <el-form-item>
+            <el-input v-model="searchForm.keyword" placeholder="姓名/手机/身份证" clearable @keyup.enter="loadData" style="width: 150px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="loadData">搜索</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 操作栏 -->
     <div class="action-bar">
@@ -386,6 +388,7 @@ import { customerApi, blacklistApi, uploadApi } from '../api'
 import type { BlacklistItem, CustomerItem, PageQuery } from '../api'
 import { useDictStore } from '../stores/dict'
 import DataState from '../components/DataState.vue'
+import MobileFilterPanel from '../components/MobileFilterPanel.vue'
 import AppDatePicker from '../components/AppDatePicker.vue'
 import { getImageUrl } from '../utils/helpers'
 

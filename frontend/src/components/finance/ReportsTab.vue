@@ -3,14 +3,16 @@
     <el-tabs v-model="activeReport">
       <!-- 单车月报 -->
       <el-tab-pane label="单车月报" name="vehicle-monthly">
-        <div class="report-toolbar">
-          <AppDatePicker v-model="monthlyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadMonthly" />
-          <el-select v-model="monthlyOwnerId" placeholder="全部车主" clearable style="width: 150px" @change="loadMonthly">
-            <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
-          </el-select>
-          <el-button :loading="loading.monthly" @click="loadMonthly">刷新</el-button>
-          <el-button @click="exportMonthly">导出</el-button>
-        </div>
+        <MobileFilterPanel title="单车月报筛选">
+          <div class="report-toolbar">
+            <AppDatePicker v-model="monthlyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadMonthly" />
+            <el-select v-model="monthlyOwnerId" placeholder="全部车主" clearable style="width: 150px" @change="loadMonthly">
+              <el-option v-for="o in owners" :key="o.id" :label="o.name" :value="o.id" />
+            </el-select>
+            <el-button :loading="loading.monthly" @click="loadMonthly">刷新</el-button>
+            <el-button @click="exportMonthly">导出</el-button>
+          </div>
+        </MobileFilterPanel>
         <p class="report-hint">
           结余 = 车主结算 − 月供 − 保养 − 维修 − 其它车辆费用。保险等年费按「分摊月数」摊到各月，
           所以续保月不会突然出现一条巨大的负数。
@@ -67,24 +69,26 @@
 
       <!-- 车辆收益排行 -->
       <el-tab-pane label="车辆收益" name="ranking">
-        <div class="report-toolbar">
-          <el-date-picker
-            v-if="!isMobile"
-            v-model="rankRange"
-            type="daterange"
-            value-format="YYYY-MM-DD"
-            start-placeholder="开始"
-            end-placeholder="结束"
-            @change="loadRanking"
-          />
-          <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
-          <div v-else class="mobile-date-range">
-            <AppDatePicker v-model="rankFrom" type="date" value-format="YYYY-MM-DD" @change="loadRanking" />
-            <span class="date-separator">-</span>
-            <AppDatePicker v-model="rankTo" type="date" value-format="YYYY-MM-DD" @change="loadRanking" />
+        <MobileFilterPanel title="车辆收益筛选">
+          <div class="report-toolbar">
+            <el-date-picker
+              v-if="!isMobile"
+              v-model="rankRange"
+              type="daterange"
+              value-format="YYYY-MM-DD"
+              start-placeholder="开始"
+              end-placeholder="结束"
+              @change="loadRanking"
+            />
+            <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
+            <div v-else class="mobile-date-range">
+              <AppDatePicker v-model="rankFrom" type="date" value-format="YYYY-MM-DD" @change="loadRanking" />
+              <span class="date-separator">-</span>
+              <AppDatePicker v-model="rankTo" type="date" value-format="YYYY-MM-DD" @change="loadRanking" />
+            </div>
+            <el-button :loading="loading.ranking" @click="loadRanking">刷新</el-button>
           </div>
-          <el-button :loading="loading.ranking" @click="loadRanking">刷新</el-button>
-        </div>
+        </MobileFilterPanel>
         <p class="report-hint">收益 = 车主结算 − 车辆费用 − 该车月供。没出车的车排最后。</p>
         <DataState
           :loading="loading.ranking"
@@ -139,10 +143,12 @@
 
       <!-- 公司月报 -->
       <el-tab-pane label="公司月报" name="company">
-        <div class="report-toolbar">
-          <AppDatePicker v-model="companyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadCompany" />
-          <el-button :loading="loading.company" @click="loadCompany">刷新</el-button>
-        </div>
+        <MobileFilterPanel title="公司月报筛选">
+          <div class="report-toolbar">
+            <AppDatePicker v-model="companyPeriod" type="month" value-format="YYYY-MM" placeholder="月份" @change="loadCompany" />
+            <el-button :loading="loading.company" @click="loadCompany">刷新</el-button>
+          </div>
+        </MobileFilterPanel>
         <p class="report-hint">
           公司收入 = 挂靠车的公司管理费 + 自营车的全额结算额。挂靠车的车辆费用与月供由车主承担，
           不计入公司成本（在对账单里扣回）。
@@ -182,28 +188,30 @@
 
       <!-- 资金流水报表 -->
       <el-tab-pane label="资金流水" name="fund-flow">
-        <div class="report-toolbar">
-          <el-date-picker
-            v-if="!isMobile"
-            v-model="flowRange"
-            type="daterange"
-            value-format="YYYY-MM-DD"
-            start-placeholder="开始"
-            end-placeholder="结束"
-            @change="loadFlow"
-          />
-          <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
-          <div v-else class="mobile-date-range">
-            <AppDatePicker v-model="flowFrom" type="date" value-format="YYYY-MM-DD" @change="loadFlow" />
-            <span class="date-separator">-</span>
-            <AppDatePicker v-model="flowTo" type="date" value-format="YYYY-MM-DD" @change="loadFlow" />
+        <MobileFilterPanel title="资金流水筛选">
+          <div class="report-toolbar">
+            <el-date-picker
+              v-if="!isMobile"
+              v-model="flowRange"
+              type="daterange"
+              value-format="YYYY-MM-DD"
+              start-placeholder="开始"
+              end-placeholder="结束"
+              @change="loadFlow"
+            />
+            <!-- 窄屏用 WeUI 滚轮：el-date-picker 的双月面板有 600 多像素宽，手机上放不下 -->
+            <div v-else class="mobile-date-range">
+              <AppDatePicker v-model="flowFrom" type="date" value-format="YYYY-MM-DD" @change="loadFlow" />
+              <span class="date-separator">-</span>
+              <AppDatePicker v-model="flowTo" type="date" value-format="YYYY-MM-DD" @change="loadFlow" />
+            </div>
+            <el-radio-group v-model="flowBy" @change="loadFlow">
+              <el-radio-button value="month">按月</el-radio-button>
+              <el-radio-button value="day">按日</el-radio-button>
+            </el-radio-group>
+            <el-button :loading="loading.flow" @click="loadFlow">刷新</el-button>
           </div>
-          <el-radio-group v-model="flowBy" @change="loadFlow">
-            <el-radio-button value="month">按月</el-radio-button>
-            <el-radio-button value="day">按日</el-radio-button>
-          </el-radio-group>
-          <el-button :loading="loading.flow" @click="loadFlow">刷新</el-button>
-        </div>
+        </MobileFilterPanel>
         <DataState
           v-if="flow"
           :loading="loading.flow"
@@ -268,6 +276,7 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import DataState from '../DataState.vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, ownerApi } from '../../api'
 import type {

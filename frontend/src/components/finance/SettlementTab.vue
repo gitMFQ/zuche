@@ -1,7 +1,8 @@
 <template>
   <div class="settlement-tab">
     <!-- 筛选 -->
-    <el-card shadow="never" class="search-card">
+    <MobileFilterPanel title="结算筛选">
+      <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
           <AppDatePicker v-model="query.period" type="month" value-format="YYYY-MM" placeholder="结算期" style="width: 130px" @change="reload" />
@@ -28,8 +29,9 @@
         <el-form-item>
           <el-button type="primary" @click="reload">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 合计条 -->
     <div class="totals-bar">
@@ -192,6 +194,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DataState from '../DataState.vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 import SettlementLineDialog from './SettlementLineDialog.vue'
 import SettlementPayoutDialog from './SettlementPayoutDialog.vue'
 import SettlementOpeningDialog from './SettlementOpeningDialog.vue'

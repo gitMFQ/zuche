@@ -1,6 +1,7 @@
 <template>
   <div class="owners-tab">
-    <el-card shadow="never" class="search-card">
+    <MobileFilterPanel title="车主筛选">
+      <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
           <el-input v-model="query.keyword" placeholder="姓名/手机号" clearable style="width: 150px" @keyup.enter="reload" />
@@ -13,8 +14,9 @@
         <el-form-item>
           <el-button type="primary" @click="reload">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <div class="action-bar">
       <el-button v-if="canManage" type="primary" @click="openCreate">
@@ -254,6 +256,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DataState from '../DataState.vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 import OwnerFormDialog from './OwnerFormDialog.vue'
 import PartnerAdvanceDialog from './PartnerAdvanceDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'

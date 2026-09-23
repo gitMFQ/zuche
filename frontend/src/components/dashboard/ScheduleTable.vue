@@ -1,54 +1,26 @@
 <template>
   <div class="schedule-table-wrap">
-    <template v-if="schedules.length">
-      <table class="schedule-table" :class="{ 'full-view-table': fullView }">
-        <thead>
-          <tr>
-            <th class="time-col">时间</th>
-            <th class="type-col">待</th>
-            <th class="plate-col">车牌</th>
-            <th class="platform-col">平台</th>
-            <th :class="{ 'location-col': fullView }">位置</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in schedules" :key="item.id" @click="emit('row-click', item.id)" class="schedule-row">
-            <td class="time-cell">{{ formatScheduleTime(item.schedule_time) }}</td>
-            <td class="type-cell"><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
-            <td class="plate-cell schedule-plate">{{ item.plate_number }}</td>
-            <td class="schedule-platform-cell"><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
-            <td class="location-cell">{{ item.location || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- 移动端改成 WeUI cell 分组：时间/类型放首行，其余字段每行 44px -->
-      <div class="schedule-mobile-list">
-        <div
-          v-for="item in schedules"
-          :key="`mobile-${item.id}`"
-          class="schedule-mobile-card"
-          @click="emit('row-click', item.id)"
-        >
-          <div class="schedule-mobile-header">
-            <span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span>
-            <span class="schedule-mobile-time">{{ formatScheduleTime(item.schedule_time) }}</span>
-          </div>
-          <div class="schedule-mobile-row">
-            <span class="label">车牌</span>
-            <span class="value schedule-plate">{{ item.plate_number || '-' }}</span>
-          </div>
-          <div class="schedule-mobile-row">
-            <span class="label">平台</span>
-            <span class="value" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span>
-          </div>
-          <div class="schedule-mobile-row">
-            <span class="label">位置</span>
-            <span class="value">{{ item.location || '-' }}</span>
-          </div>
-        </div>
-      </div>
-    </template>
+    <!-- 移动端与 PC 端都用表格：窄屏由卡片体横向滚动，不要再改成 cell 列表 -->
+    <table v-if="schedules.length" class="schedule-table" :class="{ 'full-view-table': fullView }">
+      <thead>
+        <tr>
+          <th class="time-col">时间</th>
+          <th class="type-col">待</th>
+          <th class="plate-col">车牌</th>
+          <th class="platform-col">平台</th>
+          <th :class="{ 'location-col': fullView }">位置</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in schedules" :key="item.id" @click="emit('row-click', item.id)" class="schedule-row">
+          <td class="time-cell">{{ formatScheduleTime(item.schedule_time) }}</td>
+          <td class="type-cell"><span class="schedule-type" :class="item.type === '送' ? 'send' : 'receive'">{{ item.type }}</span></td>
+          <td class="plate-cell schedule-plate">{{ item.plate_number }}</td>
+          <td class="schedule-platform-cell"><span class="schedule-platform" :style="{ color: item.platform_color || '#909399' }">{{ item.platform || '-' }}</span></td>
+          <td class="location-cell">{{ item.location || '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
     <div v-else class="empty-text">暂无调度安排</div>
   </div>
 </template>
@@ -327,102 +299,5 @@ html.dark .schedule-table tr:hover {
 
 html.dark .schedule-plate {
   color: var(--primary-color);
-}
-
-.schedule-mobile-list {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  /* 横向表格不再挤压页面，移动端用 cell 列表浏览；完整视图同样适用 */
-  .schedule-table {
-    display: none;
-  }
-
-  .schedule-mobile-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .schedule-mobile-card {
-    position: relative;
-    background: var(--m-bg-cell);
-    color: var(--m-fg-0);
-  }
-
-  .schedule-mobile-card::before,
-  .schedule-mobile-card::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--m-line);
-    transform: scaleY(0.5);
-    transform-origin: 0 0;
-    pointer-events: none;
-  }
-
-  .schedule-mobile-card::before {
-    top: 0;
-  }
-
-  .schedule-mobile-card::after {
-    bottom: 0;
-    transform-origin: 0 100%;
-  }
-
-  .schedule-mobile-card:active {
-    background: var(--m-active);
-  }
-
-  .schedule-mobile-header,
-  .schedule-mobile-row {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 44px;
-    padding: 4px 16px;
-    font-size: 15px;
-    line-height: 1.4;
-  }
-
-  .schedule-mobile-row + .schedule-mobile-row::before,
-  .schedule-mobile-header + .schedule-mobile-row::before {
-    content: '';
-    position: absolute;
-    left: 16px;
-    right: 0;
-    top: 0;
-    height: 1px;
-    background: var(--m-line);
-    transform: scaleY(0.5);
-    transform-origin: 0 0;
-    pointer-events: none;
-  }
-
-  .schedule-mobile-header {
-    font-weight: 600;
-  }
-
-  .schedule-mobile-time {
-    color: var(--m-fg-1);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .schedule-mobile-row .label {
-    flex: 0 0 auto;
-    color: var(--m-fg-1);
-  }
-
-  .schedule-mobile-row .value {
-    min-width: 0;
-    color: var(--m-fg-0);
-    text-align: right;
-    word-break: break-word;
-  }
 }
 </style>

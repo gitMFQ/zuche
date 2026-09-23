@@ -1,8 +1,9 @@
 <template>
   <div class="logs-tab">
     <!-- 筛选区域 -->
-    <el-card shadow="never" class="filter-card">
-      <el-form :inline="true" :model="filterForm" class="filter-form">
+    <MobileFilterPanel title="筛选条件">
+      <el-card shadow="never" class="filter-card">
+        <el-form :inline="true" :model="filterForm" class="filter-form">
         <el-form-item label="操作类型">
           <el-select v-model="filterForm.action" placeholder="全部" clearable style="width: 140px">
             <el-option v-for="(label, value) in actionTypes" :key="value" :label="label" :value="value" />
@@ -42,8 +43,9 @@
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 移动端卡片列表（桌面端隐藏） -->
     <div class="mobile-cards">
@@ -129,6 +131,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { logApi } from '../api'
 import AppDatePicker from './AppDatePicker.vue'
+import MobileFilterPanel from './MobileFilterPanel.vue'
 import { useDictStore } from '../stores/dict'
 import { useMobile } from '../composables/useMobile'
 import dayjs from 'dayjs'

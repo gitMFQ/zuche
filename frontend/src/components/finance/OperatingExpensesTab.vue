@@ -14,7 +14,8 @@
     </div>
 
     <!-- 按项目汇总 -->
-    <el-card v-if="stats.by_category.length" shadow="never" class="summary-card">
+    <MobileFilterPanel v-if="stats.by_category.length" title="项目快捷筛选">
+      <el-card shadow="never" class="summary-card">
       <div class="finance-section-title">本月按项目</div>
       <div class="category-tags">
         <el-tag
@@ -27,10 +28,12 @@
           {{ c.category_name }} {{ formatMoney(c.total) }}（{{ c.count }}）
         </el-tag>
       </div>
-    </el-card>
+      </el-card>
+    </MobileFilterPanel>
 
     <!-- 筛选 -->
-    <el-card shadow="never" class="search-card">
+    <MobileFilterPanel title="开支筛选">
+      <el-card shadow="never" class="search-card">
       <el-form :inline="true" :model="query">
         <el-form-item>
           <el-select v-model="query.category" placeholder="全部项目" clearable filterable style="width: 150px" @change="reload">
@@ -67,8 +70,9 @@
         <el-form-item>
           <el-button type="primary" @click="reload">搜索</el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
+        </el-form>
+      </el-card>
+    </MobileFilterPanel>
 
     <div class="totals-bar">
       <span>合计 <b class="amount-cell">{{ formatMoney(totals.total) }}</b></span>
@@ -191,6 +195,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DataState from '../DataState.vue'
+import MobileFilterPanel from '../MobileFilterPanel.vue'
 import OperatingExpenseFormDialog from './OperatingExpenseFormDialog.vue'
 import AppDatePicker from '../AppDatePicker.vue'
 import { financeReportApi, operatingExpenseApi } from '../../api'

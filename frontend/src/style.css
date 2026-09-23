@@ -2338,3 +2338,583 @@ html.dark .page-container .el-descriptions__content {
     to { transform: translateY(100%); }
   }
 }
+
+/* ========================================
+   Mobile WeUI Form（仅 <768px）
+   ========================================
+ *
+ * 移动端所有表单统一成 WeUI 的 cells_form：弹窗 sheet 里的录入表单、页面上的筛选栏、
+ * 设置页表单走同一套规则；桌面端（≥768px）一行都不改。
+ *
+ *   .el-form-item        → .weui-cell    56px 行 / 17px / 左右 16px / 顶部 0.5px hairline
+ *   .el-form-item__label → .weui-label   max-width 5em + 8px 间距，值与 placeholder 左对齐
+ *   el-input / el-select → 去盒子（透明底、无描边），17px、24px 行高
+ *   el-switch            → 52×32 微信开关（WeUI 官方尺寸）
+ *   el-radio / checkbox  → 22px 圆形，选中微信绿
+ *   el-divider           → .weui-cells__title：14px 灰字分组标题，去掉横线
+ *
+ * 四条约束（改之前先看）：
+ *
+ * 1. 选择器一律带 .page-container / .el-dialog__body 前缀，为的是**放过登录页** ——
+ *    登录表单落在灰底上、外面没有卡片外壳，输入框去盒子之后等于隐形，那一页保持原样。
+ * 2. 标签宽度是 Element Plus 写在 label 上的**内联 style**（form-item 的 labelStyle），
+ *    普通声明压不住，只能 width: auto !important。
+ * 3. 各页 scoped 里的 .search-card :deep(.el-form-item) { margin-bottom: 8px } 带
+ *    [data-v-*] 属性选择器，比这里的 .page-container .el-form-item 更高，所以 margin
+ *    也用 !important 统一 —— 否则行与行之间多出 8px 缝，hairline 的节奏就断了。
+ * 4. 弹窗里的表单用负外边距抵消 .el-dialog__body 的 24px 左右内边距，且只对直接子级生效；
+ *    嵌套在别处的表单会退化成「留在 24px 内边距里」，不会撑出横向滚动条。
+ */
+@media (max-width: 767px) {
+  /* ---------------- 容器：让 cell 能左右贴边 ---------------- */
+
+  /* sheet 里的表单：抵消 .el-dialog__body 的 24px 左右内边距 */
+  .el-dialog__body > .el-form {
+    margin-left: -24px;
+    margin-right: -24px;
+  }
+
+  /* 卡片外壳退成 WeUI 分组：无圆角、无阴影、无描边 */
+  .page-container .search-card,
+  .page-container .filter-card,
+  .page-container .setting-card {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--m-bg-cell);
+  }
+
+  .page-container .search-card > .el-card__body,
+  .page-container .filter-card > .el-card__body,
+  .page-container .setting-card > .el-card__body {
+    padding: 0;
+  }
+
+  /* ---------------- 行 = WeUI cell ---------------- */
+
+  .page-container .el-form-item,
+  .el-dialog__body .el-form-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 56px;
+    margin: 0 !important; /* 见文件头约束 3 */
+    padding: 0 16px;
+    font-size: 17px;
+    line-height: 1.4117647; /* WeUI cell 行高：24px ÷ 17px */
+    color: var(--m-fg-0);
+  }
+
+  /* 行间 0.5px hairline：左缩进 16px，与 .mobile-card-row 一致 */
+  .page-container .el-form-item::before,
+  .el-dialog__body .el-form-item::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background-color: var(--m-line);
+    transform: scaleY(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+
+  /* 表单第一行不画线；分组标题（el-divider）后面要画，那是分组的顶边 */
+  .el-form > .el-form-item:first-child::before {
+    content: none;
+  }
+
+  /* ---------------- label / content ---------------- */
+
+  .page-container .el-form-item__label,
+  .el-dialog__body .el-form-item__label {
+    flex: 0 0 auto;
+    width: auto !important; /* EP 把 label-width 写成内联 width，见文件头约束 2 */
+    max-width: 5em;         /* WeUI：5em，17px 字号下 85px */
+    height: auto;
+    margin-right: 8px;
+    padding: 0;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 17px;
+    line-height: 1.4117647;
+    color: var(--m-fg-0);
+  }
+
+  .page-container .el-form-item__content,
+  .el-dialog__body .el-form-item__content {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 0 !important; /* 无 label 的表单项 EP 会内联 margin-left */
+    font-size: 17px;
+    line-height: 1.4117647;
+  }
+
+  /* 校验失败：EP 默认绝对定位，会盖住下一行；改成行内红字 */
+  .page-container .el-form-item__error,
+  .el-dialog__body .el-form-item__error {
+    position: static;
+    width: 100%;
+    padding-top: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* ---------------- 输入框：去盒子 ---------------- */
+
+  .page-container .el-form-item .el-input,
+  .el-dialog__body .el-form-item .el-input {
+    --el-input-bg-color: transparent;
+    --el-input-border-color: transparent;
+    --el-input-hover-border-color: transparent;
+    --el-input-focus-border-color: transparent;
+    --el-input-placeholder-color: var(--m-fg-2);
+    --el-input-height: 26px; /* → 内部行高 24px，与 WeUI 一致 */
+    font-size: 17px;
+  }
+
+  .page-container .el-form-item .el-input__wrapper,
+  .el-dialog__body .el-form-item .el-input__wrapper {
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* 手机上不要聚焦绿框（style.css 上半段那条 :focus-within 是硬编码色，必须显式压掉） */
+  .page-container .el-form-item .el-input__wrapper:focus-within,
+  .el-dialog__body .el-form-item .el-input__wrapper:focus-within {
+    box-shadow: none;
+  }
+
+  .page-container .el-form-item .el-input__inner,
+  .el-dialog__body .el-form-item .el-input__inner {
+    color: var(--m-fg-0);
+    text-align: left;
+  }
+
+  /* 数字输入：EP 默认居中，跟同一列左对齐的值不齐 */
+  .page-container .el-form-item .el-input-number .el-input__inner,
+  .el-dialog__body .el-form-item .el-input-number .el-input__inner {
+    text-align: left;
+  }
+
+  .page-container .el-form-item .el-textarea__inner,
+  .el-dialog__body .el-form-item .el-textarea__inner {
+    padding: 0;
+    box-shadow: none;
+    background-color: transparent;
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  /* 备注这类多行输入：label 顶部对齐，行高由内容撑开 */
+  .page-container .el-form-item:has(.el-textarea),
+  .page-container .el-form-item:has(.el-upload),
+  .page-container .el-form-item:has(.image-list),
+  .page-container .el-form-item:has(.file-list),
+  .page-container .el-form-item:has(.image-upload),
+  .page-container .el-form-item:has(.single-upload),
+  .el-dialog__body .el-form-item:has(.el-textarea),
+  .el-dialog__body .el-form-item:has(.el-upload),
+  .el-dialog__body .el-form-item:has(.image-list),
+  .el-dialog__body .el-form-item:has(.file-list),
+  .el-dialog__body .el-form-item:has(.image-upload),
+  .el-dialog__body .el-form-item:has(.single-upload) {
+    align-items: flex-start;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* ---------------- 选择器：值左对齐 + WeUI 右箭头 ---------------- */
+
+  .page-container .el-form-item .el-select__wrapper,
+  .el-dialog__body .el-form-item .el-select__wrapper {
+    min-height: 26px;
+    padding: 0;
+    gap: 4px;
+    box-shadow: none;
+    background-color: transparent;
+    font-size: 17px;
+    line-height: 1.4117647;
+  }
+
+  .page-container .el-form-item .el-select__wrapper.is-focused,
+  .el-dialog__body .el-form-item .el-select__wrapper.is-focused {
+    box-shadow: none;
+  }
+
+  .page-container .el-form-item .el-select__placeholder.is-transparent,
+  .el-dialog__body .el-form-item .el-select__placeholder.is-transparent {
+    color: var(--m-fg-2);
+  }
+
+  /* 箭头换成 WeUI 的 12×24 chevron（weui-select.less 的原图），EP 的 ArrowDown 隐藏 */
+  .page-container .el-form-item .el-select__caret,
+  .el-dialog__body .el-form-item .el-select__caret {
+    --m-select-chevron: url("data:image/svg+xml,%3Csvg width='12' height='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.454 6.58l1.06-1.06 5.78 5.779a.996.996 0 010 1.413l-5.78 5.779-1.06-1.061 5.425-5.425-5.425-5.424z' fill='%23B2B2B2' fill-rule='evenodd'/%3E%3C/svg%3E");
+    width: 12px;
+    height: 24px;
+    background-color: var(--m-fg-2);
+    -webkit-mask: var(--m-select-chevron) center / contain no-repeat;
+    mask: var(--m-select-chevron) center / contain no-repeat;
+  }
+
+  .page-container .el-form-item .el-select__caret svg,
+  .el-dialog__body .el-form-item .el-select__caret svg {
+    display: none;
+  }
+
+  /* 展开时 EP 会把箭头翻转，WeUI 的箭头方向不变 */
+  .page-container .el-form-item .el-select__caret.is-reverse,
+  .el-dialog__body .el-form-item .el-select__caret.is-reverse {
+    transform: none;
+  }
+
+  /* ---------------- 开关：52×32（轨道 FG-3、滑块 28px 白圆） ---------------- */
+
+  /* 开关按 WeUI 摆在行尾（weui-cell_switch 的 __ft），不跟着左对齐的输入值 */
+  .page-container .el-form-item:has(.el-switch) .el-form-item__content,
+  .el-dialog__body .el-form-item:has(.el-switch) .el-form-item__content {
+    justify-content: flex-end;
+  }
+
+  .page-container .el-form-item .el-switch,
+  .el-dialog__body .el-form-item .el-switch {
+    --el-switch-on-color: var(--m-brand);
+    --el-switch-off-color: var(--m-line);
+    height: 32px;
+  }
+
+  .page-container .el-form-item .el-switch__core,
+  .el-dialog__body .el-form-item .el-switch__core {
+    min-width: 52px;
+    height: 32px;
+    padding: 2px;
+    border: 0;
+    border-radius: 16px;
+  }
+
+  .page-container .el-form-item .el-switch__action,
+  .el-dialog__body .el-form-item .el-switch__action {
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .page-container .el-form-item .el-switch.is-checked .el-switch__core .el-switch__action,
+  .el-dialog__body .el-form-item .el-switch.is-checked .el-switch__core .el-switch__action {
+    left: calc(100% - 30px);
+  }
+
+  /* inline-prompt 的文字（是/否、自动/手动）跟着变大的滑块走 */
+  .page-container .el-form-item .el-switch__core .el-switch__inner,
+  .el-dialog__body .el-form-item .el-switch__core .el-switch__inner {
+    height: 28px;
+    padding: 0 6px 0 30px;
+  }
+
+  .page-container .el-form-item .el-switch.is-checked .el-switch__core .el-switch__inner,
+  .el-dialog__body .el-form-item .el-switch.is-checked .el-switch__core .el-switch__inner {
+    padding: 0 30px 0 6px;
+  }
+
+  /* ---------------- 单选 / 多选：WeUI 的圆形勾选 ---------------- */
+
+  .page-container .el-form-item .el-radio,
+  .el-dialog__body .el-form-item .el-radio {
+    --el-radio-input-width: 22px;
+    --el-radio-input-height: 22px;
+    --el-radio-input-border-color: var(--m-fg-2);
+    height: auto;
+    min-height: 44px;
+    margin-right: 16px;
+    font-size: 17px;
+  }
+
+  /* 选中的白点跟着放大（EP 默认 4px 是配 14px 圆用的） */
+  .page-container .el-form-item .el-radio__inner::after,
+  .el-dialog__body .el-form-item .el-radio__inner::after {
+    width: 8px;
+    height: 8px;
+  }
+
+  .page-container .el-form-item .el-radio__input.is-checked + .el-radio__label,
+  .el-dialog__body .el-form-item .el-radio__input.is-checked + .el-radio__label {
+    color: var(--m-fg-0); /* WeUI 选中项文字不变色 */
+  }
+
+  .page-container .el-form-item .el-checkbox,
+  .el-dialog__body .el-form-item .el-checkbox {
+    --el-checkbox-input-width: 22px;
+    --el-checkbox-input-height: 22px;
+    --el-checkbox-border-radius: 50%;
+    --el-checkbox-input-border: 1px solid var(--m-fg-2);
+    --el-checkbox-checked-text-color: var(--m-fg-0);
+    height: auto;
+    min-height: 44px;
+    margin-right: 16px;
+    font-size: 17px;
+  }
+
+  /* 勾按 22px 的框放大重摆，否则停在左上角 */
+  .page-container .el-form-item .el-checkbox__inner::after,
+  .el-dialog__body .el-form-item .el-checkbox__inner::after {
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border-width: 2px;
+    border-left-width: 0;
+    border-top-width: 0;
+  }
+
+  /* ---------------- 分段单选 → WeUI 圆形单选 ---------------- */
+
+  /* radio-button 的隐藏 input 保留交互，展示层改成可换行的圆形选项；
+     只命中表单内控件，不影响订单筛选栏等独立 radio-group。 */
+  .page-container .el-form-item .el-radio-group,
+  .el-dialog__body .el-form-item .el-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 0;
+  }
+
+  .page-container .el-form-item .el-radio-button,
+  .el-dialog__body .el-form-item .el-radio-button {
+    margin-right: 0;
+  }
+
+  .page-container .el-form-item .el-radio-button__inner,
+  .el-dialog__body .el-form-item .el-radio-button__inner {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0 0 30px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: var(--m-fg-0) !important;
+    font-size: 17px;
+    line-height: 1.4117647;
+  }
+
+  .page-container .el-form-item .el-radio-button__inner::before,
+  .el-dialog__body .el-form-item .el-radio-button__inner::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    border: 1px solid var(--m-fg-2);
+    border-radius: 50%;
+    transform: translateY(-50%);
+  }
+
+  .page-container .el-form-item .el-radio-button.is-active .el-radio-button__inner::before,
+  .el-dialog__body .el-form-item .el-radio-button.is-active .el-radio-button__inner::before {
+    border-color: var(--m-brand);
+  }
+
+  .page-container .el-form-item .el-radio-button.is-active .el-radio-button__inner::after,
+  .el-dialog__body .el-form-item .el-radio-button.is-active .el-radio-button__inner::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--m-brand);
+    transform: translateY(-50%);
+  }
+
+  /* ---------------- 分组标题：el-divider → .weui-cells__title ---------------- */
+
+  .page-container .el-form .el-divider--horizontal,
+  .el-dialog__body .el-form .el-divider--horizontal {
+    margin: 24px 0 8px;
+    padding: 0 16px;
+    border-top: none;
+  }
+
+  .page-container .el-form > .el-divider--horizontal:first-child,
+  .el-dialog__body .el-form > .el-divider--horizontal:first-child {
+    margin-top: 0;
+  }
+
+  .page-container .el-form .el-divider__text,
+  .el-dialog__body .el-form .el-divider__text {
+    position: static;
+    padding: 0;
+    background-color: transparent;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--m-fg-1);
+  }
+
+  /* ---------------- 两列栅格在窄屏堆成一列 ---------------- */
+
+  .page-container .el-form .el-row,
+  .el-dialog__body .el-form .el-row {
+    margin-left: 0 !important; /* gutter 是内联负边距 */
+    margin-right: 0 !important;
+  }
+
+  .page-container .el-form .el-col,
+  .el-dialog__body .el-form .el-col {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 100%;
+    padding-left: 0 !important; /* gutter 是内联 padding */
+    padding-right: 0 !important;
+  }
+
+  /* ---------------- 只放按钮的行（筛选栏的「搜索」） ---------------- */
+
+  .page-container .el-form-item__content > .el-button,
+  .el-dialog__body .el-form-item__content > .el-button {
+    flex: 1 1 auto;
+    margin: 0;
+  }
+
+  /* 控件铺满整行：搜索栏里的输入框/选择器带着 100-180px 的内联宽度（给桌面布局用的），
+     窄屏不拉满的话下拉箭头会停在行中间。内联声明只能靠 !important 压 */
+  .page-container .el-form-item .el-input,
+  .page-container .el-form-item .el-input-number,
+  .page-container .el-form-item .el-select,
+  .page-container .el-form-item .el-date-editor,
+  .el-dialog__body .el-form-item .el-input,
+  .el-dialog__body .el-form-item .el-input-number,
+  .el-dialog__body .el-form-item .el-select,
+  .el-dialog__body .el-form-item .el-date-editor {
+    width: 100% !important;
+  }
+
+  /* 弹窗表单里夹着的提示条（订单表单的黑名单警告）保持左右 16px，不跟着 cell 贴边 */
+  .el-dialog__body > .el-form > .el-alert {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}
+
+/* ========================================
+   Mobile Filter Panel（仅 <768px）
+   ========================================
+ * 页面筛选统一由公共面板承载；桌面端不增加额外布局层，移动端默认折叠。
+ */
+.mobile-filter-panel {
+  display: contents;
+}
+
+.mobile-filter-panel__header {
+  display: none;
+}
+
+.mobile-filter-panel__content {
+  display: contents;
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .mobile-filter-panel {
+    display: block;
+    margin-bottom: 12px;
+    background: var(--m-bg-cell);
+  }
+
+  .mobile-filter-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 0;
+    background: var(--m-bg-cell);
+    color: var(--m-fg-0);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-filter-panel__header:active {
+    background: var(--m-active);
+  }
+
+  .mobile-filter-panel__header:focus-visible {
+    outline: 2px solid var(--m-brand);
+    outline-offset: -2px;
+  }
+
+  .mobile-filter-panel__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    line-height: 24px;
+  }
+
+  .mobile-filter-panel__title .el-icon {
+    font-size: 16px;
+    color: var(--m-fg-1);
+  }
+
+  .mobile-filter-panel__arrow {
+    flex: 0 0 auto;
+    font-size: 14px;
+    color: var(--m-fg-1);
+    transition: transform 0.25s ease;
+  }
+
+  .mobile-filter-panel__arrow.is-expanded {
+    transform: rotate(180deg);
+  }
+
+  .mobile-filter-panel__content {
+    display: block;
+    max-height: 0;
+    border-top: 1px solid var(--m-line);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: max-height 0.3s ease, opacity 0.25s ease, visibility 0s linear 0.3s;
+  }
+
+  .mobile-filter-panel__content.is-expanded {
+    max-height: 1600px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: max-height 0.3s ease, opacity 0.25s ease;
+  }
+
+  .mobile-filter-panel__content > .search-card,
+  .mobile-filter-panel__content > .filter-card,
+  .mobile-filter-panel__content > .summary-card,
+  .mobile-filter-panel__content > .stats-cards,
+  .mobile-filter-panel__content > .report-toolbar,
+  .mobile-filter-panel__content > .search-form {
+    margin-bottom: 0 !important;
+  }
+
+  .mobile-filter-panel__content > .report-toolbar {
+    padding: 12px 16px;
+  }
+
+  .mobile-filter-panel__content > .report-toolbar > .el-date-editor,
+  .mobile-filter-panel__content > .report-toolbar > .app-date-trigger,
+  .mobile-filter-panel__content > .report-toolbar > .el-select,
+  .mobile-filter-panel__content > .report-toolbar > .el-radio-group {
+    width: 100% !important;
+  }
+}
