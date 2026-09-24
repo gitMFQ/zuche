@@ -689,8 +689,8 @@ html.dark .main-container {
 
 .header {
   background-color: #ffffff;
-  backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -713,14 +713,14 @@ html.dark .header {
 
 .header.is-header-gaussian {
   background-color: rgba(255, 255, 255, var(--glass-opacity));
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
 .header.is-header-liquid {
   background-color: rgba(255, 255, 255, var(--glass-opacity));
-  backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
 }
 
@@ -758,13 +758,13 @@ html.dark .header.is-header-liquid {
   }
 
   .header.is-header-gaussian {
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
   }
 
   .header.is-header-liquid {
-    backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
     box-shadow: var(--m-glass-shadow);
   }
 

@@ -108,13 +108,13 @@ const activeIndex = computed(() => TABS.findIndex((tab) => tab.path === activeTa
 }
 
 .m-tabbar.is-gaussian {
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
 .m-tabbar.is-liquid {
-  backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
 .m-tabbar__active-mask {

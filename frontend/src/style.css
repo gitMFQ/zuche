@@ -1503,8 +1503,8 @@ html.dark .dashboard .upload-btn {
   background: rgba(0, 0, 0, 0.85);
   border-radius: 8px;
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 /* ========================================
