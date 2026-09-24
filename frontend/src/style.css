@@ -216,6 +216,7 @@ html, body, #app {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -2212,7 +2213,7 @@ html.dark .page-container .el-descriptions__content {
    Mobile WeUI Sheet 弹窗（仅 <768px）
    ========================================
  *
- * Element Plus 的 el-dialog 会 teleport 到 body，所以这里不能只写
+ * 业务 el-dialog 默认就地渲染，所以这里不能只写
  * .page-container .el-dialog；裸 .el-dialog / .el-dialog__* 才是移动端所有弹窗
  * 都能命中的选择器。保留 page-container 前缀的规则在上面继续服务桌面端。
  *

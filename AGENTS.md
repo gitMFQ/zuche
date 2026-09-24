@@ -240,6 +240,21 @@ pending (待取车) → active (已取车) → completed (已还车)
 - **沉浸式详情页**：路由 `meta.immersive: true`（目前只有订单详情 `/orders/:id`）时，移动端把全局顶栏与
   `MobileTabbar` 一起隐藏、内容区 `.main.is-immersive` 去掉内边距并撑满视口，页面自己把顶部一行 sticky 到顶、
   底部操作行 fixed 到底（见 `views/OrderDetail.vue` 的 `@media (max-width: 767px)`）。桌面端不受影响。
+- **移动端主 tab 左右滑动**：5 个主 tab 页在移动端由 `components/TabSwipeView.vue` 承载（`MainLayout` 的
+  `isTabSwipe` 为真时用它替换 `router-view`；`/orders/import`、`/orders/:id`、`/settings` 这些非主 tab 路径仍走
+  router-view）。轨道上固定摆 5 个槽、整体平移（`left`，不用 transform 是为了不让页面内弹窗的 fixed 层被限制住），
+  所以点 tabbar 不用特殊处理 —— 它照旧 `router-link`
+  跳转，滑动容器监听路由下标变化再补一段动画。三条硬约束：
+  1. **相邻页在静止时就挂载好**（结构先渲染，滑动没有空白帧），但它们的请求由 `utils/tabRequestGate.ts` 那道闸门
+     拦住，只有该 tab 被真正进入（`setActiveTab`）才放行；拦截器在 `api/index.ts`。闸门靠 `TabSwipeSlot.vue`
+     登记的实例 + `getCurrentInstance()` 的 parent 链认归属，**每个组件挂载时的第一个请求必须在生命周期钩子的
+     同步段里发出**（现在都是这样）—— 放到 `await` 之后会因为 currentInstance 已清空而认不出归属，静默漏成预加载。
+  2. **页面挂载时不要往路由写 query**（`syncToUrl` 这类）：预渲染的相邻页会把正在浏览的那个 tab 的 query 冲掉。
+  3. 每个槽自己滚（`overflow-y: auto`），所以各 tab 的滚动位置互不干扰；`.main.is-swipe` 把内边距归零、
+     内边距移进槽里（`TabSwipeView` 的 `.tab-swipe__page`）。手势逻辑在 `utils/tabSwipe.ts`，改它必须让
+     `test/tabSwipe.test.ts` 通过。底部 `MobileTabbar` 的 active 遮罩是半透明液态玻璃材质；主 tab 切换期间
+     tabbar 整体（含图标）会放大，落位后 active 遮罩与图标再放大强调。状态通过 `utils/tabbarMotion.ts`
+     在 `TabSwipeView` 与 `MobileTabbar` 间共享；`prefers-reduced-motion` 时禁用这些动画。
 - **移动端列表**：`.mobile-card*` 是历史 class 名，移动端实际承载 WeUI cells：分组间距 8px；外壳无圆角、无阴影；外壳上下与行间使用 0.5px hairline；卡片内数据行 44px / 15px，整项导航 cell 56px；`.is-block` 与两列金额网格使用 auto 高度。新增列表优先复用这些 class，不要再在各组件 scoped 复制卡片外壳样式。
 - **移动端弹窗**：全局 `style.css` 会把 `el-dialog` 转成底部 sheet（顶部 12px 圆角、最高 75vh、40×4px 下拉手柄、0.3s ease）；新增弹窗不需要另外写移动端结构。footer 按钮 64px 高，移动端不使用圆角卡片按钮。`page-container .el-dialog__*` 规则要与全局 sheet 规则保持相同或更高特异性。`OwnersTab` 的两个长表格使用 `el-drawer`，移动端全宽右侧抽屉。
 - **移动端表单**：`style.css` 末尾的「Mobile WeUI Form」把移动端所有表单统一成 WeUI cells —— 弹窗 sheet、页面筛选栏、设置页走同一套规则：表单项 56px 行 / 17px / 左右 16px / 行间 0.5px hairline（左缩进 16px），label `max-width: 5em` + 8px 间距、值与 placeholder 左对齐，输入框与选择器去盒子（透明底、无描边、24px 行高），开关 52×32 摆行尾，单选/多选是 22px 圆形，`el-divider` 当分组标题（14px 灰字、无横线）。**新增表单不要再写移动端 scoped 样式**，也不要给控件写死宽度（选择器用 `width: 100% !important` 统一拉满）。两条硬约束：label 宽度是 EP 写的**内联 style**，只能 `width: auto !important` 压；弹窗里的表单靠 `.el-dialog__body > .el-form` 的负外边距贴边，只对直接子级生效。登录页（`.login-form`）刻意排除在这套规则外 —— 它落在灰底上没有卡片外壳，去盒子后输入框会隐形。

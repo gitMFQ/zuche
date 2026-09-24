@@ -356,7 +356,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { orderApi, vehicleApi, customerApi } from '../api'
@@ -467,6 +467,10 @@ function restoreFromUrl() {
 
 /** 把当前筛选、分页与 tab 写回 URL */
 function syncToUrl() {
+  // 移动端左右滑动会预渲染相邻页（见 TabSwipeView）：此时本组件虽然已挂载，
+  // 但当前路由还不是 /orders，绝不能把自己的筛选写回地址栏 —— 那会把正在浏览的
+  // 那个 tab 的 query 冲掉（例如 /customers?tab=blacklist 被清成 /customers）
+  if (route.path !== '/orders') return
   const query: Record<string, string> = snapshotQuery()
   // pending 是默认 tab，不写进地址保持简洁
   if (activeTab.value !== 'pending') {
@@ -941,11 +945,15 @@ async function handleCancel(row: any) {
   }
 }
 
+/** 从客户管理「查看订单」跳过来时，把客户名当关键词填进筛选 */
+function applyCustomerQuery() {
+  if (!route.query.customer_id) return
+  searchForm.keyword = (route.query.customer_name as string) || ''
+}
+
 onMounted(() => {
   // 检查是否从客户管理跳转过来查看订单
-  if (route.query.customer_id) {
-    searchForm.keyword = route.query.customer_name as string || ''
-  }
+  applyCustomerQuery()
   // 恢复 URL 里的筛选与 tab（没有则回退到 sessionStorage）
   restoreFromUrl()
   loadData()
@@ -953,6 +961,21 @@ onMounted(() => {
   loadOrderSources()
   loadFilterOptions()
 })
+
+/**
+ * 移动端左右滑动会预渲染相邻页（见 TabSwipeView），订单页从客户管理跳过来时往往
+ * 已经挂载着，onMounted 不会再跑一遍 —— 只靠 onMounted 的话「查看订单」带过来的
+ * 客户名会被丢掉。这里补一个 query 监听。
+ */
+watch(
+  () => route.query.customer_id,
+  (id) => {
+    if (!id || route.path !== '/orders') return
+    applyCustomerQuery()
+    pagination.page = 1
+    loadData()
+  }
+)
 </script>
 
 <style scoped>

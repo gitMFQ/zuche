@@ -2,6 +2,47 @@
 
 > 本文件从 `README.md` 拆出，最新记录在最前。
 
+## 2026-09-24
+
+### 移动端支持左右滑动在 5 个主 tab 之间切换
+
+移动端原来只能在底部 tabbar 上点着换页。现在总览 / 订单 / 车辆 / 财务 / 客户之间可以左右滑动切换，
+点 tabbar 也会带一段滑动动画。
+
+实现要点（`components/TabSwipeView.vue`，`MainLayout` 在移动端的主 tab 路由上用它替换 `router-view`）：
+
+- 轨道上固定摆 5 个槽（宽度都是容器的 100%），滑动只是整体平移（用 `left` 而不是 `transform`：
+  后者会建立层叠上下文、成为 fixed 的包含块，页面内弹窗会跟着被平移出视口）。位置稳定，不需要
+  「滑过去再把轨道挪回来」那套重排；点 tabbar 时路由先变，容器监听到下标变化再补动画 ——
+  `MobileTabbar` 一行没改，仍是 `router-link`。
+- 每个槽自己滚（`overflow-y: auto`），各 tab 的滚动位置互不干扰。`.main.is-swipe` 把内边距归零，
+  内边距移进槽里，内容照样能滚到顶栏/底栏下面。
+- 手势只接管真正的横向滑动：容器加 `touch-action: pan-y`（纵向仍原生滚、横向不被浏览器历史手势抢走），
+  落在能横向滚动的元素里（表格横向滚动条、财务/车辆的页签条、甘特图）或弹层里（dialog/drawer/滚轮 sheet）
+  都不接管，交给它自己处理。
+
+底部 tabbar 的 active 遮罩同时改成了半透明液态玻璃材质，并在切换过程中做位移与缩放动画：滑动期间
+tabbar 整体（含图标）轻微放大，落位后 active 遮罩与图标放大强调（遮罩略大于 tabbar）。遮罩位移与缩放
+写在同一个 `transform` 里 —— 用独立的 `scale` 属性会把 `translateX` 的位移一起放大，越靠右的 tab 偏得越多。
+状态在 `TabSwipeView` 与 `MobileTabbar` 之间通过 `utils/tabbarMotion.ts` 共享，`prefers-reduced-motion` 下全部关闭。
+
+**相邻页同时跟手，但不预加载数据**：左右相邻页在静止时就挂载好（结构先渲染，滑动没有空白帧），
+但它们的请求被 `utils/tabRequestGate.ts` 拦住，只有该 tab 被真正进入才放行。请求拦截器在
+`api/index.ts`；归属靠 `TabSwipeSlot.vue` 登记的实例 + `getCurrentInstance()` 的 parent 链认出来
+（页面请求基本都在 `onMounted` 的同步段里发出，Vue 调钩子前会设 currentInstance）。
+
+顺带修掉两处会被这个改动放大的问题：
+
+- `Orders.vue` 的 `syncToUrl` 在挂载时就把筛选写回地址栏，预渲染的订单页会把正在浏览的 tab 的
+  query 冲掉（例如 `/customers?tab=blacklist` 被清成 `/customers`），现在只在 `route.path === '/orders'` 时才写。
+- 页面不再随切换卸载后，从客户管理「查看订单」跳过来时 `onMounted` 不会再跑，客户名筛选会丢，
+  补了一个 `route.query.customer_id` 监听。
+
+另外更正了 `style.css` 里「el-dialog 会 teleport 到 body」的过时注释：Element Plus 2.14 的业务弹窗
+默认就地渲染，移动端 sheet 规则本来就是靠裸 `.el-dialog__*` 命中的。
+
+桌面端零改动。
+
 ## 2026-09-23
 
 ### 移动端总览页两个「完整视图」弹窗去掉两侧留白

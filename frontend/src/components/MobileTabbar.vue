@@ -4,10 +4,18 @@
     :class="{
       'is-floating': userStore.themeSettings.bottomFloating,
       'is-gaussian': userStore.themeSettings.bottomGaussianBlur,
-      'is-liquid': userStore.themeSettings.bottomLiquidGlass
+      'is-liquid': userStore.themeSettings.bottomLiquidGlass,
+      'is-sliding': isSliding,
+      'is-settled': isSettled
     }"
     aria-label="主导航"
   >
+    <div
+      v-if="activeIndex >= 0"
+      class="m-tabbar__active-mask"
+      :style="{ '--mask-x': `${activeIndex * 100}%` }"
+      aria-hidden="true"
+    />
     <router-link
       v-for="tab in TABS"
       :key="tab.path"
@@ -32,6 +40,7 @@ import { useUserStore } from '../stores/user'
 import { DataAnalysis, Money } from '@element-plus/icons-vue'
 import CarIcon from './CarIcon.vue'
 import { matchTabPath, type TabPath } from '../utils/nav'
+import { useTabbarMotion } from '../utils/tabbarMotion'
 
 /**
  * 移动端底部标签栏（WeUI tabbar：高 60px、图标 24px、文字 10px、选中着色）。
@@ -54,9 +63,11 @@ const TABS: { path: TabPath; label: string; icon?: Component; weuiIcon?: string 
 
 const route = useRoute()
 const userStore = useUserStore()
+const { isSliding, isSettled } = useTabbarMotion()
 
 // 前缀匹配，见 utils/nav.ts：/orders/import 与 /orders/:id 都要让「订单」亮起来
 const activeTab = computed(() => matchTabPath(route.path))
+const activeIndex = computed(() => TABS.findIndex((tab) => tab.path === activeTab.value))
 </script>
 
 <style scoped>
@@ -69,7 +80,9 @@ const activeTab = computed(() => matchTabPath(route.path))
   display: flex;
   height: 64px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
   border: 0;
   border-radius: 0;
   background: var(--m-bg-sub);
@@ -104,7 +117,47 @@ const activeTab = computed(() => matchTabPath(route.path))
   -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
+.m-tabbar__active-mask {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 20%;
+  border: 1px solid var(--m-glass-border);
+  border-radius: inherit;
+  background: var(--m-glass-bg);
+  box-shadow: var(--m-glass-shadow);
+  opacity: 0.5;
+  pointer-events: none;
+  transform: translateX(var(--mask-x, 0%)) scale(0.8);
+  transform-origin: center;
+  transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.m-tabbar.is-sliding {
+  transform: scale(1.02);
+}
+
+.m-tabbar.is-sliding .m-tabbar__active-mask {
+  transform: translateX(var(--mask-x, 0%)) scale(1.1);
+}
+
+.m-tabbar.is-settled {
+  transform: scale(1.02);
+}
+
+.m-tabbar.is-settled .m-tabbar__active-mask {
+  transform: translateX(var(--mask-x, 0%)) scale(1.15);
+}
+
+.m-tabbar.is-settled .m-tabbar__item.is-active .m-tabbar__icon {
+  scale: 1.1;
+}
+
 .m-tabbar__item {
+  position: relative;
+  z-index: 1;
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
@@ -119,10 +172,6 @@ const activeTab = computed(() => matchTabPath(route.path))
   transition: background-color 0.15s ease;
 }
 
-.m-tabbar__item:active {
-  background-color: var(--m-active);
-}
-
 .m-tabbar__item:focus-visible {
   outline: 2px solid var(--m-brand);
   outline-offset: -4px;
@@ -133,6 +182,11 @@ const activeTab = computed(() => matchTabPath(route.path))
   color: var(--m-brand);
 }
 
+.m-tabbar__icon {
+  scale: 1;
+  transition: scale 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
 .m-tabbar__text {
   font-size: 10px;
   line-height: 1.4;
@@ -140,14 +194,35 @@ const activeTab = computed(() => matchTabPath(route.path))
 
 @supports not ((backdrop-filter: blur(1px))) {
   .m-tabbar.is-gaussian,
-  .m-tabbar.is-liquid {
+  .m-tabbar.is-liquid,
+  .m-tabbar__active-mask {
     background: var(--m-glass-fallback-bg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .m-tabbar,
+  .m-tabbar__active-mask,
+  .m-tabbar__icon,
   .m-tabbar__item {
     transition: none;
+  }
+
+  .m-tabbar.is-sliding,
+  .m-tabbar.is-settled {
+    transform: none;
+  }
+
+  .m-tabbar.is-sliding .m-tabbar__active-mask {
+    transform: translateX(var(--mask-x, 0%)) scale(0.8);
+  }
+
+  .m-tabbar.is-settled .m-tabbar__active-mask {
+    transform: translateX(var(--mask-x, 0%)) scale(0.8);
+  }
+
+  .m-tabbar.is-settled .m-tabbar__item.is-active .m-tabbar__icon {
+    scale: 1;
   }
 }
 </style>

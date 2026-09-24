@@ -115,9 +115,11 @@
         </div>
       </el-header>
 
-      <!-- 内容区 -->
-      <el-main class="main" :class="{ 'is-immersive': immersive }">
-        <router-view v-slot="{ Component }">
+      <!-- 内容区。移动端的 5 个主 tab 页交给 TabSwipeView（左右滑动切换），
+           其余页面（订单详情/批量导入/设置）仍走 router-view -->
+      <el-main class="main" :class="{ 'is-immersive': immersive, 'is-swipe': isTabSwipe }">
+        <TabSwipeView v-if="isTabSwipe" :floating-tabbar="userStore.themeSettings.bottomFloating" />
+        <router-view v-else v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :is-mobile="isMobile" />
           </transition>
@@ -176,8 +178,10 @@ import { authApi, settingsApi } from '../api'
 import { getLogoUrl } from '../utils/helpers'
 import { useMobile } from '../composables/useMobile'
 import MobileTabbar from '../components/MobileTabbar.vue'
+import TabSwipeView from '../components/TabSwipeView.vue'
 import CarIcon from '../components/CarIcon.vue'
 import SunMoonIcon from '../components/SunMoonIcon.vue'
+import { TAB_PATHS } from '../utils/nav'
 
 const route = useRoute()
 const router = useRouter()
@@ -194,6 +198,13 @@ const isCollapse = ref(true)
  * 路由 meta.immersive）。桌面端不受影响，顶栏照旧。
  */
 const immersive = computed(() => isMobile.value && route.meta.immersive === true)
+
+/**
+ * 是否用滑动容器渲染内容区：移动端且当前正好是 5 个主 tab 之一。
+ * 子路径（/orders/import、/orders/:id）与 /settings 都不算 —— 它们没有对应的
+ * 相邻 tab，走 router-view 更简单。
+ */
+const isTabSwipe = computed(() => isMobile.value && (TAB_PATHS as readonly string[]).includes(route.path))
 
 // 移动端自动收起侧栏，桌面端展开（immediate 保证首屏就是正确状态）
 watch(isMobile, (mobile) => {
@@ -946,7 +957,7 @@ html.dark .main {
 }
 
 @media (max-width: 767px) {
-  .main-container.has-floating-tabbar .main:not(.is-immersive) {
+  .main-container.has-floating-tabbar .main:not(.is-immersive):not(.is-swipe) {
     padding-bottom: calc(92px + env(safe-area-inset-bottom));
   }
 }
@@ -965,6 +976,14 @@ html.dark .main {
     padding-top: 72px;
     scroll-padding-top: 72px;
     min-height: calc(100vh - 56px);
+  }
+
+  /* 主 tab 页：内容区交给 TabSwipeView 自己管，内边距移进了每个页面槽 ——
+     这样每个 tab 各自滚动（位置互不干扰），内容照样能滚到顶栏/底栏下面 */
+  .main.is-swipe {
+    padding: 0;
+    overflow: hidden;
+    min-height: 0;
   }
 }
 

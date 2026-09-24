@@ -2,6 +2,7 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { compressImage } from '../utils/image'
 import { validateUploadFile } from '../utils/upload'
+import { gateTabRequest } from '../utils/tabRequestGate'
 import type {
   ApiResponse,
   BlacklistItem,
@@ -56,11 +57,16 @@ const api = axios.create({
 
 // 请求拦截器
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // 移动端左右滑动时相邻页会先把结构渲染出来，但还没被进入，不该发请求。
+    // gateTabRequest 靠当前组件实例认出这类请求，返回的 promise 要等该 tab 被
+    // 真正进入后才 resolve（原理见 utils/tabRequestGate.ts）。
+    const gate = gateTabRequest()
+    if (gate) await gate
     return config
   },
   (error) => {
