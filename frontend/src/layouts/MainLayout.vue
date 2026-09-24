@@ -48,9 +48,16 @@
     </el-aside>
 
     <!-- 主内容区 -->
-    <el-container class="main-container">
+    <el-container class="main-container" :class="{ 'has-floating-tabbar': isMobile && !immersive && userStore.themeSettings.bottomFloating }">
       <!-- 顶部栏。沉浸式页面（订单详情，仅移动端）把它和 tabbar 一起收起来 -->
-      <el-header v-if="!immersive" class="header">
+      <el-header
+        v-if="!immersive"
+        class="header"
+        :class="{
+          'is-header-gaussian': userStore.themeSettings.headerGaussianBlur,
+          'is-header-liquid': userStore.themeSettings.headerLiquidGlass
+        }"
+      >
         <div class="header-left">
           <!-- 移动端没有侧栏可收起，汉堡按钮一并隐藏 -->
           <el-button
@@ -645,7 +652,10 @@ html.dark .user-role {
 }
 
 .main-container {
+  position: relative;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   background-color: var(--sk-bg-light-gray);
   margin-left: 0;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -667,24 +677,48 @@ html.dark .main-container {
 }
 
 .header {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background-color: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
   box-shadow: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  position: sticky;
+  /* 顶栏叠在主内容之上，透明/模糊状态才能采样到滚动内容 */
+  position: absolute;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 999;
   height: 48px;
 }
 
 html.dark .header {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: #000000;
   border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.header.is-header-gaussian {
+  background-color: rgba(255, 255, 255, var(--glass-opacity));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.header.is-header-liquid {
+  background-color: rgba(255, 255, 255, var(--glass-opacity));
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+html.dark .header.is-header-gaussian {
+  background-color: rgba(0, 0, 0, var(--glass-opacity));
+}
+
+html.dark .header.is-header-liquid {
+  background-color: rgba(0, 0, 0, var(--glass-opacity));
 }
 
 @media (min-width: 768px) {
@@ -694,13 +728,40 @@ html.dark .header {
 }
 
 @media (max-width: 767px) {
-  /* WeUI navbar：固定 56px、实色 cell 背景；桌面端保留 Apple 毛玻璃 48px */
+  /* Miuix navbar：固定 56px，与悬浮 tabbar 共用液态玻璃材质 */
   .header {
     height: 56px;
-    background-color: var(--m-bg-cell);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    background: var(--m-bg-cell);
     border-bottom-color: var(--m-line);
+    box-shadow: none;
+  }
+
+  .header.is-header-gaussian {
+    background: var(--m-gaussian-bg);
+    border-bottom-color: var(--m-line);
+  }
+
+  .header.is-header-liquid {
+    background: var(--m-glass-bg);
+    border-bottom-color: var(--m-glass-border);
+  }
+
+  .header.is-header-gaussian {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .header.is-header-liquid {
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: var(--m-glass-shadow);
+  }
+
+  @supports not ((backdrop-filter: blur(1px))) {
+    .header.is-header-gaussian,
+    .header.is-header-liquid {
+      background: var(--m-glass-fallback-bg);
+    }
   }
 
   /* 顶栏左侧的品牌区：Logo 方块复用侧栏的 .logo-icon / .logo-img（移动端 --sk-focus-color
@@ -861,8 +922,10 @@ html.dark .user-dropdown:hover {
 }
 
 .main {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px;
-  /* 底部给 tabbar 让位：60px 标签栏 + 安全区 + 16px 间距。
+  /* 贴底 tabbar 的让位：64px 标签栏 + 安全区；悬浮模式在下面额外增加 16px 间距。
      不给的话滚到最底时最后一张卡片会被 tabbar 压住。
      桌面端由下面 min-width:768px 的 padding:24px 整体覆盖掉 */
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
@@ -882,14 +945,25 @@ html.dark .main {
   background-color: var(--sk-bg-pure-black);
 }
 
+@media (max-width: 767px) {
+  .main-container.has-floating-tabbar .main:not(.is-immersive) {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+}
+
 @media (min-width: 768px) {
   .main {
-    padding: 24px;
+    /* 顶栏绝对定位叠在内容上方：48px 顶栏 + 24px 页面间距 */
+    padding: 72px 24px 24px;
+    scroll-padding-top: 72px;
   }
 }
 
 @media (max-width: 767px) {
   .main {
+    /* 顶栏绝对定位叠在内容上方：56px 顶栏 + 16px 页面间距 */
+    padding-top: 72px;
+    scroll-padding-top: 72px;
     min-height: calc(100vh - 56px);
   }
 }

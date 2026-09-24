@@ -1,5 +1,13 @@
 <template>
-  <nav class="m-tabbar" aria-label="主导航">
+  <nav
+    class="m-tabbar"
+    :class="{
+      'is-floating': userStore.themeSettings.bottomFloating,
+      'is-gaussian': userStore.themeSettings.bottomGaussianBlur,
+      'is-liquid': userStore.themeSettings.bottomLiquidGlass
+    }"
+    aria-label="主导航"
+  >
     <router-link
       v-for="tab in TABS"
       :key="tab.path"
@@ -20,6 +28,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '../stores/user'
 import { DataAnalysis, Money } from '@element-plus/icons-vue'
 import CarIcon from './CarIcon.vue'
 import { matchTabPath, type TabPath } from '../utils/nav'
@@ -44,6 +53,7 @@ const TABS: { path: TabPath; label: string; icon?: Component; weuiIcon?: string 
 ]
 
 const route = useRoute()
+const userStore = useUserStore()
 
 // 前缀匹配，见 utils/nav.ts：/orders/import 与 /orders/:id 都要让「订单」亮起来
 const activeTab = computed(() => matchTabPath(route.path))
@@ -57,29 +67,47 @@ const activeTab = computed(() => matchTabPath(route.path))
   bottom: 0;
   z-index: 900;
   display: flex;
-  background-color: var(--m-bg-sub);
-  /* iPhone 底部横条：不加的话最后一项会被横条压住 */
-  padding-bottom: env(safe-area-inset-bottom);
+  height: 64px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--m-bg-sub);
+  box-shadow: none;
 }
 
-/* 顶部 0.5px 边线（1px 再 scaleY(.5)，WeUI 的 hairline 做法） */
-.m-tabbar::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1px;
-  background-color: var(--m-line);
-  transform: scaleY(0.5);
-  transform-origin: 0 0;
-  pointer-events: none;
+.m-tabbar.is-floating {
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  border-radius: 20px;
+  box-shadow: var(--m-glass-shadow);
+}
+
+.m-tabbar.is-gaussian {
+  background: var(--m-gaussian-bg);
+  border: 1px solid var(--m-line);
+}
+
+.m-tabbar.is-liquid {
+  background: var(--m-glass-bg);
+  border: 1px solid var(--m-glass-border);
+}
+
+.m-tabbar.is-gaussian {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.m-tabbar.is-liquid {
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
 .m-tabbar__item {
   flex: 1 1 0;
   min-width: 0;
-  height: 60px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -95,6 +123,12 @@ const activeTab = computed(() => matchTabPath(route.path))
   background-color: var(--m-active);
 }
 
+.m-tabbar__item:focus-visible {
+  outline: 2px solid var(--m-brand);
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+
 .m-tabbar__item.is-active {
   color: var(--m-brand);
 }
@@ -102,5 +136,18 @@ const activeTab = computed(() => matchTabPath(route.path))
 .m-tabbar__text {
   font-size: 10px;
   line-height: 1.4;
+}
+
+@supports not ((backdrop-filter: blur(1px))) {
+  .m-tabbar.is-gaussian,
+  .m-tabbar.is-liquid {
+    background: var(--m-glass-fallback-bg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-tabbar__item {
+    transition: none;
+  }
 }
 </style>

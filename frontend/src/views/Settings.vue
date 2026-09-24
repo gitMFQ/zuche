@@ -59,6 +59,47 @@
                 <span class="dark-mode-label">{{ autoDarkMode ? '跟随系统' : '手动控制' }}</span>
               </div>
             </el-form-item>
+            <el-form-item label="玻璃透明度">
+              <div class="glass-opacity-setting">
+                <el-slider v-model="glassOpacity" :min="20" :max="100" :step="1" />
+                <span class="dark-mode-label">{{ glassOpacity }}%</span>
+              </div>
+            </el-form-item>
+            <div class="effect-tip">同时控制桌面和移动端顶栏、底栏的玻璃背景；关闭效果时使用不透明背景</div>
+            <el-divider content-position="left">顶栏效果</el-divider>
+            <el-form-item label="高斯模糊">
+              <div class="dark-mode-settings">
+                <el-switch v-model="headerGaussianBlur" @change="handleEffectChange('顶栏高斯模糊', $event)" />
+                <span class="dark-mode-label">{{ headerGaussianBlur ? '已开启' : '已关闭' }}</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="液态玻璃">
+              <div class="dark-mode-settings">
+                <el-switch v-model="headerLiquidGlass" @change="handleEffectChange('顶栏液态玻璃', $event)" />
+                <span class="dark-mode-label">{{ headerLiquidGlass ? '已开启' : '已关闭' }}</span>
+              </div>
+            </el-form-item>
+            <div class="effect-tip">两种效果只能开启一种，都关闭时使用不透明顶栏</div>
+            <el-divider content-position="left">底栏效果</el-divider>
+            <el-form-item label="悬浮底栏">
+              <div class="dark-mode-settings">
+                <el-switch v-model="bottomFloating" />
+                <span class="dark-mode-label">{{ bottomFloating ? '悬浮显示' : '贴底显示' }}</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="高斯模糊">
+              <div class="dark-mode-settings">
+                <el-switch v-model="bottomGaussianBlur" @change="handleEffectChange('底栏高斯模糊', $event)" />
+                <span class="dark-mode-label">{{ bottomGaussianBlur ? '已开启' : '已关闭' }}</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="液态玻璃">
+              <div class="dark-mode-settings">
+                <el-switch v-model="bottomLiquidGlass" @change="handleEffectChange('底栏液态玻璃', $event)" />
+                <span class="dark-mode-label">{{ bottomLiquidGlass ? '已开启' : '已关闭' }}</span>
+              </div>
+            </el-form-item>
+            <div class="effect-tip">两种效果只能开启一种，都关闭时使用不透明底栏</div>
             <el-form-item>
               <el-button type="primary" @click="saveSettings">保存设置</el-button>
             </el-form-item>
@@ -109,6 +150,40 @@ const autoDarkMode = computed({
   get: () => userStore.themeSettings.autoDarkMode,
   set: (val) => userStore.setAutoDarkMode(val)
 })
+
+const glassOpacity = computed({
+  get: () => userStore.themeSettings.glassOpacity,
+  set: (val: number) => userStore.updateThemeSettings({ glassOpacity: val })
+})
+
+const headerGaussianBlur = computed({
+  get: () => userStore.themeSettings.headerGaussianBlur,
+  set: (val) => userStore.setHeaderGaussianBlur(val)
+})
+
+const headerLiquidGlass = computed({
+  get: () => userStore.themeSettings.headerLiquidGlass,
+  set: (val) => userStore.setHeaderLiquidGlass(val)
+})
+
+const bottomFloating = computed({
+  get: () => userStore.themeSettings.bottomFloating,
+  set: (val) => userStore.setBottomFloating(val)
+})
+
+const bottomGaussianBlur = computed({
+  get: () => userStore.themeSettings.bottomGaussianBlur,
+  set: (val) => userStore.setBottomGaussianBlur(val)
+})
+
+const bottomLiquidGlass = computed({
+  get: () => userStore.themeSettings.bottomLiquidGlass,
+  set: (val) => userStore.setBottomLiquidGlass(val)
+})
+
+function handleEffectChange(label: string, enabled: boolean) {
+  if (enabled) ElMessage.success(`${label}已开启，另一种效果已自动关闭`)
+}
 
 function handleDarkModeChange(enabled: boolean) {
   if (enabled) {
@@ -217,6 +292,23 @@ async function saveSettings() {
 </script>
 
 <style scoped>
+.glass-opacity-setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
+.glass-opacity-setting :deep(.el-slider) {
+  flex: 1;
+}
+
+.effect-tip {
+  margin: -4px 0 12px 100px;
+  color: var(--sk-text-tertiary);
+  font-size: 12px;
+}
+
 /* 容器不设 max-width：与财务页一致，铺满主内容区（约定见 style.css 的 .page-container） */
 .settings-tabs {
   background: var(--bg-color-secondary);
