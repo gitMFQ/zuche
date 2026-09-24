@@ -46,39 +46,43 @@ export function formatDateTime(dateStr: string): string {
   return `${month}-${day} ${hours}:${minutes}`
 }
 
+function lookupMap<T extends Record<string, string>>(map: T, key: string, fallback: string): string {
+  return map[key] || fallback
+}
+
 /**
  * 获取订单状态标签类型
  */
 export function getOrderStatusType(status: string): string {
-  return ORDER_STATUS_TYPE_MAP[status] || 'info'
+  return lookupMap(ORDER_STATUS_TYPE_MAP, status, 'info')
 }
 
 /**
  * 获取支付方式文本
  */
 export function getPaymentMethodText(method: string): string {
-  return PAYMENT_METHOD_TEXT_MAP[method] || method
+  return lookupMap(PAYMENT_METHOD_TEXT_MAP, method, method)
 }
 
 /**
  * 获取支付类型文本
  */
 export function getPaymentTypeText(type: string): string {
-  return PAYMENT_TYPE_TEXT_MAP[type] || type
+  return lookupMap(PAYMENT_TYPE_TEXT_MAP, type, type)
 }
 
 /**
  * 获取服务类型文本
  */
 export function getServiceLabel(type: string): string {
-  return SERVICE_TYPE_TEXT_MAP[type] || type
+  return lookupMap(SERVICE_TYPE_TEXT_MAP, type, type)
 }
 
 /**
  * 获取服务类型标签颜色
  */
 export function getServiceTagType(type: string): string {
-  return SERVICE_TYPE_TAG_MAP[type] || ''
+  return lookupMap(SERVICE_TYPE_TAG_MAP, type, '')
 }
 
 /**

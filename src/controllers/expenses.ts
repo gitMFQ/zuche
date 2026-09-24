@@ -133,6 +133,40 @@ function deleteMirrorTxnStmt(sourceType: string, sourceId: string): Stmt {
   };
 }
 
+async function findLockedPeriod(db: D1Database, dates: Array<string | null | undefined>): Promise<string | null> {
+  for (const date of [...new Set(dates.filter((value): value is string => Boolean(value)))]) {
+    const locked = await findPeriodLock(db, date);
+    if (locked) return locked;
+  }
+  return null;
+}
+
+interface PaymentBody {
+  account_id?: string;
+  paid_at?: string;
+}
+
+async function validatePayment(
+  db: D1Database,
+  body: PaymentBody
+): Promise<{ account: { id: string; name: string } | null; paidAt: string; error?: string }> {
+  const paidAt = body.paid_at?.trim() || today();
+  if (!isDate(paidAt)) return { account: null, paidAt, error: '付款日期格式应为 YYYY-MM-DD' };
+  const account = await resolvePaidAccount(db, body.account_id);
+  if (!account) return { account: null, paidAt, error: '请选择有效的付款账户' };
+  const locked = await findLockedPeriod(db, [paidAt]);
+  if (locked) return { account: null, paidAt, error: `账期 ${locked} 已锁定，无法记账` };
+  return { account, paidAt };
+}
+
+function paymentUpdateStmt(sql: string, id: string, accountId: string, paidAt: string, currentTime: string): Stmt {
+  return { sql, params: [paidAt, accountId, currentTime, id] };
+}
+
+function unpayUpdateStmt(sql: string, id: string, currentTime: string): Stmt {
+  return { sql, params: [currentTime, id] };
+}
+
 // ==================== 车辆费用台账 ====================
 
 export async function getVehicleExpenses(c: AppContext): Promise<Response> {
@@ -460,11 +494,9 @@ export async function updateVehicleExpense(c: AppContext): Promise<Response> {
       ownerId = vehicle.owner_id;
     }
 
-    for (const date of [row.expense_date, expenseDate]) {
-      const locked = await findPeriodLock(db, date);
-      if (locked) {
-        return c.json({ success: false, message: `账期 ${locked} 已锁定，无法修改` }, 400);
-      }
+    const locked = await findLockedPeriod(db, [row.expense_date, expenseDate]);
+    if (locked) {
+      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法修改` }, 400);
     }
 
     await execute(
@@ -513,7 +545,7 @@ export async function payVehicleExpense(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const id = c.req.param('id');
-    const body = await c.req.json<{ account_id?: string; paid_at?: string }>();
+    const body = await c.req.json<PaymentBody>();
 
     const row = await queryOne<VehicleExpenseRow>(db, 'SELECT * FROM vehicle_expenses WHERE id = ?', [id]);
     if (!row) {
@@ -523,25 +555,21 @@ export async function payVehicleExpense(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '该记录已标记为已付款' }, 400);
     }
 
-    const paidAt = body.paid_at?.trim() || today();
-    if (!isDate(paidAt)) {
-      return c.json({ success: false, message: '付款日期格式应为 YYYY-MM-DD' }, 400);
+    const payment = await validatePayment(db, body);
+    if (payment.error || !payment.account) {
+      return c.json({ success: false, message: payment.error }, 400);
     }
-    const account = await resolvePaidAccount(db, body.account_id);
-    if (!account) {
-      return c.json({ success: false, message: '请选择有效的付款账户' }, 400);
-    }
-    const locked = await findPeriodLock(db, paidAt);
-    if (locked) {
-      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法记账` }, 400);
-    }
+    const { account, paidAt } = payment;
 
     const currentTime = now();
     await batchExecute(db, [
-      {
-        sql: 'UPDATE vehicle_expenses SET is_paid = 1, paid_at = ?, account_id = ?, updated_at = ? WHERE id = ?',
-        params: [paidAt, account.id, currentTime, id]
-      },
+      paymentUpdateStmt(
+        'UPDATE vehicle_expenses SET is_paid = 1, paid_at = ?, account_id = ?, updated_at = ? WHERE id = ?',
+        id ?? '',
+        account.id,
+        paidAt,
+        currentTime
+      ),
       ...mirrorFlowStmts(
         {
           id: row.id,
@@ -586,19 +614,18 @@ export async function unpayVehicleExpense(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '该记录未标记付款' }, 400);
     }
 
-    for (const date of [row.expense_date, row.paid_at ?? row.expense_date]) {
-      const locked = await findPeriodLock(db, date);
-      if (locked) {
-        return c.json({ success: false, message: `账期 ${locked} 已锁定，无法撤销付款` }, 400);
-      }
+    const locked = await findLockedPeriod(db, [row.expense_date, row.paid_at ?? row.expense_date]);
+    if (locked) {
+      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法撤销付款` }, 400);
     }
 
     await batchExecute(db, [
       deleteMirrorTxnStmt('vehicle_expense', id),
-      {
-        sql: 'UPDATE vehicle_expenses SET is_paid = 0, paid_at = NULL, account_id = NULL, updated_at = ? WHERE id = ?',
-        params: [now(), id]
-      }
+      unpayUpdateStmt(
+        'UPDATE vehicle_expenses SET is_paid = 0, paid_at = NULL, account_id = NULL, updated_at = ? WHERE id = ?',
+        id,
+        now()
+      )
     ]);
 
     await logAction(db, {
@@ -899,11 +926,9 @@ export async function updateOperatingExpense(c: AppContext): Promise<Response> {
       name = found;
     }
 
-    for (const date of [row.expense_date, expenseDate]) {
-      const locked = await findPeriodLock(db, date);
-      if (locked) {
-        return c.json({ success: false, message: `账期 ${locked} 已锁定，无法修改` }, 400);
-      }
+    const locked = await findLockedPeriod(db, [row.expense_date, expenseDate]);
+    if (locked) {
+      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法修改` }, 400);
     }
 
     await execute(
@@ -943,7 +968,7 @@ export async function payOperatingExpense(c: AppContext): Promise<Response> {
   const db = c.env.DB;
   try {
     const id = c.req.param('id');
-    const body = await c.req.json<{ account_id?: string; paid_at?: string }>();
+    const body = await c.req.json<PaymentBody>();
 
     const row = await queryOne<{ id: string; expense_date: string; category_name: string; amount: number; is_paid: number; payee: string | null; remarks: string | null }>(
       db,
@@ -957,25 +982,21 @@ export async function payOperatingExpense(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '该开支已标记为已付款' }, 400);
     }
 
-    const paidAt = body.paid_at?.trim() || today();
-    if (!isDate(paidAt)) {
-      return c.json({ success: false, message: '付款日期格式应为 YYYY-MM-DD' }, 400);
+    const payment = await validatePayment(db, body);
+    if (payment.error || !payment.account) {
+      return c.json({ success: false, message: payment.error }, 400);
     }
-    const account = await resolvePaidAccount(db, body.account_id);
-    if (!account) {
-      return c.json({ success: false, message: '请选择有效的付款账户' }, 400);
-    }
-    const locked = await findPeriodLock(db, paidAt);
-    if (locked) {
-      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法记账` }, 400);
-    }
+    const { account, paidAt } = payment;
 
     const currentTime = now();
     await batchExecute(db, [
-      {
-        sql: 'UPDATE operating_expenses SET is_paid = 1, paid_at = ?, account_id = ?, updated_at = ? WHERE id = ?',
-        params: [paidAt, account.id, currentTime, id]
-      },
+      paymentUpdateStmt(
+        'UPDATE operating_expenses SET is_paid = 1, paid_at = ?, account_id = ?, updated_at = ? WHERE id = ?',
+        id ?? '',
+        account.id,
+        paidAt,
+        currentTime
+      ),
       ...operatingExpenseTxnStmts(
         { id: row.id, category_name: row.category_name, payee: row.payee, remarks: row.remarks },
         account.id,
@@ -1018,19 +1039,18 @@ export async function unpayOperatingExpense(c: AppContext): Promise<Response> {
       return c.json({ success: false, message: '该开支未标记付款' }, 400);
     }
 
-    for (const date of [row.expense_date, row.paid_at ?? row.expense_date]) {
-      const locked = await findPeriodLock(db, date);
-      if (locked) {
-        return c.json({ success: false, message: `账期 ${locked} 已锁定，无法撤销付款` }, 400);
-      }
+    const locked = await findLockedPeriod(db, [row.expense_date, row.paid_at ?? row.expense_date]);
+    if (locked) {
+      return c.json({ success: false, message: `账期 ${locked} 已锁定，无法撤销付款` }, 400);
     }
 
     await batchExecute(db, [
       deleteMirrorTxnStmt('operating_expense', id),
-      {
-        sql: 'UPDATE operating_expenses SET is_paid = 0, paid_at = NULL, account_id = NULL, updated_at = ? WHERE id = ?',
-        params: [now(), id]
-      }
+      unpayUpdateStmt(
+        'UPDATE operating_expenses SET is_paid = 0, paid_at = NULL, account_id = NULL, updated_at = ? WHERE id = ?',
+        id,
+        now()
+      )
     ]);
 
     await logAction(db, {
